@@ -121,12 +121,6 @@
   .dash-pulse-sub{font-size:11px;color:var(--muted);margin-top:4px;}
   .dash-empty-card{padding:28px 18px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;}
   .dash-empty-card .dash-empty-icon{font-size:20px;display:block;margin-bottom:8px;}
-  .dash-perf-row{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--border-soft);}
-  .dash-perf-cell{flex:1;min-width:150px;padding:16px 18px;border-right:1px solid var(--border-soft);}
-  .dash-perf-cell:last-child{border-right:none;}
-  .dash-perf-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
-  .dash-perf-value{font-size:20px;font-weight:700;color:var(--white);}
-  .dash-perf-footnote{padding:10px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);line-height:1.6;}
   .dash-run-label{color:var(--amber);font-weight:600;}
 </style>
 </head>
@@ -192,21 +186,6 @@
         Not available yet — NSE's board-meeting API blocks requests from this project's hosting infrastructure (GitHub Actions). A working path exists via Dhan's broker API, deferred for now.
       </div>
     </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">PORTFOLIO PERFORMANCE</div>
-      <div class="panel-meta" id="dash-perf-run-label">—</div>
-    </div>
-    <div class="dash-perf-row" id="dash-perf-row">
-      <div class="dash-perf-cell"><div class="dash-perf-label">STARTING CAPITAL</div><div class="dash-perf-value" id="dash-perf-start">—</div></div>
-      <div class="dash-perf-cell"><div class="dash-perf-label">ENDING EQUITY (COMBINED)</div><div class="dash-perf-value" id="dash-perf-end">—</div></div>
-      <div class="dash-perf-cell"><div class="dash-perf-label">CAGR</div><div class="dash-perf-value" id="dash-perf-cagr">—</div></div>
-      <div class="dash-perf-cell"><div class="dash-perf-label">MAX DRAWDOWN</div><div class="dash-perf-value" id="dash-perf-dd">—</div></div>
-    </div>
-    <div class="chart-box" id="dash-equity-chart"><div class="loading">Loading equity curve...</div></div>
-    <div class="dash-perf-footnote" id="dash-perf-footnote"></div>
   </div>
 
   <div class="panel">
@@ -555,7 +534,7 @@ document.getElementById('nav-results').onclick = () => switchPage('results');
 // DASHBOARD PAGE
 // ============================================================
 let dashInitialized = false;
-let dashBreadthChart, dashEquityChart;
+let dashBreadthChart;
 
 function fmtRsShort(v){
   if(v == null) return '—';
@@ -655,58 +634,6 @@ async function loadDashboardRuns(){
       <td><span class="status-tag validated">DONE</span></td>
     </tr>
   `).join('');
-
-  // Portfolio Performance + equity curve, sourced from the most recent run —
-  // isolated from the table render above so a failure here (e.g. the chart
-  // library) can't wipe out the already-rendered runs table.
-  try{
-    const latest = runs[0];
-    const fullResp = await fetch('results/' + latest.filename + '?t=' + Date.now());
-    const full = await fullResp.json();
-    renderPortfolioPerformance(latest, full);
-  }catch(err){
-    console.error('Portfolio performance failed:', err);
-    document.getElementById('dash-equity-chart').innerHTML = `<div class="loading">Failed to render: ${err.message}</div>`;
-  }
-}
-
-function renderPortfolioPerformance(entry, full){
-  const ic = full.params.initial_capital_rs;
-  const ending = ic + full.metrics.combined_pl_rs;
-  const eq = full.equity_curve;
-  let cagrText = '—';
-  if(eq.length > 1 && ic > 0){
-    const days = (new Date(eq[eq.length-1].date) - new Date(eq[0].date)) / 86400000;
-    const years = days / 365.25;
-    if(years > 0){
-      const cagr = (Math.pow(ending / ic, 1/years) - 1) * 100;
-      cagrText = (cagr >= 0 ? '+' : '') + cagr.toFixed(1) + '%';
-    }
-  }
-
-  document.getElementById('dash-perf-run-label').textContent = entry.run_label + ' · ' + entry.universe_size.toLocaleString('en-IN') + ' stocks';
-  document.getElementById('dash-perf-start').textContent = fmtRsShort(ic);
-  document.getElementById('dash-perf-end').textContent = fmtRsShort(ending);
-  document.getElementById('dash-perf-cagr').textContent = cagrText;
-  document.getElementById('dash-perf-dd').textContent = full.metrics.max_drawdown_pct != null ? full.metrics.max_drawdown_pct.toFixed(2) + '%' : '—';
-
-  document.getElementById('dash-perf-footnote').textContent =
-    'Capital shown is the configured starting figure. The engine currently caps concurrent positions by count (max_open_positions) but does not enforce a cash budget, so more capital can be deployed at once than this starting figure — see docs/SPEC.md. Read CAGR here as strategy signal quality, not a literal account simulation, until that constraint is added.';
-
-  if(dashEquityChart) dashEquityChart.destroy();
-  dashEquityChart = new ApexCharts(document.getElementById('dash-equity-chart'), {
-    chart: {type:'area', height:280, background:'transparent', toolbar:{show:true}},
-    theme: {mode:'dark'},
-    series: [{name: 'Combined Equity', data: eq.map(p => ({x: new Date(p.date).getTime(), y: ic + p.combined}))}],
-    colors: ['#ff9f1a'],
-    stroke: {width: 2, curve: 'straight'},
-    fill: {type:'gradient', gradient:{shadeIntensity:1, opacityFrom:0.25, opacityTo:0.02}},
-    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
-    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => fmtRsShort(v)}},
-    grid: {borderColor:'#1e1e23'},
-    legend: {show:false},
-  });
-  dashEquityChart.render();
 }
 
 document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); };
