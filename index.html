@@ -120,6 +120,7 @@
     <button data-page="backfill" id="nav-backfill">BACKFILL</button>
     <button data-page="stock" id="nav-stock">STOCK DETAIL</button>
     <button data-page="strategy" id="nav-strategy">STRATEGY BUILDER</button>
+    <button data-page="results" id="nav-results">RESULTS</button>
   </div>
 </div>
 
@@ -370,6 +371,63 @@
   </div>
 </div>
 
+<!-- ============ RESULTS PAGE ============ -->
+<div class="page" id="page-results">
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">BACKTEST RUNS — <b id="res-run-count">—</b></div>
+      <div class="panel-meta">select up to 4 runs to compare · click REFRESH after triggering a new run from the Actions tab</div>
+      <button class="refresh-btn" id="res-refresh">↻ REFRESH</button>
+    </div>
+    <div class="table-scroll" style="max-height:320px;">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th></th><th>LABEL</th><th>RUN AT</th><th>WIN RATE</th><th>PROFIT FACTOR</th>
+            <th>MAX DD</th><th>TRADES</th><th>COMBINED P&L</th>
+          </tr>
+        </thead>
+        <tbody id="res-run-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="res-run-empty" style="display:none;">No runs yet — trigger one from Actions → Run SST Backtest.</div>
+  </div>
+
+  <div class="panel" id="res-detail-panel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-title">EQUITY CURVE — <b id="res-detail-label">—</b></div>
+      <div class="panel-meta">realized (solid) vs combined incl. open MTM (dashed)</div>
+    </div>
+    <div class="chart-box"><div id="chart-equity" style="height:320px;"></div></div>
+  </div>
+
+  <div class="panel" id="res-metrics-panel" style="display:none;">
+    <div class="panel-head"><div class="panel-title">METRICS COMPARISON</div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="res-metrics-table">
+        <thead><tr id="res-metrics-head"></tr></thead>
+        <tbody id="res-metrics-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="res-trades-panel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-title">TRADES — <b id="res-trades-label">—</b></div>
+      <div class="panel-meta">single-run view only — select exactly one run to see its trade list</div>
+    </div>
+    <div class="table-scroll" style="max-height:360px;">
+      <table class="list-table">
+        <thead><tr><th>SYMBOL</th><th>ENTRY</th><th>EXIT</th><th>ENTRY ₹</th><th>EXIT ₹</th><th>QTY</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>HOLD (D)</th><th>ADD-ON</th></tr></thead>
+        <tbody id="res-trades-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note">Reads results/index.json + individual result files directly from main — same-origin, no CORS, no separate branch needed (unlike the checkpoint data).</div>
+</div>
+
 <script>
 // ============================================================
 // NAV
@@ -382,11 +440,13 @@ function switchPage(page){
   if(page === 'backfill' && !bfLoaded) loadBackfill();
   if(page === 'stock' && !sdInitialized) initStockDetail();
   if(page === 'strategy' && !sbInitialized) initStrategyBuilder();
+  if(page === 'results' && !resInitialized) initResults();
 }
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-stock').onclick = () => switchPage('stock');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
+document.getElementById('nav-results').onclick = () => switchPage('results');
 
 // ============================================================
 // UNIVERSE PAGE
@@ -1033,6 +1093,214 @@ function initStrategyBuilder(){
   sbInitialized = true;
   renderTrailTable();
 }
+
+// ============================================================
+// RESULTS PAGE
+// ============================================================
+let resInitialized = false;
+let resRunIndex = [];       // from results/index.json
+let resSelected = new Set(); // filenames currently checked
+let resFullCache = {};       // filename -> full parsed result JSON (fetched on demand)
+let equityChart;
+
+function fmtRs(v){
+  if(v == null) return '—';
+  return '₹' + Math.round(v).toLocaleString('en-IN');
+}
+function fmtPct(v){
+  return v == null ? '—' : v.toFixed(2) + '%';
+}
+
+async function initResults(){
+  resInitialized = true;
+  await loadRunIndex();
+}
+
+async function loadRunIndex(){
+  const tbody = document.getElementById('res-run-body');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading run index...</td></tr>';
+  try{
+    const resp = await fetch('results/index.json?t=' + Date.now());
+    if(!resp.ok){
+      resRunIndex = [];
+    } else {
+      resRunIndex = await resp.json();
+    }
+  }catch(err){
+    resRunIndex = [];
+  }
+  resRunIndex.sort((a,b) => new Date(b.run_at) - new Date(a.run_at)); // newest first
+  renderRunList();
+}
+
+function renderRunList(){
+  const tbody = document.getElementById('res-run-body');
+  const emptyNote = document.getElementById('res-run-empty');
+  document.getElementById('res-run-count').textContent = resRunIndex.length;
+
+  if(!resRunIndex.length){
+    tbody.innerHTML = '';
+    emptyNote.style.display = 'block';
+    return;
+  }
+  emptyNote.style.display = 'none';
+
+  tbody.innerHTML = resRunIndex.map(r => `
+    <tr>
+      <td><input type="checkbox" class="res-run-checkbox" data-filename="${r.filename}" ${resSelected.has(r.filename)?'checked':''}></td>
+      <td>${r.run_label}</td>
+      <td>${new Date(r.run_at).toLocaleString('en-IN')}</td>
+      <td>${fmtPct(r.win_rate_pct)}</td>
+      <td>${r.profit_factor != null ? r.profit_factor.toFixed(2) : '—'}</td>
+      <td>${fmtPct(r.max_drawdown_pct)}</td>
+      <td>${r.total_closed_trades}</td>
+      <td style="color:${r.combined_pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRs(r.combined_pl_rs)}</td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.res-run-checkbox').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const fn = e.target.dataset.filename;
+      if(e.target.checked){
+        if(resSelected.size >= 4){ e.target.checked = false; return; } // cap at 4, per spec
+        resSelected.add(fn);
+      } else {
+        resSelected.delete(fn);
+      }
+      onSelectionChange();
+    });
+  });
+}
+
+async function fetchFullResult(filename){
+  if(resFullCache[filename]) return resFullCache[filename];
+  const resp = await fetch('results/' + filename + '?t=' + Date.now());
+  const data = await resp.json();
+  resFullCache[filename] = data;
+  return data;
+}
+
+async function onSelectionChange(){
+  const detailPanel = document.getElementById('res-detail-panel');
+  const metricsPanel = document.getElementById('res-metrics-panel');
+  const tradesPanel = document.getElementById('res-trades-panel');
+
+  if(resSelected.size === 0){
+    detailPanel.style.display = 'none';
+    metricsPanel.style.display = 'none';
+    tradesPanel.style.display = 'none';
+    return;
+  }
+
+  const selectedEntries = resRunIndex.filter(r => resSelected.has(r.filename));
+  const fullResults = await Promise.all(selectedEntries.map(r => fetchFullResult(r.filename)));
+
+  // Each render step isolated — one failing (e.g. the chart library failing
+  // to load) must not prevent the metrics/trades tables, which have no
+  // such dependency, from still rendering.
+  try{ renderEquityChart(selectedEntries, fullResults); }
+  catch(err){ console.error('Equity chart failed:', err); document.getElementById('chart-equity').innerHTML = `<div class="loading">Chart failed to render: ${err.message}</div>`; }
+
+  try{ renderMetricsComparison(selectedEntries, fullResults); }
+  catch(err){ console.error('Metrics table failed:', err); }
+
+  if(selectedEntries.length === 1){
+    tradesPanel.style.display = 'block';
+    document.getElementById('res-trades-label').textContent = selectedEntries[0].run_label;
+    renderTradesTable(fullResults[0].trades);
+  } else {
+    tradesPanel.style.display = 'none';
+  }
+}
+
+const RUN_COLORS = ['#ff9f1a', '#29c5f6', '#00d26a', '#ff3b30'];
+
+function renderEquityChart(entries, results){
+  document.getElementById('res-detail-panel').style.display = 'block';
+  document.getElementById('res-detail-label').textContent =
+    entries.length === 1 ? entries[0].run_label : `${entries.length} runs compared`;
+
+  let series, colors, strokeWidths, dashArrays;
+  if(entries.length === 1){
+    const eq = results[0].equity_curve;
+    series = [
+      {name: 'Realized', data: eq.map(p => ({x: new Date(p.date).getTime(), y: p.realized}))},
+      {name: 'Combined (incl. open MTM)', data: eq.map(p => ({x: new Date(p.date).getTime(), y: p.combined}))},
+    ];
+    colors = ['#00d26a', '#ff9f1a'];
+    strokeWidths = [2, 2];
+    dashArrays = [0, 4];
+  } else {
+    series = entries.map((e, i) => ({
+      name: e.run_label,
+      data: results[i].equity_curve.map(p => ({x: new Date(p.date).getTime(), y: p.combined})),
+    }));
+    colors = entries.map((_, i) => RUN_COLORS[i % RUN_COLORS.length]);
+    strokeWidths = entries.map(() => 2);
+    dashArrays = entries.map(() => 0);
+  }
+
+  if(equityChart) equityChart.destroy();
+  equityChart = new ApexCharts(document.getElementById('chart-equity'), {
+    chart: {type:'line', height:320, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series,
+    colors,
+    stroke: {width: strokeWidths, dashArray: dashArrays, curve:'straight'},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => fmtRs(v)}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {labels:{colors:'#e9e9ec'}},
+  });
+  equityChart.render();
+}
+
+const METRIC_ROWS = [
+  {key:'win_rate_pct', label:'Win Rate', fmt: fmtPct},
+  {key:'profit_factor', label:'Profit Factor', fmt: v => v!=null ? v.toFixed(2) : '—'},
+  {key:'max_drawdown_pct', label:'Max Drawdown', fmt: fmtPct},
+  {key:'total_closed_trades', label:'Closed Trades', fmt: v => v},
+  {key:'open_positions_count', label:'Open Positions', fmt: v => v},
+  {key:'avg_hold_days_winners', label:'Avg Hold — Winners (d)', fmt: v => v ?? '—'},
+  {key:'avg_hold_days_losers', label:'Avg Hold — Losers (d)', fmt: v => v ?? '—'},
+  {key:'realized_pl_rs', label:'Realized P&L', fmt: fmtRs},
+  {key:'open_mtm_rs', label:'Open MTM', fmt: fmtRs},
+  {key:'combined_pl_rs', label:'Combined P&L', fmt: fmtRs},
+];
+
+function renderMetricsComparison(entries, results){
+  document.getElementById('res-metrics-panel').style.display = 'block';
+  document.getElementById('res-metrics-head').innerHTML =
+    '<th>METRIC</th>' + entries.map(e => `<th>${e.run_label}</th>`).join('');
+  document.getElementById('res-metrics-body').innerHTML = METRIC_ROWS.map(row => `
+    <tr>
+      <td style="color:var(--dim);">${row.label}</td>
+      ${results.map(r => `<td>${row.fmt(r.metrics[row.key])}</td>`).join('')}
+    </tr>
+  `).join('');
+}
+
+function renderTradesTable(trades){
+  document.getElementById('res-trades-body').innerHTML = trades.map(t => `
+    <tr>
+      <td>${t.symbol}</td>
+      <td>${t.entry_date}</td>
+      <td>${t.exit_date}</td>
+      <td>₹${t.entry_price}</td>
+      <td>₹${t.exit_price}</td>
+      <td>${t.qty}</td>
+      <td style="color:${t.pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRs(t.pl_rs)}</td>
+      <td style="color:${t.pl_pct>=0?'var(--green)':'var(--red)'}">${t.pl_pct>=0?'+':''}${t.pl_pct}%</td>
+      <td>${t.hold_days}</td>
+      <td>${t.had_addon ? 'Yes' : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('res-refresh').onclick = () => {
+  resFullCache = {};
+  loadRunIndex();
+};
 </script>
 </body>
 </html>

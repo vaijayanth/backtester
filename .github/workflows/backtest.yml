@@ -79,12 +79,16 @@ jobs:
           echo "OUT_FILE=$OUT_FILE" >> $GITHUB_ENV
           python scripts/backtest_engine.py --params params.json --out "$OUT_FILE"
 
+      - name: Update results index
+        working-directory: main
+        run: python scripts/update_results_index.py "$OUT_FILE"
+
       - name: Commit results
         working-directory: main
         run: |
           git config user.name "backtest-bot"
           git config user.email "actions@github.com"
-          git add "$OUT_FILE"
+          git add "$OUT_FILE" results/index.json
           git commit -m "Backtest run: $OUT_FILE"
           # pull --rebase first in case another run landed on main since
           # this job's checkout — low-probability for a manually-triggered
