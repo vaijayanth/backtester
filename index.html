@@ -97,6 +97,18 @@
   .chart-box{padding:14px 18px;}
   .rc-group{display:flex;flex-direction:column;gap:6px;min-width:150px;}
   .rc-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
+
+  .sb-section{padding:16px 18px;border-bottom:1px solid var(--border-soft);}
+  .sb-section-title{font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
+  .sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+  .sb-field label{display:block;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;}
+  .sb-field input{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--white);font-family:inherit;font-size:12px;}
+  .sb-field input:focus{outline:none;border-color:var(--amber-dim);}
+  .sb-meta{font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .sb-controls-row{display:flex;gap:10px;align-items:center;padding:16px 18px;flex-wrap:wrap;}
+  .sb-trail-input{width:70px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;padding:5px 8px;color:var(--white);font-family:inherit;font-size:12px;}
+  .sb-trail-remove{background:transparent;border:1px solid var(--border);color:var(--red);font-family:inherit;font-size:10px;padding:3px 8px;border-radius:3px;cursor:pointer;}
+  .sb-trail-remove:hover{background:var(--red-dim);}
 </style>
 </head>
 <body>
@@ -107,6 +119,7 @@
     <button class="active" data-page="universe" id="nav-universe">UNIVERSE</button>
     <button data-page="backfill" id="nav-backfill">BACKFILL</button>
     <button data-page="stock" id="nav-stock">STOCK DETAIL</button>
+    <button data-page="strategy" id="nav-strategy">STRATEGY BUILDER</button>
   </div>
 </div>
 
@@ -293,6 +306,71 @@
   <div class="footer-note">Data queried live from the parquet checkpoint file via DuckDB-WASM, running entirely in this browser tab — no server, no pre-converted JSON. This is the same query path the real backtest engine will use.</div>
 </div>
 
+<!-- ============ STRATEGY BUILDER PAGE ============ -->
+<div class="page" id="page-strategy">
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">SST STRATEGY PARAMETERS</div>
+      <div class="panel-meta">every value here is tunable — matches docs/SPEC.md section 7 exactly</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">ENTRY / UNIVERSE FILTER</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Breakout window (N-Day High)</label><input type="number" id="p-breakout_window_days" value="21" min="1"></div>
+        <div class="sb-field"><label>EMA filter — fast</label><input type="number" id="p-ema_filter_fast" value="50" min="1"></div>
+        <div class="sb-field"><label>EMA filter — slow</label><input type="number" id="p-ema_filter_slow" value="200" min="1"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">PROFIT TRAILING-STOP</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Lock-in trigger %</label><input type="number" id="p-profit_lock_trigger_pct" value="6" step="0.5"></div>
+      </div>
+      <div class="sb-meta">Step-based ratchet — distance below peak price tightens as profit grows. One-directional, never loosens.</div>
+      <table class="list-table" id="sb-trail-table">
+        <thead><tr><th>PROFIT ≥ %</th><th>TRAIL DISTANCE %</th><th></th></tr></thead>
+        <tbody id="sb-trail-body"></tbody>
+      </table>
+      <button class="refresh-btn" id="sb-trail-add" style="margin:10px 18px;">+ ADD CHECKPOINT</button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">ADD-ON (LOSS, ABOVE BOTH EMAs, FRESH BREAKOUT)</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Add-on trigger % (loss)</label><input type="number" id="p-add_on_trigger_pct" value="-7" step="0.5"></div>
+        <div class="sb-field"><label>Add-on size (fraction of qty)</label><input type="number" id="p-add_on_size_fraction" value="0.1" step="0.01" min="0"></div>
+        <div class="sb-field"><label>Max add-ons per week (per stock)</label><input type="number" id="p-add_on_max_per_week" value="1" min="0"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">POSITION SIZING</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Base position (₹)</label><input type="number" id="p-base_position_rs" value="20000" step="1000"></div>
+        <div class="sb-field"><label>Increment (₹)</label><input type="number" id="p-position_size_increment_rs" value="5000" step="500"></div>
+        <div class="sb-field"><label>Increment every N closed trades</label><input type="number" id="p-position_size_increment_trades" value="100" min="1"></div>
+        <div class="sb-field"><label>Position size cap (₹)</label><input type="number" id="p-position_size_cap_rs" value="100000" step="5000"></div>
+        <div class="sb-field"><label>Max open positions</label><input type="number" id="p-max_open_positions" value="200" min="1"></div>
+        <div class="sb-field"><label>Initial capital (₹)</label><input type="number" id="p-initial_capital_rs" value="5000000" step="100000"></div>
+      </div>
+    </div>
+
+    <div class="sb-controls-row">
+      <button class="refresh-btn" id="sb-run-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;padding:9px 18px;">▶ RUN BACKTEST</button>
+      <button class="refresh-btn" id="sb-copy-btn">⧉ COPY PARAMS AS JSON</button>
+      <span class="sd-status" id="sb-status"></span>
+    </div>
+  </div>
+
+  <div class="footer-note" id="sb-wiring-note">
+    <b style="color:var(--amber);">Not yet wired for one-click execution.</b> The trigger relay (Cloudflare Workers — needs a separate account/setup) isn't built yet, so clicking RUN BACKTEST can't kick off a live GitHub Actions run from this page directly.
+    For now, click COPY PARAMS AS JSON and hand that to whoever is driving the Actions workflow manually — same mechanism, just not one-click yet.
+  </div>
+</div>
+
 <script>
 // ============================================================
 // NAV
@@ -304,10 +382,12 @@ function switchPage(page){
   document.getElementById('page-' + page).classList.add('active');
   if(page === 'backfill' && !bfLoaded) loadBackfill();
   if(page === 'stock' && !sdInitialized) initStockDetail();
+  if(page === 'strategy' && !sbInitialized) initStrategyBuilder();
 }
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-stock').onclick = () => switchPage('stock');
+document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 
 // ============================================================
 // UNIVERSE PAGE
@@ -862,6 +942,103 @@ async function initStockDetail(){
     select.innerHTML = '<option>Failed to load symbol list</option>';
     setSdStatus(`Failed: ${err.message}`, true);
   }
+}
+
+// ============================================================
+// STRATEGY BUILDER PAGE
+// ============================================================
+let sbInitialized = false;
+// Mirrors DEFAULT_PARAMS["trail_checkpoints"] in scripts/backtest_engine.py exactly.
+let sbTrailCheckpoints = [
+  {profit_pct: 6, trail_pct: 6},
+  {profit_pct: 10, trail_pct: 5},
+  {profit_pct: 15, trail_pct: 4},
+  {profit_pct: 25, trail_pct: 3},
+];
+
+function renderTrailTable(){
+  document.getElementById('sb-trail-body').innerHTML = sbTrailCheckpoints.map((cp, i) => `
+    <tr>
+      <td><input type="number" class="sb-trail-input" data-idx="${i}" data-field="profit_pct" value="${cp.profit_pct}" step="0.5"></td>
+      <td><input type="number" class="sb-trail-input" data-idx="${i}" data-field="trail_pct" value="${cp.trail_pct}" step="0.5"></td>
+      <td><button class="sb-trail-remove" data-idx="${i}">REMOVE</button></td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.sb-trail-input').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.idx), field = e.target.dataset.field;
+      sbTrailCheckpoints[idx][field] = parseFloat(e.target.value) || 0;
+    });
+  });
+  document.querySelectorAll('.sb-trail-remove').forEach(btn => {
+    btn.onclick = (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      sbTrailCheckpoints.splice(idx, 1);
+      renderTrailTable();
+    };
+  });
+}
+
+document.getElementById('sb-trail-add').onclick = () => {
+  const last = sbTrailCheckpoints[sbTrailCheckpoints.length - 1] || {profit_pct: 0, trail_pct: 6};
+  sbTrailCheckpoints.push({profit_pct: last.profit_pct + 5, trail_pct: Math.max(1, last.trail_pct - 1)});
+  renderTrailTable();
+};
+
+function numVal(id){
+  return parseFloat(document.getElementById(id).value);
+}
+
+// Builds the exact JSON shape scripts/backtest_engine.py's DEFAULT_PARAMS
+// (and its --params override file) expects — field names must match
+// precisely, this is the contract between this form and the Python engine.
+function collectParams(){
+  return {
+    breakout_window_days: numVal('p-breakout_window_days'),
+    ema_filter_fast: numVal('p-ema_filter_fast'),
+    ema_filter_slow: numVal('p-ema_filter_slow'),
+    profit_lock_trigger_pct: numVal('p-profit_lock_trigger_pct'),
+    trail_checkpoints: sbTrailCheckpoints.map(cp => ({profit_pct: cp.profit_pct, trail_pct: cp.trail_pct})),
+    add_on_trigger_pct: numVal('p-add_on_trigger_pct'),
+    add_on_size_fraction: numVal('p-add_on_size_fraction'),
+    add_on_max_per_week: numVal('p-add_on_max_per_week'),
+    base_position_rs: numVal('p-base_position_rs'),
+    position_size_increment_rs: numVal('p-position_size_increment_rs'),
+    position_size_increment_trades: numVal('p-position_size_increment_trades'),
+    position_size_cap_rs: numVal('p-position_size_cap_rs'),
+    max_open_positions: numVal('p-max_open_positions'),
+    initial_capital_rs: numVal('p-initial_capital_rs'),
+  };
+}
+
+function setSbStatus(msg, isError){
+  const el = document.getElementById('sb-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--dim)';
+}
+
+document.getElementById('sb-run-btn').onclick = () => {
+  const params = collectParams();
+  setSbStatus('Not wired yet — this would dispatch a GitHub Actions run with these params once the trigger relay exists. Use COPY PARAMS AS JSON for now.', true);
+  console.log('Backtest params (would be sent to Actions workflow_dispatch):', params);
+};
+
+document.getElementById('sb-copy-btn').onclick = async () => {
+  const params = collectParams();
+  const json = JSON.stringify(params, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    setSbStatus('Copied params JSON to clipboard.');
+  }catch(err){
+    setSbStatus('Clipboard copy failed — params logged to console instead.', true);
+    console.log(json);
+  }
+};
+
+function initStrategyBuilder(){
+  sbInitialized = true;
+  renderTrailTable();
 }
 </script>
 </body>
