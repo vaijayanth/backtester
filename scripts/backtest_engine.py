@@ -47,12 +47,17 @@ DEFAULT_PARAMS = {
     "breakout_window_days": 21,
     "ema_filter_fast": 50,
     "ema_filter_slow": 200,
-    "profit_lock_trigger_pct": 6.0,
+    # Confirmed via direct user spec + manual trade-by-trade validation against
+    # 360ONE.NS (docs/SPEC.md section 7): activation at 7% peak profit, then a
+    # FLAT 6% trail thereafter — not the earlier placeholder 4-tier progressive
+    # ratchet (6/10/15/25% -> 6/5/4/3%), which produced same-day activate+exit
+    # whipsaws because it armed at only 6%. A single checkpoint at profit_pct=0
+    # makes trail_distance_for_profit() return trail_pct=6 for any profit level
+    # once armed, i.e. a constant distance — trail_checkpoints still supports
+    # multiple tiers if ever reintroduced, just unused by this confirmed default.
+    "profit_lock_trigger_pct": 7.0,
     "trail_checkpoints": [
-        {"profit_pct": 6, "trail_pct": 6},
-        {"profit_pct": 10, "trail_pct": 5},
-        {"profit_pct": 15, "trail_pct": 4},
-        {"profit_pct": 25, "trail_pct": 3},
+        {"profit_pct": 0, "trail_pct": 6},
     ],
     "add_on_trigger_pct": -7.0,
     "add_on_size_fraction": 0.1,
