@@ -265,6 +265,17 @@
       <div><div class="sd-metric-label">WITHIN ±<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value" id="oa-within">—</div></div>
       <div><div class="sd-metric-label">TOTAL PERIODS</div><div class="sd-metric-value" id="oa-total">—</div></div>
     </div>
+    <div class="sd-controls" style="border-top:1px solid var(--border-soft);">
+      <div class="rc-group" style="min-width:100px;">
+        <label class="rc-label">RANGE COVERS</label>
+        <input type="number" id="oa-pct-coverage" value="90" min="50" max="99" step="1"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:70px;">
+        <span style="font-size:11px;color:var(--muted);">% of periods</span>
+      </div>
+      <div style="flex:1;font-size:13px;color:var(--white);">
+        <span id="oa-pct-sentence">—</span>
+      </div>
+    </div>
     <div class="chart-box"><div id="chart-outlier" style="height:280px;"></div></div>
   </div>
 
@@ -706,6 +717,20 @@ function renderOutlierAnalysis(){
   document.getElementById('oa-upper').textContent = above.length.toLocaleString('en-IN');
   document.getElementById('oa-lower').textContent = below.length.toLocaleString('en-IN');
   document.getElementById('oa-within').textContent = within.toLocaleString('en-IN');
+
+  // "90% range" readout — the actual percentile-derived answer to
+  // "what's the 90% up/down range", separate from the fixed-threshold
+  // breach count above.
+  const pctCoverage = parseFloat(document.getElementById('oa-pct-coverage').value) || 90;
+  const sortedReturns = returns.map(r => r.ret).sort((a,b) => a-b);
+  const lowP = (1 - pctCoverage/100) / 2, highP = 1 - lowP;
+  const lowBound = percentile(sortedReturns, lowP);
+  const highBound = percentile(sortedReturns, highP);
+  const periodWord = oaPeriod === 'weekly' ? 'weeks' : 'months';
+  const fmtSigned = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  document.getElementById('oa-pct-sentence').textContent =
+    `${pctCoverage}% of ${periodWord} fell between ${fmtSigned(lowBound)} and ${fmtSigned(highBound)} ` +
+    `(the other ${100-pctCoverage}% moved more extreme than that, either up or down).`;
   document.getElementById('oa-total').textContent = returns.length.toLocaleString('en-IN');
 
   const breaches = [...above, ...below];
@@ -756,6 +781,7 @@ function renderOutlierAnalysis(){
 document.getElementById('oa-period-weekly').onclick = () => { oaPeriod='weekly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-weekly').classList.add('active'); renderOutlierAnalysis(); };
 document.getElementById('oa-period-monthly').onclick = () => { oaPeriod='monthly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-monthly').classList.add('active'); renderOutlierAnalysis(); };
 document.getElementById('oa-threshold').addEventListener('input', renderOutlierAnalysis);
+document.getElementById('oa-pct-coverage').addEventListener('input', renderOutlierAnalysis);
 
 function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData){
   document.getElementById('sd-chart-symbol').textContent = symbol;
