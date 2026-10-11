@@ -1,16 +1,20 @@
 """
 Market Screens — 52-Week High, 5-Year High, and RSI Overbought/Oversold
-lists for the Dashboard's F&O panels.
+lists, for either the F&O universe (options screening) or the full
+backtester universe (SST equity swing screening — "which stocks are near
+a breakout right now").
 
-Scoped to the 213-stock NSE F&O-eligible universe (data/fno_universe.csv),
-not the full 1,466-stock backtester universe — matches what the user asked
-for ("Nifty F&O stocks above RSI 70 & below RSI 30").
+--universe fno (default): 213-stock NSE F&O-eligible universe
+  (data/fno_universe.csv) — feeds the IVP Screener / Strangle Screen pages.
+--universe full: all 1,466 validated stocks — feeds the Dashboard's SST
+  position-screening panels. SST trades the full equity universe, not
+  just F&O-eligible names, so this is deliberately NOT the same list.
 
 Honest framing, not "ATH": this repo only has 5 years of backfilled OHLC,
 not a company's full trading history. A stock at its highest close in that
-5-year window is NOT necessarily its genuine all-time high — many of these
-213 names have traded for decades. Labeled "5-Year High" everywhere,
-including in this script's own output keys, to avoid that misleading claim.
+5-year window is NOT necessarily its genuine all-time high — many names
+have traded for decades. Labeled "5-Year High" everywhere, including in
+this script's own output keys, to avoid that misleading claim.
 
 RSI14 formula matches Stock Detail's existing JS exactly (Wilder's
 smoothing: avg = (avg*13 + new)/14 after a simple-average seed) so results
@@ -18,7 +22,8 @@ are comparable across the whole system, same principle as the EMA formula
 parity already enforced in backtest_engine.py.
 
 Usage:
-  python scripts/market_screens.py --out market_screens.json
+  python scripts/market_screens.py --universe fno --out market_screens.json
+  python scripts/market_screens.py --universe full --out market_screens_full.json
 """
 
 import argparse
@@ -71,9 +76,9 @@ def load_validated_set():
     return set(manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist())
 
 
-def build_screens():
-    fno_symbols = load_fno_symbols()
+def build_screens(universe="fno"):
     validated = load_validated_set()
+    target_symbols = load_fno_symbols() if universe == "fno" else sorted(validated)
 
     week52_high = []
     five_year_high = []
@@ -81,7 +86,7 @@ def build_screens():
     rsi_oversold = []
     skipped = []
 
-    for symbol in fno_symbols:
+    for symbol in target_symbols:
         if symbol not in validated:
             skipped.append(symbol)
             continue
@@ -137,8 +142,8 @@ def build_screens():
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "universe": "nse_fno",
-        "universe_size": len(fno_symbols),
+        "universe": "nse_fno" if universe == "fno" else "full_backtester_universe",
+        "universe_size": len(target_symbols),
         "skipped": skipped,
         "week52_high": week52_high,
         "five_year_high": five_year_high,
@@ -149,13 +154,14 @@ def build_screens():
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--universe", choices=["fno", "full"], default="fno")
     parser.add_argument("--out", type=str, default="market_screens.json")
     args = parser.parse_args()
 
-    screens = build_screens()
+    screens = build_screens(universe=args.universe)
     Path(args.out).write_text(json.dumps(screens, indent=2))
 
-    print(f"F&O universe: {screens['universe_size']} symbols ({len(screens['skipped'])} skipped)")
+    print(f"Universe ({args.universe}): {screens['universe_size']} symbols ({len(screens['skipped'])} skipped)")
     print(f"52-Week High (within {NEAR_52WH_TOLERANCE_PCT}%): {len(screens['week52_high'])}")
     print(f"5-Year High: {len(screens['five_year_high'])}")
     print(f"RSI Overbought (>=70): {len(screens['rsi_overbought'])}")

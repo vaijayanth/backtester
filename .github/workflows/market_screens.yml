@@ -2,9 +2,11 @@ name: Build Market Screens
 
 # Manually triggered via GitHub's own "Run workflow" button, same pattern as
 # the other data-pipeline workflows. Computes 52-Week High / 5-Year High /
-# RSI Overbought-Oversold for the 213-stock F&O universe (data/fno_universe.csv)
-# from the already-backfilled checkpoints branch — pure computation, no new
-# external data source.
+# RSI Overbought-Oversold TWICE — once for the 213-stock F&O universe
+# (market_screens.json, feeds IVP Screener / Strangle Screen) and once for
+# the full 1,466-stock backtester universe (market_screens_full.json, feeds
+# the Dashboard's SST position-screening panels) — from the already-
+# backfilled checkpoints branch, pure computation, no new external data.
 
 on:
   workflow_dispatch: {}
@@ -40,16 +42,20 @@ jobs:
           mkdir -p main/checkpoints
           cp -r checkpoints-branch/checkpoints/. main/checkpoints/
 
-      - name: Build screens
+      - name: Build screens (F&O)
         working-directory: main
-        run: python scripts/market_screens.py --out market_screens.json
+        run: python scripts/market_screens.py --universe fno --out market_screens.json
+
+      - name: Build screens (full universe)
+        working-directory: main
+        run: python scripts/market_screens.py --universe full --out market_screens_full.json
 
       - name: Commit screens
         working-directory: main
         run: |
           git config user.name "screens-bot"
           git config user.email "actions@github.com"
-          git add market_screens.json
+          git add market_screens.json market_screens_full.json
           if git diff --cached --quiet; then
             echo "No screen changes to commit"
           else
