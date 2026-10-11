@@ -242,8 +242,8 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">OUTLIER ANALYSIS</div>
-      <div class="panel-meta">real distribution of periodic returns — find the "safe" range empirically, same data already loaded above</div>
+      <div class="panel-title">THRESHOLD BREACH ANALYSIS</div>
+      <div class="panel-meta">how many periods moved beyond a fixed ±% from the period's opening price</div>
     </div>
     <div class="sd-controls">
       <div class="rc-group">
@@ -254,22 +254,16 @@
         </div>
       </div>
       <div class="rc-group">
-        <label class="rc-label">CALC TYPE</label>
-        <div class="tabs" id="oa-calc-tabs">
-          <button class="tab-btn active" data-val="oc" id="oa-calc-oc">OC (OPEN→CLOSE)</button>
-          <button class="tab-btn" data-val="hl" id="oa-calc-hl">H-L (RANGE)</button>
-        </div>
-      </div>
-      <div class="rc-group" style="flex:1;min-width:220px;">
-        <label class="rc-label">COVERAGE: <span id="oa-coverage-val">90</span>%</label>
-        <input type="range" id="oa-coverage" min="70" max="99" value="90" style="width:100%;accent-color:var(--amber);">
+        <label class="rc-label">THRESHOLD %</label>
+        <input type="number" id="oa-threshold" value="10" min="1" max="100" step="0.5"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
       </div>
     </div>
     <div class="sd-meta-row" id="oa-safe-range-row">
-      <div><div class="sd-metric-label">LOWER BOUND</div><div class="sd-metric-value red" id="oa-lower">—</div></div>
-      <div><div class="sd-metric-label">UPPER BOUND</div><div class="sd-metric-value green" id="oa-upper">—</div></div>
+      <div><div class="sd-metric-label">MONTHS &gt; +<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value green" id="oa-upper">—</div></div>
+      <div><div class="sd-metric-label">MONTHS &lt; −<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value red" id="oa-lower">—</div></div>
+      <div><div class="sd-metric-label">WITHIN ±<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value" id="oa-within">—</div></div>
       <div><div class="sd-metric-label">TOTAL PERIODS</div><div class="sd-metric-value" id="oa-total">—</div></div>
-      <div><div class="sd-metric-label">OUTLIERS</div><div class="sd-metric-value amber" id="oa-outlier-count">—</div></div>
     </div>
     <div class="chart-box"><div id="chart-outlier" style="height:280px;"></div></div>
   </div>
@@ -590,7 +584,7 @@ function computeRSI14(closes){
 
 let priceChart, volumeChart, rsiChart, outlierChart;
 let sdCurrentRows = []; // kept after load so the Outlier Analysis panel can recompute on control changes without re-querying DuckDB
-let oaPeriod = 'monthly', oaCalc = 'oc';
+let oaPeriod = 'monthly';
 
 async function loadStock(symbol){
   setSdStatus('Querying parquet via DuckDB-WASM...');
@@ -699,40 +693,42 @@ function percentile(sortedVals, p){
 
 function renderOutlierAnalysis(){
   if(!sdCurrentRows.length) return;
-  const coverage = parseInt(document.getElementById('oa-coverage').value) / 100;
-  const periods = groupIntoPeriods(sdCurrentRows, oaPeriod);
-  const returns = computePeriodReturns(periods, oaCalc);
-  const sorted = [...returns.map(r => r.ret)].sort((a,b) => a-b);
-  const lowerP = (1 - coverage) / 2, upperP = 1 - lowerP;
-  const lowerBound = percentile(sorted, lowerP);
-  const upperBound = percentile(sorted, upperP);
+  const threshold = parseFloat(document.getElementById('oa-threshold').value) || 10;
+  document.querySelectorAll('.oa-thresh-label').forEach(el => el.textContent = threshold);
 
-  document.getElementById('oa-lower').textContent = lowerBound.toFixed(2) + '%';
-  document.getElementById('oa-upper').textContent = upperBound.toFixed(2) + '%';
+  const periods = groupIntoPeriods(sdCurrentRows, oaPeriod);
+  const returns = computePeriodReturns(periods, 'oc'); // always open->close vs the period's own start price, per the actual ask
+
+  const above = returns.filter(r => r.ret > threshold);
+  const below = returns.filter(r => r.ret < -threshold);
+  const within = returns.length - above.length - below.length;
+
+  document.getElementById('oa-upper').textContent = above.length.toLocaleString('en-IN');
+  document.getElementById('oa-lower').textContent = below.length.toLocaleString('en-IN');
+  document.getElementById('oa-within').textContent = within.toLocaleString('en-IN');
   document.getElementById('oa-total').textContent = returns.length.toLocaleString('en-IN');
 
-  const outliers = returns.filter(r => r.ret < lowerBound || r.ret > upperBound);
-  document.getElementById('oa-outlier-count').textContent =
-    `${outliers.length} (${(outliers.length/returns.length*100).toFixed(1)}%)`;
-
-  const scatterData = returns.map(r => {
-    const isOutlier = r.ret < lowerBound || r.ret > upperBound;
-    return {x: r.end.getTime(), y: Number(r.ret.toFixed(2)), fillColor: isOutlier ? (r.ret > 0 ? '#00d26a' : '#ff3b30') : '#55555c'};
-  });
+  const breaches = [...above, ...below];
+  const barData = returns.map(r => ({
+    x: r.end.getTime(),
+    y: Number(r.ret.toFixed(2)),
+    fillColor: r.ret > threshold ? '#00d26a' : (r.ret < -threshold ? '#ff3b30' : '#55555c'),
+  }));
 
   if(outlierChart) outlierChart.destroy();
   outlierChart = new ApexCharts(document.getElementById('chart-outlier'), {
-    chart: {type:'scatter', height:280, background:'transparent', toolbar:{show:true}},
+    chart: {type:'bar', height:280, background:'transparent', toolbar:{show:true}},
     theme: {mode:'dark'},
-    series: [{name:'Return %', data: scatterData.map(d => ({x:d.x, y:d.y}))}],
-    markers: {size:4, colors: scatterData.map(d => d.fillColor)},
+    series: [{name:'Return %', data: barData.map(d => ({x:d.x, y:d.y, fillColor:d.fillColor}))}],
+    plotOptions: {bar:{columnWidth:'70%', distributed:false}},
     xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
-    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(1)+'%'}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(0)+'%'}},
     grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:false},
     annotations: {
       yaxis: [
-        {y:upperBound, borderColor:'#00d26a', strokeDashArray:4, label:{text:'Upper '+upperBound.toFixed(1)+'%', position:'right', style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
-        {y:lowerBound, borderColor:'#ff3b30', strokeDashArray:4, label:{text:'Lower '+lowerBound.toFixed(1)+'%', position:'right', style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
+        {y:threshold, borderColor:'#00d26a', strokeDashArray:4, label:{text:'+'+threshold+'%', position:'right', style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
+        {y:-threshold, borderColor:'#ff3b30', strokeDashArray:4, label:{text:'-'+threshold+'%', position:'right', style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
       ]
     },
   });
@@ -740,18 +736,18 @@ function renderOutlierAnalysis(){
 
   const outlierBody = document.getElementById('oa-outlier-body');
   const emptyNote = document.getElementById('oa-outlier-empty');
-  if(!outliers.length){
+  if(!breaches.length){
     outlierBody.innerHTML = '';
     emptyNote.style.display = 'block';
   } else {
     emptyNote.style.display = 'none';
-    const sortedOutliers = [...outliers].sort((a,b) => Math.abs(b.ret) - Math.abs(a.ret));
-    outlierBody.innerHTML = sortedOutliers.map(o => `
+    const sortedBreaches = [...breaches].sort((a,b) => Math.abs(b.ret) - Math.abs(a.ret));
+    outlierBody.innerHTML = sortedBreaches.map(o => `
       <tr>
         <td>${o.start.toISOString().slice(0,10)}</td>
         <td>${o.end.toISOString().slice(0,10)}</td>
         <td style="color:${o.ret>0?'var(--green)':'var(--red)'}">${o.ret>0?'+':''}${o.ret.toFixed(2)}%</td>
-        <td>${o.ret>0 ? 'Upside outlier' : 'Downside outlier'}</td>
+        <td>${o.ret>0 ? `Broke above +${threshold}%` : `Broke below -${threshold}%`}</td>
       </tr>
     `).join('');
   }
@@ -759,12 +755,7 @@ function renderOutlierAnalysis(){
 
 document.getElementById('oa-period-weekly').onclick = () => { oaPeriod='weekly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-weekly').classList.add('active'); renderOutlierAnalysis(); };
 document.getElementById('oa-period-monthly').onclick = () => { oaPeriod='monthly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-monthly').classList.add('active'); renderOutlierAnalysis(); };
-document.getElementById('oa-calc-oc').onclick = () => { oaCalc='oc'; document.querySelectorAll('#oa-calc-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-calc-oc').classList.add('active'); renderOutlierAnalysis(); };
-document.getElementById('oa-calc-hl').onclick = () => { oaCalc='hl'; document.querySelectorAll('#oa-calc-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-calc-hl').classList.add('active'); renderOutlierAnalysis(); };
-document.getElementById('oa-coverage').addEventListener('input', (e) => {
-  document.getElementById('oa-coverage-val').textContent = e.target.value;
-  renderOutlierAnalysis();
-});
+document.getElementById('oa-threshold').addEventListener('input', renderOutlierAnalysis);
 
 function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData){
   document.getElementById('sd-chart-symbol').textContent = symbol;
