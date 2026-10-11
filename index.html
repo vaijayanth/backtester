@@ -714,9 +714,10 @@ function renderOutlierAnalysis(){
   const below = returns.filter(r => r.ret < -threshold);
   const within = returns.length - above.length - below.length;
 
-  document.getElementById('oa-upper').textContent = above.length.toLocaleString('en-IN');
-  document.getElementById('oa-lower').textContent = below.length.toLocaleString('en-IN');
-  document.getElementById('oa-within').textContent = within.toLocaleString('en-IN');
+  const pct = n => returns.length ? ` (${(n/returns.length*100).toFixed(1)}%)` : '';
+  document.getElementById('oa-upper').textContent = above.length.toLocaleString('en-IN') + pct(above.length);
+  document.getElementById('oa-lower').textContent = below.length.toLocaleString('en-IN') + pct(below.length);
+  document.getElementById('oa-within').textContent = within.toLocaleString('en-IN') + pct(within);
 
   // "90% range" readout — the actual percentile-derived answer to
   // "what's the 90% up/down range", separate from the fixed-threshold
