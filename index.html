@@ -578,7 +578,7 @@ async function loadStock(symbol){
     const rsiData = rows.map((r,i) => ({x: r.date, y: rsi14[i]}));
 
     renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData);
-    renderStats(rows, ema50, ema200, rsi14);
+    renderStockStats(rows, ema50, ema200, rsi14);
 
     setSdStatus(`Loaded ${rows.length} rows directly from parquet via DuckDB-WASM.`);
   }catch(err){
@@ -586,7 +586,7 @@ async function loadStock(symbol){
   }
 }
 
-function renderStats(rows, ema50, ema200, rsi14){
+function renderStockStats(rows, ema50, ema200, rsi14){
   const last = rows[rows.length - 1];
   const highs = rows.map(r => r.high), lows = rows.map(r => r.low);
   document.getElementById('sd-close').textContent = '₹' + last.close.toLocaleString('en-IN', {maximumFractionDigits:2});
