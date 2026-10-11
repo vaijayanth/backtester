@@ -646,12 +646,12 @@ function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsi
     colors: ['#ff9f1a'],
     stroke: {width:1.5},
     xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
-    yaxis: {min:0, max:100, labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {min:0, max:100, tickAmount:4, labels:{style:{colors:'#8a8a93'}, formatter: v => Math.round(v)}},
     grid: {borderColor:'#1e1e23'},
     annotations: {
       yaxis: [
-        {y:70, borderColor:'#ff3b30', label:{text:'70', style:{color:'#fff', background:'#ff3b30'}}},
-        {y:30, borderColor:'#00d26a', label:{text:'30', style:{color:'#fff', background:'#00d26a'}}},
+        {y:70, borderColor:'#ff3b30', label:{text:'70', position:'right', offsetX:-5, style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
+        {y:30, borderColor:'#00d26a', label:{text:'30', position:'right', offsetX:-5, style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
       ]
     },
   });
