@@ -95,6 +95,8 @@
   .sd-metric-value.red{color:var(--red);}
   .sd-metric-value.amber{color:var(--amber);}
   .chart-box{padding:14px 18px;}
+  .rc-group{display:flex;flex-direction:column;gap:6px;min-width:150px;}
+  .rc-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
 </style>
 </head>
 <body>
@@ -236,6 +238,51 @@
   <div class="panel">
     <div class="panel-head"><div class="panel-title">RSI (14)</div><div class="panel-meta">reference lines at 30 / 70</div></div>
     <div class="chart-box"><div id="chart-rsi" style="height:160px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">OUTLIER ANALYSIS</div>
+      <div class="panel-meta">real distribution of periodic returns — find the "safe" range empirically, same data already loaded above</div>
+    </div>
+    <div class="sd-controls">
+      <div class="rc-group">
+        <label class="rc-label">PERIOD</label>
+        <div class="tabs" id="oa-period-tabs">
+          <button class="tab-btn" data-val="weekly" id="oa-period-weekly">WEEKLY</button>
+          <button class="tab-btn active" data-val="monthly" id="oa-period-monthly">MONTHLY</button>
+        </div>
+      </div>
+      <div class="rc-group">
+        <label class="rc-label">CALC TYPE</label>
+        <div class="tabs" id="oa-calc-tabs">
+          <button class="tab-btn active" data-val="oc" id="oa-calc-oc">OC (OPEN→CLOSE)</button>
+          <button class="tab-btn" data-val="hl" id="oa-calc-hl">H-L (RANGE)</button>
+        </div>
+      </div>
+      <div class="rc-group" style="flex:1;min-width:220px;">
+        <label class="rc-label">COVERAGE: <span id="oa-coverage-val">90</span>%</label>
+        <input type="range" id="oa-coverage" min="70" max="99" value="90" style="width:100%;accent-color:var(--amber);">
+      </div>
+    </div>
+    <div class="sd-meta-row" id="oa-safe-range-row">
+      <div><div class="sd-metric-label">LOWER BOUND</div><div class="sd-metric-value red" id="oa-lower">—</div></div>
+      <div><div class="sd-metric-label">UPPER BOUND</div><div class="sd-metric-value green" id="oa-upper">—</div></div>
+      <div><div class="sd-metric-label">TOTAL PERIODS</div><div class="sd-metric-value" id="oa-total">—</div></div>
+      <div><div class="sd-metric-label">OUTLIERS</div><div class="sd-metric-value amber" id="oa-outlier-count">—</div></div>
+    </div>
+    <div class="chart-box"><div id="chart-outlier" style="height:280px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OUTLIER PERIODS</div><div class="panel-meta">sorted by absolute return size</div></div>
+    <div class="table-scroll" style="max-height:300px;">
+      <table class="list-table">
+        <thead><tr><th>START</th><th>END</th><th>RETURN %</th><th>STATUS</th></tr></thead>
+        <tbody id="oa-outlier-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="oa-outlier-empty" style="display:none;">No outliers at this coverage level.</div>
   </div>
 
   <div class="footer-note">Data queried live from the parquet checkpoint file via DuckDB-WASM, running entirely in this browser tab — no server, no pre-converted JSON. This is the same query path the real backtest engine will use.</div>
@@ -541,7 +588,9 @@ function computeRSI14(closes){
   return out;
 }
 
-let priceChart, volumeChart, rsiChart;
+let priceChart, volumeChart, rsiChart, outlierChart;
+let sdCurrentRows = []; // kept after load so the Outlier Analysis panel can recompute on control changes without re-querying DuckDB
+let oaPeriod = 'monthly', oaCalc = 'oc';
 
 async function loadStock(symbol){
   setSdStatus('Querying parquet via DuckDB-WASM...');
@@ -579,6 +628,8 @@ async function loadStock(symbol){
 
     renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData);
     renderStockStats(rows, ema50, ema200, rsi14);
+    sdCurrentRows = rows;
+    renderOutlierAnalysis();
 
     setSdStatus(`Loaded ${rows.length} rows directly from parquet via DuckDB-WASM.`);
   }catch(err){
@@ -602,6 +653,118 @@ function renderStockStats(rows, ema50, ema200, rsi14){
   document.getElementById('sd-rsi').textContent = lastRsi ? lastRsi.toFixed(1) : '—';
   document.getElementById('sd-meta-row').style.display = 'flex';
 }
+
+// ============================================================
+// OUTLIER ANALYSIS — real periodic-return distribution + percentile
+// boundaries, computed client-side from the same rows already loaded
+// above (no second DuckDB query needed). Replaces the old synthetic
+// Range Analysis feature from Options Terminal (docs/SPEC.md section 9)
+// with real data.
+// ============================================================
+function mondayOf(d){
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = (day === 0 ? -6 : 1 - day);
+  const m = new Date(d);
+  m.setDate(d.getDate() + diff);
+  m.setHours(0,0,0,0);
+  return m.toISOString().slice(0,10);
+}
+
+function groupIntoPeriods(rows, periodType){
+  const groups = {};
+  rows.forEach(r => {
+    const key = periodType === 'weekly'
+      ? mondayOf(r.date)
+      : `${r.date.getFullYear()}-${String(r.date.getMonth()+1).padStart(2,'0')}`;
+    (groups[key] = groups[key] || []).push(r);
+  });
+  return Object.keys(groups).sort().map(k => groups[k]);
+}
+
+function computePeriodReturns(periods, calcType){
+  return periods.map(p => {
+    const open = p[0].open, close = p[p.length-1].close;
+    const high = Math.max(...p.map(r => r.high)), low = Math.min(...p.map(r => r.low));
+    const ret = calcType === 'oc' ? (close - open) / open * 100 : (high - low) / low * 100;
+    return {start: p[0].date, end: p[p.length-1].date, ret};
+  });
+}
+
+function percentile(sortedVals, p){
+  const idx = (sortedVals.length - 1) * p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  if(lo === hi) return sortedVals[lo];
+  return sortedVals[lo] + (sortedVals[hi] - sortedVals[lo]) * (idx - lo);
+}
+
+function renderOutlierAnalysis(){
+  if(!sdCurrentRows.length) return;
+  const coverage = parseInt(document.getElementById('oa-coverage').value) / 100;
+  const periods = groupIntoPeriods(sdCurrentRows, oaPeriod);
+  const returns = computePeriodReturns(periods, oaCalc);
+  const sorted = [...returns.map(r => r.ret)].sort((a,b) => a-b);
+  const lowerP = (1 - coverage) / 2, upperP = 1 - lowerP;
+  const lowerBound = percentile(sorted, lowerP);
+  const upperBound = percentile(sorted, upperP);
+
+  document.getElementById('oa-lower').textContent = lowerBound.toFixed(2) + '%';
+  document.getElementById('oa-upper').textContent = upperBound.toFixed(2) + '%';
+  document.getElementById('oa-total').textContent = returns.length.toLocaleString('en-IN');
+
+  const outliers = returns.filter(r => r.ret < lowerBound || r.ret > upperBound);
+  document.getElementById('oa-outlier-count').textContent =
+    `${outliers.length} (${(outliers.length/returns.length*100).toFixed(1)}%)`;
+
+  const scatterData = returns.map(r => {
+    const isOutlier = r.ret < lowerBound || r.ret > upperBound;
+    return {x: r.end.getTime(), y: Number(r.ret.toFixed(2)), fillColor: isOutlier ? (r.ret > 0 ? '#00d26a' : '#ff3b30') : '#55555c'};
+  });
+
+  if(outlierChart) outlierChart.destroy();
+  outlierChart = new ApexCharts(document.getElementById('chart-outlier'), {
+    chart: {type:'scatter', height:280, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [{name:'Return %', data: scatterData.map(d => ({x:d.x, y:d.y}))}],
+    markers: {size:4, colors: scatterData.map(d => d.fillColor)},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(1)+'%'}},
+    grid: {borderColor:'#1e1e23'},
+    annotations: {
+      yaxis: [
+        {y:upperBound, borderColor:'#00d26a', strokeDashArray:4, label:{text:'Upper '+upperBound.toFixed(1)+'%', position:'right', style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
+        {y:lowerBound, borderColor:'#ff3b30', strokeDashArray:4, label:{text:'Lower '+lowerBound.toFixed(1)+'%', position:'right', style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
+      ]
+    },
+  });
+  outlierChart.render();
+
+  const outlierBody = document.getElementById('oa-outlier-body');
+  const emptyNote = document.getElementById('oa-outlier-empty');
+  if(!outliers.length){
+    outlierBody.innerHTML = '';
+    emptyNote.style.display = 'block';
+  } else {
+    emptyNote.style.display = 'none';
+    const sortedOutliers = [...outliers].sort((a,b) => Math.abs(b.ret) - Math.abs(a.ret));
+    outlierBody.innerHTML = sortedOutliers.map(o => `
+      <tr>
+        <td>${o.start.toISOString().slice(0,10)}</td>
+        <td>${o.end.toISOString().slice(0,10)}</td>
+        <td style="color:${o.ret>0?'var(--green)':'var(--red)'}">${o.ret>0?'+':''}${o.ret.toFixed(2)}%</td>
+        <td>${o.ret>0 ? 'Upside outlier' : 'Downside outlier'}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+document.getElementById('oa-period-weekly').onclick = () => { oaPeriod='weekly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-weekly').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-period-monthly').onclick = () => { oaPeriod='monthly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-monthly').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-calc-oc').onclick = () => { oaCalc='oc'; document.querySelectorAll('#oa-calc-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-calc-oc').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-calc-hl').onclick = () => { oaCalc='hl'; document.querySelectorAll('#oa-calc-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-calc-hl').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-coverage').addEventListener('input', (e) => {
+  document.getElementById('oa-coverage-val').textContent = e.target.value;
+  renderOutlierAnalysis();
+});
 
 function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData){
   document.getElementById('sd-chart-symbol').textContent = symbol;
