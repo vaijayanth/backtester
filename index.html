@@ -268,33 +268,44 @@
 
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">MARKET BREADTH TREND <span class="panel-meta">monthly average, not daily</span></div></div>
-      <div class="chart-box" id="dash-breadth-chart"><div class="loading">Loading breadth history...</div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
-      <div class="table-scroll" style="max-height:300px;">
+      <div class="panel-head">
+        <div class="panel-title">52-WEEK HIGH <span class="panel-meta">full universe · 1,466 stocks</span></div>
+        <button class="refresh-btn" id="dash-refresh">↻ REFRESH</button>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
-          <thead><tr><th>STOCK</th><th>DATE</th><th>DAYS AWAY</th></tr></thead>
-          <tbody id="dash-results-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>52W HIGH</th><th>% FROM HIGH</th></tr></thead>
+          <tbody id="dash-52wh-full-body"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
         </table>
       </div>
-      <div class="row-count" id="dash-results-empty" style="display:none;">No upcoming results in the current Sensibull snapshot.</div>
-      <div class="dash-footnote">Source: manual Sensibull (Zerodha) export, not a live feed — NSE's own API blocks this project's hosting infrastructure (see docs/SPEC.md). Paste a fresh export to refresh; stale after ~1-2 weeks.</div>
+      <div class="row-count" id="dash-52wh-full-empty" style="display:none;">No stocks currently within 1% of their 52-week high.</div>
+      <div class="dash-footnote">SST entry universe: above 200 EMA + 50 EMA, GTT at 21-day high. This list is a broader breakout-candidate screen across the full backtester universe, not F&amp;O-restricted.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">5-YEAR HIGH <span class="panel-meta">full universe · not a true ATH</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>5YR HIGH</th></tr></thead>
+          <tbody id="dash-5yh-full-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-5yh-full-empty" style="display:none;">No stocks currently at a new 5-year high.</div>
+      <div class="dash-footnote">Highest close within this repo's 5-year backfill window only — not a verified lifetime all-time-high for stocks that have traded longer.</div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">RECENT BACKTEST RUNS</div>
-      <button class="refresh-btn" id="dash-refresh">↻ REFRESH</button>
-    </div>
-    <div class="table-scroll" style="max-height:320px;">
+    <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
+    <div class="table-scroll" style="max-height:300px;">
       <table class="list-table">
-        <thead><tr><th>CONFIGURATION</th><th>RUN AT</th><th>UNIVERSE</th><th>RETURN (COMBINED)</th><th>MAX DD</th><th>STATUS</th></tr></thead>
-        <tbody id="dash-runs-body"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        <thead><tr><th>STOCK</th><th>DATE</th><th>DAYS AWAY</th></tr></thead>
+        <tbody id="dash-results-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
+    <div class="row-count" id="dash-results-empty" style="display:none;">No upcoming results in the current Sensibull snapshot.</div>
+    <div class="dash-footnote">Source: manual Sensibull (Zerodha) export, not a live feed — NSE's own API blocks this project's hosting infrastructure (see docs/SPEC.md). Paste a fresh export to refresh; stale after ~1-2 weeks.</div>
   </div>
 
 </div>
@@ -821,21 +832,10 @@ document.getElementById('nav-ivp').onclick = () => switchPage('ivp');
 // DASHBOARD PAGE
 // ============================================================
 let dashInitialized = false;
-let dashBreadthChart;
-
-function fmtRsShort(v){
-  if(v == null) return '—';
-  const sign = v < 0 ? '-' : '';
-  const a = Math.abs(v);
-  if(a >= 1e7) return sign + '₹' + (a/1e7).toFixed(2) + 'Cr';
-  if(a >= 1e5) return sign + '₹' + (a/1e5).toFixed(2) + 'L';
-  if(a >= 1e3) return sign + '₹' + (a/1e3).toFixed(1) + 'k';
-  return sign + '₹' + Math.round(a);
-}
 
 async function initDashboard(){
   dashInitialized = true;
-  await Promise.all([loadMarketSnapshot(), loadDashboardRuns(), loadMarketScreens(), loadEarningsCalendar()]);
+  await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar()]);
 }
 
 async function loadEarningsCalendar(){
@@ -887,16 +887,11 @@ async function loadMarketSnapshot(){
     if(!resp.ok) throw new Error('market_snapshot.json not found — run the "Build Market Snapshot" workflow');
     snap = await resp.json();
   }catch(err){
-    document.getElementById('dash-breadth-chart').innerHTML = `<div class="loading">${err.message}</div>`;
+    console.error('Market snapshot failed:', err);
     return;
   }
-  // Each step isolated — one failing (e.g. the chart library failing to
-  // load) must not prevent the others, which have no such dependency,
-  // from still rendering. Same pattern as the Results page's fix.
   try{ renderMarketPulse(snap); }
   catch(err){ console.error('Market pulse failed:', err); }
-  try{ renderBreadthChart(snap); }
-  catch(err){ console.error('Breadth chart failed:', err); document.getElementById('dash-breadth-chart').innerHTML = `<div class="loading">Chart failed to render: ${err.message}</div>`; }
   document.getElementById('dash-meta').textContent =
     `Market Data: Latest EOD (${snap.as_of_date})  |  Updated: ${new Date(snap.generated_at).toLocaleString('en-IN')}  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
   document.getElementById('sidebar-status-sub').textContent = snap.as_of_date;
@@ -978,87 +973,58 @@ function renderMarketPulse(snap){
   document.getElementById('dash-pulse-neither-pct').textContent = p.below_both_pct + '%';
 }
 
-// 1,236 raw daily points over 5 years rendered as a jagged, unreadable
-// line — aggregated to one point per calendar month (mean of that
-// month's daily values) instead. ~60 points reads as an actual trend;
-// the underlying daily data in market_snapshot.json is untouched, this
-// is purely a display aggregation.
-function aggregateBreadthMonthly(pts){
-  const byMonth = {};
-  pts.forEach(p => {
-    const key = p.date.slice(0, 7); // YYYY-MM
-    (byMonth[key] = byMonth[key] || []).push(p);
-  });
-  return Object.keys(byMonth).sort().map(month => {
-    const rows = byMonth[month];
-    const avg = (field) => rows.reduce((s, r) => s + r[field], 0) / rows.length;
-    // mid-month timestamp so the point sits inside its month on the axis
-    const midDate = new Date(month + '-15').getTime();
-    return {x: midDate, above50: Math.round(avg('above_ema50_pct') * 10) / 10,
-             above200: Math.round(avg('above_ema200_pct') * 10) / 10};
-  });
-}
-
-function renderBreadthChart(snap){
-  const pts = snap.breadth_trend.filter(p => p.above_ema200_pct != null);
-  const monthly = aggregateBreadthMonthly(pts);
-  const s50 = monthly.map(p => ({x: p.x, y: p.above50}));
-  const s200 = monthly.map(p => ({x: p.x, y: p.above200}));
-
-  if(dashBreadthChart) dashBreadthChart.destroy();
-  dashBreadthChart = new ApexCharts(document.getElementById('dash-breadth-chart'), {
-    chart: {type:'line', height:300, background:'transparent', toolbar:{show:true}},
-    theme: {mode:'dark'},
-    series: [
-      {name: '% Above EMA50', data: s50},
-      {name: '% Above EMA200', data: s200},
-    ],
-    colors: ['#29c5f6', '#ff9f1a'],
-    stroke: {width: [2.5, 2.5], curve: 'smooth'},
-    markers: {size: 0},
-    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
-    yaxis: {min:0, max:100, labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(0) + '%'}},
-    grid: {borderColor:'#1e1e23'},
-    legend: {labels:{colors:'#e9e9ec'}},
-    annotations: {
-      yaxis: [{y: 50, borderColor: '#55555c', strokeDashArray: 4,
-        label: {text: '50%', style: {color: '#8a8a93', background: 'transparent'}, position: 'left'}}],
-    },
-    tooltip: {x: {format: 'MMM yyyy'}},
-  });
-  dashBreadthChart.render();
-}
-
-async function loadDashboardRuns(){
-  const tbody = document.getElementById('dash-runs-body');
-  let runs;
+// Full 1,466-stock backtester universe — same 52WH/5YH screen logic as
+// loadMarketScreens() above, but against market_screens_full.json. Kept as
+// a separate function/endpoint rather than merged because the F&O panels
+// (dash-52wh-body/dash-5yh-body) and these full-universe panels
+// (dash-52wh-full-body/dash-5yh-full-body) are deliberately different
+// scopes for different purposes: F&O panels feed options screening,
+// these feed SST equity swing position screening.
+async function loadMarketScreensFull(){
+  const bodies = ['dash-52wh-full-body','dash-5yh-full-body'];
+  let screens;
   try{
-    const resp = await fetch('results/index.json?t=' + Date.now());
-    runs = resp.ok ? await resp.json() : [];
-    runs.sort((a,b) => new Date(b.run_at) - new Date(a.run_at));
+    const resp = await fetch('market_screens_full.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('market_screens_full.json not found — run the "Build Market Screens" workflow');
+    screens = await resp.json();
   }catch(err){
-    tbody.innerHTML = `<tr><td colspan="6" class="loading">Failed to load runs: ${err.message}</td></tr>`;
+    bodies.forEach(id => document.getElementById(id).innerHTML = `<tr><td colspan="4" class="loading">${err.message}</td></tr>`);
     return;
   }
 
-  if(!runs.length){
-    tbody.innerHTML = '<tr><td colspan="6" class="loading">No backtest runs yet</td></tr>';
-    return;
-  }
+  const renderTable = (bodyId, emptyId, rows, rowFn) => {
+    const tbody = document.getElementById(bodyId);
+    const empty = document.getElementById(emptyId);
+    if(!rows.length){
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(rowFn).join('');
+  };
 
-  tbody.innerHTML = runs.map(r => `
-    <tr>
-      <td class="dash-run-label">${r.run_label}</td>
-      <td>${new Date(r.run_at).toLocaleString('en-IN')}</td>
-      <td>${r.universe_size.toLocaleString('en-IN')}</td>
-      <td style="color:${r.combined_pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRsShort(r.combined_pl_rs)}</td>
-      <td>${r.max_drawdown_pct != null ? r.max_drawdown_pct.toFixed(2)+'%' : '—'}</td>
-      <td><span class="status-tag validated">DONE</span></td>
-    </tr>
-  `).join('');
+  try{
+    renderTable('dash-52wh-full-body', 'dash-52wh-full-empty', screens.week52_high, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td>₹${r.high_52w.toLocaleString('en-IN')}</td>
+        <td style="color:var(--green)">${r.pct_from_high.toFixed(2)}%</td>
+      </tr>`);
+  }catch(err){ console.error('Full-universe 52WH table failed:', err); }
+
+  try{
+    renderTable('dash-5yh-full-body', 'dash-5yh-full-empty', screens.five_year_high, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td>₹${r.high_5y.toLocaleString('en-IN')}</td>
+      </tr>`);
+  }catch(err){ console.error('Full-universe 5YH table failed:', err); }
 }
 
-document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); loadMarketScreens(); loadEarningsCalendar(); };
+document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadMarketScreens(); loadMarketScreensFull(); loadEarningsCalendar(); };
 
 // ============================================================
 // UNIVERSE PAGE
