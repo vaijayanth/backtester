@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BACKTESTER — Universe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08080a; --panel:#111114; --panel2:#17171b;
+    --border:#2a2a30; --border-soft:#1e1e23;
+    --amber:#ff9f1a; --amber-dim:#8a5a12; --amber-glow:rgba(255,159,26,0.12);
+    --white:#e9e9ec; --dim:#8a8a93; --muted:#55555c;
+    --green:#00d26a; --red:#ff3b30;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--white);font-family:'IBM Plex Mono',monospace;margin:0;font-size:13px;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--amber);color:#000;}
+
+  .topbar{display:flex;align-items:center;gap:18px;padding:14px 20px;background:#000;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+  .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
+  .logo span{color:var(--dim);font-weight:400;letter-spacing:1px;}
+  .nav{display:flex;gap:2px;margin-left:16px;}
+  .nav a{color:var(--dim);font-size:11px;letter-spacing:1px;padding:7px 14px;text-decoration:none;border-radius:3px;font-weight:600;}
+  .nav a.active{color:var(--amber);background:var(--amber-glow);}
+
+  .page{padding:20px;max-width:1100px;margin:0 auto;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;}
+  .panel-head{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .panel-title{font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--dim);}
+  .panel-title b{color:var(--white);}
+  .panel-meta{font-size:11px;color:var(--muted);}
+
+  .stat-row{display:flex;gap:0;flex-wrap:wrap;}
+  .stat{flex:1;min-width:140px;padding:16px 18px;border-right:1px solid var(--border-soft);}
+  .stat:last-child{border-right:none;}
+  .stat-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:700;color:var(--white);}
+  .stat-value.amber{color:var(--amber);}
+  .stat-value.red{color:var(--red);}
+
+  .controls{display:flex;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;align-items:center;}
+  .search-box{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;}
+  .search-box::placeholder{color:var(--muted);}
+  .tabs{display:flex;gap:4px;}
+  .tab-btn{background:var(--panel2);border:1px solid var(--border);color:var(--dim);font-family:inherit;font-size:11px;padding:7px 13px;border-radius:3px;cursor:pointer;font-weight:600;}
+  .tab-btn:hover{color:var(--white);}
+  .tab-btn.active{color:#000;background:var(--amber);border-color:var(--amber);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px;background:var(--border-soft);max-height:560px;overflow-y:auto;}
+  .sym{background:var(--panel);padding:9px 12px;font-size:12px;color:var(--white);font-weight:500;}
+  .sym:hover{background:var(--panel2);color:var(--amber);}
+  .list-table{width:100%;border-collapse:collapse;}
+  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);}
+  .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);}
+  .list-table tr:hover td{background:var(--panel2);}
+  .table-scroll{max-height:560px;overflow-y:auto;}
+  .exch-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;}
+  .exch-tag.ns{background:rgba(0,210,106,.1);color:var(--green);}
+  .exch-tag.bo{background:rgba(255,159,26,.1);color:var(--amber);}
+  .removed-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;background:var(--amber-glow);color:var(--amber);}
+  .removed-tag.dupe{background:rgba(41,197,246,.1);color:#29c5f6;}
+
+  .footer-note{padding:12px 18px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);}
+  .row-count{padding:8px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);}
+  .loading{padding:40px;text-align:center;color:var(--dim);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">BACKTESTER <span>· universe browser</span></div>
+  <div class="nav"><a class="active">UNIVERSE</a></div>
+</div>
+
+<div class="page">
+
+  <div class="panel">
+    <div class="stat-row" id="stat-row">
+      <div class="stat"><div class="stat-label">RAW SYMBOLS</div><div class="stat-value" id="stat-raw">—</div></div>
+      <div class="stat"><div class="stat-label">ETFS REMOVED</div><div class="stat-value amber" id="stat-etf">—</div></div>
+      <div class="stat"><div class="stat-label">DUPLICATES REMOVED</div><div class="stat-value amber" id="stat-dupe">—</div></div>
+      <div class="stat"><div class="stat-label">CLEAN UNIVERSE</div><div class="stat-value" id="stat-clean">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">EQUITY UNIVERSE — <b id="panel-count">—</b> stocks</div>
+      <div class="panel-meta">source: StockList sheet → scripts/clean_universe.py → data/universe_clean.csv</div>
+    </div>
+    <div class="controls">
+      <input class="search-box" id="search" placeholder="search symbol...">
+      <div class="tabs">
+        <button class="tab-btn active" data-view="grid" id="tab-grid">GRID</button>
+        <button class="tab-btn" data-view="table" id="tab-table">TABLE</button>
+        <button class="tab-btn" data-view="removed" id="tab-removed">REMOVED (<span id="removed-count">—</span>)</button>
+      </div>
+    </div>
+    <div id="view-grid" class="grid"></div>
+    <div id="view-table" class="table-scroll" style="display:none;">
+      <table class="list-table">
+        <thead><tr><th>#</th><th>SYMBOL</th><th>EXCHANGE</th></tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div id="view-removed" class="table-scroll" style="display:none;">
+      <table class="list-table">
+        <thead><tr><th>SYMBOL</th><th>REASON</th></tr></thead>
+        <tbody id="removed-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="row-count"></div>
+  </div>
+
+  <div class="footer-note">This is the raw universe only — no price data yet. Backfill (5yr OHLC via yfinance) is the next build step.</div>
+</div>
+
+<script>
+let cleanSymbols = [];
+let removedRows = []; // {symbol, reason}
+let currentView = 'grid';
+
+function exchTag(sym){
+  const exch = sym.endsWith('.BO') ? 'BO' : 'NS';
+  return `<span class="exch-tag ${exch.toLowerCase()}">${exch}</span>`;
+}
+
+function renderStats(raw, etf, dupe, clean){
+  document.getElementById('stat-raw').textContent = raw.toLocaleString('en-IN');
+  document.getElementById('stat-etf').textContent = etf.toLocaleString('en-IN');
+  document.getElementById('stat-dupe').textContent = dupe.toLocaleString('en-IN');
+  document.getElementById('stat-clean').textContent = clean.toLocaleString('en-IN');
+  document.getElementById('panel-count').textContent = clean.toLocaleString('en-IN');
+  document.getElementById('removed-count').textContent = (etf + dupe).toLocaleString('en-IN');
+}
+
+function renderGrid(list){
+  document.getElementById('view-grid').innerHTML = list.map(s => `<div class="sym">${s}</div>`).join('');
+}
+
+function renderTable(list){
+  document.getElementById('table-body').innerHTML = list.map((s,i) =>
+    `<tr><td style="color:var(--muted)">${i+1}</td><td>${s.replace(/\.(NS|BO)$/,'')}</td><td>${exchTag(s)}</td></tr>`
+  ).join('');
+}
+
+function renderRemoved(list){
+  document.getElementById('removed-body').innerHTML = list.map(r =>
+    `<tr><td>${r.symbol}</td><td><span class="removed-tag ${r.reason==='duplicate'?'dupe':''}">${r.reason.toUpperCase()}</span></td></tr>`
+  ).join('');
+}
+
+function applySearch(){
+  const term = document.getElementById('search').value.trim().toUpperCase();
+  if(currentView === 'removed'){
+    const list = term ? removedRows.filter(r => r.symbol.toUpperCase().includes(term)) : removedRows;
+    renderRemoved(list);
+    document.getElementById('row-count').textContent = `Showing ${list.length} of ${removedRows.length} removed symbols`;
+    return;
+  }
+  const list = term ? cleanSymbols.filter(s => s.toUpperCase().includes(term)) : cleanSymbols;
+  if(currentView === 'grid') renderGrid(list); else renderTable(list);
+  document.getElementById('row-count').textContent = `Showing ${list.length} of ${cleanSymbols.length} clean equities`;
+}
+
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + view).classList.add('active');
+  document.getElementById('view-grid').style.display = view === 'grid' ? 'grid' : 'none';
+  document.getElementById('view-table').style.display = view === 'table' ? 'block' : 'none';
+  document.getElementById('view-removed').style.display = view === 'removed' ? 'block' : 'none';
+  applySearch();
+}
+
+document.getElementById('tab-grid').onclick = () => switchView('grid');
+document.getElementById('tab-table').onclick = () => switchView('table');
+document.getElementById('tab-removed').onclick = () => switchView('removed');
+document.getElementById('search').addEventListener('input', applySearch);
+
+async function init(){
+  try{
+    const [cleanResp, reportResp] = await Promise.all([
+      fetch('data/universe_clean.csv'),
+      fetch('data/universe_report.txt'),
+    ]);
+    const cleanText = await cleanResp.text();
+    const reportText = await reportResp.text();
+
+    cleanSymbols = cleanText.split('\n').map(l => l.trim()).filter(l => l && l !== 'symbol');
+
+    // Parse universe_report.txt for raw/etf/dupe counts + removed symbol lists
+    const rawMatch = reportText.match(/Raw symbols in source:\s+(\d+)/);
+    const etfMatch = reportText.match(/Removed as ETFs:\s+(\d+)/);
+    const dupeMatch = reportText.match(/Removed as duplicates:\s+(\d+)/);
+    const raw = rawMatch ? parseInt(rawMatch[1]) : cleanSymbols.length;
+    const etfCount = etfMatch ? parseInt(etfMatch[1]) : 0;
+    const dupeCount = dupeMatch ? parseInt(dupeMatch[1]) : 0;
+
+    const etfSection = reportText.split(/--- ETFs removed/)[1] || '';
+    const etfBlock = etfSection.split(/--- Duplicates removed/)[0] || '';
+    etfBlock.split('\n').map(l=>l.trim()).filter(l=>l && l.endsWith('.NS') || l.endsWith('.BO'))
+      .forEach(sym => removedRows.push({symbol: sym, reason: 'etf'}));
+
+    const dupeSection = reportText.split(/--- Duplicates removed/)[1] || '';
+    dupeSection.split('\n').map(l=>l.trim()).filter(l=>l && (l.endsWith('.NS') || l.endsWith('.BO')))
+      .forEach(sym => removedRows.push({symbol: sym, reason: 'duplicate'}));
+
+    renderStats(raw, etfCount, dupeCount, cleanSymbols.length);
+    switchView('grid');
+  }catch(err){
+    document.getElementById('view-grid').innerHTML = `<div class="loading">Failed to load universe data: ${err.message}</div>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
