@@ -602,19 +602,24 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">STRANGLE BREAKEVEN SCREEN</div>
-      <div class="dash-meta" id="ss-meta">Monthly open→close return vs ±<span id="ss-threshold-label">10</span>% breakeven · F&amp;O universe</div>
+      <div class="dash-meta" id="ss-meta">Monthly open→close return vs separate CALL/PUT breakevens · F&amp;O universe</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">GRID STOCKS</div>
-      <div class="panel-meta">WIN = month's return stayed inside ±<span id="ss-threshold-label2">10</span>% · LOOSE = breached either side</div>
+      <div class="panel-meta">CALL WIN = return ≤ +call% (didn't rally past the CE breakeven) · PUT WIN = return ≥ −put% (didn't fall past the PE breakeven) · each leg judged independently</div>
     </div>
     <div class="sd-controls">
       <div class="rc-group">
-        <label class="rc-label">THRESHOLD %</label>
-        <input type="number" id="ss-threshold" value="10" min="1" max="50" step="0.5"
+        <label class="rc-label">CALL SIDE %</label>
+        <input type="number" id="ss-threshold-call" value="10" min="1" max="50" step="0.5"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+      </div>
+      <div class="rc-group">
+        <label class="rc-label">PUT SIDE %</label>
+        <input type="number" id="ss-threshold-put" value="10" min="1" max="50" step="0.5"
           style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
       </div>
       <div class="rc-group" style="flex:1;min-width:260px;position:relative;">
@@ -628,7 +633,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">MONTHLY GRID</div>
+      <div class="panel-title">MONTHLY GRID <span class="panel-meta">each stock shown as CALL + PUT sub-columns</span></div>
       <div class="panel-meta" id="ss-grid-meta">—</div>
     </div>
     <div class="table-scroll" style="max-height:560px;">
@@ -641,12 +646,12 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY WIN % <span class="panel-meta" id="ss-rank-count">—</span></div>
+      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY COMBINED WIN % <span class="panel-meta" id="ss-rank-count">—</span></div>
       <input class="search-box" id="ss-rank-search" placeholder="filter..." style="max-width:200px;">
     </div>
     <div class="table-scroll" style="max-height:420px;">
       <table class="list-table">
-        <thead><tr><th>#</th><th>STOCK</th><th>WIN</th><th>LOOSE</th><th>TOTAL MONTHS</th><th>WIN %</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>STOCK</th><th>CALL WIN%</th><th>PUT WIN%</th><th>COMBINED WIN%</th><th>MONTHS</th><th></th></tr></thead>
         <tbody id="ss-rank-body"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
@@ -1736,7 +1741,8 @@ async function initStrangleScreen(){
     return;
   }
 
-  document.getElementById('ss-threshold').value = ssData.threshold_pct;
+  document.getElementById('ss-threshold-call').value = ssData.threshold_pct;
+  document.getElementById('ss-threshold-put').value = ssData.threshold_pct;
 
   // Default to the user's reference stocks that exist in our F&O universe.
   const available = new Set(ssData.summary.map(r => r.symbol));
@@ -1745,18 +1751,24 @@ async function initStrangleScreen(){
   recomputeAndRenderSs();
 }
 
-// Backend ships raw return_pct per stock-month, not just a fixed-threshold
-// Win/Loose verdict — so the threshold input can be changed instantly
-// client-side without a backend re-run. ssSummary is recomputed fresh from
-// ssData.monthly every time the threshold changes.
+function ssThresholds(){
+  const call = parseFloat(document.getElementById('ss-threshold-call').value) || ssData.threshold_pct;
+  const put = parseFloat(document.getElementById('ss-threshold-put').value) || ssData.threshold_pct;
+  return {call, put};
+}
+
+// Backend ships raw return_pct per stock-month, not a fixed-threshold
+// verdict — CALL and PUT legs are each judged independently against their
+// own breakeven: a strangle's call side only loses if price rallies past
+// +call%, the put side only if it falls past -put%. A month can be a loss
+// on one leg and a win on the other. ssSummary is recomputed fresh from
+// ssData.monthly whenever either threshold changes.
 let ssSummary = [];
 
 function recomputeAndRenderSs(){
-  const threshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
-  document.getElementById('ss-threshold-label').textContent = threshold;
-  document.getElementById('ss-threshold-label2').textContent = threshold;
+  const {call, put} = ssThresholds();
   document.getElementById('ss-meta').innerHTML =
-    `Monthly open→close return vs ±<span id="ss-threshold-label">${threshold}</span>% breakeven · F&amp;O universe (${ssData.universe_size} stocks) · generated ${new Date(ssData.generated_at).toLocaleString('en-IN')}`;
+    `Monthly open→close return vs CALL +${call}% / PUT -${put}% breakevens · F&amp;O universe (${ssData.universe_size} stocks) · generated ${new Date(ssData.generated_at).toLocaleString('en-IN')}`;
 
   const bySymbol = {};
   ssData.monthly.forEach(r => {
@@ -1764,13 +1776,17 @@ function recomputeAndRenderSs(){
   });
   ssSummary = Object.keys(bySymbol).map(symbol => {
     const rows = bySymbol[symbol];
-    const win = rows.filter(r => Math.abs(r.return_pct) <= threshold).length;
-    const loose = rows.length - win;
-    return {symbol, win, loose, total: rows.length, win_pct: rows.length ? Math.round(win/rows.length*1000)/10 : null};
-  }).sort((a,b) => (b.win_pct ?? -1) - (a.win_pct ?? -1));
+    const callWin = rows.filter(r => r.return_pct <= call).length;
+    const putWin = rows.filter(r => r.return_pct >= -put).length;
+    const total = rows.length;
+    const callWinPct = total ? Math.round(callWin/total*1000)/10 : null;
+    const putWinPct = total ? Math.round(putWin/total*1000)/10 : null;
+    const combinedWinPct = total ? Math.round((callWin+putWin)/(total*2)*1000)/10 : null;
+    return {symbol, callWin, putWin, total, callWinPct, putWinPct, combinedWinPct};
+  }).sort((a,b) => (b.combinedWinPct ?? -1) - (a.combinedWinPct ?? -1));
 
   try{ renderSsChips(); } catch(err){ console.error('Strangle chips failed:', err); }
-  try{ renderSsGrid(threshold); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
+  try{ renderSsGrid(call, put); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
   try{ renderSsRanking(document.getElementById('ss-rank-search').value); } catch(err){ console.error('Strangle ranking failed:', err); }
 }
 
@@ -1785,13 +1801,13 @@ function renderSsChips(){
     btn.onclick = () => {
       ssSelected = ssSelected.filter(s => s !== btn.dataset.sym);
       renderSsChips();
-      const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
-      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+      const {call, put} = ssThresholds();
+      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
     };
   });
 }
 
-function renderSsGrid(threshold){
+function renderSsGrid(call, put){
   const head = document.getElementById('ss-grid-head');
   const body = document.getElementById('ss-grid-body');
 
@@ -1803,7 +1819,7 @@ function renderSsGrid(threshold){
   }
 
   head.innerHTML = '<th class="ss-grid-sticky-col">MONTH</th>' +
-    ssSelected.map(s => `<th>${ssSymLabel(s)}</th>`).join('') +
+    ssSelected.map(s => `<th>${ssSymLabel(s)} CALL</th><th>${ssSymLabel(s)} PUT</th>`).join('') +
     '<th>WIN</th><th>LOOSE</th><th>FINAL IMPRESSION</th>';
 
   // Pivot: month -> {symbol -> return_pct}
@@ -1819,11 +1835,14 @@ function renderSsGrid(threshold){
     let win = 0, loose = 0;
     const cells = ssSelected.map(sym => {
       const ret = bySymMonth[sym][month];
-      if(ret == null) return '<td style="color:var(--muted)">—</td>';
-      const status = Math.abs(ret) <= threshold ? 'Win' : 'Loose';
-      if(status === 'Win') win++; else loose++;
-      const cls = status === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
-      return `<td class="${cls}" title="${ret}%">${status}</td>`;
+      if(ret == null) return '<td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td>';
+      const callStatus = ret <= call ? 'Win' : 'Loose';
+      const putStatus = ret >= -put ? 'Win' : 'Loose';
+      if(callStatus === 'Win') win++; else loose++;
+      if(putStatus === 'Win') win++; else loose++;
+      const callCls = callStatus === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
+      const putCls = putStatus === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
+      return `<td class="${callCls}" title="${ret}%">${callStatus}</td><td class="${putCls}" title="${ret}%">${putStatus}</td>`;
     }).join('');
     const final = win - loose;
     return `
@@ -1836,7 +1855,7 @@ function renderSsGrid(threshold){
       </tr>`;
   }).join('');
 
-  document.getElementById('ss-grid-meta').textContent = `${months.length} months · ${ssSelected.length} stocks`;
+  document.getElementById('ss-grid-meta').textContent = `${months.length} months · ${ssSelected.length} stocks × 2 legs`;
 }
 
 function renderSsRanking(filterTerm){
@@ -1848,21 +1867,21 @@ function renderSsRanking(filterTerm){
     <tr>
       <td style="color:var(--muted)">${i+1}</td>
       <td class="dash-run-label">${ssSymLabel(r.symbol)}</td>
-      <td style="color:var(--green)">${r.win}</td>
-      <td style="color:var(--red)">${r.loose}</td>
+      <td style="color:var(--green)">${r.callWinPct != null ? r.callWinPct + '%' : '—'}</td>
+      <td style="color:var(--green)">${r.putWinPct != null ? r.putWinPct + '%' : '—'}</td>
+      <td style="font-weight:700;">${r.combinedWinPct != null ? r.combinedWinPct + '%' : '—'}</td>
       <td>${r.total}</td>
-      <td style="font-weight:700;">${r.win_pct != null ? r.win_pct + '%' : '—'}</td>
       <td><button class="refresh-btn ss-add-btn" data-sym="${r.symbol}" ${ssSelected.includes(r.symbol) ? 'disabled' : ''}>${ssSelected.includes(r.symbol) ? '✓ added' : '+ add'}</button></td>
     </tr>
   `).join('');
 
-  const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
+  const {call, put} = ssThresholds();
   document.querySelectorAll('.ss-add-btn').forEach(btn => {
     btn.onclick = () => {
       const sym = btn.dataset.sym;
       if(!ssSelected.includes(sym)) ssSelected.push(sym);
       renderSsChips();
-      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1878,7 +1897,7 @@ document.getElementById('ss-search').addEventListener('input', (e) => {
     .filter(r => !ssSelected.includes(r.symbol) && ssSymLabel(r.symbol).toUpperCase().includes(term))
     .slice(0, 15);
   if(!matches.length){ dropdown.style.display = 'none'; return; }
-  dropdown.innerHTML = matches.map(r => `<div class="ss-opt" data-sym="${r.symbol}">${ssSymLabel(r.symbol)} <span style="color:var(--muted);float:right;">${r.win_pct}% win</span></div>`).join('');
+  dropdown.innerHTML = matches.map(r => `<div class="ss-opt" data-sym="${r.symbol}">${ssSymLabel(r.symbol)} <span style="color:var(--muted);float:right;">${r.combinedWinPct}% win</span></div>`).join('');
   dropdown.style.display = 'block';
   dropdown.querySelectorAll('.ss-opt').forEach(opt => {
     opt.onclick = () => {
@@ -1887,8 +1906,8 @@ document.getElementById('ss-search').addEventListener('input', (e) => {
       document.getElementById('ss-search').value = '';
       dropdown.style.display = 'none';
       renderSsChips();
-      const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
-      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+      const {call, put} = ssThresholds();
+      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1899,10 +1918,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-document.getElementById('ss-threshold').addEventListener('change', () => {
-  if(!ssData) return;
-  recomputeAndRenderSs();
-});
+document.getElementById('ss-threshold-call').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
+document.getElementById('ss-threshold-put').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
 
 // Dashboard is the default landing page — initialize it eagerly, same as
 // Universe used to before Dashboard took over that slot.
