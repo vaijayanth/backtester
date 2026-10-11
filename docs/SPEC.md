@@ -143,13 +143,19 @@ Spec closed for the equity/SST side, end to end — purpose, data pipeline, stor
 - Exact UI layout/visual design for the Strategy Builder dashboard itself — functional requirements locked (sections 1, 10), visual design not yet discussed.
 
 ### Build order (in progress, one step at a time — user explicitly wants incremental build with checkpoints for review, not everything at once)
-1. ~~Repo scaffold~~ — in progress
-2. StockList universe cleanup script (fetch sheet → strip ETFs/dupes → clean symbol list)
-3. Backfill script: chunk + checkpoint + resume logic (yfinance)
-4. GitHub Actions workflow for the backfill + `backfill-checkpoints` branch
-5. Validation + publish pipeline (year-partitioned Parquet → GitHub Releases)
-6. SST backtest engine (Python, fully parameterized per section 7)
-7. GitHub Actions workflow for on-demand backtest execution (async)
-8. Cloudflare Workers trigger relay
-9. Frontend: GitHub Pages dashboard + strategy builder UI + run comparison
-10. Results JSON schema wiring end-to-end
+1. ~~Repo scaffold~~ — DONE
+2. ~~StockList universe cleanup~~ — DONE (1,610 raw → 1,535 clean, Universe tab live)
+3. ~~Backfill script: chunk + checkpoint + resume~~ — DONE (`scripts/backfill.py`)
+4. ~~GitHub Actions workflow for the backfill~~ — DONE (`backfill.yml`, `backfill-checkpoints` branch), tested live with 1 real symbol (360ONE.NS, 1235 rows)
+5. Validation + publish pipeline (year-partitioned Parquet → GitHub Releases) — NOT STARTED, only needed once the full backfill runs
+6. ~~SST backtest engine~~ — DONE (`scripts/backtest_engine.py`), tested against real 360ONE.NS data, one real bug found+fixed (pl_pct mismatch) via manual trade inspection
+7. GitHub Actions workflow for on-demand backtest execution (async) — NOT STARTED
+8. Cloudflare Workers trigger relay — NOT STARTED, needs user's own Cloudflare account
+9. ~~Strategy Builder UI~~ — DONE (`STRATEGY BUILDER` tab: full 14-param form + trailing-stop checkpoint editor), params JSON verified end-to-end against the real Python engine (extracted live from the rendered form, fed directly into `backtest_engine.py`, ran successfully)
+   - "Run Backtest" button currently shows a clear not-yet-wired message (step 8 dependency) + a "Copy params as JSON" fallback for manual triggering in the meantime
+   - Still needed: results display (equity curve, metrics, trade list) once a run actually produces a results JSON; run comparison UI (section 10)
+10. Results JSON schema wiring end-to-end — partially done (engine produces the JSON, display UI not yet built)
+
+### Also built, not originally itemized here
+- Stock Detail page (DuckDB-WASM live parquet query, candlestick+EMA+RSI charts)
+- Threshold Breach Analysis + 90%-range readout (the "Outlier Analysis" from section 9, simplified per direct user feedback from percentile-slider UX to plain fixed-threshold counts + a percentile-range sentence)
