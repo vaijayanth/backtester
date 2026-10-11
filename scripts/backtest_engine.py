@@ -178,6 +178,13 @@ def run_backtest(params=None, symbols=None):
                 if row["Low"] <= pos["stop_price"]:
                     exit_price = pos["stop_price"]
                     pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
+                    # Computed from exit_price (the actual stop fill), NOT
+                    # cur_pl_pct (which is based on the day's Close) — those
+                    # two can diverge significantly on the exit day itself,
+                    # since the stop fires on Low breaching the stop level,
+                    # not at the day's closing price. Confirmed as a real
+                    # bug via manual trade inspection before this fix.
+                    exit_pl_pct = (exit_price - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
                     realized_pl += pl_rs
                     closed_trades.append({
                         "symbol": sym,
@@ -187,7 +194,7 @@ def run_backtest(params=None, symbols=None):
                         "exit_price": round(exit_price, 2),
                         "qty": pos["qty"],
                         "pl_rs": round(pl_rs, 2),
-                        "pl_pct": round(cur_pl_pct, 2),
+                        "pl_pct": round(exit_pl_pct, 2),
                         "hold_days": (date - pos["entry_date"]).days,
                         "had_addon": pos["last_addon_date"] is not None,
                     })
