@@ -6,6 +6,7 @@
 <title>BACKTESTER</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
 <style>
   :root{
     --bg:#08080a; --panel:#111114; --panel2:#17171b;
@@ -83,6 +84,17 @@
   .loading{padding:40px;text-align:center;color:var(--dim);}
   .refresh-btn{background:var(--panel2);border:1px solid var(--border);color:var(--white);font-family:inherit;font-size:10px;padding:5px 10px;border-radius:3px;cursor:pointer;}
   .refresh-btn:hover{border-color:var(--amber-dim);color:var(--amber);}
+
+  .sd-controls{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border-soft);align-items:center;flex-wrap:wrap;}
+  .sd-select{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;min-width:160px;}
+  .sd-status{font-size:11px;color:var(--dim);}
+  .sd-meta-row{display:flex;gap:18px;padding:14px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border-soft);}
+  .sd-metric-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
+  .sd-metric-value{font-size:16px;font-weight:700;color:var(--white);margin-top:3px;}
+  .sd-metric-value.green{color:var(--green);}
+  .sd-metric-value.red{color:var(--red);}
+  .sd-metric-value.amber{color:var(--amber);}
+  .chart-box{padding:14px 18px;}
 </style>
 </head>
 <body>
@@ -92,6 +104,7 @@
   <div class="nav">
     <button class="active" data-page="universe" id="nav-universe">UNIVERSE</button>
     <button data-page="backfill" id="nav-backfill">BACKFILL</button>
+    <button data-page="stock" id="nav-stock">STOCK DETAIL</button>
   </div>
 </div>
 
@@ -188,6 +201,46 @@
   <div class="footer-note">Checkpoint data lives on the backfill-checkpoints git branch, not main — written by .github/workflows/backfill.yml, never committed by hand.</div>
 </div>
 
+<!-- ============ STOCK DETAIL PAGE ============ -->
+<div class="page" id="page-stock">
+
+  <div class="panel">
+    <div class="sd-controls">
+      <select class="sd-select" id="sd-symbol-select"><option>Loading validated symbols...</option></select>
+      <span class="sd-status" id="sd-status"></span>
+    </div>
+    <div class="sd-meta-row" id="sd-meta-row" style="display:none;">
+      <div><div class="sd-metric-label">LATEST CLOSE</div><div class="sd-metric-value" id="sd-close">—</div></div>
+      <div><div class="sd-metric-label">PERIOD HIGH</div><div class="sd-metric-value green" id="sd-high">—</div></div>
+      <div><div class="sd-metric-label">PERIOD LOW</div><div class="sd-metric-value red" id="sd-low">—</div></div>
+      <div><div class="sd-metric-label">DATE RANGE</div><div class="sd-metric-value" id="sd-range" style="font-size:12px;">—</div></div>
+      <div><div class="sd-metric-label">TRADING DAYS</div><div class="sd-metric-value" id="sd-days">—</div></div>
+      <div><div class="sd-metric-label">EMA50 / EMA200</div><div class="sd-metric-value" id="sd-ema" style="font-size:12px;">—</div></div>
+      <div><div class="sd-metric-label">RSI14 (latest)</div><div class="sd-metric-value amber" id="sd-rsi">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">PRICE — <b id="sd-chart-symbol">—</b></div>
+      <div class="panel-meta">candlestick, adjusted close · EMA50 (cyan) / EMA200 (amber) overlay</div>
+    </div>
+    <div class="chart-box"><div id="chart-price" style="height:360px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">VOLUME</div></div>
+    <div class="chart-box"><div id="chart-volume" style="height:140px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">RSI (14)</div><div class="panel-meta">reference lines at 30 / 70</div></div>
+    <div class="chart-box"><div id="chart-rsi" style="height:160px;"></div></div>
+  </div>
+
+  <div class="footer-note">Data queried live from the parquet checkpoint file via DuckDB-WASM, running entirely in this browser tab — no server, no pre-converted JSON. This is the same query path the real backtest engine will use.</div>
+</div>
+
 <script>
 // ============================================================
 // NAV
@@ -198,9 +251,11 @@ function switchPage(page){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   if(page === 'backfill' && !bfLoaded) loadBackfill();
+  if(page === 'stock' && !sdInitialized) initStockDetail();
 }
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
+document.getElementById('nav-stock').onclick = () => switchPage('stock');
 
 // ============================================================
 // UNIVERSE PAGE
@@ -415,6 +470,216 @@ async function loadBackfill(){
   }catch(err){
     document.getElementById('bf-table-body').innerHTML =
       `<tr><td colspan="7" class="loading">Failed to load manifest: ${err.message}</td></tr>`;
+  }
+}
+
+// ============================================================
+// STOCK DETAIL PAGE — DuckDB-WASM querying the real parquet checkpoint
+// directly over HTTP. This is the same query path the real backtest
+// engine will use (docs/SPEC.md section 4b) — this page doubles as a
+// live test of that architecture, not just a data viewer.
+// ============================================================
+let sdInitialized = false;
+let sdDb = null;
+const CHECKPOINTS_BASE = 'https://raw.githubusercontent.com/vaijayanth/backtester/backfill-checkpoints/checkpoints';
+
+function setSdStatus(msg, isError){
+  const el = document.getElementById('sd-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--dim)';
+}
+
+async function initDuckDB(){
+  const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm');
+  const bundles = duckdb.getJsDelivrBundles();
+  const bundle = await duckdb.selectBundle(bundles);
+  const workerUrl = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+  );
+  const worker = new Worker(workerUrl);
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  URL.revokeObjectURL(workerUrl);
+  return db;
+}
+
+// EMA / RSI14 — same formulas as scripts/backfill.py's sibling logic in
+// the existing Options Terminal Python backend, ported to JS so the chart
+// overlay matches what the backtest engine will compute.
+function computeEMA(closes, period){
+  const out = new Array(closes.length).fill(null);
+  if(closes.length < period) return out;
+  let ema = closes.slice(0, period).reduce((a,b)=>a+b,0) / period;
+  out[period-1] = ema;
+  const mult = 2 / (period + 1);
+  for(let i = period; i < closes.length; i++){
+    ema = (closes[i] - ema) * mult + ema;
+    out[i] = ema;
+  }
+  return out;
+}
+
+function computeRSI14(closes){
+  const out = new Array(closes.length).fill(null);
+  if(closes.length < 15) return out;
+  let gains = 0, losses = 0;
+  for(let i = 1; i <= 14; i++){
+    const diff = closes[i] - closes[i-1];
+    gains += Math.max(diff, 0);
+    losses += Math.max(-diff, 0);
+  }
+  let avgGain = gains / 14, avgLoss = losses / 14;
+  out[14] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  for(let i = 15; i < closes.length; i++){
+    const diff = closes[i] - closes[i-1];
+    const gain = Math.max(diff, 0), loss = Math.max(-diff, 0);
+    avgGain = (avgGain * 13 + gain) / 14;
+    avgLoss = (avgLoss * 13 + loss) / 14;
+    out[i] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  }
+  return out;
+}
+
+let priceChart, volumeChart, rsiChart;
+
+async function loadStock(symbol){
+  setSdStatus('Querying parquet via DuckDB-WASM...');
+  document.getElementById('sd-meta-row').style.display = 'none';
+  try{
+    if(!sdDb){
+      setSdStatus('Initializing DuckDB-WASM (first load only)...');
+      sdDb = await initDuckDB();
+    }
+    const conn = await sdDb.connect();
+    const url = `${CHECKPOINTS_BASE}/raw/${symbol.replace(/\./g, '_')}.parquet`;
+    const result = await conn.query(
+      `SELECT Date, Open, High, Low, Close, Volume FROM read_parquet('${url}') ORDER BY Date`
+    );
+    await conn.close();
+
+    const rows = result.toArray().map(r => ({
+      date: new Date(Number(r.Date)),
+      open: Number(r.Open), high: Number(r.High), low: Number(r.Low),
+      close: Number(r.Close), volume: Number(r.Volume),
+    }));
+
+    if(!rows.length) throw new Error('query returned 0 rows');
+
+    const closes = rows.map(r => r.close);
+    const ema50 = computeEMA(closes, 50);
+    const ema200 = computeEMA(closes, 200);
+    const rsi14 = computeRSI14(closes);
+
+    const candleData = rows.map(r => ({x: r.date, y: [r.open, r.high, r.low, r.close]}));
+    const ema50Data = rows.map((r,i) => ({x: r.date, y: ema50[i]}));
+    const ema200Data = rows.map((r,i) => ({x: r.date, y: ema200[i]}));
+    const volumeData = rows.map(r => ({x: r.date, y: r.volume}));
+    const rsiData = rows.map((r,i) => ({x: r.date, y: rsi14[i]}));
+
+    renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData);
+    renderStats(rows, ema50, ema200, rsi14);
+
+    setSdStatus(`Loaded ${rows.length} rows directly from parquet via DuckDB-WASM.`);
+  }catch(err){
+    setSdStatus(`Failed: ${err.message}`, true);
+  }
+}
+
+function renderStats(rows, ema50, ema200, rsi14){
+  const last = rows[rows.length - 1];
+  const highs = rows.map(r => r.high), lows = rows.map(r => r.low);
+  document.getElementById('sd-close').textContent = '₹' + last.close.toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-high').textContent = '₹' + Math.max(...highs).toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-low').textContent = '₹' + Math.min(...lows).toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-range').textContent =
+    `${rows[0].date.toISOString().slice(0,10)} → ${last.date.toISOString().slice(0,10)}`;
+  document.getElementById('sd-days').textContent = rows.length.toLocaleString('en-IN');
+  const lastEma50 = ema50[ema50.length-1], lastEma200 = ema200[ema200.length-1];
+  document.getElementById('sd-ema').textContent =
+    (lastEma50 ? '₹'+lastEma50.toFixed(2) : '—') + ' / ' + (lastEma200 ? '₹'+lastEma200.toFixed(2) : '—');
+  const lastRsi = rsi14[rsi14.length-1];
+  document.getElementById('sd-rsi').textContent = lastRsi ? lastRsi.toFixed(1) : '—';
+  document.getElementById('sd-meta-row').style.display = 'flex';
+}
+
+function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData){
+  document.getElementById('sd-chart-symbol').textContent = symbol;
+
+  if(priceChart) priceChart.destroy();
+  priceChart = new ApexCharts(document.getElementById('chart-price'), {
+    chart: {type:'candlestick', height:360, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [
+      {name:'Price', type:'candlestick', data: candleData},
+      {name:'EMA50', type:'line', data: ema50Data},
+      {name:'EMA200', type:'line', data: ema200Data},
+    ],
+    stroke: {width:[1,1.5,1.5], curve:'straight'},
+    colors: ['#00d26a', '#29c5f6', '#ff9f1a'],
+    plotOptions: {candlestick:{colors:{upward:'#00d26a', downward:'#ff3b30'}}},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => '₹'+Math.round(v)}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {labels:{colors:'#e9e9ec'}},
+  });
+  priceChart.render();
+
+  if(volumeChart) volumeChart.destroy();
+  volumeChart = new ApexCharts(document.getElementById('chart-volume'), {
+    chart: {type:'bar', height:140, background:'transparent', toolbar:{show:false}},
+    theme: {mode:'dark'},
+    series: [{name:'Volume', data: volumeData}],
+    colors: ['#55555c'],
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:false},
+  });
+  volumeChart.render();
+
+  if(rsiChart) rsiChart.destroy();
+  rsiChart = new ApexCharts(document.getElementById('chart-rsi'), {
+    chart: {type:'line', height:160, background:'transparent', toolbar:{show:false}},
+    theme: {mode:'dark'},
+    series: [{name:'RSI14', data: rsiData}],
+    colors: ['#ff9f1a'],
+    stroke: {width:1.5},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {min:0, max:100, labels:{style:{colors:'#8a8a93'}}},
+    grid: {borderColor:'#1e1e23'},
+    annotations: {
+      yaxis: [
+        {y:70, borderColor:'#ff3b30', label:{text:'70', style:{color:'#fff', background:'#ff3b30'}}},
+        {y:30, borderColor:'#00d26a', label:{text:'30', style:{color:'#fff', background:'#00d26a'}}},
+      ]
+    },
+  });
+  rsiChart.render();
+}
+
+async function initStockDetail(){
+  sdInitialized = true;
+  const select = document.getElementById('sd-symbol-select');
+  try{
+    const resp = await fetch(`${CHECKPOINTS_BASE}/manifest.csv?t=` + Date.now());
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const header = rows[0];
+    const statusIdx = header.indexOf('status');
+    const symbolIdx = header.indexOf('symbol');
+    const validated = rows.slice(1).filter(r => r[statusIdx] === 'VALIDATED').map(r => r[symbolIdx]);
+
+    if(!validated.length){
+      select.innerHTML = '<option>No validated symbols yet — run the backfill first</option>';
+      return;
+    }
+    select.innerHTML = validated.map(s => `<option value="${s}">${s}</option>`).join('');
+    select.onchange = () => loadStock(select.value);
+    loadStock(validated[0]);
+  }catch(err){
+    select.innerHTML = '<option>Failed to load symbol list</option>';
+    setSdStatus(`Failed: ${err.message}`, true);
   }
 }
 </script>
