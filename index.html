@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
 <style>
   :root{
+    color-scheme: dark;
     --bg:#08080a; --panel:#111114; --panel2:#17171b;
     --border:#2a2a30; --border-soft:#1e1e23;
     --amber:#ff9f1a; --amber-dim:#8a5a12; --amber-glow:rgba(255,159,26,0.12);
@@ -18,6 +19,13 @@
   }
   *{box-sizing:border-box;}
   body{background:var(--bg);color:var(--white);font-family:'IBM Plex Mono',monospace;margin:0;font-size:13px;-webkit-font-smoothing:antialiased;}
+  /* Without this, native <select> dropdown popups and <option> lists fall
+     back to the OS/browser's light-mode default background while our CSS
+     still forces near-white text on them — invisible (white-on-white,
+     reads as "black on black" since the text is unreadable either way).
+     color-scheme:dark tells the browser to render all native form widgets
+     (select popups, checkboxes, scrollbars) with a dark UI by default. */
+  select, input, option{color-scheme: dark;}
   ::selection{background:var(--amber);color:#000;}
 
   .sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#000;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
@@ -158,7 +166,7 @@
 <div class="sidebar">
   <div class="sidebar-logo">
     <div class="logo">BACKTESTER</div>
-    <div class="logo-sub">SST Market Intelligence</div>
+    <div class="logo-sub">Market Intelligence</div>
   </div>
   <div class="nav">
     <button class="active" data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
@@ -180,7 +188,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">SST BACKTESTING &amp; MARKET INTELLIGENCE</div>
+      <div class="dash-title">BACKTESTING &amp; MARKET INTELLIGENCE</div>
       <div class="dash-meta" id="dash-meta">Market Data: — &nbsp;|&nbsp; Updated: —</div>
     </div>
   </div>
