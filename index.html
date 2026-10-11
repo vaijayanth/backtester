@@ -267,7 +267,7 @@
 
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">MARKET BREADTH TREND</div></div>
+      <div class="panel-head"><div class="panel-title">MARKET BREADTH TREND <span class="panel-meta">monthly average, not daily</span></div></div>
       <div class="chart-box" id="dash-breadth-chart"><div class="loading">Loading breadth history...</div></div>
     </div>
     <div class="panel">
@@ -856,10 +856,32 @@ function renderMarketPulse(snap){
   document.getElementById('dash-pulse-neither-pct').textContent = p.below_both_pct + '%';
 }
 
+// 1,236 raw daily points over 5 years rendered as a jagged, unreadable
+// line — aggregated to one point per calendar month (mean of that
+// month's daily values) instead. ~60 points reads as an actual trend;
+// the underlying daily data in market_snapshot.json is untouched, this
+// is purely a display aggregation.
+function aggregateBreadthMonthly(pts){
+  const byMonth = {};
+  pts.forEach(p => {
+    const key = p.date.slice(0, 7); // YYYY-MM
+    (byMonth[key] = byMonth[key] || []).push(p);
+  });
+  return Object.keys(byMonth).sort().map(month => {
+    const rows = byMonth[month];
+    const avg = (field) => rows.reduce((s, r) => s + r[field], 0) / rows.length;
+    // mid-month timestamp so the point sits inside its month on the axis
+    const midDate = new Date(month + '-15').getTime();
+    return {x: midDate, above50: Math.round(avg('above_ema50_pct') * 10) / 10,
+             above200: Math.round(avg('above_ema200_pct') * 10) / 10};
+  });
+}
+
 function renderBreadthChart(snap){
   const pts = snap.breadth_trend.filter(p => p.above_ema200_pct != null);
-  const s50 = pts.map(p => ({x: new Date(p.date).getTime(), y: p.above_ema50_pct}));
-  const s200 = pts.map(p => ({x: new Date(p.date).getTime(), y: p.above_ema200_pct}));
+  const monthly = aggregateBreadthMonthly(pts);
+  const s50 = monthly.map(p => ({x: p.x, y: p.above50}));
+  const s200 = monthly.map(p => ({x: p.x, y: p.above200}));
 
   if(dashBreadthChart) dashBreadthChart.destroy();
   dashBreadthChart = new ApexCharts(document.getElementById('dash-breadth-chart'), {
@@ -870,11 +892,17 @@ function renderBreadthChart(snap){
       {name: '% Above EMA200', data: s200},
     ],
     colors: ['#29c5f6', '#ff9f1a'],
-    stroke: {width: [1.5, 1.5], curve: 'straight'},
+    stroke: {width: [2.5, 2.5], curve: 'smooth'},
+    markers: {size: 0},
     xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
     yaxis: {min:0, max:100, labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(0) + '%'}},
     grid: {borderColor:'#1e1e23'},
     legend: {labels:{colors:'#e9e9ec'}},
+    annotations: {
+      yaxis: [{y: 50, borderColor: '#55555c', strokeDashArray: 4,
+        label: {text: '50%', style: {color: '#8a8a93', background: 'transparent'}, position: 'left'}}],
+    },
+    tooltip: {x: {format: 'MMM yyyy'}},
   });
   dashBreadthChart.render();
 }
