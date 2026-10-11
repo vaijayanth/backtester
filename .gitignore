@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local secrets / env
+.env
+*.local
+
+# Data artifacts (published data lives in GitHub Releases, not git history)
+*.parquet
+checkpoints/
+
+# OS
+.DS_Store
