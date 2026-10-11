@@ -20,15 +20,27 @@
   body{background:var(--bg);color:var(--white);font-family:'IBM Plex Mono',monospace;margin:0;font-size:13px;-webkit-font-smoothing:antialiased;}
   ::selection{background:var(--amber);color:#000;}
 
-  .topbar{display:flex;align-items:center;gap:18px;padding:14px 20px;background:#000;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
-  .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
-  .logo span{color:var(--dim);font-weight:400;letter-spacing:1px;}
-  .nav{display:flex;gap:2px;margin-left:16px;}
-  .nav button{background:transparent;border:none;color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:3px;font-weight:600;}
-  .nav button:hover{color:var(--white);}
-  .nav button.active{color:var(--amber);background:var(--amber-glow);}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#000;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
+  .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border-soft);}
+  .sidebar-logo .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
+  .sidebar-logo .logo-sub{color:var(--muted);font-weight:400;letter-spacing:1px;font-size:10px;margin-top:3px;}
+  .nav{display:flex;flex-direction:column;gap:2px;padding:14px 10px;flex:1;overflow-y:auto;}
+  .nav button{display:flex;align-items:center;gap:10px;background:transparent;border:none;color:var(--dim);font-family:inherit;font-size:12px;letter-spacing:0.5px;padding:10px 12px;cursor:pointer;border-radius:5px;font-weight:600;text-align:left;width:100%;}
+  .nav button .nav-icon{font-size:13px;width:16px;text-align:center;}
+  .nav button:hover{color:var(--white);background:var(--panel2);}
+  .nav button.active{color:#000;background:var(--amber);}
+  .sidebar-status{padding:14px 20px;border-top:1px solid var(--border-soft);font-size:10px;color:var(--dim);}
+  .sidebar-status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;}
+  .sidebar-status .status-sub{color:var(--muted);margin-top:3px;}
 
-  .page{display:none;padding:20px;max-width:1100px;margin:0 auto;}
+  .main{margin-left:220px;}
+  @media (max-width:760px){
+    .sidebar{position:static;width:auto;flex-direction:row;overflow-x:auto;}
+    .nav{flex-direction:row;}
+    .main{margin-left:0;}
+  }
+
+  .page{display:none;padding:20px;max-width:1200px;margin:0 auto;}
   .page.active{display:block;}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;}
   .panel-head{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
@@ -122,21 +134,31 @@
   .dash-empty-card{padding:28px 18px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;}
   .dash-empty-card .dash-empty-icon{font-size:20px;display:block;margin-bottom:8px;}
   .dash-run-label{color:var(--amber);font-weight:600;}
+  .dash-footnote{padding:10px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);line-height:1.6;}
+  .dash-rsi-tag{font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;font-weight:700;}
+  .dash-rsi-tag.ob{background:var(--red-dim);color:var(--red);}
+  .dash-rsi-tag.os{background:var(--green-dim);color:var(--green);}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo">BACKTESTER</div>
-  <div class="nav">
-    <button class="active" data-page="dashboard" id="nav-dashboard">DASHBOARD</button>
-    <button data-page="universe" id="nav-universe">UNIVERSE</button>
-    <button data-page="backfill" id="nav-backfill">BACKFILL</button>
-    <button data-page="stock" id="nav-stock">STOCK DETAIL</button>
-    <button data-page="strategy" id="nav-strategy">STRATEGY BUILDER</button>
-    <button data-page="results" id="nav-results">RESULTS</button>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo">BACKTESTER</div>
+    <div class="logo-sub">SST Market Intelligence</div>
   </div>
+  <div class="nav">
+    <button class="active" data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
+    <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
+    <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
+    <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
+    <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
+    <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
+  </div>
+  <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
+
+<div class="main">
 
 <!-- ============ DASHBOARD PAGE ============ -->
 <div class="page active" id="page-dashboard">
@@ -171,6 +193,61 @@
         <div class="dash-pulse-value red" id="dash-pulse-neither">—</div>
         <div class="dash-pulse-sub" id="dash-pulse-neither-pct">—</div>
       </div>
+    </div>
+  </div>
+
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">52-WEEK HIGH <span class="panel-meta">F&amp;O universe · within 1% of trailing 252-day high</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>52W HIGH</th><th>% FROM HIGH</th></tr></thead>
+          <tbody id="dash-52wh-body"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-52wh-empty" style="display:none;">No F&amp;O stocks currently within 1% of their 52-week high.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">5-YEAR HIGH <span class="panel-meta">not a true ATH — see note</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>5YR HIGH</th></tr></thead>
+          <tbody id="dash-5yh-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-5yh-empty" style="display:none;">No F&amp;O stocks currently at a new 5-year high.</div>
+      <div class="dash-footnote">Highest close within this repo's 5-year backfill window only — not a verified lifetime all-time-high for stocks that have traded longer.</div>
+    </div>
+  </div>
+
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">RSI OVERBOUGHT <span class="panel-meta">F&amp;O · RSI14 ≥ 70</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>RSI14</th></tr></thead>
+          <tbody id="dash-rsi-ob-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-rsi-ob-empty" style="display:none;">No F&amp;O stocks currently overbought (RSI14 ≥ 70).</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">RSI OVERSOLD <span class="panel-meta">F&amp;O · RSI14 ≤ 30</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>RSI14</th></tr></thead>
+          <tbody id="dash-rsi-os-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-rsi-os-empty" style="display:none;">No F&amp;O stocks currently oversold (RSI14 ≤ 30).</div>
     </div>
   </div>
 
@@ -507,6 +584,8 @@
   <div class="footer-note">Reads results/index.json + individual result files directly from main — same-origin, no CORS, no separate branch needed (unlike the checkpoint data).</div>
 </div>
 
+</div><!-- /.main -->
+
 <script>
 // ============================================================
 // NAV
@@ -548,7 +627,7 @@ function fmtRsShort(v){
 
 async function initDashboard(){
   dashInitialized = true;
-  await Promise.all([loadMarketSnapshot(), loadDashboardRuns()]);
+  await Promise.all([loadMarketSnapshot(), loadDashboardRuns(), loadMarketScreens()]);
 }
 
 async function loadMarketSnapshot(){
@@ -570,6 +649,71 @@ async function loadMarketSnapshot(){
   catch(err){ console.error('Breadth chart failed:', err); document.getElementById('dash-breadth-chart').innerHTML = `<div class="loading">Chart failed to render: ${err.message}</div>`; }
   document.getElementById('dash-meta').textContent =
     `Market Data: Latest EOD (${snap.as_of_date})  |  Updated: ${new Date(snap.generated_at).toLocaleString('en-IN')}  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
+  document.getElementById('sidebar-status-sub').textContent = snap.as_of_date;
+}
+
+function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
+
+async function loadMarketScreens(){
+  const bodies = ['dash-52wh-body','dash-5yh-body','dash-rsi-ob-body','dash-rsi-os-body'];
+  let screens;
+  try{
+    const resp = await fetch('market_screens.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('market_screens.json not found — run the "Build Market Screens" workflow');
+    screens = await resp.json();
+  }catch(err){
+    bodies.forEach(id => document.getElementById(id).innerHTML = `<tr><td colspan="4" class="loading">${err.message}</td></tr>`);
+    return;
+  }
+
+  const renderTable = (bodyId, emptyId, rows, rowFn, colspan) => {
+    const tbody = document.getElementById(bodyId);
+    const empty = document.getElementById(emptyId);
+    if(!rows.length){
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(rowFn).join('');
+  };
+
+  try{
+    renderTable('dash-52wh-body', 'dash-52wh-empty', screens.week52_high, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td>₹${r.high_52w.toLocaleString('en-IN')}</td>
+        <td style="color:var(--green)">${r.pct_from_high.toFixed(2)}%</td>
+      </tr>`, 4);
+  }catch(err){ console.error('52WH table failed:', err); }
+
+  try{
+    renderTable('dash-5yh-body', 'dash-5yh-empty', screens.five_year_high, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td>₹${r.high_5y.toLocaleString('en-IN')}</td>
+      </tr>`, 3);
+  }catch(err){ console.error('5YH table failed:', err); }
+
+  try{
+    renderTable('dash-rsi-ob-body', 'dash-rsi-ob-empty', screens.rsi_overbought, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td><span class="dash-rsi-tag ob">${r.rsi14}</span></td>
+      </tr>`, 3);
+  }catch(err){ console.error('RSI overbought table failed:', err); }
+
+  try{
+    renderTable('dash-rsi-os-body', 'dash-rsi-os-empty', screens.rsi_oversold, r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td><span class="dash-rsi-tag os">${r.rsi14}</span></td>
+      </tr>`, 3);
+  }catch(err){ console.error('RSI oversold table failed:', err); }
 }
 
 function renderMarketPulse(snap){
@@ -636,7 +780,7 @@ async function loadDashboardRuns(){
   `).join('');
 }
 
-document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); };
+document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); loadMarketScreens(); };
 
 // ============================================================
 // UNIVERSE PAGE
