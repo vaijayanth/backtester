@@ -190,6 +190,7 @@
     <div class="dash-header">
       <div class="dash-title">BACKTESTING &amp; MARKET INTELLIGENCE</div>
       <div class="dash-meta" id="dash-meta">Market Data: — &nbsp;|&nbsp; Updated: —</div>
+      <div class="dash-meta" id="dash-pipeline-status">Daily update pipeline: —</div>
     </div>
   </div>
 
@@ -843,7 +844,48 @@ let dashInitialized = false;
 
 async function initDashboard(){
   dashInitialized = true;
-  await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar()]);
+  await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar(), loadPipelineStatus()]);
+}
+
+// Reads pipeline_status.json, written by the scheduled daily_update.yml
+// workflow (scripts/update_ohlc.py --status-out) — answers "did the robot
+// actually run last night", independent of what made it into the data
+// itself. Separate from market_snapshot.json's as_of_date, which only
+// tells you the data's own latest EOD date, not whether anything tried
+// to refresh it.
+async function loadPipelineStatus(){
+  const el = document.getElementById('dash-pipeline-status');
+  let status;
+  try{
+    const resp = await fetch('pipeline_status.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('not found — the daily_update.yml workflow hasn\'t run yet');
+    status = await resp.json();
+  }catch(err){
+    el.textContent = `Daily update pipeline: ${err.message}`;
+    el.style.color = 'var(--muted)';
+    return;
+  }
+
+  const finished = new Date(status.last_run_finished_utc);
+  const hoursAgo = (Date.now() - finished.getTime()) / 3600000;
+  const whenTxt = hoursAgo < 1 ? Math.round(hoursAgo * 60) + 'm ago'
+    : hoursAgo < 48 ? Math.round(hoursAgo) + 'h ago'
+    : finished.toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+
+  const incr = status.incremental || {}, full = status.full_refresh || {}, catchup = status.catchup || {};
+  const totalFailed = (incr.failed||0) + (full.failed||0) + (catchup.failed||0);
+  const totalUpdated = (incr.updated||0) + (full.refreshed||0) + (catchup.validated||0);
+
+  // Stale = pipeline hasn't run in over ~36h on a weekday-cadence job —
+  // generous enough to not false-alarm over a single missed run, tight
+  // enough to catch "the scheduled job stopped firing" within a day or two.
+  const isStale = hoursAgo > 36;
+
+  el.innerHTML = `Daily update pipeline: last ran ${whenTxt}, through ${status.latest_trading_date || '—'}` +
+    ` &middot; ${totalUpdated} updated` +
+    (totalFailed > 0 ? `, <span style="color:var(--amber)">${totalFailed} failed</span>` : '') +
+    (isStale ? ` &middot; <span style="color:var(--red)">stale — check Actions tab</span>` : '');
+  el.style.color = isStale ? 'var(--amber)' : 'var(--muted)';
 }
 
 async function loadEarningsCalendar(){
@@ -1032,7 +1074,7 @@ async function loadMarketScreensFull(){
   }catch(err){ console.error('Full-universe 5YH table failed:', err); }
 }
 
-document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadMarketScreens(); loadMarketScreensFull(); loadEarningsCalendar(); };
+document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadMarketScreens(); loadMarketScreensFull(); loadEarningsCalendar(); loadPipelineStatus(); };
 
 // ============================================================
 // UNIVERSE PAGE

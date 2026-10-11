@@ -55,7 +55,7 @@ jobs:
 
       - name: Update OHLC (incremental + rotated full refresh)
         working-directory: main
-        run: python scripts/update_ohlc.py
+        run: python scripts/update_ohlc.py --status-out pipeline_status.json
 
       - name: Commit checkpoint updates to backfill-checkpoints branch
         run: |
@@ -92,7 +92,7 @@ jobs:
         run: |
           git config user.name "daily-update-bot"
           git config user.email "actions@github.com"
-          git add market_snapshot.json market_screens.json market_screens_full.json strangle_screen.json
+          git add market_snapshot.json market_screens.json market_screens_full.json strangle_screen.json pipeline_status.json
           if git diff --cached --quiet; then
             echo "No output changes to commit"
           else

@@ -34,8 +34,11 @@ calling workflow commits checkpoints/ to the backfill-checkpoints branch.
 
 Usage:
   python scripts/update_ohlc.py
+  python scripts/update_ohlc.py --status-out pipeline_status.json
 """
 
+import argparse
+import json
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -126,6 +129,12 @@ def incremental_update(symbol: str, last_date_str: str) -> dict:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--status-out", type=str, default=None,
+                         help="path to write a pipeline_status.json summary (e.g. for the Dashboard's status footer)")
+    args = parser.parse_args()
+
+    run_started = datetime.now(timezone.utc)
     universe = load_universe()
     manifest = load_manifest()
 
@@ -153,9 +162,11 @@ def main():
           f"Full refresh (today's rotation slice): {len(full_refresh_targets)}  "
           f"Catch-up (still PENDING/retryable): {len(catchup_targets)}.")
 
+    incremental_updated = incremental_unchanged = incremental_failed = 0
     for i, symbol in enumerate(incremental_targets):
         print(f"[incr {i + 1}/{len(incremental_targets)}] {symbol}...")
-        row = incremental_update(symbol, manifest[symbol]["last_date"])
+        prior_last_date = manifest[symbol]["last_date"]
+        row = incremental_update(symbol, prior_last_date)
         row["attempts"] = manifest[symbol].get("attempts", "0")
         if row["status"] != STATUS_VALIDATED:
             # One transient failure on an incremental update shouldn't
@@ -163,38 +174,87 @@ def main():
             # keeping the existing manifest row untouched rather than
             # marking it FAILED, so it's simply retried again tomorrow.
             print(f"    incremental update failed ({row['error']}) — keeping prior data, will retry tomorrow")
+            incremental_failed += 1
             continue
         manifest[symbol] = row
+        if row["last_date"] != prior_last_date:
+            incremental_updated += 1
+        else:
+            incremental_unchanged += 1  # no new trading day since last run (holiday/weekend/not-yet-posted)
         print(f"    last_date now {row['last_date']} ({row['records']} total rows)")
         save_manifest(manifest)
         if i % 50 == 0:
             time.sleep(1)  # light pacing, same spirit as backfill.py's batching
 
+    full_refreshed = full_refresh_failed = 0
     for i, symbol in enumerate(full_refresh_targets):
         prior_attempts = int(manifest[symbol].get("attempts", 0))
         print(f"[refresh {i + 1}/{len(full_refresh_targets)}] {symbol} (weekly correcting re-fetch)...")
         row = fetch_with_retry(symbol, prior_attempts)
         if row["status"] != STATUS_VALIDATED:
             print(f"    full refresh failed ({row['error']}) — keeping prior data, will retry on next rotation")
+            full_refresh_failed += 1
             continue
         manifest[symbol] = row
+        full_refreshed += 1
         print(f"    refreshed, last_date now {row['last_date']} ({row['records']} total rows)")
         save_manifest(manifest)
 
+    catchup_validated = catchup_failed = 0
     for i, symbol in enumerate(catchup_targets):
         prior_attempts = int(manifest[symbol].get("attempts", 0))
         print(f"[catchup {i + 1}/{len(catchup_targets)}] {symbol}...")
         row = fetch_with_retry(symbol, prior_attempts)
         manifest[symbol] = row
-        note = "VALIDATED" if row["status"] == STATUS_VALIDATED else f"FAILED — {row['error']}"
+        if row["status"] == STATUS_VALIDATED:
+            catchup_validated += 1
+            note = "VALIDATED"
+        else:
+            catchup_failed += 1
+            note = f"FAILED — {row['error']}"
         print(f"    {note}")
         save_manifest(manifest)
 
     validated = sum(1 for s in universe if manifest[s]["status"] == STATUS_VALIDATED)
     failed = sum(1 for s in universe if manifest[s]["status"] == STATUS_FAILED)
     pending = sum(1 for s in universe if manifest[s]["status"] == STATUS_PENDING)
+    # Most recent last_date across all VALIDATED symbols — the single
+    # number that answers "is today's close actually in the data yet".
+    latest_trading_date = max(
+        (manifest[s]["last_date"] for s in universe if manifest[s]["status"] == STATUS_VALIDATED and manifest[s]["last_date"]),
+        default=None,
+    )
     print(f"\nRun complete. Universe totals — VALIDATED: {validated}  FAILED: {failed}  "
           f"PENDING: {pending}  (of {len(universe)})")
+
+    if args.status_out:
+        status = {
+            "last_run_started_utc": run_started.isoformat(),
+            "last_run_finished_utc": datetime.now(timezone.utc).isoformat(),
+            "latest_trading_date": latest_trading_date,
+            "universe_size": len(universe),
+            "validated": validated,
+            "failed": failed,
+            "pending": pending,
+            "incremental": {
+                "attempted": len(incremental_targets),
+                "updated": incremental_updated,
+                "unchanged": incremental_unchanged,
+                "failed": incremental_failed,
+            },
+            "full_refresh": {
+                "attempted": len(full_refresh_targets),
+                "refreshed": full_refreshed,
+                "failed": full_refresh_failed,
+            },
+            "catchup": {
+                "attempted": len(catchup_targets),
+                "validated": catchup_validated,
+                "failed": catchup_failed,
+            },
+        }
+        Path(args.status_out).write_text(json.dumps(status, indent=2))
+        print(f"Status written to {args.status_out}")
 
 
 if __name__ == "__main__":
