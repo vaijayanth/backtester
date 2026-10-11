@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BACKTESTER — Universe</title>
+<title>BACKTESTER</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -12,7 +12,8 @@
     --border:#2a2a30; --border-soft:#1e1e23;
     --amber:#ff9f1a; --amber-dim:#8a5a12; --amber-glow:rgba(255,159,26,0.12);
     --white:#e9e9ec; --dim:#8a8a93; --muted:#55555c;
-    --green:#00d26a; --red:#ff3b30;
+    --green:#00d26a; --green-dim:rgba(0,210,106,.1);
+    --red:#ff3b30; --red-dim:rgba(255,59,48,.1);
   }
   *{box-sizing:border-box;}
   body{background:var(--bg);color:var(--white);font-family:'IBM Plex Mono',monospace;margin:0;font-size:13px;-webkit-font-smoothing:antialiased;}
@@ -22,10 +23,12 @@
   .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
   .logo span{color:var(--dim);font-weight:400;letter-spacing:1px;}
   .nav{display:flex;gap:2px;margin-left:16px;}
-  .nav a{color:var(--dim);font-size:11px;letter-spacing:1px;padding:7px 14px;text-decoration:none;border-radius:3px;font-weight:600;}
-  .nav a.active{color:var(--amber);background:var(--amber-glow);}
+  .nav button{background:transparent;border:none;color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:3px;font-weight:600;}
+  .nav button:hover{color:var(--white);}
+  .nav button.active{color:var(--amber);background:var(--amber-glow);}
 
-  .page{padding:20px;max-width:1100px;margin:0 auto;}
+  .page{display:none;padding:20px;max-width:1100px;margin:0 auto;}
+  .page.active{display:block;}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;}
   .panel-head{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
   .panel-title{font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--dim);}
@@ -39,11 +42,18 @@
   .stat-value{font-size:22px;font-weight:700;color:var(--white);}
   .stat-value.amber{color:var(--amber);}
   .stat-value.red{color:var(--red);}
+  .stat-value.green{color:var(--green);}
+
+  .progress-wrap{padding:14px 18px;border-bottom:1px solid var(--border-soft);}
+  .progress-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .progress-bar-bg{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;display:flex;}
+  .progress-bar-seg.validated{background:var(--green);}
+  .progress-bar-seg.failed{background:var(--red);}
 
   .controls{display:flex;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;align-items:center;}
   .search-box{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;}
   .search-box::placeholder{color:var(--muted);}
-  .tabs{display:flex;gap:4px;}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;}
   .tab-btn{background:var(--panel2);border:1px solid var(--border);color:var(--dim);font-family:inherit;font-size:11px;padding:7px 13px;border-radius:3px;cursor:pointer;font-weight:600;}
   .tab-btn:hover{color:var(--white);}
   .tab-btn.active{color:#000;background:var(--amber);border-color:var(--amber);}
@@ -57,24 +67,36 @@
   .list-table tr:hover td{background:var(--panel2);}
   .table-scroll{max-height:560px;overflow-y:auto;}
   .exch-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;}
-  .exch-tag.ns{background:rgba(0,210,106,.1);color:var(--green);}
-  .exch-tag.bo{background:rgba(255,159,26,.1);color:var(--amber);}
+  .exch-tag.ns{background:var(--green-dim);color:var(--green);}
+  .exch-tag.bo{background:var(--amber-glow);color:var(--amber);}
   .removed-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;background:var(--amber-glow);color:var(--amber);}
   .removed-tag.dupe{background:rgba(41,197,246,.1);color:#29c5f6;}
+  .status-tag{font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;font-weight:700;}
+  .status-tag.validated{background:var(--green-dim);color:var(--green);}
+  .status-tag.failed{background:var(--red-dim);color:var(--red);}
+  .status-tag.pending{background:rgba(138,138,147,.1);color:var(--muted);}
+  .status-tag.exhausted{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+  .err-text{color:var(--dim);font-size:10px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
   .footer-note{padding:12px 18px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);}
   .row-count{padding:8px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);}
   .loading{padding:40px;text-align:center;color:var(--dim);}
+  .refresh-btn{background:var(--panel2);border:1px solid var(--border);color:var(--white);font-family:inherit;font-size:10px;padding:5px 10px;border-radius:3px;cursor:pointer;}
+  .refresh-btn:hover{border-color:var(--amber-dim);color:var(--amber);}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="logo">BACKTESTER <span>· universe browser</span></div>
-  <div class="nav"><a class="active">UNIVERSE</a></div>
+  <div class="logo">BACKTESTER</div>
+  <div class="nav">
+    <button class="active" data-page="universe" id="nav-universe">UNIVERSE</button>
+    <button data-page="backfill" id="nav-backfill">BACKFILL</button>
+  </div>
 </div>
 
-<div class="page">
+<!-- ============ UNIVERSE PAGE ============ -->
+<div class="page active" id="page-universe">
 
   <div class="panel">
     <div class="stat-row" id="stat-row">
@@ -114,10 +136,75 @@
     <div class="row-count" id="row-count"></div>
   </div>
 
-  <div class="footer-note">This is the raw universe only — no price data yet. Backfill (5yr OHLC via yfinance) is the next build step.</div>
+  <div class="footer-note">This is the raw universe only — no price data yet. See the BACKFILL tab for data-fetch progress.</div>
+</div>
+
+<!-- ============ BACKFILL PAGE ============ -->
+<div class="page" id="page-backfill">
+
+  <div class="panel">
+    <div class="progress-wrap">
+      <div class="progress-label"><span>BACKFILL PROGRESS</span><span id="bf-progress-pct">—</span></div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-seg validated" id="bf-bar-validated" style="width:0%"></div>
+        <div class="progress-bar-seg failed" id="bf-bar-failed" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="stat-row" id="bf-stat-row">
+      <div class="stat"><div class="stat-label">VALIDATED</div><div class="stat-value green" id="bf-stat-validated">—</div></div>
+      <div class="stat"><div class="stat-label">FAILED (retryable)</div><div class="stat-value red" id="bf-stat-failed">—</div></div>
+      <div class="stat"><div class="stat-label">EXHAUSTED</div><div class="stat-value red" id="bf-stat-exhausted">—</div></div>
+      <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" id="bf-stat-pending">—</div></div>
+      <div class="stat"><div class="stat-label">TOTAL UNIVERSE</div><div class="stat-value" id="bf-stat-total">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">MANIFEST — <b id="bf-panel-count">—</b> symbols</div>
+      <div class="panel-meta">source: backfill-checkpoints branch → checkpoints/manifest.csv</div>
+      <button class="refresh-btn" id="bf-refresh">↻ REFRESH</button>
+    </div>
+    <div class="controls">
+      <input class="search-box" id="bf-search" placeholder="search symbol...">
+      <div class="tabs" id="bf-filter-tabs">
+        <button class="tab-btn active" data-status="all" id="bf-filter-all">ALL</button>
+        <button class="tab-btn" data-status="VALIDATED" id="bf-filter-validated">VALIDATED</button>
+        <button class="tab-btn" data-status="FAILED" id="bf-filter-failed">FAILED</button>
+        <button class="tab-btn" data-status="PENDING" id="bf-filter-pending">PENDING</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="list-table">
+        <thead>
+          <tr><th>SYMBOL</th><th>STATUS</th><th>RECORDS</th><th>FIRST DATE</th><th>LAST DATE</th><th>ATTEMPTS</th><th>ERROR</th></tr>
+        </thead>
+        <tbody id="bf-table-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="bf-row-count"></div>
+  </div>
+
+  <div class="footer-note">Checkpoint data lives on the backfill-checkpoints git branch, not main — written by .github/workflows/backfill.yml, never committed by hand.</div>
 </div>
 
 <script>
+// ============================================================
+// NAV
+// ============================================================
+function switchPage(page){
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + page).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if(page === 'backfill' && !bfLoaded) loadBackfill();
+}
+document.getElementById('nav-universe').onclick = () => switchPage('universe');
+document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
+
+// ============================================================
+// UNIVERSE PAGE
+// ============================================================
 let cleanSymbols = [];
 let removedRows = []; // {symbol, reason}
 let currentView = 'grid';
@@ -167,7 +254,7 @@ function applySearch(){
 
 function switchView(view){
   currentView = view;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#page-universe .tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + view).classList.add('active');
   document.getElementById('view-grid').style.display = view === 'grid' ? 'grid' : 'none';
   document.getElementById('view-table').style.display = view === 'table' ? 'block' : 'none';
@@ -180,7 +267,7 @@ document.getElementById('tab-table').onclick = () => switchView('table');
 document.getElementById('tab-removed').onclick = () => switchView('removed');
 document.getElementById('search').addEventListener('input', applySearch);
 
-async function init(){
+async function initUniverse(){
   try{
     const [cleanResp, reportResp] = await Promise.all([
       fetch('data/universe_clean.csv'),
@@ -191,7 +278,6 @@ async function init(){
 
     cleanSymbols = cleanText.split('\n').map(l => l.trim()).filter(l => l && l !== 'symbol');
 
-    // Parse universe_report.txt for raw/etf/dupe counts + removed symbol lists
     const rawMatch = reportText.match(/Raw symbols in source:\s+(\d+)/);
     const etfMatch = reportText.match(/Removed as ETFs:\s+(\d+)/);
     const dupeMatch = reportText.match(/Removed as duplicates:\s+(\d+)/);
@@ -214,7 +300,123 @@ async function init(){
     document.getElementById('view-grid').innerHTML = `<div class="loading">Failed to load universe data: ${err.message}</div>`;
   }
 }
-init();
+initUniverse();
+
+// ============================================================
+// BACKFILL PAGE
+// ============================================================
+const MANIFEST_URL = 'https://raw.githubusercontent.com/vaijayanth/backtester/backfill-checkpoints/checkpoints/manifest.csv';
+let bfLoaded = false;
+let manifestRows = [];
+let bfFilter = 'all';
+
+// Minimal RFC4180-ish CSV parser — handles quoted fields with embedded
+// commas, which the Python csv module uses for the "error" column (error
+// messages routinely contain commas, e.g. "missing columns: {'Open', ...}").
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length > 1 || r[0] !== '');
+}
+
+function statusTag(row){
+  if(row.status === 'VALIDATED') return '<span class="status-tag validated">VALIDATED</span>';
+  if(row.status === 'FAILED' && parseInt(row.attempts||0) >= 3) return '<span class="status-tag exhausted">EXHAUSTED</span>';
+  if(row.status === 'FAILED') return '<span class="status-tag failed">FAILED</span>';
+  return '<span class="status-tag pending">PENDING</span>';
+}
+
+function renderBfStats(){
+  const validated = manifestRows.filter(r => r.status === 'VALIDATED').length;
+  const exhausted = manifestRows.filter(r => r.status === 'FAILED' && parseInt(r.attempts||0) >= 3).length;
+  const failed = manifestRows.filter(r => r.status === 'FAILED' && parseInt(r.attempts||0) < 3).length;
+  const pending = manifestRows.filter(r => r.status === 'PENDING').length;
+  const total = manifestRows.length;
+
+  document.getElementById('bf-stat-validated').textContent = validated.toLocaleString('en-IN');
+  document.getElementById('bf-stat-failed').textContent = failed.toLocaleString('en-IN');
+  document.getElementById('bf-stat-exhausted').textContent = exhausted.toLocaleString('en-IN');
+  document.getElementById('bf-stat-pending').textContent = pending.toLocaleString('en-IN');
+  document.getElementById('bf-stat-total').textContent = total.toLocaleString('en-IN');
+  document.getElementById('bf-panel-count').textContent = total.toLocaleString('en-IN');
+
+  const pct = total ? (validated / total * 100) : 0;
+  const failPct = total ? ((failed + exhausted) / total * 100) : 0;
+  document.getElementById('bf-progress-pct').textContent =
+    `${validated.toLocaleString('en-IN')} / ${total.toLocaleString('en-IN')} (${pct.toFixed(1)}%)`;
+  document.getElementById('bf-bar-validated').style.width = pct + '%';
+  document.getElementById('bf-bar-failed').style.width = failPct + '%';
+}
+
+function renderBfTable(){
+  const term = document.getElementById('bf-search').value.trim().toUpperCase();
+  let list = manifestRows;
+  if(bfFilter !== 'all') list = list.filter(r => r.status === bfFilter);
+  if(term) list = list.filter(r => r.symbol.toUpperCase().includes(term));
+
+  document.getElementById('bf-table-body').innerHTML = list.map(r => `
+    <tr>
+      <td>${r.symbol}</td>
+      <td>${statusTag(r)}</td>
+      <td>${r.records || '—'}</td>
+      <td>${r.first_date || '—'}</td>
+      <td>${r.last_date || '—'}</td>
+      <td>${r.attempts || '0'}</td>
+      <td class="err-text" title="${(r.error||'').replace(/"/g,'&quot;')}">${r.error || '—'}</td>
+    </tr>
+  `).join('');
+  document.getElementById('bf-row-count').textContent = `Showing ${list.length} of ${manifestRows.length} symbols`;
+}
+
+document.querySelectorAll('#bf-filter-tabs .tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    bfFilter = btn.dataset.status;
+    document.querySelectorAll('#bf-filter-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBfTable();
+  };
+});
+document.getElementById('bf-search').addEventListener('input', renderBfTable);
+document.getElementById('bf-refresh').onclick = () => loadBackfill();
+
+async function loadBackfill(){
+  bfLoaded = true;
+  document.getElementById('bf-table-body').innerHTML = '<tr><td colspan="7" class="loading">Loading manifest...</td></tr>';
+  try{
+    // cache-bust — raw.githubusercontent.com caches aggressively, and this
+    // view needs to reflect the latest Actions run, not a stale fetch
+    const resp = await fetch(MANIFEST_URL + '?t=' + Date.now());
+    if(!resp.ok) throw new Error(`manifest not found (HTTP ${resp.status}) — has the backfill workflow run yet?`);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const header = rows[0];
+    manifestRows = rows.slice(1).map(r => {
+      const obj = {};
+      header.forEach((h, i) => obj[h] = r[i] || '');
+      return obj;
+    });
+    renderBfStats();
+    renderBfTable();
+  }catch(err){
+    document.getElementById('bf-table-body').innerHTML =
+      `<tr><td colspan="7" class="loading">Failed to load manifest: ${err.message}</td></tr>`;
+  }
+}
 </script>
 </body>
 </html>
