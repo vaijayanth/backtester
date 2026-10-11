@@ -1,0 +1,100 @@
+name: Backfill Historical OHLC
+
+# Manually triggered only — this is a one-time (or occasional re-run) job,
+# not a schedule. Defaults to limit=1 so the FIRST run is a deliberate
+# single-symbol test before committing to the full 1,535-stock universe.
+# See docs/SPEC.md section 4 ("Backfill Reliability Design") for the full
+# rationale behind the checkpoint-branch approach below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max symbols to process this run (ignored if 'symbol' is set)"
+        required: false
+        default: "1"
+      symbol:
+        description: "Single symbol to force-retry, e.g. RELIANCE.NS (overrides limit)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # needed to push checkpoint commits to the backfill-checkpoints branch
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (if it already exists)
+        id: checkout_checkpoints
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Initialize backfill-checkpoints branch (first run only)
+        if: steps.checkout_checkpoints.outcome == 'failure'
+        run: |
+          mkdir -p checkpoints-branch
+          cd checkpoints-branch
+          git init -b backfill-checkpoints
+          git config user.name "backfill-bot"
+          git config user.email "actions@github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          mkdir -p checkpoints
+          echo "Backfill checkpoint data — written by .github/workflows/backfill.yml, not meant to be edited by hand. See docs/SPEC.md section 4." > checkpoints/README.md
+          git add checkpoints
+          git commit -m "Initialize backfill-checkpoints branch"
+          git push origin backfill-checkpoints
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore existing checkpoints into working copy
+        run: |
+          mkdir -p main/checkpoints
+          if [ -d checkpoints-branch/checkpoints ]; then
+            cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+          fi
+
+      - name: Run backfill
+        working-directory: main
+        run: |
+          if [ -n "${{ github.event.inputs.symbol }}" ]; then
+            python scripts/backfill.py --symbol "${{ github.event.inputs.symbol }}"
+          else
+            python scripts/backfill.py --limit "${{ github.event.inputs.limit }}"
+          fi
+
+      - name: Show manifest summary
+        working-directory: main
+        run: |
+          echo "--- manifest.csv (this run's state) ---"
+          cat checkpoints/manifest.csv || echo "(no manifest written)"
+
+      - name: Commit checkpoint updates to backfill-checkpoints branch
+        run: |
+          rm -rf checkpoints-branch/checkpoints
+          mkdir -p checkpoints-branch/checkpoints
+          cp -r main/checkpoints/. checkpoints-branch/checkpoints/
+          cd checkpoints-branch
+          git config user.name "backfill-bot"
+          git config user.email "actions@github.com"
+          git add checkpoints
+          if git diff --cached --quiet; then
+            echo "No checkpoint changes to commit"
+          else
+            git commit -m "Checkpoint: backfill run $(date -u +%Y-%m-%dT%H:%M:%SZ) (limit=${{ github.event.inputs.limit }} symbol=${{ github.event.inputs.symbol }})"
+            git push origin backfill-checkpoints
+          fi
