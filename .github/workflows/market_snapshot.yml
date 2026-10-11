@@ -1,0 +1,59 @@
+name: Build Market Snapshot
+
+# Manually triggered via GitHub's own "Run workflow" button, same pattern as
+# backfill.yml / backtest.yml. Computes Dashboard's Market Pulse counts and
+# Breadth Trend history from the already-backfilled checkpoints branch — no
+# new external data source, pure computation. Re-run this whenever the
+# backfill is refreshed to pick up newer EOD data.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed to commit market_snapshot.json back to main
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Build snapshot
+        working-directory: main
+        run: python scripts/market_snapshot.py --out market_snapshot.json
+
+      - name: Commit snapshot
+        working-directory: main
+        run: |
+          git config user.name "snapshot-bot"
+          git config user.email "actions@github.com"
+          git add market_snapshot.json
+          if git diff --cached --quiet; then
+            echo "No snapshot changes to commit"
+          else
+            git commit -m "Market snapshot: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
