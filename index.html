@@ -149,6 +149,8 @@
   .ss-cell-win{color:var(--green);font-weight:600;}
   .ss-cell-loose{color:var(--red);font-weight:600;}
   .ss-grid-sticky-col{position:sticky;left:0;background:var(--panel);}
+  .ss-bt-total-row td{font-weight:700;font-size:13px;border-top:2px solid var(--border);background:var(--panel2);}
+  .ss-winpct-good{background:var(--green-dim);color:var(--green);font-weight:700;}
 </style>
 </head>
 <body>
@@ -668,6 +670,26 @@
       <table class="list-table" id="ss-grid-table">
         <thead><tr id="ss-grid-head"></tr></thead>
         <tbody id="ss-grid-body"><tr><td class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title"><span id="ss-bt-months">—</span> MONTHS BACKTESTING RESULTS <span class="panel-meta">picked stocks only · combined ±range, not split by leg</span></div>
+    </div>
+    <div class="sd-controls">
+      <div class="rc-group">
+        <label class="rc-label">ENTER % RANGE</label>
+        <input type="number" id="ss-bt-range" value="10" min="1" max="50" step="0.5"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+      </div>
+    </div>
+    <div class="table-scroll" style="max-height:420px;">
+      <table class="list-table">
+        <thead><tr><th>COMPANY</th><th>TOTAL WIN</th><th>TOTAL LOOSE</th><th>WIN %AGE</th></tr></thead>
+        <tbody id="ss-bt-body"><tr><td colspan="4" class="loading">Add stocks above to see results.</td></tr></tbody>
+        <tfoot><tr id="ss-bt-total"></tr></tfoot>
       </table>
     </div>
   </div>
@@ -1749,7 +1771,7 @@ document.getElementById('res-refresh').onclick = () => {
 let ssInitialized = false;
 let ssData = null;          // raw strangle_screen.json
 let ssSelected = [];         // ordered list of picked symbols (default set below)
-const SS_DEFAULT_SYMBOLS = ['TCS.NS','RELIANCE.NS','MARUTI.NS','TATACONSUM.NS','HINDUNILVR.NS','ULTRACEMCO.NS'];
+const SS_DEFAULT_SYMBOLS = ['TCS.NS','RELIANCE.NS','MARUTI.NS','TATACONSUM.NS','HINDUNILVR.NS','ULTRACEMCO.NS','AMBUJACEM.NS','BAJFINANCE.NS','ASIANPAINT.NS','ITC.NS','TATASTEEL.NS','GRASIM.NS'];
 const SS_MONTH_LABELS = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};
 
 function ssMonthLabel(monthKey){
@@ -1838,9 +1860,59 @@ function recomputeAndRenderSs(){
   try{ renderSsChips(); } catch(err){ console.error('Strangle chips failed:', err); }
   try{ renderSsGrid(call, put, rsiFilter); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
   try{ renderSsRanking(document.getElementById('ss-rank-search').value); } catch(err){ console.error('Strangle ranking failed:', err); }
+  try{ renderSsBacktestSummary(); } catch(err){ console.error('Backtest summary failed:', err); }
 }
 
 function ssSymLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
+
+// "N Months Backtesting Results" panel — combined (not call/put-split)
+// Win/Loose per picked stock against a single ± range, plus a Total row.
+// Shares the same stock picker (ssSelected) and RSI filter as the grid
+// above, but its own range % input, matching the user's reference
+// spreadsheet exactly.
+function renderSsBacktestSummary(){
+  const body = document.getElementById('ss-bt-body');
+  const totalRow = document.getElementById('ss-bt-total');
+  const range = parseFloat(document.getElementById('ss-bt-range').value) || 10;
+  const rsiFilter = ssRsiFilter();
+
+  if(!ssSelected.length){
+    body.innerHTML = '<tr><td colspan="4" class="loading">Add stocks above to see results.</td></tr>';
+    totalRow.innerHTML = '';
+    document.getElementById('ss-bt-months').textContent = '—';
+    return;
+  }
+
+  const bySymbol = {};
+  ssData.monthly.forEach(r => {
+    if(ssSelected.includes(r.symbol) && ssRsiMatches(r.rsi_at_start, rsiFilter)){
+      (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r);
+    }
+  });
+
+  let totalWin = 0, totalLoose = 0, maxMonths = 0;
+  const rows = ssSelected.map(sym => {
+    const recs = bySymbol[sym] || [];
+    const win = recs.filter(r => Math.abs(r.return_pct) <= range).length;
+    const loose = recs.length - win;
+    totalWin += win; totalLoose += loose;
+    maxMonths = Math.max(maxMonths, recs.length);
+    const winPct = recs.length ? Math.round(win/recs.length*1000)/10 : null;
+    const highlight = winPct != null && winPct >= 60 ? 'ss-winpct-good' : '';
+    return `
+      <tr>
+        <td class="dash-run-label">${ssSymLabel(sym)}</td>
+        <td style="color:var(--green)">${win}</td>
+        <td style="color:var(--red)">${loose}</td>
+        <td class="${highlight}">${winPct != null ? winPct + '%' : '—'}</td>
+      </tr>`;
+  }).join('');
+
+  body.innerHTML = rows;
+  totalRow.className = 'ss-bt-total-row';
+  totalRow.innerHTML = `<td>Total</td><td style="color:var(--green)">${totalWin}</td><td style="color:var(--red)">${totalLoose}</td><td></td>`;
+  document.getElementById('ss-bt-months').textContent = maxMonths;
+}
 
 function renderSsChips(){
   document.getElementById('ss-chips').innerHTML = ssSelected.map(sym => `
@@ -1853,6 +1925,7 @@ function renderSsChips(){
       renderSsChips();
       const {call, put} = ssThresholds();
       try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
+      try{ renderSsBacktestSummary(); } catch(err){ console.error(err); }
     };
   });
 }
@@ -1946,6 +2019,7 @@ function renderSsRanking(filterTerm){
       if(!ssSelected.includes(sym)) ssSelected.push(sym);
       renderSsChips();
       try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
+      try{ renderSsBacktestSummary(); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1972,6 +2046,7 @@ document.getElementById('ss-search').addEventListener('input', (e) => {
       renderSsChips();
       const {call, put} = ssThresholds();
       try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
+      try{ renderSsBacktestSummary(); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1987,6 +2062,7 @@ document.getElementById('ss-threshold-put').addEventListener('change', () => { i
 document.getElementById('ss-rsi-enabled').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
 document.getElementById('ss-rsi-dir').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
 document.getElementById('ss-rsi-threshold').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
+document.getElementById('ss-bt-range').addEventListener('change', () => { if(ssData) renderSsBacktestSummary(); });
 
 // Dashboard is the default landing page — initialize it eagerly, same as
 // Universe used to before Dashboard took over that slot.
