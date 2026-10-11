@@ -2199,11 +2199,10 @@ async function initIvpScreener(){
 
     if(screensResp.ok){
       const screens = await screensResp.json();
-      // market_screens.json only carries RSI for stocks that were
-      // overbought/oversold at >=70/<=30 — not a full per-stock RSI list.
-      // Recompute isn't available client-side here, so this join is
-      // best-effort: stocks outside those bands simply show "—" for RSI.
-      [...screens.rsi_overbought, ...screens.rsi_oversold].forEach(r => {
+      // rsi_all carries every F&O stock's RSI14 (not just the >=70/<=30
+      // extremes in rsi_overbought/rsi_oversold) — full join, no more "—"
+      // gaps for stocks sitting in the 30-70 range.
+      (screens.rsi_all || []).forEach(r => {
         ivpRsiBySymbol[r.symbol] = r.rsi14;
       });
     }

@@ -84,6 +84,7 @@ def build_screens(universe="fno"):
     five_year_high = []
     rsi_overbought = []
     rsi_oversold = []
+    rsi_all = []
     skipped = []
 
     for symbol in target_symbols:
@@ -131,6 +132,7 @@ def build_screens(universe="fno"):
         if latest_rsi is not None:
             entry = {"symbol": symbol, "close": round(latest_close, 2),
                       "rsi14": round(latest_rsi, 1), "date": latest_date}
+            rsi_all.append(entry)
             if latest_rsi >= 70:
                 rsi_overbought.append(entry)
             elif latest_rsi <= 30:
@@ -149,6 +151,11 @@ def build_screens(universe="fno"):
         "five_year_high": five_year_high,
         "rsi_overbought": rsi_overbought,
         "rsi_oversold": rsi_oversold,
+        # Full per-stock RSI14, every symbol with >=15 bars of history (not
+        # just the >=70/<=30 extremes above) — the IVP Screener joins RSI
+        # for ALL 213 F&O stocks against this, not just the ones already
+        # flagged overbought/oversold.
+        "rsi_all": rsi_all,
     }
 
 
