@@ -1,0 +1,102 @@
+name: Daily OHLC Update
+
+# Scheduled — keeps the 5-year backfilled checkpoint data current through
+# today's EOD close, and regenerates every JSON the Dashboard/Strangle
+# Screen/IVP Screener pages read from it, with no manual trigger needed.
+#
+# Cron is UTC. NSE closes 15:30 IST (10:00 UTC); 12:30 UTC (18:00 IST) gives
+# a 2.5hr buffer for Yahoo Finance's own EOD data to actually post — running
+# right at the close has previously returned incomplete/stale same-day rows
+# in ad-hoc testing for other tickers, this is deliberate slack, not a
+# guess. Mon-Fri only (NSE doesn't trade weekends — a weekend run would just
+# find zero new rows for every symbol and do nothing productive).
+#
+# See scripts/update_ohlc.py's own docstring for why this is NOT a full
+# 5yr refetch of every symbol daily (far too slow/wasteful) — it's an
+# incremental tail-append for most symbols, with a weekday-rotated full
+# refresh of 1/5 of the universe to self-heal split/dividend adjustment
+# drift that an incremental append can never retroactively fix.
+
+on:
+  schedule:
+    - cron: "30 12 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  daily_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Update OHLC (incremental + rotated full refresh)
+        working-directory: main
+        run: python scripts/update_ohlc.py
+
+      - name: Commit checkpoint updates to backfill-checkpoints branch
+        run: |
+          rm -rf checkpoints-branch/checkpoints
+          mkdir -p checkpoints-branch/checkpoints
+          cp -r main/checkpoints/. checkpoints-branch/checkpoints/
+          cd checkpoints-branch
+          git config user.name "daily-update-bot"
+          git config user.email "actions@github.com"
+          git add checkpoints
+          if git diff --cached --quiet; then
+            echo "No checkpoint changes to commit"
+          else
+            git commit -m "Daily OHLC update: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push origin backfill-checkpoints
+          fi
+
+      - name: Rebuild market snapshot
+        working-directory: main
+        run: python scripts/market_snapshot.py --out market_snapshot.json
+
+      - name: Rebuild market screens (F&O + full universe)
+        working-directory: main
+        run: |
+          python scripts/market_screens.py --universe fno --out market_screens.json
+          python scripts/market_screens.py --universe full --out market_screens_full.json
+
+      - name: Rebuild strangle breakeven screen
+        working-directory: main
+        run: python scripts/strangle_screen.py --out strangle_screen.json --threshold 10
+
+      - name: Commit regenerated JSON to main
+        working-directory: main
+        run: |
+          git config user.name "daily-update-bot"
+          git config user.email "actions@github.com"
+          git add market_snapshot.json market_screens.json market_screens_full.json strangle_screen.json
+          if git diff --cached --quiet; then
+            echo "No output changes to commit"
+          else
+            git commit -m "Daily data refresh: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

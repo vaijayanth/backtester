@@ -210,6 +210,28 @@ User's reference: a hand-built spreadsheet computing, per stock per month, "Win"
 - Verified via Playwright against the real pushed `market_screens_full.json` (not a fixture): 26 rows rendered in the 52WH-full panel, 14 in the 5YH-full panel — exact match to the pipeline's own reported counts — zero console errors referencing removed functions.
 - Net effect: the Dashboard's "which stocks look interesting right now" panels went from F&O-only (213 stocks, options-screening purpose) to F&O + full-universe (1,466 stocks, SST equity position-screening purpose) side by side, and dropped a chart that wasn't earning its space plus a backtest-run table that duplicated the dedicated Results page.
 
+## 13. Daily OHLC Update Mechanism (2026-10-11 session, same day)
+
+User request: "we need to figure out a mechanism at every day to incrementally update the OHLC values so that this 5 year data is always upto date till today end of market close." Until this, the 5-year checkpoint data only moved forward when `backfill.yml` was triggered by hand — fine for the initial build, not for keeping the site live day to day.
+
+**Why not just re-run `backfill.py` daily**: its `fetch_one()` does a full 5-year refetch per symbol (`ticker.history(period="5y")`) — correct for a one-time backfill, but wasteful and slow run against 1,466+ symbols every single day (the original full run took ~70 minutes for 1,533 symbols). An incremental append (fetch only new rows since each symbol's stored `last_date`) is the obvious fix, but introduces a real correctness problem: yfinance's `auto_adjust=True` back-adjusts a symbol's **entire** price history for splits/bonuses/dividends at fetch time. A new split announced today changes the correct adjusted price for years-old rows — an incremental append only ever touches the tail, so it can never retroactively fix already-stored history. Silently running incremental-only forever would let adjustment drift creep in on any symbol that has a corporate action after its last full fetch.
+
+**Design — `scripts/update_ohlc.py`**, three symbol buckets per run, each already-VALIDATED symbol in exactly one of the first two:
+1. **Incremental** (the common case, most symbols most days): `ticker.history(start=last_date - 1 day)` (one day of overlap on purpose, to pick up a same-day revision of the prior close, not just literally-new rows), merged into the existing parquet via `concat` + `drop_duplicates(keep="last")` + sort. Verified locally against a mocked yfinance response: a revised prior-day close is correctly overwritten (999.0 test value landed exactly on the right row) and the row count only grows by the genuinely new day, not by both.
+2. **Full refresh, weekday-rotated**: a deterministic `hash(symbol) % 5` bucket maps every VALIDATED symbol to one weekday (Mon-Fri). On its day, that symbol gets the same full 5yr overwrite `backfill.py` does — this is the self-healing mechanism for the adjustment-drift problem above: every symbol gets a fully-correct re-fetch roughly once a week, spread evenly across the week rather than clustering load on one day.
+3. **Catch-up**: still-PENDING or still-retryable-FAILED symbols (from backfill.py's own manifest states) get a full fetch attempt too, same as a `backfill.py` run — this daily job doubles as an opportunistic top-up of overall backfill coverage since it's already iterating the whole universe.
+
+A transient incremental-fetch failure does NOT mark a symbol FAILED (which would make it lose its history) — it just skips updating that symbol this run and leaves prior data in place, to be retried on the next day's run.
+
+**Workflow — `.github/workflows/daily_update.yml`**: `schedule: cron: "30 12 * * 1-5"` (12:30 UTC = 18:00 IST, Mon-Fri only) plus `workflow_dispatch` for manual runs. NSE closes 15:30 IST (10:00 UTC); the 2.5hr buffer to 18:00 IST is deliberate slack for Yahoo Finance's own EOD data to actually post, not a guess. Chains the full pipeline in one run: update checkpoints -> commit to `backfill-checkpoints` branch -> rebuild `market_snapshot.json`, `market_screens.json` (F&O), `market_screens_full.json` (full universe), `strangle_screen.json` -> commit those to `main`. End to end, no manual trigger needed from here on for day-to-day freshness — the Dashboard, Strangle Screen, and the full-universe 52WH/5YH panels all update themselves the evening of every trading day.
+
+**Not yet exercised against a real scheduled run** — the workflow logic was built and locally unit-tested (merge/dedup logic, weekday bucketing, manifest I/O) against mocked yfinance responses only, since this sandbox's network proxy blocks Yahoo Finance outright (same restriction documented in section 4 for the original backfill). First real validation will be either the first scheduled firing or a manual `workflow_dispatch` trigger.
+
+### Open / not built (carried forward)
+- IVP Screener sector filtering (section 12, still not built).
+- Capital constraint on the backtest engine (section 11, still open).
+- Options strategy side (section 3, still fully deferred).
+
 ## Status
 
 Spec closed for the equity/SST side, end to end — purpose, data pipeline, storage, backfill reliability, execution architecture, strategy parameterization, output metrics, and UI run-comparison are all locked (see sections above). Repo created and confirmed: `vaijayanth/backtester` (github.com/vaijayanth/backtester), push access verified.
