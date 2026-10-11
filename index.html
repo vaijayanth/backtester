@@ -359,15 +359,14 @@
     </div>
 
     <div class="sb-controls-row">
-      <button class="refresh-btn" id="sb-run-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;padding:9px 18px;">▶ RUN BACKTEST</button>
-      <button class="refresh-btn" id="sb-copy-btn">⧉ COPY PARAMS AS JSON</button>
+      <button class="refresh-btn" id="sb-copy-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;padding:9px 18px;">⧉ COPY PARAMS AS JSON</button>
       <span class="sd-status" id="sb-status"></span>
     </div>
   </div>
 
   <div class="footer-note" id="sb-wiring-note">
-    <b style="color:var(--amber);">Not yet wired for one-click execution.</b> The trigger relay (Cloudflare Workers — needs a separate account/setup) isn't built yet, so clicking RUN BACKTEST can't kick off a live GitHub Actions run from this page directly.
-    For now, click COPY PARAMS AS JSON and hand that to whoever is driving the Actions workflow manually — same mechanism, just not one-click yet.
+    <b style="color:var(--amber);">Runs via GitHub's own Actions tab, not a one-click button here — by design.</b>
+    Click COPY PARAMS AS JSON above, then go to this repo's <b>Actions → Run SST Backtest → Run workflow</b>, paste the JSON into <code>params_json</code>, give it a <code>run_label</code>, and run it. Results land in <code>results/</code> on main a minute or two later.
   </div>
 </div>
 
@@ -1018,18 +1017,12 @@ function setSbStatus(msg, isError){
   el.style.color = isError ? 'var(--red)' : 'var(--dim)';
 }
 
-document.getElementById('sb-run-btn').onclick = () => {
-  const params = collectParams();
-  setSbStatus('Not wired yet — this would dispatch a GitHub Actions run with these params once the trigger relay exists. Use COPY PARAMS AS JSON for now.', true);
-  console.log('Backtest params (would be sent to Actions workflow_dispatch):', params);
-};
-
 document.getElementById('sb-copy-btn').onclick = async () => {
   const params = collectParams();
   const json = JSON.stringify(params, null, 2);
   try{
     await navigator.clipboard.writeText(json);
-    setSbStatus('Copied params JSON to clipboard.');
+    setSbStatus('Copied — now go to Actions → Run SST Backtest → Run workflow and paste it in.');
   }catch(err){
     setSbStatus('Clipboard copy failed — params logged to console instead.', true);
     console.log(json);

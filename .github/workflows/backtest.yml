@@ -1,0 +1,89 @@
+name: Run SST Backtest
+
+# Manually triggered via GitHub's own "Run workflow" button (Actions tab) —
+# deliberately no public/one-click trigger from the Strategy Builder page
+# itself (see docs/SPEC.md section 8: Cloudflare relay skipped on purpose,
+# not blocked). Paste the params JSON from the Strategy Builder page's
+# "Copy Params as JSON" button into the params_json input below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      params_json:
+        description: "Strategy params JSON (paste from Strategy Builder's Copy button — leave blank for all defaults)"
+        required: false
+        default: ""
+      run_label:
+        description: "Short label for this run, e.g. 'baseline' or 'tighter-trail' — shows up in the results filename"
+        required: false
+        default: "run"
+
+permissions:
+  contents: write   # needed to commit the results JSON back to main
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (read-only — this is where the historical data lives)
+        id: checkout_checkpoints
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Write params file
+        working-directory: main
+        run: |
+          if [ -n "${{ github.event.inputs.params_json }}" ]; then
+            echo '${{ github.event.inputs.params_json }}' > params.json
+            echo "Using provided params:"
+            cat params.json
+          else
+            echo "No params provided — using engine defaults."
+            echo '{}' > params.json
+          fi
+
+      - name: Run backtest
+        working-directory: main
+        run: |
+          mkdir -p results
+          TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          LABEL="${{ github.event.inputs.run_label }}"
+          LABEL="${LABEL:-run}"
+          # sanitize label to safe filename characters only
+          SAFE_LABEL=$(echo "$LABEL" | tr -c 'a-zA-Z0-9_-' '_')
+          OUT_FILE="results/${TIMESTAMP}_${SAFE_LABEL}.json"
+          echo "OUT_FILE=$OUT_FILE" >> $GITHUB_ENV
+          python scripts/backtest_engine.py --params params.json --out "$OUT_FILE"
+
+      - name: Commit results
+        working-directory: main
+        run: |
+          git config user.name "backtest-bot"
+          git config user.email "actions@github.com"
+          git add "$OUT_FILE"
+          git commit -m "Backtest run: $OUT_FILE"
+          # pull --rebase first in case another run landed on main since
+          # this job's checkout — low-probability for a manually-triggered
+          # personal tool, but a plain push would fail outright on a race.
+          git pull --rebase origin main
+          git push origin HEAD:main
