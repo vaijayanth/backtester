@@ -271,11 +271,15 @@
       <div class="chart-box" id="dash-breadth-chart"><div class="loading">Loading breadth history...</div></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta">Next 7 days</span></div></div>
-      <div class="dash-empty-card">
-        <span class="dash-empty-icon">—</span>
-        Not available yet — NSE's board-meeting API blocks requests from this project's hosting infrastructure (GitHub Actions). A working path exists via Dhan's broker API, deferred for now.
+      <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
+      <div class="table-scroll" style="max-height:300px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>DATE</th><th>DAYS AWAY</th></tr></thead>
+          <tbody id="dash-results-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
       </div>
+      <div class="row-count" id="dash-results-empty" style="display:none;">No upcoming results in the current Sensibull snapshot.</div>
+      <div class="dash-footnote">Source: manual Sensibull (Zerodha) export, not a live feed — NSE's own API blocks this project's hosting infrastructure (see docs/SPEC.md). Paste a fresh export to refresh; stale after ~1-2 weeks.</div>
     </div>
   </div>
 
@@ -755,8 +759,50 @@ function fmtRsShort(v){
 
 async function initDashboard(){
   dashInitialized = true;
-  await Promise.all([loadMarketSnapshot(), loadDashboardRuns(), loadMarketScreens()]);
+  await Promise.all([loadMarketSnapshot(), loadDashboardRuns(), loadMarketScreens(), loadEarningsCalendar()]);
 }
+
+async function loadEarningsCalendar(){
+  const body = document.getElementById('dash-results-body');
+  const empty = document.getElementById('dash-results-empty');
+  let cal;
+  try{
+    const resp = await fetch('earnings_calendar.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('earnings_calendar.json not found');
+    cal = await resp.json();
+  }catch(err){
+    body.innerHTML = `<tr><td colspan="3" class="loading">${err.message}</td></tr>`;
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = cal.entries
+    .map(e => ({...e, days: Math.round((new Date(e.date) - today) / 86400000)}))
+    .filter(e => e.days >= 0)
+    .sort((a,b) => a.days - b.days);
+
+  document.getElementById('dash-results-meta').textContent =
+    `F&O universe · snapshot ${new Date(cal.generated_at).toLocaleDateString('en-IN')}`;
+
+  if(!upcoming.length){
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  body.innerHTML = upcoming.map(e => `
+    <tr>
+      <td class="dash-run-label">${ssSymLabelSafe(e.symbol)}</td>
+      <td>${new Date(e.date).toLocaleDateString('en-IN', {day:'2-digit', month:'short'})}</td>
+      <td style="color:${e.days<=7?'var(--amber)':'var(--muted)'}">${e.days === 0 ? 'Today' : e.days + 'd'}</td>
+    </tr>
+  `).join('');
+}
+
+// Local copy of ssSymLabel's logic — Dashboard must not depend on the
+// Strangle Screen page's JS having loaded (it's lazy-initialized).
+function ssSymLabelSafe(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
 
 async function loadMarketSnapshot(){
   let snap;
@@ -936,7 +982,7 @@ async function loadDashboardRuns(){
   `).join('');
 }
 
-document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); loadMarketScreens(); };
+document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); loadMarketScreens(); loadEarningsCalendar(); };
 
 // ============================================================
 // UNIVERSE PAGE
