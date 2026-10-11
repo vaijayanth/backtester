@@ -41,6 +41,13 @@ jobs:
       - name: Initialize backfill-checkpoints branch (first run only)
         if: steps.checkout_checkpoints.outcome == 'failure'
         run: |
+          # actions/checkout partially initializes the target directory
+          # (git init + remote add origin) BEFORE failing on a non-existent
+          # ref's fetch — confirmed by a real failed run, not a guess. Wipe
+          # it first so we start from a genuinely clean state, or `git
+          # remote add origin` below fails with "remote origin already
+          # exists" against checkout's own half-finished leftover repo.
+          rm -rf checkpoints-branch
           mkdir -p checkpoints-branch
           cd checkpoints-branch
           git init -b backfill-checkpoints
