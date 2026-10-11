@@ -15,6 +15,14 @@ Scoped to the 213-stock NSE F&O universe (data/fno_universe.csv) — this is
 specifically a screen for the options strangle strategy, which only trades
 F&O-eligible names.
 
+Each monthly record also carries rsi_at_start — the stock's RSI14 on that
+month's FIRST trading day (the signal you'd see before entering a strangle
+for that period), not RSI at month-end or the month's peak RSI. This lets
+the frontend answer "what's my Call/Put win rate specifically in months
+where I'd have seen RSI>70 going in" — directly testing the strategy's
+stated rule ("RSI > 70 -> increase CE lots, sell CE further OTM"). RSI14
+formula matches market_screens.py/Stock Detail exactly (Wilder's smoothing).
+
 Usage:
   python scripts/strangle_screen.py --out strangle_screen.json --threshold 10
 """
@@ -33,6 +41,26 @@ MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
 FNO_UNIVERSE_CSV = ROOT / "data" / "fno_universe.csv"
 
 
+def compute_rsi14(closes):
+    out = [None] * len(closes)
+    if len(closes) < 15:
+        return out
+    gains = losses = 0.0
+    for i in range(1, 15):
+        diff = closes[i] - closes[i - 1]
+        gains += max(diff, 0)
+        losses += max(-diff, 0)
+    avg_gain, avg_loss = gains / 14, losses / 14
+    out[14] = 100.0 if avg_loss == 0 else 100 - 100 / (1 + avg_gain / avg_loss)
+    for i in range(15, len(closes)):
+        diff = closes[i] - closes[i - 1]
+        gain, loss = max(diff, 0), max(-diff, 0)
+        avg_gain = (avg_gain * 13 + gain) / 14
+        avg_loss = (avg_loss * 13 + loss) / 14
+        out[i] = 100.0 if avg_loss == 0 else 100 - 100 / (1 + avg_gain / avg_loss)
+    return out
+
+
 def load_fno_symbols():
     if not FNO_UNIVERSE_CSV.exists():
         return []
@@ -47,18 +75,25 @@ def load_validated_set():
 
 
 def monthly_returns(df):
-    """Group by calendar month, return [(month_key, open_to_close_pct), ...]
-    sorted by month — exact same grouping + formula as the JS
-    groupIntoPeriods()/computePeriodReturns() on the Stock Detail page."""
+    """Group by calendar month, return [(month_key, open_to_close_pct,
+    rsi_at_start), ...] sorted by month — same grouping + OC formula as the
+    JS groupIntoPeriods()/computePeriodReturns() on the Stock Detail page.
+    rsi_at_start = RSI14 computed as of the month's first trading day
+    (using only data up to and including that day — no look-ahead)."""
     df = df.copy()
     df["month_key"] = df.index.to_series().dt.strftime("%Y-%m")
+    closes = df["Close"].tolist()
+    rsi_series = compute_rsi14(closes)
+    df = df.reset_index(drop=True)
+    first_idx_per_month = df.groupby("month_key").apply(lambda g: g.index[0])
+
     out = []
     for month_key, g in df.groupby("month_key", sort=True):
-        g = g.sort_index()
         open_px = g["Open"].iloc[0]
         close_px = g["Close"].iloc[-1]
         ret = (close_px - open_px) / open_px * 100
-        out.append((month_key, round(ret, 2)))
+        rsi_at_start = rsi_series[first_idx_per_month[month_key]]
+        out.append((month_key, round(ret, 2), round(rsi_at_start, 1) if rsi_at_start is not None else None))
     return out
 
 
@@ -88,7 +123,7 @@ def build_screen(threshold):
 
         rets = monthly_returns(df)
         win = loose = 0
-        for month_key, ret in rets:
+        for month_key, ret, rsi_at_start in rets:
             status = "Win" if abs(ret) <= threshold else "Loose"
             if status == "Win":
                 win += 1
@@ -97,6 +132,7 @@ def build_screen(threshold):
             monthly.append({
                 "symbol": symbol, "month": month_key,
                 "return_pct": ret, "status": status,
+                "rsi_at_start": rsi_at_start,
             })
 
         total = win + loose
