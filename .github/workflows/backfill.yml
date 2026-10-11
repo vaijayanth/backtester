@@ -78,10 +78,16 @@ jobs:
       - name: Run backfill
         working-directory: main
         run: |
+          # argparse's --limit is type=int and crashes outright on an empty
+          # string, confirmed directly before relying on this — so an empty
+          # limit input must omit the flag entirely (meaning "no cap, all
+          # retryable symbols"), not pass --limit "".
           if [ -n "${{ github.event.inputs.symbol }}" ]; then
             python scripts/backfill.py --symbol "${{ github.event.inputs.symbol }}"
-          else
+          elif [ -n "${{ github.event.inputs.limit }}" ]; then
             python scripts/backfill.py --limit "${{ github.event.inputs.limit }}"
+          else
+            python scripts/backfill.py
           fi
 
       - name: Show manifest summary
