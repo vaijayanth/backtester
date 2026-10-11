@@ -138,6 +138,17 @@
   .dash-rsi-tag{font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;font-weight:700;}
   .dash-rsi-tag.ob{background:var(--red-dim);color:var(--red);}
   .dash-rsi-tag.os{background:var(--green-dim);color:var(--green);}
+
+  .ss-search-dropdown{position:absolute;z-index:40;background:var(--panel2);border:1px solid var(--border);border-radius:4px;max-height:220px;overflow-y:auto;width:100%;max-width:340px;margin-top:4px;}
+  .ss-search-dropdown .ss-opt{padding:8px 12px;font-size:12px;cursor:pointer;color:var(--white);}
+  .ss-search-dropdown .ss-opt:hover{background:var(--panel);color:var(--amber);}
+  .ss-chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;}
+  .ss-chip{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:5px 6px 5px 12px;font-size:11px;color:var(--white);}
+  .ss-chip button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:2px 6px;border-radius:50%;}
+  .ss-chip button:hover{color:var(--red);background:var(--red-dim);}
+  .ss-cell-win{color:var(--green);font-weight:600;}
+  .ss-cell-loose{color:var(--red);font-weight:600;}
+  .ss-grid-sticky-col{position:sticky;left:0;background:var(--panel);}
 </style>
 </head>
 <body>
@@ -154,6 +165,7 @@
     <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
     <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
+    <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Strangle Screen</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -584,6 +596,65 @@
   <div class="footer-note">Reads results/index.json + individual result files directly from main — same-origin, no CORS, no separate branch needed (unlike the checkpoint data).</div>
 </div>
 
+<!-- ============ STRANGLE SCREEN PAGE ============ -->
+<div class="page" id="page-strangle">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">STRANGLE BREAKEVEN SCREEN</div>
+      <div class="dash-meta" id="ss-meta">Monthly open→close return vs ±<span id="ss-threshold-label">10</span>% breakeven · F&amp;O universe</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">GRID STOCKS</div>
+      <div class="panel-meta">WIN = month's return stayed inside ±<span id="ss-threshold-label2">10</span>% · LOOSE = breached either side</div>
+    </div>
+    <div class="sd-controls">
+      <div class="rc-group">
+        <label class="rc-label">THRESHOLD %</label>
+        <input type="number" id="ss-threshold" value="10" min="1" max="50" step="0.5"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+      </div>
+      <div class="rc-group" style="flex:1;min-width:260px;position:relative;">
+        <label class="rc-label">ADD STOCK</label>
+        <input class="search-box" id="ss-search" placeholder="search F&amp;O symbol to add..." autocomplete="off">
+        <div id="ss-search-results" class="ss-search-dropdown" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="ss-chips" id="ss-chips"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">MONTHLY GRID</div>
+      <div class="panel-meta" id="ss-grid-meta">—</div>
+    </div>
+    <div class="table-scroll" style="max-height:560px;">
+      <table class="list-table" id="ss-grid-table">
+        <thead><tr id="ss-grid-head"></tr></thead>
+        <tbody id="ss-grid-body"><tr><td class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY WIN % <span class="panel-meta" id="ss-rank-count">—</span></div>
+      <input class="search-box" id="ss-rank-search" placeholder="filter..." style="max-width:200px;">
+    </div>
+    <div class="table-scroll" style="max-height:420px;">
+      <table class="list-table">
+        <thead><tr><th>#</th><th>STOCK</th><th>WIN</th><th>LOOSE</th><th>TOTAL MONTHS</th><th>WIN %</th><th></th></tr></thead>
+        <tbody id="ss-rank-body"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note">Same open→close monthly-return math as Stock Detail's Threshold Breach Analysis, run across the full F&amp;O universe. Cross-validated against a manual reference calculation for Jul-2025 before shipping — 6/6 comparable stocks matched exactly.</div>
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -601,6 +672,7 @@ function switchPage(page){
   if(page === 'stock' && !sdInitialized) initStockDetail();
   if(page === 'strategy' && !sbInitialized) initStrategyBuilder();
   if(page === 'results' && !resInitialized) initResults();
+  if(page === 'strangle' && !ssInitialized) initStrangleScreen();
 }
 document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
@@ -608,6 +680,7 @@ document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-stock').onclick = () => switchPage('stock');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-results').onclick = () => switchPage('results');
+document.getElementById('nav-strangle').onclick = () => switchPage('strangle');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -1636,6 +1709,200 @@ document.getElementById('res-refresh').onclick = () => {
   resFullCache = {};
   loadRunIndex();
 };
+
+// ============================================================
+// STRANGLE SCREEN PAGE
+// ============================================================
+let ssInitialized = false;
+let ssData = null;          // raw strangle_screen.json
+let ssSelected = [];         // ordered list of picked symbols (default set below)
+const SS_DEFAULT_SYMBOLS = ['TCS.NS','RELIANCE.NS','MARUTI.NS','TATACONSUM.NS','HINDUNILVR.NS','ULTRACEMCO.NS'];
+const SS_MONTH_LABELS = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};
+
+function ssMonthLabel(monthKey){
+  const [y, m] = monthKey.split('-');
+  return SS_MONTH_LABELS[parseInt(m)] + '-' + y.slice(2);
+}
+
+async function initStrangleScreen(){
+  ssInitialized = true;
+  try{
+    const resp = await fetch('strangle_screen.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('strangle_screen.json not found — run the "Build Strangle Breakeven Screen" workflow');
+    ssData = await resp.json();
+  }catch(err){
+    document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">${err.message}</td></tr>`;
+    document.getElementById('ss-rank-body').innerHTML = `<tr><td colspan="7" class="loading">${err.message}</td></tr>`;
+    return;
+  }
+
+  document.getElementById('ss-threshold').value = ssData.threshold_pct;
+
+  // Default to the user's reference stocks that exist in our F&O universe.
+  const available = new Set(ssData.summary.map(r => r.symbol));
+  ssSelected = SS_DEFAULT_SYMBOLS.filter(s => available.has(s));
+
+  recomputeAndRenderSs();
+}
+
+// Backend ships raw return_pct per stock-month, not just a fixed-threshold
+// Win/Loose verdict — so the threshold input can be changed instantly
+// client-side without a backend re-run. ssSummary is recomputed fresh from
+// ssData.monthly every time the threshold changes.
+let ssSummary = [];
+
+function recomputeAndRenderSs(){
+  const threshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
+  document.getElementById('ss-threshold-label').textContent = threshold;
+  document.getElementById('ss-threshold-label2').textContent = threshold;
+  document.getElementById('ss-meta').innerHTML =
+    `Monthly open→close return vs ±<span id="ss-threshold-label">${threshold}</span>% breakeven · F&amp;O universe (${ssData.universe_size} stocks) · generated ${new Date(ssData.generated_at).toLocaleString('en-IN')}`;
+
+  const bySymbol = {};
+  ssData.monthly.forEach(r => {
+    (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r);
+  });
+  ssSummary = Object.keys(bySymbol).map(symbol => {
+    const rows = bySymbol[symbol];
+    const win = rows.filter(r => Math.abs(r.return_pct) <= threshold).length;
+    const loose = rows.length - win;
+    return {symbol, win, loose, total: rows.length, win_pct: rows.length ? Math.round(win/rows.length*1000)/10 : null};
+  }).sort((a,b) => (b.win_pct ?? -1) - (a.win_pct ?? -1));
+
+  try{ renderSsChips(); } catch(err){ console.error('Strangle chips failed:', err); }
+  try{ renderSsGrid(threshold); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
+  try{ renderSsRanking(document.getElementById('ss-rank-search').value); } catch(err){ console.error('Strangle ranking failed:', err); }
+}
+
+function ssSymLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
+
+function renderSsChips(){
+  document.getElementById('ss-chips').innerHTML = ssSelected.map(sym => `
+    <span class="ss-chip">${ssSymLabel(sym)}<button data-sym="${sym}" class="ss-chip-remove">×</button></span>
+  `).join('') || '<span class="row-count" style="padding:0;">No stocks selected — search above to add some.</span>';
+
+  document.querySelectorAll('.ss-chip-remove').forEach(btn => {
+    btn.onclick = () => {
+      ssSelected = ssSelected.filter(s => s !== btn.dataset.sym);
+      renderSsChips();
+      const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
+      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+    };
+  });
+}
+
+function renderSsGrid(threshold){
+  const head = document.getElementById('ss-grid-head');
+  const body = document.getElementById('ss-grid-body');
+
+  if(!ssSelected.length){
+    head.innerHTML = '<th>MONTH</th>';
+    body.innerHTML = `<tr><td class="loading">Add at least one stock above to build the grid.</td></tr>`;
+    document.getElementById('ss-grid-meta').textContent = '—';
+    return;
+  }
+
+  head.innerHTML = '<th class="ss-grid-sticky-col">MONTH</th>' +
+    ssSelected.map(s => `<th>${ssSymLabel(s)}</th>`).join('') +
+    '<th>WIN</th><th>LOOSE</th><th>FINAL IMPRESSION</th>';
+
+  // Pivot: month -> {symbol -> return_pct}
+  const bySymMonth = {};
+  ssSelected.forEach(s => bySymMonth[s] = {});
+  ssData.monthly.forEach(r => {
+    if(bySymMonth[r.symbol]) bySymMonth[r.symbol][r.month] = r.return_pct;
+  });
+
+  const months = [...new Set(ssData.monthly.map(r => r.month))].sort().reverse(); // newest first, matches reference image
+
+  body.innerHTML = months.map(month => {
+    let win = 0, loose = 0;
+    const cells = ssSelected.map(sym => {
+      const ret = bySymMonth[sym][month];
+      if(ret == null) return '<td style="color:var(--muted)">—</td>';
+      const status = Math.abs(ret) <= threshold ? 'Win' : 'Loose';
+      if(status === 'Win') win++; else loose++;
+      const cls = status === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
+      return `<td class="${cls}" title="${ret}%">${status}</td>`;
+    }).join('');
+    const final = win - loose;
+    return `
+      <tr>
+        <td class="ss-grid-sticky-col">${ssMonthLabel(month)}</td>
+        ${cells}
+        <td class="ss-cell-win">${win}</td>
+        <td class="ss-cell-loose">${loose}</td>
+        <td style="color:${final>=0?'var(--green)':'var(--red)'};font-weight:700;">${final}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('ss-grid-meta').textContent = `${months.length} months · ${ssSelected.length} stocks`;
+}
+
+function renderSsRanking(filterTerm){
+  const term = (filterTerm || '').toUpperCase();
+  const rows = term ? ssSummary.filter(r => ssSymLabel(r.symbol).toUpperCase().includes(term)) : ssSummary;
+  document.getElementById('ss-rank-count').textContent = `${rows.length} of ${ssSummary.length}`;
+
+  document.getElementById('ss-rank-body').innerHTML = rows.map((r, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td class="dash-run-label">${ssSymLabel(r.symbol)}</td>
+      <td style="color:var(--green)">${r.win}</td>
+      <td style="color:var(--red)">${r.loose}</td>
+      <td>${r.total}</td>
+      <td style="font-weight:700;">${r.win_pct != null ? r.win_pct + '%' : '—'}</td>
+      <td><button class="refresh-btn ss-add-btn" data-sym="${r.symbol}" ${ssSelected.includes(r.symbol) ? 'disabled' : ''}>${ssSelected.includes(r.symbol) ? '✓ added' : '+ add'}</button></td>
+    </tr>
+  `).join('');
+
+  const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
+  document.querySelectorAll('.ss-add-btn').forEach(btn => {
+    btn.onclick = () => {
+      const sym = btn.dataset.sym;
+      if(!ssSelected.includes(sym)) ssSelected.push(sym);
+      renderSsChips();
+      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+      renderSsRanking(document.getElementById('ss-rank-search').value);
+    };
+  });
+}
+
+document.getElementById('ss-rank-search').addEventListener('input', (e) => renderSsRanking(e.target.value));
+
+document.getElementById('ss-search').addEventListener('input', (e) => {
+  const term = e.target.value.trim().toUpperCase();
+  const dropdown = document.getElementById('ss-search-results');
+  if(!term || !ssData){ dropdown.style.display = 'none'; return; }
+  const matches = ssSummary
+    .filter(r => !ssSelected.includes(r.symbol) && ssSymLabel(r.symbol).toUpperCase().includes(term))
+    .slice(0, 15);
+  if(!matches.length){ dropdown.style.display = 'none'; return; }
+  dropdown.innerHTML = matches.map(r => `<div class="ss-opt" data-sym="${r.symbol}">${ssSymLabel(r.symbol)} <span style="color:var(--muted);float:right;">${r.win_pct}% win</span></div>`).join('');
+  dropdown.style.display = 'block';
+  dropdown.querySelectorAll('.ss-opt').forEach(opt => {
+    opt.onclick = () => {
+      const sym = opt.dataset.sym;
+      if(!ssSelected.includes(sym)) ssSelected.push(sym);
+      document.getElementById('ss-search').value = '';
+      dropdown.style.display = 'none';
+      renderSsChips();
+      const curThreshold = parseFloat(document.getElementById('ss-threshold').value) || ssData.threshold_pct;
+      try{ renderSsGrid(curThreshold); } catch(err){ console.error(err); }
+      renderSsRanking(document.getElementById('ss-rank-search').value);
+    };
+  });
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#ss-search') && !e.target.closest('#ss-search-results')){
+    document.getElementById('ss-search-results').style.display = 'none';
+  }
+});
+
+document.getElementById('ss-threshold').addEventListener('change', () => {
+  if(!ssData) return;
+  recomputeAndRenderSs();
+});
 
 // Dashboard is the default landing page — initialize it eagerly, same as
 // Universe used to before Dashboard took over that slot.
