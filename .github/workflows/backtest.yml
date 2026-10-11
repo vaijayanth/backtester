@@ -70,7 +70,11 @@ jobs:
           LABEL="${{ github.event.inputs.run_label }}"
           LABEL="${LABEL:-run}"
           # sanitize label to safe filename characters only
-          SAFE_LABEL=$(echo "$LABEL" | tr -c 'a-zA-Z0-9_-' '_')
+          # printf, not echo -- echo appends a trailing newline that tr -c
+          # then converts into a stray trailing underscore in the filename
+          # (confirmed via a real run: "first-real-test" became
+          # "first-real-test_"). printf '%s' has no trailing newline.
+          SAFE_LABEL=$(printf '%s' "$LABEL" | tr -c 'a-zA-Z0-9_-' '_')
           OUT_FILE="results/${TIMESTAMP}_${SAFE_LABEL}.json"
           echo "OUT_FILE=$OUT_FILE" >> $GITHUB_ENV
           python scripts/backtest_engine.py --params params.json --out "$OUT_FILE"
