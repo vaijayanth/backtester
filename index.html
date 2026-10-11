@@ -633,6 +633,34 @@
 
   <div class="panel">
     <div class="panel-head">
+      <div class="panel-title">RSI ENTRY FILTER <span class="panel-meta">optional — tests the "RSI&gt;70 → sell CE further OTM" rule</span></div>
+    </div>
+    <div class="sd-controls">
+      <div class="rc-group">
+        <label class="rc-label"><input type="checkbox" id="ss-rsi-enabled" style="margin-right:6px;">ENABLE</label>
+      </div>
+      <div class="rc-group">
+        <label class="rc-label">RSI14 AT MONTH START</label>
+        <select id="ss-rsi-dir" style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--white);font-family:inherit;font-size:12px;">
+          <option value="above">Above (&gt;)</option>
+          <option value="below">Below (&lt;)</option>
+        </select>
+      </div>
+      <div class="rc-group">
+        <label class="rc-label">THRESHOLD</label>
+        <input type="number" id="ss-rsi-threshold" value="70" min="0" max="100" step="1"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+      </div>
+      <div class="rc-group" style="flex:1;">
+        <label class="rc-label">MATCHED MONTHS</label>
+        <div class="sd-metric-value" id="ss-rsi-matched" style="font-size:14px;">—</div>
+      </div>
+    </div>
+    <div class="dash-footnote">RSI at the month's FIRST trading day only (the signal you'd see before entering), not RSI at month-end or the month's peak. No look-ahead. Small sample sizes at tight filters will make Win% noisy — check the matched-months count before trusting a number.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
       <div class="panel-title">MONTHLY GRID <span class="panel-meta">each stock shown as CALL + PUT sub-columns</span></div>
       <div class="panel-meta" id="ss-grid-meta">—</div>
     </div>
@@ -646,7 +674,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY COMBINED WIN % <span class="panel-meta" id="ss-rank-count">—</span></div>
+      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY COMBINED WIN % <span class="panel-meta" id="ss-rank-title-suffix"></span> <span class="panel-meta" id="ss-rank-count">—</span></div>
       <input class="search-box" id="ss-rank-search" placeholder="filter..." style="max-width:200px;">
     </div>
     <div class="table-scroll" style="max-height:420px;">
@@ -1765,13 +1793,32 @@ function ssThresholds(){
 // ssData.monthly whenever either threshold changes.
 let ssSummary = [];
 
+function ssRsiFilter(){
+  const enabled = document.getElementById('ss-rsi-enabled').checked;
+  const dir = document.getElementById('ss-rsi-dir').value;
+  const threshold = parseFloat(document.getElementById('ss-rsi-threshold').value);
+  return {enabled, dir, threshold};
+}
+
+function ssRsiMatches(rsi, filter){
+  if(!filter.enabled) return true;
+  if(rsi == null || isNaN(filter.threshold)) return false;
+  return filter.dir === 'above' ? rsi > filter.threshold : rsi < filter.threshold;
+}
+
 function recomputeAndRenderSs(){
   const {call, put} = ssThresholds();
+  const rsiFilter = ssRsiFilter();
+  const rsiLabel = rsiFilter.enabled ? ` · RSI14@start ${rsiFilter.dir === 'above' ? '>' : '<'} ${rsiFilter.threshold}` : '';
   document.getElementById('ss-meta').innerHTML =
-    `Monthly open→close return vs CALL +${call}% / PUT -${put}% breakevens · F&amp;O universe (${ssData.universe_size} stocks) · generated ${new Date(ssData.generated_at).toLocaleString('en-IN')}`;
+    `Monthly open→close return vs CALL +${call}% / PUT -${put}% breakevens${rsiLabel} · F&amp;O universe (${ssData.universe_size} stocks) · generated ${new Date(ssData.generated_at).toLocaleString('en-IN')}`;
+
+  const filteredMonthly = ssData.monthly.filter(r => ssRsiMatches(r.rsi_at_start, rsiFilter));
+  document.getElementById('ss-rsi-matched').textContent =
+    rsiFilter.enabled ? `${filteredMonthly.length} of ${ssData.monthly.length} stock-months` : 'filter disabled';
 
   const bySymbol = {};
-  ssData.monthly.forEach(r => {
+  filteredMonthly.forEach(r => {
     (bySymbol[r.symbol] = bySymbol[r.symbol] || []).push(r);
   });
   ssSummary = Object.keys(bySymbol).map(symbol => {
@@ -1785,8 +1832,11 @@ function recomputeAndRenderSs(){
     return {symbol, callWin, putWin, total, callWinPct, putWinPct, combinedWinPct};
   }).sort((a,b) => (b.combinedWinPct ?? -1) - (a.combinedWinPct ?? -1));
 
+  document.getElementById('ss-rank-title-suffix').textContent = rsiFilter.enabled
+    ? `(RSI14@start ${rsiFilter.dir === 'above' ? '>' : '<'} ${rsiFilter.threshold})` : '';
+
   try{ renderSsChips(); } catch(err){ console.error('Strangle chips failed:', err); }
-  try{ renderSsGrid(call, put); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
+  try{ renderSsGrid(call, put, rsiFilter); } catch(err){ console.error('Strangle grid failed:', err); document.getElementById('ss-grid-body').innerHTML = `<tr><td class="loading">Failed: ${err.message}</td></tr>`; }
   try{ renderSsRanking(document.getElementById('ss-rank-search').value); } catch(err){ console.error('Strangle ranking failed:', err); }
 }
 
@@ -1802,12 +1852,12 @@ function renderSsChips(){
       ssSelected = ssSelected.filter(s => s !== btn.dataset.sym);
       renderSsChips();
       const {call, put} = ssThresholds();
-      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
+      try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
     };
   });
 }
 
-function renderSsGrid(call, put){
+function renderSsGrid(call, put, rsiFilter){
   const head = document.getElementById('ss-grid-head');
   const body = document.getElementById('ss-grid-body');
 
@@ -1822,28 +1872,38 @@ function renderSsGrid(call, put){
     ssSelected.map(s => `<th>${ssSymLabel(s)} CALL</th><th>${ssSymLabel(s)} PUT</th>`).join('') +
     '<th>WIN</th><th>LOOSE</th><th>FINAL IMPRESSION</th>';
 
-  // Pivot: month -> {symbol -> return_pct}
+  // Pivot: month -> {symbol -> {return_pct, rsi_at_start}}
   const bySymMonth = {};
   ssSelected.forEach(s => bySymMonth[s] = {});
   ssData.monthly.forEach(r => {
-    if(bySymMonth[r.symbol]) bySymMonth[r.symbol][r.month] = r.return_pct;
+    if(bySymMonth[r.symbol]) bySymMonth[r.symbol][r.month] = r;
   });
 
   const months = [...new Set(ssData.monthly.map(r => r.month))].sort().reverse(); // newest first, matches reference image
 
-  body.innerHTML = months.map(month => {
-    let win = 0, loose = 0;
+  let rowsShown = 0;
+  const bodyRows = months.map(month => {
+    let win = 0, loose = 0, anyMatch = false;
     const cells = ssSelected.map(sym => {
-      const ret = bySymMonth[sym][month];
-      if(ret == null) return '<td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td>';
+      const rec = bySymMonth[sym][month];
+      if(!rec || rec.return_pct == null) return '<td style="color:var(--muted)">—</td><td style="color:var(--muted)">—</td>';
+      if(!ssRsiMatches(rec.rsi_at_start, rsiFilter)){
+        const rsiTxt = rec.rsi_at_start != null ? ` (RSI ${rec.rsi_at_start})` : ' (RSI n/a)';
+        return `<td style="color:var(--muted)" title="filtered out${rsiTxt}">—</td><td style="color:var(--muted)" title="filtered out${rsiTxt}">—</td>`;
+      }
+      anyMatch = true;
+      const ret = rec.return_pct;
       const callStatus = ret <= call ? 'Win' : 'Loose';
       const putStatus = ret >= -put ? 'Win' : 'Loose';
       if(callStatus === 'Win') win++; else loose++;
       if(putStatus === 'Win') win++; else loose++;
       const callCls = callStatus === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
       const putCls = putStatus === 'Win' ? 'ss-cell-win' : 'ss-cell-loose';
-      return `<td class="${callCls}" title="${ret}%">${callStatus}</td><td class="${putCls}" title="${ret}%">${putStatus}</td>`;
+      const rsiTitle = rec.rsi_at_start != null ? ` · RSI@start ${rec.rsi_at_start}` : '';
+      return `<td class="${callCls}" title="${ret}%${rsiTitle}">${callStatus}</td><td class="${putCls}" title="${ret}%${rsiTitle}">${putStatus}</td>`;
     }).join('');
+    if(rsiFilter.enabled && !anyMatch) return null; // no selected stock matched the filter this month — skip the row
+    rowsShown++;
     const final = win - loose;
     return `
       <tr>
@@ -1853,9 +1913,13 @@ function renderSsGrid(call, put){
         <td class="ss-cell-loose">${loose}</td>
         <td style="color:${final>=0?'var(--green)':'var(--red)'};font-weight:700;">${final}</td>
       </tr>`;
-  }).join('');
+  }).filter(r => r !== null);
 
-  document.getElementById('ss-grid-meta').textContent = `${months.length} months · ${ssSelected.length} stocks × 2 legs`;
+  body.innerHTML = bodyRows.length ? bodyRows.join('') :
+    `<tr><td class="loading">No months match the RSI filter for the selected stocks.</td></tr>`;
+
+  document.getElementById('ss-grid-meta').textContent =
+    `${rowsShown} of ${months.length} months shown · ${ssSelected.length} stocks × 2 legs`;
 }
 
 function renderSsRanking(filterTerm){
@@ -1881,7 +1945,7 @@ function renderSsRanking(filterTerm){
       const sym = btn.dataset.sym;
       if(!ssSelected.includes(sym)) ssSelected.push(sym);
       renderSsChips();
-      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
+      try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1907,7 +1971,7 @@ document.getElementById('ss-search').addEventListener('input', (e) => {
       dropdown.style.display = 'none';
       renderSsChips();
       const {call, put} = ssThresholds();
-      try{ renderSsGrid(call, put); } catch(err){ console.error(err); }
+      try{ renderSsGrid(call, put, ssRsiFilter()); } catch(err){ console.error(err); }
       renderSsRanking(document.getElementById('ss-rank-search').value);
     };
   });
@@ -1920,6 +1984,9 @@ document.addEventListener('click', (e) => {
 
 document.getElementById('ss-threshold-call').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
 document.getElementById('ss-threshold-put').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
+document.getElementById('ss-rsi-enabled').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
+document.getElementById('ss-rsi-dir').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
+document.getElementById('ss-rsi-threshold').addEventListener('change', () => { if(ssData) recomputeAndRenderSs(); });
 
 // Dashboard is the default landing page — initialize it eagerly, same as
 // Universe used to before Dashboard took over that slot.
