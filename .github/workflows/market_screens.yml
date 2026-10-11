@@ -1,0 +1,59 @@
+name: Build Market Screens
+
+# Manually triggered via GitHub's own "Run workflow" button, same pattern as
+# the other data-pipeline workflows. Computes 52-Week High / 5-Year High /
+# RSI Overbought-Oversold for the 213-stock F&O universe (data/fno_universe.csv)
+# from the already-backfilled checkpoints branch — pure computation, no new
+# external data source.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed to commit market_screens.json back to main
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Build screens
+        working-directory: main
+        run: python scripts/market_screens.py --out market_screens.json
+
+      - name: Commit screens
+        working-directory: main
+        run: |
+          git config user.name "screens-bot"
+          git config user.email "actions@github.com"
+          git add market_screens.json
+          if git diff --cached --quiet; then
+            echo "No screen changes to commit"
+          else
+            git commit -m "Market screens: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
