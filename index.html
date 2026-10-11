@@ -1,1 +1,1574 @@
-placeholder
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BACKTESTER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
+<style>
+  :root{
+    --bg:#08080a; --panel:#111114; --panel2:#17171b;
+    --border:#2a2a30; --border-soft:#1e1e23;
+    --amber:#ff9f1a; --amber-dim:#8a5a12; --amber-glow:rgba(255,159,26,0.12);
+    --white:#e9e9ec; --dim:#8a8a93; --muted:#55555c;
+    --green:#00d26a; --green-dim:rgba(0,210,106,.1);
+    --red:#ff3b30; --red-dim:rgba(255,59,48,.1);
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--white);font-family:'IBM Plex Mono',monospace;margin:0;font-size:13px;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--amber);color:#000;}
+
+  .topbar{display:flex;align-items:center;gap:18px;padding:14px 20px;background:#000;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+  .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
+  .logo span{color:var(--dim);font-weight:400;letter-spacing:1px;}
+  .nav{display:flex;gap:2px;margin-left:16px;}
+  .nav button{background:transparent;border:none;color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:1px;padding:7px 14px;cursor:pointer;border-radius:3px;font-weight:600;}
+  .nav button:hover{color:var(--white);}
+  .nav button.active{color:var(--amber);background:var(--amber-glow);}
+
+  .page{display:none;padding:20px;max-width:1100px;margin:0 auto;}
+  .page.active{display:block;}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;}
+  .panel-head{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .panel-title{font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--dim);}
+  .panel-title b{color:var(--white);}
+  .panel-meta{font-size:11px;color:var(--muted);}
+
+  .stat-row{display:flex;gap:0;flex-wrap:wrap;}
+  .stat{flex:1;min-width:140px;padding:16px 18px;border-right:1px solid var(--border-soft);}
+  .stat:last-child{border-right:none;}
+  .stat-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:700;color:var(--white);}
+  .stat-value.amber{color:var(--amber);}
+  .stat-value.red{color:var(--red);}
+  .stat-value.green{color:var(--green);}
+
+  .progress-wrap{padding:14px 18px;border-bottom:1px solid var(--border-soft);}
+  .progress-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;}
+  .progress-bar-bg{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;display:flex;}
+  .progress-bar-seg.validated{background:var(--green);}
+  .progress-bar-seg.failed{background:var(--red);}
+
+  .controls{display:flex;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;align-items:center;}
+  .search-box{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;}
+  .search-box::placeholder{color:var(--muted);}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;}
+  .tab-btn{background:var(--panel2);border:1px solid var(--border);color:var(--dim);font-family:inherit;font-size:11px;padding:7px 13px;border-radius:3px;cursor:pointer;font-weight:600;}
+  .tab-btn:hover{color:var(--white);}
+  .tab-btn.active{color:#000;background:var(--amber);border-color:var(--amber);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px;background:var(--border-soft);max-height:560px;overflow-y:auto;}
+  .sym{background:var(--panel);padding:9px 12px;font-size:12px;color:var(--white);font-weight:500;}
+  .sym:hover{background:var(--panel2);color:var(--amber);}
+  .list-table{width:100%;border-collapse:collapse;}
+  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);}
+  .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);}
+  .list-table tr:hover td{background:var(--panel2);}
+  .table-scroll{max-height:560px;overflow-y:auto;}
+  .exch-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;}
+  .exch-tag.ns{background:var(--green-dim);color:var(--green);}
+  .exch-tag.bo{background:var(--amber-glow);color:var(--amber);}
+  .removed-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;background:var(--amber-glow);color:var(--amber);}
+  .removed-tag.dupe{background:rgba(41,197,246,.1);color:#29c5f6;}
+  .status-tag{font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;font-weight:700;}
+  .status-tag.validated{background:var(--green-dim);color:var(--green);}
+  .status-tag.failed{background:var(--red-dim);color:var(--red);}
+  .status-tag.pending{background:rgba(138,138,147,.1);color:var(--muted);}
+  .status-tag.exhausted{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
+  .err-text{color:var(--dim);font-size:10px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  .footer-note{padding:12px 18px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);}
+  .row-count{padding:8px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);}
+  .loading{padding:40px;text-align:center;color:var(--dim);}
+  .refresh-btn{background:var(--panel2);border:1px solid var(--border);color:var(--white);font-family:inherit;font-size:10px;padding:5px 10px;border-radius:3px;cursor:pointer;}
+  .refresh-btn:hover{border-color:var(--amber-dim);color:var(--amber);}
+
+  .sd-controls{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border-soft);align-items:center;flex-wrap:wrap;}
+  .sd-select{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;min-width:160px;}
+  .sd-status{font-size:11px;color:var(--dim);}
+  .sd-meta-row{display:flex;gap:18px;padding:14px 18px;flex-wrap:wrap;border-bottom:1px solid var(--border-soft);}
+  .sd-metric-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
+  .sd-metric-value{font-size:16px;font-weight:700;color:var(--white);margin-top:3px;}
+  .sd-metric-value.green{color:var(--green);}
+  .sd-metric-value.red{color:var(--red);}
+  .sd-metric-value.amber{color:var(--amber);}
+  .chart-box{padding:14px 18px;}
+  .rc-group{display:flex;flex-direction:column;gap:6px;min-width:150px;}
+  .rc-label{font-size:9px;color:var(--muted);letter-spacing:1px;}
+
+  .sb-section{padding:16px 18px;border-bottom:1px solid var(--border-soft);}
+  .sb-section-title{font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
+  .sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+  .sb-field label{display:block;font-size:10px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;}
+  .sb-field input{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 10px;color:var(--white);font-family:inherit;font-size:12px;}
+  .sb-field input:focus{outline:none;border-color:var(--amber-dim);}
+  .sb-meta{font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .sb-controls-row{display:flex;gap:10px;align-items:center;padding:16px 18px;flex-wrap:wrap;}
+  .sb-trail-input{width:70px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;padding:5px 8px;color:var(--white);font-family:inherit;font-size:12px;}
+  .sb-trail-remove{background:transparent;border:1px solid var(--border);color:var(--red);font-family:inherit;font-size:10px;padding:3px 8px;border-radius:3px;cursor:pointer;}
+  .sb-trail-remove:hover{background:var(--red-dim);}
+
+  .dash-header{padding:18px 18px 14px;border-bottom:1px solid var(--border-soft);}
+  .dash-title{font-size:15px;font-weight:700;color:var(--amber);letter-spacing:1.5px;}
+  .dash-meta{font-size:11px;color:var(--muted);margin-top:6px;}
+  .dash-split{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+  @media (max-width:860px){.dash-split{grid-template-columns:1fr;}}
+  .dash-pulse-value{font-size:26px;font-weight:700;color:var(--white);}
+  .dash-pulse-value.green{color:var(--green);}
+  .dash-pulse-value.red{color:var(--red);}
+  .dash-pulse-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+  .dash-empty-card{padding:28px 18px;text-align:center;color:var(--muted);font-size:11px;line-height:1.6;}
+  .dash-empty-card .dash-empty-icon{font-size:20px;display:block;margin-bottom:8px;}
+  .dash-perf-row{display:flex;gap:0;flex-wrap:wrap;border-bottom:1px solid var(--border-soft);}
+  .dash-perf-cell{flex:1;min-width:150px;padding:16px 18px;border-right:1px solid var(--border-soft);}
+  .dash-perf-cell:last-child{border-right:none;}
+  .dash-perf-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;}
+  .dash-perf-value{font-size:20px;font-weight:700;color:var(--white);}
+  .dash-perf-footnote{padding:10px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);line-height:1.6;}
+  .dash-run-label{color:var(--amber);font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">BACKTESTER</div>
+  <div class="nav">
+    <button class="active" data-page="dashboard" id="nav-dashboard">DASHBOARD</button>
+    <button data-page="universe" id="nav-universe">UNIVERSE</button>
+    <button data-page="backfill" id="nav-backfill">BACKFILL</button>
+    <button data-page="stock" id="nav-stock">STOCK DETAIL</button>
+    <button data-page="strategy" id="nav-strategy">STRATEGY BUILDER</button>
+    <button data-page="results" id="nav-results">RESULTS</button>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD PAGE ============ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">SST BACKTESTING &amp; MARKET INTELLIGENCE</div>
+      <div class="dash-meta" id="dash-meta">Market Data: — &nbsp;|&nbsp; Updated: —</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">MARKET PULSE</div></div>
+    <div class="stat-row" id="dash-pulse-row">
+      <div class="stat">
+        <div class="stat-label">STOCKS &gt; EMA50</div>
+        <div class="dash-pulse-value" id="dash-pulse-ema50">—</div>
+        <div class="dash-pulse-sub" id="dash-pulse-ema50-pct">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">STOCKS &gt; EMA200</div>
+        <div class="dash-pulse-value" id="dash-pulse-ema200">—</div>
+        <div class="dash-pulse-sub" id="dash-pulse-ema200-pct">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">ABOVE BOTH</div>
+        <div class="dash-pulse-value green" id="dash-pulse-both">—</div>
+        <div class="dash-pulse-sub" id="dash-pulse-both-pct">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">BELOW BOTH</div>
+        <div class="dash-pulse-value red" id="dash-pulse-neither">—</div>
+        <div class="dash-pulse-sub" id="dash-pulse-neither-pct">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">MARKET BREADTH TREND</div></div>
+      <div class="chart-box" id="dash-breadth-chart"><div class="loading">Loading breadth history...</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta">Next 7 days</span></div></div>
+      <div class="dash-empty-card">
+        <span class="dash-empty-icon">—</span>
+        Not available yet — NSE's board-meeting API blocks requests from this project's hosting infrastructure (GitHub Actions). A working path exists via Dhan's broker API, deferred for now.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">PORTFOLIO PERFORMANCE</div>
+      <div class="panel-meta" id="dash-perf-run-label">—</div>
+    </div>
+    <div class="dash-perf-row" id="dash-perf-row">
+      <div class="dash-perf-cell"><div class="dash-perf-label">STARTING CAPITAL</div><div class="dash-perf-value" id="dash-perf-start">—</div></div>
+      <div class="dash-perf-cell"><div class="dash-perf-label">ENDING EQUITY (COMBINED)</div><div class="dash-perf-value" id="dash-perf-end">—</div></div>
+      <div class="dash-perf-cell"><div class="dash-perf-label">CAGR</div><div class="dash-perf-value" id="dash-perf-cagr">—</div></div>
+      <div class="dash-perf-cell"><div class="dash-perf-label">MAX DRAWDOWN</div><div class="dash-perf-value" id="dash-perf-dd">—</div></div>
+    </div>
+    <div class="chart-box" id="dash-equity-chart"><div class="loading">Loading equity curve...</div></div>
+    <div class="dash-perf-footnote" id="dash-perf-footnote"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">RECENT BACKTEST RUNS</div>
+      <button class="refresh-btn" id="dash-refresh">↻ REFRESH</button>
+    </div>
+    <div class="table-scroll" style="max-height:320px;">
+      <table class="list-table">
+        <thead><tr><th>CONFIGURATION</th><th>RUN AT</th><th>UNIVERSE</th><th>RETURN (COMBINED)</th><th>MAX DD</th><th>STATUS</th></tr></thead>
+        <tbody id="dash-runs-body"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ UNIVERSE PAGE ============ -->
+<div class="page" id="page-universe">
+
+  <div class="panel">
+    <div class="stat-row" id="stat-row">
+      <div class="stat"><div class="stat-label">RAW SYMBOLS</div><div class="stat-value" id="stat-raw">—</div></div>
+      <div class="stat"><div class="stat-label">ETFS REMOVED</div><div class="stat-value amber" id="stat-etf">—</div></div>
+      <div class="stat"><div class="stat-label">DUPLICATES REMOVED</div><div class="stat-value amber" id="stat-dupe">—</div></div>
+      <div class="stat"><div class="stat-label">CLEAN UNIVERSE</div><div class="stat-value" id="stat-clean">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">EQUITY UNIVERSE — <b id="panel-count">—</b> stocks</div>
+      <div class="panel-meta">source: StockList sheet → scripts/clean_universe.py → data/universe_clean.csv</div>
+    </div>
+    <div class="controls">
+      <input class="search-box" id="search" placeholder="search symbol...">
+      <div class="tabs">
+        <button class="tab-btn active" data-view="grid" id="tab-grid">GRID</button>
+        <button class="tab-btn" data-view="table" id="tab-table">TABLE</button>
+        <button class="tab-btn" data-view="removed" id="tab-removed">REMOVED (<span id="removed-count">—</span>)</button>
+      </div>
+    </div>
+    <div id="view-grid" class="grid"></div>
+    <div id="view-table" class="table-scroll" style="display:none;">
+      <table class="list-table">
+        <thead><tr><th>#</th><th>SYMBOL</th><th>EXCHANGE</th></tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div id="view-removed" class="table-scroll" style="display:none;">
+      <table class="list-table">
+        <thead><tr><th>SYMBOL</th><th>REASON</th></tr></thead>
+        <tbody id="removed-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="row-count"></div>
+  </div>
+
+  <div class="footer-note">This is the raw universe only — no price data yet. See the BACKFILL tab for data-fetch progress.</div>
+</div>
+
+<!-- ============ BACKFILL PAGE ============ -->
+<div class="page" id="page-backfill">
+
+  <div class="panel">
+    <div class="progress-wrap">
+      <div class="progress-label"><span>BACKFILL PROGRESS</span><span id="bf-progress-pct">—</span></div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-seg validated" id="bf-bar-validated" style="width:0%"></div>
+        <div class="progress-bar-seg failed" id="bf-bar-failed" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="stat-row" id="bf-stat-row">
+      <div class="stat"><div class="stat-label">VALIDATED</div><div class="stat-value green" id="bf-stat-validated">—</div></div>
+      <div class="stat"><div class="stat-label">FAILED (retryable)</div><div class="stat-value red" id="bf-stat-failed">—</div></div>
+      <div class="stat"><div class="stat-label">EXHAUSTED</div><div class="stat-value red" id="bf-stat-exhausted">—</div></div>
+      <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" id="bf-stat-pending">—</div></div>
+      <div class="stat"><div class="stat-label">TOTAL UNIVERSE</div><div class="stat-value" id="bf-stat-total">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">MANIFEST — <b id="bf-panel-count">—</b> symbols</div>
+      <div class="panel-meta">source: backfill-checkpoints branch → checkpoints/manifest.csv</div>
+      <button class="refresh-btn" id="bf-refresh">↻ REFRESH</button>
+    </div>
+    <div class="controls">
+      <input class="search-box" id="bf-search" placeholder="search symbol...">
+      <div class="tabs" id="bf-filter-tabs">
+        <button class="tab-btn active" data-status="all" id="bf-filter-all">ALL</button>
+        <button class="tab-btn" data-status="VALIDATED" id="bf-filter-validated">VALIDATED</button>
+        <button class="tab-btn" data-status="FAILED" id="bf-filter-failed">FAILED</button>
+        <button class="tab-btn" data-status="PENDING" id="bf-filter-pending">PENDING</button>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="list-table">
+        <thead>
+          <tr><th>SYMBOL</th><th>STATUS</th><th>RECORDS</th><th>FIRST DATE</th><th>LAST DATE</th><th>ATTEMPTS</th><th>ERROR</th></tr>
+        </thead>
+        <tbody id="bf-table-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="bf-row-count"></div>
+  </div>
+
+  <div class="footer-note">Checkpoint data lives on the backfill-checkpoints git branch, not main — written by .github/workflows/backfill.yml, never committed by hand.</div>
+</div>
+
+<!-- ============ STOCK DETAIL PAGE ============ -->
+<div class="page" id="page-stock">
+
+  <div class="panel">
+    <div class="sd-controls">
+      <select class="sd-select" id="sd-symbol-select"><option>Loading validated symbols...</option></select>
+      <span class="sd-status" id="sd-status"></span>
+    </div>
+    <div class="sd-meta-row" id="sd-meta-row" style="display:none;">
+      <div><div class="sd-metric-label">LATEST CLOSE</div><div class="sd-metric-value" id="sd-close">—</div></div>
+      <div><div class="sd-metric-label">PERIOD HIGH</div><div class="sd-metric-value green" id="sd-high">—</div></div>
+      <div><div class="sd-metric-label">PERIOD LOW</div><div class="sd-metric-value red" id="sd-low">—</div></div>
+      <div><div class="sd-metric-label">DATE RANGE</div><div class="sd-metric-value" id="sd-range" style="font-size:12px;">—</div></div>
+      <div><div class="sd-metric-label">TRADING DAYS</div><div class="sd-metric-value" id="sd-days">—</div></div>
+      <div><div class="sd-metric-label">EMA50 / EMA200</div><div class="sd-metric-value" id="sd-ema" style="font-size:12px;">—</div></div>
+      <div><div class="sd-metric-label">RSI14 (latest)</div><div class="sd-metric-value amber" id="sd-rsi">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">PRICE — <b id="sd-chart-symbol">—</b></div>
+      <div class="panel-meta">candlestick, adjusted close · EMA50 (cyan) / EMA200 (amber) overlay</div>
+    </div>
+    <div class="chart-box"><div id="chart-price" style="height:360px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">VOLUME</div></div>
+    <div class="chart-box"><div id="chart-volume" style="height:140px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">RSI (14)</div><div class="panel-meta">reference lines at 30 / 70</div></div>
+    <div class="chart-box"><div id="chart-rsi" style="height:160px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">THRESHOLD BREACH ANALYSIS</div>
+      <div class="panel-meta">how many periods moved beyond a fixed ±% from the period's opening price</div>
+    </div>
+    <div class="sd-controls">
+      <div class="rc-group">
+        <label class="rc-label">PERIOD</label>
+        <div class="tabs" id="oa-period-tabs">
+          <button class="tab-btn" data-val="weekly" id="oa-period-weekly">WEEKLY</button>
+          <button class="tab-btn active" data-val="monthly" id="oa-period-monthly">MONTHLY</button>
+        </div>
+      </div>
+      <div class="rc-group">
+        <label class="rc-label">THRESHOLD %</label>
+        <input type="number" id="oa-threshold" value="10" min="1" max="100" step="0.5"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+      </div>
+    </div>
+    <div class="sd-meta-row" id="oa-safe-range-row">
+      <div><div class="sd-metric-label">MONTHS &gt; +<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value green" id="oa-upper">—</div></div>
+      <div><div class="sd-metric-label">MONTHS &lt; −<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value red" id="oa-lower">—</div></div>
+      <div><div class="sd-metric-label">WITHIN ±<span class="oa-thresh-label">10</span>%</div><div class="sd-metric-value" id="oa-within">—</div></div>
+      <div><div class="sd-metric-label">TOTAL PERIODS</div><div class="sd-metric-value" id="oa-total">—</div></div>
+    </div>
+    <div class="sd-controls" style="border-top:1px solid var(--border-soft);">
+      <div class="rc-group" style="min-width:100px;">
+        <label class="rc-label">RANGE COVERS</label>
+        <input type="number" id="oa-pct-coverage" value="90" min="50" max="99" step="1"
+          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:70px;">
+        <span style="font-size:11px;color:var(--muted);">% of periods</span>
+      </div>
+      <div style="flex:1;font-size:13px;color:var(--white);">
+        <span id="oa-pct-sentence">—</span>
+      </div>
+    </div>
+    <div class="chart-box"><div id="chart-outlier" style="height:280px;"></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OUTLIER PERIODS</div><div class="panel-meta">sorted by absolute return size</div></div>
+    <div class="table-scroll" style="max-height:300px;">
+      <table class="list-table">
+        <thead><tr><th>START</th><th>END</th><th>RETURN %</th><th>STATUS</th></tr></thead>
+        <tbody id="oa-outlier-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="oa-outlier-empty" style="display:none;">No outliers at this coverage level.</div>
+  </div>
+
+  <div class="footer-note">Data queried live from the parquet checkpoint file via DuckDB-WASM, running entirely in this browser tab — no server, no pre-converted JSON. This is the same query path the real backtest engine will use.</div>
+</div>
+
+<!-- ============ STRATEGY BUILDER PAGE ============ -->
+<div class="page" id="page-strategy">
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">SST STRATEGY PARAMETERS</div>
+      <div class="panel-meta">every value here is tunable — matches docs/SPEC.md section 7 exactly</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">ENTRY / UNIVERSE FILTER</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Breakout window (N-Day High)</label><input type="number" id="p-breakout_window_days" value="21" min="1"></div>
+        <div class="sb-field"><label>EMA filter — fast</label><input type="number" id="p-ema_filter_fast" value="50" min="1"></div>
+        <div class="sb-field"><label>EMA filter — slow</label><input type="number" id="p-ema_filter_slow" value="200" min="1"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">PROFIT TRAILING-STOP</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Lock-in trigger %</label><input type="number" id="p-profit_lock_trigger_pct" value="6" step="0.5"></div>
+      </div>
+      <div class="sb-meta">Step-based ratchet — distance below peak price tightens as profit grows. One-directional, never loosens.</div>
+      <table class="list-table" id="sb-trail-table">
+        <thead><tr><th>PROFIT ≥ %</th><th>TRAIL DISTANCE %</th><th></th></tr></thead>
+        <tbody id="sb-trail-body"></tbody>
+      </table>
+      <button class="refresh-btn" id="sb-trail-add" style="margin:10px 18px;">+ ADD CHECKPOINT</button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">ADD-ON (LOSS, ABOVE BOTH EMAs, FRESH BREAKOUT)</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Add-on trigger % (loss)</label><input type="number" id="p-add_on_trigger_pct" value="-7" step="0.5"></div>
+        <div class="sb-field"><label>Add-on size (fraction of qty)</label><input type="number" id="p-add_on_size_fraction" value="0.1" step="0.01" min="0"></div>
+        <div class="sb-field"><label>Max add-ons per week (per stock)</label><input type="number" id="p-add_on_max_per_week" value="1" min="0"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">POSITION SIZING</div>
+      <div class="sb-grid">
+        <div class="sb-field"><label>Base position (₹)</label><input type="number" id="p-base_position_rs" value="20000" step="1000"></div>
+        <div class="sb-field"><label>Increment (₹)</label><input type="number" id="p-position_size_increment_rs" value="5000" step="500"></div>
+        <div class="sb-field"><label>Increment every N closed trades</label><input type="number" id="p-position_size_increment_trades" value="100" min="1"></div>
+        <div class="sb-field"><label>Position size cap (₹)</label><input type="number" id="p-position_size_cap_rs" value="100000" step="5000"></div>
+        <div class="sb-field"><label>Max open positions</label><input type="number" id="p-max_open_positions" value="200" min="1"></div>
+        <div class="sb-field"><label>Initial capital (₹)</label><input type="number" id="p-initial_capital_rs" value="5000000" step="100000"></div>
+      </div>
+    </div>
+
+    <div class="sb-controls-row">
+      <button class="refresh-btn" id="sb-copy-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;padding:9px 18px;">⧉ COPY PARAMS AS JSON</button>
+      <span class="sd-status" id="sb-status"></span>
+    </div>
+  </div>
+
+  <div class="footer-note" id="sb-wiring-note">
+    <b style="color:var(--amber);">Runs via GitHub's own Actions tab, not a one-click button here — by design.</b>
+    Click COPY PARAMS AS JSON above, then go to this repo's <b>Actions → Run SST Backtest → Run workflow</b>, paste the JSON into <code>params_json</code>, give it a <code>run_label</code>, and run it. Results land in <code>results/</code> on main a minute or two later.
+  </div>
+</div>
+
+<!-- ============ RESULTS PAGE ============ -->
+<div class="page" id="page-results">
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">BACKTEST RUNS — <b id="res-run-count">—</b></div>
+      <div class="panel-meta">select up to 4 runs to compare · click REFRESH after triggering a new run from the Actions tab</div>
+      <button class="refresh-btn" id="res-refresh">↻ REFRESH</button>
+    </div>
+    <div class="table-scroll" style="max-height:320px;">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th></th><th>LABEL</th><th>RUN AT</th><th>WIN RATE</th><th>PROFIT FACTOR</th>
+            <th>MAX DD</th><th>TRADES</th><th>COMBINED P&L</th>
+          </tr>
+        </thead>
+        <tbody id="res-run-body"></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="res-run-empty" style="display:none;">No runs yet — trigger one from Actions → Run SST Backtest.</div>
+  </div>
+
+  <div class="panel" id="res-detail-panel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-title">EQUITY CURVE — <b id="res-detail-label">—</b></div>
+      <div class="panel-meta">realized (solid) vs combined incl. open MTM (dashed)</div>
+    </div>
+    <div class="chart-box"><div id="chart-equity" style="height:320px;"></div></div>
+  </div>
+
+  <div class="panel" id="res-metrics-panel" style="display:none;">
+    <div class="panel-head"><div class="panel-title">METRICS COMPARISON</div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="res-metrics-table">
+        <thead><tr id="res-metrics-head"></tr></thead>
+        <tbody id="res-metrics-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="res-trades-panel" style="display:none;">
+    <div class="panel-head">
+      <div class="panel-title">TRADES — <b id="res-trades-label">—</b></div>
+      <div class="panel-meta">single-run view only — select exactly one run to see its trade list</div>
+    </div>
+    <div class="table-scroll" style="max-height:360px;">
+      <table class="list-table">
+        <thead><tr><th>SYMBOL</th><th>ENTRY</th><th>EXIT</th><th>ENTRY ₹</th><th>EXIT ₹</th><th>QTY</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>HOLD (D)</th><th>ADD-ON</th></tr></thead>
+        <tbody id="res-trades-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note">Reads results/index.json + individual result files directly from main — same-origin, no CORS, no separate branch needed (unlike the checkpoint data).</div>
+</div>
+
+<script>
+// ============================================================
+// NAV
+// ============================================================
+function switchPage(page){
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + page).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if(page === 'dashboard' && !dashInitialized) initDashboard();
+  if(page === 'universe' && !univInitialized) initUniverse();
+  if(page === 'backfill' && !bfLoaded) loadBackfill();
+  if(page === 'stock' && !sdInitialized) initStockDetail();
+  if(page === 'strategy' && !sbInitialized) initStrategyBuilder();
+  if(page === 'results' && !resInitialized) initResults();
+}
+document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
+document.getElementById('nav-universe').onclick = () => switchPage('universe');
+document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
+document.getElementById('nav-stock').onclick = () => switchPage('stock');
+document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
+document.getElementById('nav-results').onclick = () => switchPage('results');
+
+// ============================================================
+// DASHBOARD PAGE
+// ============================================================
+let dashInitialized = false;
+let dashBreadthChart, dashEquityChart;
+
+function fmtRsShort(v){
+  if(v == null) return '—';
+  const sign = v < 0 ? '-' : '';
+  const a = Math.abs(v);
+  if(a >= 1e7) return sign + '₹' + (a/1e7).toFixed(2) + 'Cr';
+  if(a >= 1e5) return sign + '₹' + (a/1e5).toFixed(2) + 'L';
+  if(a >= 1e3) return sign + '₹' + (a/1e3).toFixed(1) + 'k';
+  return sign + '₹' + Math.round(a);
+}
+
+async function initDashboard(){
+  dashInitialized = true;
+  await Promise.all([loadMarketSnapshot(), loadDashboardRuns()]);
+}
+
+async function loadMarketSnapshot(){
+  let snap;
+  try{
+    const resp = await fetch('market_snapshot.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('market_snapshot.json not found — run the "Build Market Snapshot" workflow');
+    snap = await resp.json();
+  }catch(err){
+    document.getElementById('dash-breadth-chart').innerHTML = `<div class="loading">${err.message}</div>`;
+    return;
+  }
+  // Each step isolated — one failing (e.g. the chart library failing to
+  // load) must not prevent the others, which have no such dependency,
+  // from still rendering. Same pattern as the Results page's fix.
+  try{ renderMarketPulse(snap); }
+  catch(err){ console.error('Market pulse failed:', err); }
+  try{ renderBreadthChart(snap); }
+  catch(err){ console.error('Breadth chart failed:', err); document.getElementById('dash-breadth-chart').innerHTML = `<div class="loading">Chart failed to render: ${err.message}</div>`; }
+  document.getElementById('dash-meta').textContent =
+    `Market Data: Latest EOD (${snap.as_of_date})  |  Updated: ${new Date(snap.generated_at).toLocaleString('en-IN')}  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
+}
+
+function renderMarketPulse(snap){
+  const p = snap.pulse;
+  document.getElementById('dash-pulse-ema50').textContent = p.above_ema50.toLocaleString('en-IN');
+  document.getElementById('dash-pulse-ema50-pct').textContent = p.above_ema50_pct + '% of ' + p.counted;
+  document.getElementById('dash-pulse-ema200').textContent = p.above_ema200.toLocaleString('en-IN');
+  document.getElementById('dash-pulse-ema200-pct').textContent = p.above_ema200_pct + '% of ' + p.counted;
+  document.getElementById('dash-pulse-both').textContent = p.above_both.toLocaleString('en-IN');
+  document.getElementById('dash-pulse-both-pct').textContent = p.above_both_pct + '%';
+  document.getElementById('dash-pulse-neither').textContent = p.below_both.toLocaleString('en-IN');
+  document.getElementById('dash-pulse-neither-pct').textContent = p.below_both_pct + '%';
+}
+
+function renderBreadthChart(snap){
+  const pts = snap.breadth_trend.filter(p => p.above_ema200_pct != null);
+  const s50 = pts.map(p => ({x: new Date(p.date).getTime(), y: p.above_ema50_pct}));
+  const s200 = pts.map(p => ({x: new Date(p.date).getTime(), y: p.above_ema200_pct}));
+
+  if(dashBreadthChart) dashBreadthChart.destroy();
+  dashBreadthChart = new ApexCharts(document.getElementById('dash-breadth-chart'), {
+    chart: {type:'line', height:300, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [
+      {name: '% Above EMA50', data: s50},
+      {name: '% Above EMA200', data: s200},
+    ],
+    colors: ['#29c5f6', '#ff9f1a'],
+    stroke: {width: [1.5, 1.5], curve: 'straight'},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {min:0, max:100, labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(0) + '%'}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {labels:{colors:'#e9e9ec'}},
+  });
+  dashBreadthChart.render();
+}
+
+async function loadDashboardRuns(){
+  const tbody = document.getElementById('dash-runs-body');
+  let runs;
+  try{
+    const resp = await fetch('results/index.json?t=' + Date.now());
+    runs = resp.ok ? await resp.json() : [];
+    runs.sort((a,b) => new Date(b.run_at) - new Date(a.run_at));
+  }catch(err){
+    tbody.innerHTML = `<tr><td colspan="6" class="loading">Failed to load runs: ${err.message}</td></tr>`;
+    return;
+  }
+
+  if(!runs.length){
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">No backtest runs yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = runs.map(r => `
+    <tr>
+      <td class="dash-run-label">${r.run_label}</td>
+      <td>${new Date(r.run_at).toLocaleString('en-IN')}</td>
+      <td>${r.universe_size.toLocaleString('en-IN')}</td>
+      <td style="color:${r.combined_pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRsShort(r.combined_pl_rs)}</td>
+      <td>${r.max_drawdown_pct != null ? r.max_drawdown_pct.toFixed(2)+'%' : '—'}</td>
+      <td><span class="status-tag validated">DONE</span></td>
+    </tr>
+  `).join('');
+
+  // Portfolio Performance + equity curve, sourced from the most recent run —
+  // isolated from the table render above so a failure here (e.g. the chart
+  // library) can't wipe out the already-rendered runs table.
+  try{
+    const latest = runs[0];
+    const fullResp = await fetch('results/' + latest.filename + '?t=' + Date.now());
+    const full = await fullResp.json();
+    renderPortfolioPerformance(latest, full);
+  }catch(err){
+    console.error('Portfolio performance failed:', err);
+    document.getElementById('dash-equity-chart').innerHTML = `<div class="loading">Failed to render: ${err.message}</div>`;
+  }
+}
+
+function renderPortfolioPerformance(entry, full){
+  const ic = full.params.initial_capital_rs;
+  const ending = ic + full.metrics.combined_pl_rs;
+  const eq = full.equity_curve;
+  let cagrText = '—';
+  if(eq.length > 1 && ic > 0){
+    const days = (new Date(eq[eq.length-1].date) - new Date(eq[0].date)) / 86400000;
+    const years = days / 365.25;
+    if(years > 0){
+      const cagr = (Math.pow(ending / ic, 1/years) - 1) * 100;
+      cagrText = (cagr >= 0 ? '+' : '') + cagr.toFixed(1) + '%';
+    }
+  }
+
+  document.getElementById('dash-perf-run-label').textContent = entry.run_label + ' · ' + entry.universe_size.toLocaleString('en-IN') + ' stocks';
+  document.getElementById('dash-perf-start').textContent = fmtRsShort(ic);
+  document.getElementById('dash-perf-end').textContent = fmtRsShort(ending);
+  document.getElementById('dash-perf-cagr').textContent = cagrText;
+  document.getElementById('dash-perf-dd').textContent = full.metrics.max_drawdown_pct != null ? full.metrics.max_drawdown_pct.toFixed(2) + '%' : '—';
+
+  document.getElementById('dash-perf-footnote').textContent =
+    'Capital shown is the configured starting figure. The engine currently caps concurrent positions by count (max_open_positions) but does not enforce a cash budget, so more capital can be deployed at once than this starting figure — see docs/SPEC.md. Read CAGR here as strategy signal quality, not a literal account simulation, until that constraint is added.';
+
+  if(dashEquityChart) dashEquityChart.destroy();
+  dashEquityChart = new ApexCharts(document.getElementById('dash-equity-chart'), {
+    chart: {type:'area', height:280, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [{name: 'Combined Equity', data: eq.map(p => ({x: new Date(p.date).getTime(), y: ic + p.combined}))}],
+    colors: ['#ff9f1a'],
+    stroke: {width: 2, curve: 'straight'},
+    fill: {type:'gradient', gradient:{shadeIntensity:1, opacityFrom:0.25, opacityTo:0.02}},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => fmtRsShort(v)}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {show:false},
+  });
+  dashEquityChart.render();
+}
+
+document.getElementById('dash-refresh').onclick = () => { loadMarketSnapshot(); loadDashboardRuns(); };
+
+// ============================================================
+// UNIVERSE PAGE
+// ============================================================
+let cleanSymbols = [];
+let removedRows = []; // {symbol, reason}
+let currentView = 'grid';
+
+function exchTag(sym){
+  const exch = sym.endsWith('.BO') ? 'BO' : 'NS';
+  return `<span class="exch-tag ${exch.toLowerCase()}">${exch}</span>`;
+}
+
+function renderStats(raw, etf, dupe, clean){
+  document.getElementById('stat-raw').textContent = raw.toLocaleString('en-IN');
+  document.getElementById('stat-etf').textContent = etf.toLocaleString('en-IN');
+  document.getElementById('stat-dupe').textContent = dupe.toLocaleString('en-IN');
+  document.getElementById('stat-clean').textContent = clean.toLocaleString('en-IN');
+  document.getElementById('panel-count').textContent = clean.toLocaleString('en-IN');
+  document.getElementById('removed-count').textContent = (etf + dupe).toLocaleString('en-IN');
+}
+
+function renderGrid(list){
+  document.getElementById('view-grid').innerHTML = list.map(s => `<div class="sym">${s}</div>`).join('');
+}
+
+function renderTable(list){
+  document.getElementById('table-body').innerHTML = list.map((s,i) =>
+    `<tr><td style="color:var(--muted)">${i+1}</td><td>${s.replace(/\.(NS|BO)$/,'')}</td><td>${exchTag(s)}</td></tr>`
+  ).join('');
+}
+
+function renderRemoved(list){
+  document.getElementById('removed-body').innerHTML = list.map(r =>
+    `<tr><td>${r.symbol}</td><td><span class="removed-tag ${r.reason==='duplicate'?'dupe':''}">${r.reason.toUpperCase()}</span></td></tr>`
+  ).join('');
+}
+
+function applySearch(){
+  const term = document.getElementById('search').value.trim().toUpperCase();
+  if(currentView === 'removed'){
+    const list = term ? removedRows.filter(r => r.symbol.toUpperCase().includes(term)) : removedRows;
+    renderRemoved(list);
+    document.getElementById('row-count').textContent = `Showing ${list.length} of ${removedRows.length} removed symbols`;
+    return;
+  }
+  const list = term ? cleanSymbols.filter(s => s.toUpperCase().includes(term)) : cleanSymbols;
+  if(currentView === 'grid') renderGrid(list); else renderTable(list);
+  document.getElementById('row-count').textContent = `Showing ${list.length} of ${cleanSymbols.length} clean equities`;
+}
+
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('#page-universe .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + view).classList.add('active');
+  document.getElementById('view-grid').style.display = view === 'grid' ? 'grid' : 'none';
+  document.getElementById('view-table').style.display = view === 'table' ? 'block' : 'none';
+  document.getElementById('view-removed').style.display = view === 'removed' ? 'block' : 'none';
+  applySearch();
+}
+
+document.getElementById('tab-grid').onclick = () => switchView('grid');
+document.getElementById('tab-table').onclick = () => switchView('table');
+document.getElementById('tab-removed').onclick = () => switchView('removed');
+document.getElementById('search').addEventListener('input', applySearch);
+
+let univInitialized = false;
+async function initUniverse(){
+  univInitialized = true;
+  try{
+    const [cleanResp, reportResp] = await Promise.all([
+      fetch('data/universe_clean.csv'),
+      fetch('data/universe_report.txt'),
+    ]);
+    const cleanText = await cleanResp.text();
+    const reportText = await reportResp.text();
+
+    cleanSymbols = cleanText.split('\n').map(l => l.trim()).filter(l => l && l !== 'symbol');
+
+    const rawMatch = reportText.match(/Raw symbols in source:\s+(\d+)/);
+    const etfMatch = reportText.match(/Removed as ETFs:\s+(\d+)/);
+    const dupeMatch = reportText.match(/Removed as duplicates:\s+(\d+)/);
+    const raw = rawMatch ? parseInt(rawMatch[1]) : cleanSymbols.length;
+    const etfCount = etfMatch ? parseInt(etfMatch[1]) : 0;
+    const dupeCount = dupeMatch ? parseInt(dupeMatch[1]) : 0;
+
+    const etfSection = reportText.split(/--- ETFs removed/)[1] || '';
+    const etfBlock = etfSection.split(/--- Duplicates removed/)[0] || '';
+    etfBlock.split('\n').map(l=>l.trim()).filter(l=>l && l.endsWith('.NS') || l.endsWith('.BO'))
+      .forEach(sym => removedRows.push({symbol: sym, reason: 'etf'}));
+
+    const dupeSection = reportText.split(/--- Duplicates removed/)[1] || '';
+    dupeSection.split('\n').map(l=>l.trim()).filter(l=>l && (l.endsWith('.NS') || l.endsWith('.BO')))
+      .forEach(sym => removedRows.push({symbol: sym, reason: 'duplicate'}));
+
+    renderStats(raw, etfCount, dupeCount, cleanSymbols.length);
+    switchView('grid');
+  }catch(err){
+    document.getElementById('view-grid').innerHTML = `<div class="loading">Failed to load universe data: ${err.message}</div>`;
+  }
+}
+
+// ============================================================
+// BACKFILL PAGE
+// ============================================================
+const MANIFEST_URL = 'https://raw.githubusercontent.com/vaijayanth/backtester/backfill-checkpoints/checkpoints/manifest.csv';
+let bfLoaded = false;
+let manifestRows = [];
+let bfFilter = 'all';
+
+// Minimal RFC4180-ish CSV parser — handles quoted fields with embedded
+// commas, which the Python csv module uses for the "error" column (error
+// messages routinely contain commas, e.g. "missing columns: {'Open', ...}").
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length > 1 || r[0] !== '');
+}
+
+function statusTag(row){
+  if(row.status === 'VALIDATED') return '<span class="status-tag validated">VALIDATED</span>';
+  if(row.status === 'FAILED' && parseInt(row.attempts||0) >= 3) return '<span class="status-tag exhausted">EXHAUSTED</span>';
+  if(row.status === 'FAILED') return '<span class="status-tag failed">FAILED</span>';
+  return '<span class="status-tag pending">PENDING</span>';
+}
+
+function renderBfStats(){
+  const validated = manifestRows.filter(r => r.status === 'VALIDATED').length;
+  const exhausted = manifestRows.filter(r => r.status === 'FAILED' && parseInt(r.attempts||0) >= 3).length;
+  const failed = manifestRows.filter(r => r.status === 'FAILED' && parseInt(r.attempts||0) < 3).length;
+  const pending = manifestRows.filter(r => r.status === 'PENDING').length;
+  const total = manifestRows.length;
+
+  document.getElementById('bf-stat-validated').textContent = validated.toLocaleString('en-IN');
+  document.getElementById('bf-stat-failed').textContent = failed.toLocaleString('en-IN');
+  document.getElementById('bf-stat-exhausted').textContent = exhausted.toLocaleString('en-IN');
+  document.getElementById('bf-stat-pending').textContent = pending.toLocaleString('en-IN');
+  document.getElementById('bf-stat-total').textContent = total.toLocaleString('en-IN');
+  document.getElementById('bf-panel-count').textContent = total.toLocaleString('en-IN');
+
+  const pct = total ? (validated / total * 100) : 0;
+  const failPct = total ? ((failed + exhausted) / total * 100) : 0;
+  document.getElementById('bf-progress-pct').textContent =
+    `${validated.toLocaleString('en-IN')} / ${total.toLocaleString('en-IN')} (${pct.toFixed(1)}%)`;
+  document.getElementById('bf-bar-validated').style.width = pct + '%';
+  document.getElementById('bf-bar-failed').style.width = failPct + '%';
+}
+
+function renderBfTable(){
+  const term = document.getElementById('bf-search').value.trim().toUpperCase();
+  let list = manifestRows;
+  if(bfFilter !== 'all') list = list.filter(r => r.status === bfFilter);
+  if(term) list = list.filter(r => r.symbol.toUpperCase().includes(term));
+
+  document.getElementById('bf-table-body').innerHTML = list.map(r => `
+    <tr>
+      <td>${r.symbol}</td>
+      <td>${statusTag(r)}</td>
+      <td>${r.records || '—'}</td>
+      <td>${r.first_date || '—'}</td>
+      <td>${r.last_date || '—'}</td>
+      <td>${r.attempts || '0'}</td>
+      <td class="err-text" title="${(r.error||'').replace(/"/g,'&quot;')}">${r.error || '—'}</td>
+    </tr>
+  `).join('');
+  document.getElementById('bf-row-count').textContent = `Showing ${list.length} of ${manifestRows.length} symbols`;
+}
+
+document.querySelectorAll('#bf-filter-tabs .tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    bfFilter = btn.dataset.status;
+    document.querySelectorAll('#bf-filter-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBfTable();
+  };
+});
+document.getElementById('bf-search').addEventListener('input', renderBfTable);
+document.getElementById('bf-refresh').onclick = () => loadBackfill();
+
+async function loadBackfill(){
+  bfLoaded = true;
+  document.getElementById('bf-table-body').innerHTML = '<tr><td colspan="7" class="loading">Loading manifest...</td></tr>';
+  try{
+    // cache-bust — raw.githubusercontent.com caches aggressively, and this
+    // view needs to reflect the latest Actions run, not a stale fetch
+    const resp = await fetch(MANIFEST_URL + '?t=' + Date.now());
+    if(!resp.ok) throw new Error(`manifest not found (HTTP ${resp.status}) — has the backfill workflow run yet?`);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const header = rows[0];
+    manifestRows = rows.slice(1).map(r => {
+      const obj = {};
+      header.forEach((h, i) => obj[h] = r[i] || '');
+      return obj;
+    });
+    renderBfStats();
+    renderBfTable();
+  }catch(err){
+    document.getElementById('bf-table-body').innerHTML =
+      `<tr><td colspan="7" class="loading">Failed to load manifest: ${err.message}</td></tr>`;
+  }
+}
+
+// ============================================================
+// STOCK DETAIL PAGE — DuckDB-WASM querying the real parquet checkpoint
+// directly over HTTP. This is the same query path the real backtest
+// engine will use (docs/SPEC.md section 4b) — this page doubles as a
+// live test of that architecture, not just a data viewer.
+// ============================================================
+let sdInitialized = false;
+let sdDb = null;
+const CHECKPOINTS_BASE = 'https://raw.githubusercontent.com/vaijayanth/backtester/backfill-checkpoints/checkpoints';
+
+function setSdStatus(msg, isError){
+  const el = document.getElementById('sd-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--dim)';
+}
+
+async function initDuckDB(){
+  const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm');
+  const bundles = duckdb.getJsDelivrBundles();
+  const bundle = await duckdb.selectBundle(bundles);
+  const workerUrl = URL.createObjectURL(
+    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+  );
+  const worker = new Worker(workerUrl);
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+  const db = new duckdb.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+  URL.revokeObjectURL(workerUrl);
+  return db;
+}
+
+// EMA / RSI14 — same formulas as scripts/backfill.py's sibling logic in
+// the existing Options Terminal Python backend, ported to JS so the chart
+// overlay matches what the backtest engine will compute.
+function computeEMA(closes, period){
+  const out = new Array(closes.length).fill(null);
+  if(closes.length < period) return out;
+  let ema = closes.slice(0, period).reduce((a,b)=>a+b,0) / period;
+  out[period-1] = ema;
+  const mult = 2 / (period + 1);
+  for(let i = period; i < closes.length; i++){
+    ema = (closes[i] - ema) * mult + ema;
+    out[i] = ema;
+  }
+  return out;
+}
+
+function computeRSI14(closes){
+  const out = new Array(closes.length).fill(null);
+  if(closes.length < 15) return out;
+  let gains = 0, losses = 0;
+  for(let i = 1; i <= 14; i++){
+    const diff = closes[i] - closes[i-1];
+    gains += Math.max(diff, 0);
+    losses += Math.max(-diff, 0);
+  }
+  let avgGain = gains / 14, avgLoss = losses / 14;
+  out[14] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  for(let i = 15; i < closes.length; i++){
+    const diff = closes[i] - closes[i-1];
+    const gain = Math.max(diff, 0), loss = Math.max(-diff, 0);
+    avgGain = (avgGain * 13 + gain) / 14;
+    avgLoss = (avgLoss * 13 + loss) / 14;
+    out[i] = avgLoss === 0 ? 100 : 100 - 100/(1 + avgGain/avgLoss);
+  }
+  return out;
+}
+
+let priceChart, volumeChart, rsiChart, outlierChart;
+let sdCurrentRows = []; // kept after load so the Outlier Analysis panel can recompute on control changes without re-querying DuckDB
+let oaPeriod = 'monthly';
+
+async function loadStock(symbol){
+  setSdStatus('Querying parquet via DuckDB-WASM...');
+  document.getElementById('sd-meta-row').style.display = 'none';
+  try{
+    if(!sdDb){
+      setSdStatus('Initializing DuckDB-WASM (first load only)...');
+      sdDb = await initDuckDB();
+    }
+    const conn = await sdDb.connect();
+    const url = `${CHECKPOINTS_BASE}/raw/${symbol.replace(/\./g, '_')}.parquet`;
+    const result = await conn.query(
+      `SELECT Date, Open, High, Low, Close, Volume FROM read_parquet('${url}') ORDER BY Date`
+    );
+    await conn.close();
+
+    const rows = result.toArray().map(r => ({
+      date: new Date(Number(r.Date)),
+      open: Number(r.Open), high: Number(r.High), low: Number(r.Low),
+      close: Number(r.Close), volume: Number(r.Volume),
+    }));
+
+    if(!rows.length) throw new Error('query returned 0 rows');
+
+    const closes = rows.map(r => r.close);
+    const ema50 = computeEMA(closes, 50);
+    const ema200 = computeEMA(closes, 200);
+    const rsi14 = computeRSI14(closes);
+
+    const candleData = rows.map(r => ({x: r.date, y: [r.open, r.high, r.low, r.close]}));
+    const ema50Data = rows.map((r,i) => ({x: r.date, y: ema50[i]}));
+    const ema200Data = rows.map((r,i) => ({x: r.date, y: ema200[i]}));
+    const volumeData = rows.map(r => ({x: r.date, y: r.volume}));
+    const rsiData = rows.map((r,i) => ({x: r.date, y: rsi14[i]}));
+
+    renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData);
+    renderStockStats(rows, ema50, ema200, rsi14);
+    sdCurrentRows = rows;
+    renderOutlierAnalysis();
+
+    setSdStatus(`Loaded ${rows.length} rows directly from parquet via DuckDB-WASM.`);
+  }catch(err){
+    setSdStatus(`Failed: ${err.message}`, true);
+  }
+}
+
+function renderStockStats(rows, ema50, ema200, rsi14){
+  const last = rows[rows.length - 1];
+  const highs = rows.map(r => r.high), lows = rows.map(r => r.low);
+  document.getElementById('sd-close').textContent = '₹' + last.close.toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-high').textContent = '₹' + Math.max(...highs).toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-low').textContent = '₹' + Math.min(...lows).toLocaleString('en-IN', {maximumFractionDigits:2});
+  document.getElementById('sd-range').textContent =
+    `${rows[0].date.toISOString().slice(0,10)} → ${last.date.toISOString().slice(0,10)}`;
+  document.getElementById('sd-days').textContent = rows.length.toLocaleString('en-IN');
+  const lastEma50 = ema50[ema50.length-1], lastEma200 = ema200[ema200.length-1];
+  document.getElementById('sd-ema').textContent =
+    (lastEma50 ? '₹'+lastEma50.toFixed(2) : '—') + ' / ' + (lastEma200 ? '₹'+lastEma200.toFixed(2) : '—');
+  const lastRsi = rsi14[rsi14.length-1];
+  document.getElementById('sd-rsi').textContent = lastRsi ? lastRsi.toFixed(1) : '—';
+  document.getElementById('sd-meta-row').style.display = 'flex';
+}
+
+// ============================================================
+// OUTLIER ANALYSIS — real periodic-return distribution + percentile
+// boundaries, computed client-side from the same rows already loaded
+// above (no second DuckDB query needed). Replaces the old synthetic
+// Range Analysis feature from Options Terminal (docs/SPEC.md section 9)
+// with real data.
+// ============================================================
+function mondayOf(d){
+  const day = d.getDay(); // 0=Sun..6=Sat
+  const diff = (day === 0 ? -6 : 1 - day);
+  const m = new Date(d);
+  m.setDate(d.getDate() + diff);
+  m.setHours(0,0,0,0);
+  return m.toISOString().slice(0,10);
+}
+
+function groupIntoPeriods(rows, periodType){
+  const groups = {};
+  rows.forEach(r => {
+    const key = periodType === 'weekly'
+      ? mondayOf(r.date)
+      : `${r.date.getFullYear()}-${String(r.date.getMonth()+1).padStart(2,'0')}`;
+    (groups[key] = groups[key] || []).push(r);
+  });
+  return Object.keys(groups).sort().map(k => groups[k]);
+}
+
+function computePeriodReturns(periods, calcType){
+  return periods.map(p => {
+    const open = p[0].open, close = p[p.length-1].close;
+    const high = Math.max(...p.map(r => r.high)), low = Math.min(...p.map(r => r.low));
+    const ret = calcType === 'oc' ? (close - open) / open * 100 : (high - low) / low * 100;
+    return {start: p[0].date, end: p[p.length-1].date, ret};
+  });
+}
+
+function percentile(sortedVals, p){
+  const idx = (sortedVals.length - 1) * p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  if(lo === hi) return sortedVals[lo];
+  return sortedVals[lo] + (sortedVals[hi] - sortedVals[lo]) * (idx - lo);
+}
+
+function renderOutlierAnalysis(){
+  if(!sdCurrentRows.length) return;
+  const threshold = parseFloat(document.getElementById('oa-threshold').value) || 10;
+  document.querySelectorAll('.oa-thresh-label').forEach(el => el.textContent = threshold);
+
+  const periods = groupIntoPeriods(sdCurrentRows, oaPeriod);
+  const returns = computePeriodReturns(periods, 'oc'); // always open->close vs the period's own start price, per the actual ask
+
+  const above = returns.filter(r => r.ret > threshold);
+  const below = returns.filter(r => r.ret < -threshold);
+  const within = returns.length - above.length - below.length;
+
+  const pct = n => returns.length ? ` (${(n/returns.length*100).toFixed(1)}%)` : '';
+  document.getElementById('oa-upper').textContent = above.length.toLocaleString('en-IN') + pct(above.length);
+  document.getElementById('oa-lower').textContent = below.length.toLocaleString('en-IN') + pct(below.length);
+  document.getElementById('oa-within').textContent = within.toLocaleString('en-IN') + pct(within);
+
+  // "90% range" readout — the actual percentile-derived answer to
+  // "what's the 90% up/down range", separate from the fixed-threshold
+  // breach count above.
+  const pctCoverage = parseFloat(document.getElementById('oa-pct-coverage').value) || 90;
+  const sortedReturns = returns.map(r => r.ret).sort((a,b) => a-b);
+  const lowP = (1 - pctCoverage/100) / 2, highP = 1 - lowP;
+  const lowBound = percentile(sortedReturns, lowP);
+  const highBound = percentile(sortedReturns, highP);
+  const periodWord = oaPeriod === 'weekly' ? 'weeks' : 'months';
+  const fmtSigned = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  document.getElementById('oa-pct-sentence').textContent =
+    `${pctCoverage}% of ${periodWord} fell between ${fmtSigned(lowBound)} and ${fmtSigned(highBound)} ` +
+    `(the other ${100-pctCoverage}% moved more extreme than that, either up or down).`;
+  document.getElementById('oa-total').textContent = returns.length.toLocaleString('en-IN');
+
+  const breaches = [...above, ...below];
+  const barData = returns.map(r => ({
+    x: r.end.getTime(),
+    y: Number(r.ret.toFixed(2)),
+    fillColor: r.ret > threshold ? '#00d26a' : (r.ret < -threshold ? '#ff3b30' : '#55555c'),
+  }));
+
+  if(outlierChart) outlierChart.destroy();
+  outlierChart = new ApexCharts(document.getElementById('chart-outlier'), {
+    chart: {type:'bar', height:280, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [{name:'Return %', data: barData.map(d => ({x:d.x, y:d.y, fillColor:d.fillColor}))}],
+    plotOptions: {bar:{columnWidth:'70%', distributed:false}},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => v.toFixed(0)+'%'}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:false},
+    annotations: {
+      yaxis: [
+        {y:threshold, borderColor:'#00d26a', strokeDashArray:4, label:{text:'+'+threshold+'%', position:'right', style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
+        {y:-threshold, borderColor:'#ff3b30', strokeDashArray:4, label:{text:'-'+threshold+'%', position:'right', style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
+      ]
+    },
+  });
+  outlierChart.render();
+
+  const outlierBody = document.getElementById('oa-outlier-body');
+  const emptyNote = document.getElementById('oa-outlier-empty');
+  if(!breaches.length){
+    outlierBody.innerHTML = '';
+    emptyNote.style.display = 'block';
+  } else {
+    emptyNote.style.display = 'none';
+    const sortedBreaches = [...breaches].sort((a,b) => Math.abs(b.ret) - Math.abs(a.ret));
+    outlierBody.innerHTML = sortedBreaches.map(o => `
+      <tr>
+        <td>${o.start.toISOString().slice(0,10)}</td>
+        <td>${o.end.toISOString().slice(0,10)}</td>
+        <td style="color:${o.ret>0?'var(--green)':'var(--red)'}">${o.ret>0?'+':''}${o.ret.toFixed(2)}%</td>
+        <td>${o.ret>0 ? `Broke above +${threshold}%` : `Broke below -${threshold}%`}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+document.getElementById('oa-period-weekly').onclick = () => { oaPeriod='weekly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-weekly').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-period-monthly').onclick = () => { oaPeriod='monthly'; document.querySelectorAll('#oa-period-tabs .tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById('oa-period-monthly').classList.add('active'); renderOutlierAnalysis(); };
+document.getElementById('oa-threshold').addEventListener('input', renderOutlierAnalysis);
+document.getElementById('oa-pct-coverage').addEventListener('input', renderOutlierAnalysis);
+
+function renderCharts(symbol, candleData, ema50Data, ema200Data, volumeData, rsiData){
+  document.getElementById('sd-chart-symbol').textContent = symbol;
+
+  if(priceChart) priceChart.destroy();
+  priceChart = new ApexCharts(document.getElementById('chart-price'), {
+    chart: {type:'candlestick', height:360, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [
+      {name:'Price', type:'candlestick', data: candleData},
+      {name:'EMA50', type:'line', data: ema50Data},
+      {name:'EMA200', type:'line', data: ema200Data},
+    ],
+    stroke: {width:[1,1.5,1.5], curve:'straight'},
+    colors: ['#00d26a', '#29c5f6', '#ff9f1a'],
+    plotOptions: {candlestick:{colors:{upward:'#00d26a', downward:'#ff3b30'}}},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => '₹'+Math.round(v)}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {labels:{colors:'#e9e9ec'}},
+  });
+  priceChart.render();
+
+  if(volumeChart) volumeChart.destroy();
+  volumeChart = new ApexCharts(document.getElementById('chart-volume'), {
+    chart: {type:'bar', height:140, background:'transparent', toolbar:{show:false}},
+    theme: {mode:'dark'},
+    series: [{name:'Volume', data: volumeData}],
+    colors: ['#55555c'],
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:false},
+  });
+  volumeChart.render();
+
+  if(rsiChart) rsiChart.destroy();
+  rsiChart = new ApexCharts(document.getElementById('chart-rsi'), {
+    chart: {type:'line', height:160, background:'transparent', toolbar:{show:false}},
+    theme: {mode:'dark'},
+    series: [{name:'RSI14', data: rsiData}],
+    colors: ['#ff9f1a'],
+    stroke: {width:1.5},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {min:0, max:100, tickAmount:4, labels:{style:{colors:'#8a8a93'}, formatter: v => Math.round(v)}},
+    grid: {borderColor:'#1e1e23'},
+    annotations: {
+      yaxis: [
+        {y:70, borderColor:'#ff3b30', label:{text:'70', position:'right', offsetX:-5, style:{color:'#fff', background:'#ff3b30', fontSize:'10px'}}},
+        {y:30, borderColor:'#00d26a', label:{text:'30', position:'right', offsetX:-5, style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}},
+      ]
+    },
+  });
+  rsiChart.render();
+}
+
+async function initStockDetail(){
+  sdInitialized = true;
+  const select = document.getElementById('sd-symbol-select');
+  try{
+    const resp = await fetch(`${CHECKPOINTS_BASE}/manifest.csv?t=` + Date.now());
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const header = rows[0];
+    const statusIdx = header.indexOf('status');
+    const symbolIdx = header.indexOf('symbol');
+    const validated = rows.slice(1).filter(r => r[statusIdx] === 'VALIDATED').map(r => r[symbolIdx]);
+
+    if(!validated.length){
+      select.innerHTML = '<option>No validated symbols yet — run the backfill first</option>';
+      return;
+    }
+    select.innerHTML = validated.map(s => `<option value="${s}">${s}</option>`).join('');
+    select.onchange = () => loadStock(select.value);
+    loadStock(validated[0]);
+  }catch(err){
+    select.innerHTML = '<option>Failed to load symbol list</option>';
+    setSdStatus(`Failed: ${err.message}`, true);
+  }
+}
+
+// ============================================================
+// STRATEGY BUILDER PAGE
+// ============================================================
+let sbInitialized = false;
+// Mirrors DEFAULT_PARAMS["trail_checkpoints"] in scripts/backtest_engine.py exactly.
+let sbTrailCheckpoints = [
+  {profit_pct: 6, trail_pct: 6},
+  {profit_pct: 10, trail_pct: 5},
+  {profit_pct: 15, trail_pct: 4},
+  {profit_pct: 25, trail_pct: 3},
+];
+
+function renderTrailTable(){
+  document.getElementById('sb-trail-body').innerHTML = sbTrailCheckpoints.map((cp, i) => `
+    <tr>
+      <td><input type="number" class="sb-trail-input" data-idx="${i}" data-field="profit_pct" value="${cp.profit_pct}" step="0.5"></td>
+      <td><input type="number" class="sb-trail-input" data-idx="${i}" data-field="trail_pct" value="${cp.trail_pct}" step="0.5"></td>
+      <td><button class="sb-trail-remove" data-idx="${i}">REMOVE</button></td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.sb-trail-input').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.idx), field = e.target.dataset.field;
+      sbTrailCheckpoints[idx][field] = parseFloat(e.target.value) || 0;
+    });
+  });
+  document.querySelectorAll('.sb-trail-remove').forEach(btn => {
+    btn.onclick = (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      sbTrailCheckpoints.splice(idx, 1);
+      renderTrailTable();
+    };
+  });
+}
+
+document.getElementById('sb-trail-add').onclick = () => {
+  const last = sbTrailCheckpoints[sbTrailCheckpoints.length - 1] || {profit_pct: 0, trail_pct: 6};
+  sbTrailCheckpoints.push({profit_pct: last.profit_pct + 5, trail_pct: Math.max(1, last.trail_pct - 1)});
+  renderTrailTable();
+};
+
+function numVal(id){
+  return parseFloat(document.getElementById(id).value);
+}
+
+// Builds the exact JSON shape scripts/backtest_engine.py's DEFAULT_PARAMS
+// (and its --params override file) expects — field names must match
+// precisely, this is the contract between this form and the Python engine.
+function collectParams(){
+  return {
+    breakout_window_days: numVal('p-breakout_window_days'),
+    ema_filter_fast: numVal('p-ema_filter_fast'),
+    ema_filter_slow: numVal('p-ema_filter_slow'),
+    profit_lock_trigger_pct: numVal('p-profit_lock_trigger_pct'),
+    trail_checkpoints: sbTrailCheckpoints.map(cp => ({profit_pct: cp.profit_pct, trail_pct: cp.trail_pct})),
+    add_on_trigger_pct: numVal('p-add_on_trigger_pct'),
+    add_on_size_fraction: numVal('p-add_on_size_fraction'),
+    add_on_max_per_week: numVal('p-add_on_max_per_week'),
+    base_position_rs: numVal('p-base_position_rs'),
+    position_size_increment_rs: numVal('p-position_size_increment_rs'),
+    position_size_increment_trades: numVal('p-position_size_increment_trades'),
+    position_size_cap_rs: numVal('p-position_size_cap_rs'),
+    max_open_positions: numVal('p-max_open_positions'),
+    initial_capital_rs: numVal('p-initial_capital_rs'),
+  };
+}
+
+function setSbStatus(msg, isError){
+  const el = document.getElementById('sb-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--dim)';
+}
+
+document.getElementById('sb-copy-btn').onclick = async () => {
+  const params = collectParams();
+  const json = JSON.stringify(params, null, 2);
+  try{
+    await navigator.clipboard.writeText(json);
+    setSbStatus('Copied — now go to Actions → Run SST Backtest → Run workflow and paste it in.');
+  }catch(err){
+    setSbStatus('Clipboard copy failed — params logged to console instead.', true);
+    console.log(json);
+  }
+};
+
+function initStrategyBuilder(){
+  sbInitialized = true;
+  renderTrailTable();
+}
+
+// ============================================================
+// RESULTS PAGE
+// ============================================================
+let resInitialized = false;
+let resRunIndex = [];       // from results/index.json
+let resSelected = new Set(); // filenames currently checked
+let resFullCache = {};       // filename -> full parsed result JSON (fetched on demand)
+let equityChart;
+
+function fmtRs(v){
+  if(v == null) return '—';
+  return '₹' + Math.round(v).toLocaleString('en-IN');
+}
+function fmtPct(v){
+  return v == null ? '—' : v.toFixed(2) + '%';
+}
+
+async function initResults(){
+  resInitialized = true;
+  await loadRunIndex();
+}
+
+async function loadRunIndex(){
+  const tbody = document.getElementById('res-run-body');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading run index...</td></tr>';
+  try{
+    const resp = await fetch('results/index.json?t=' + Date.now());
+    if(!resp.ok){
+      resRunIndex = [];
+    } else {
+      resRunIndex = await resp.json();
+    }
+  }catch(err){
+    resRunIndex = [];
+  }
+  resRunIndex.sort((a,b) => new Date(b.run_at) - new Date(a.run_at)); // newest first
+  renderRunList();
+}
+
+function renderRunList(){
+  const tbody = document.getElementById('res-run-body');
+  const emptyNote = document.getElementById('res-run-empty');
+  document.getElementById('res-run-count').textContent = resRunIndex.length;
+
+  if(!resRunIndex.length){
+    tbody.innerHTML = '';
+    emptyNote.style.display = 'block';
+    return;
+  }
+  emptyNote.style.display = 'none';
+
+  tbody.innerHTML = resRunIndex.map(r => `
+    <tr>
+      <td><input type="checkbox" class="res-run-checkbox" data-filename="${r.filename}" ${resSelected.has(r.filename)?'checked':''}></td>
+      <td>${r.run_label}</td>
+      <td>${new Date(r.run_at).toLocaleString('en-IN')}</td>
+      <td>${fmtPct(r.win_rate_pct)}</td>
+      <td>${r.profit_factor != null ? r.profit_factor.toFixed(2) : '—'}</td>
+      <td>${fmtPct(r.max_drawdown_pct)}</td>
+      <td>${r.total_closed_trades}</td>
+      <td style="color:${r.combined_pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRs(r.combined_pl_rs)}</td>
+    </tr>
+  `).join('');
+
+  document.querySelectorAll('.res-run-checkbox').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const fn = e.target.dataset.filename;
+      if(e.target.checked){
+        if(resSelected.size >= 4){ e.target.checked = false; return; } // cap at 4, per spec
+        resSelected.add(fn);
+      } else {
+        resSelected.delete(fn);
+      }
+      onSelectionChange();
+    });
+  });
+}
+
+async function fetchFullResult(filename){
+  if(resFullCache[filename]) return resFullCache[filename];
+  const resp = await fetch('results/' + filename + '?t=' + Date.now());
+  const data = await resp.json();
+  resFullCache[filename] = data;
+  return data;
+}
+
+async function onSelectionChange(){
+  const detailPanel = document.getElementById('res-detail-panel');
+  const metricsPanel = document.getElementById('res-metrics-panel');
+  const tradesPanel = document.getElementById('res-trades-panel');
+
+  if(resSelected.size === 0){
+    detailPanel.style.display = 'none';
+    metricsPanel.style.display = 'none';
+    tradesPanel.style.display = 'none';
+    return;
+  }
+
+  const selectedEntries = resRunIndex.filter(r => resSelected.has(r.filename));
+  const fullResults = await Promise.all(selectedEntries.map(r => fetchFullResult(r.filename)));
+
+  // Each render step isolated — one failing (e.g. the chart library failing
+  // to load) must not prevent the metrics/trades tables, which have no
+  // such dependency, from still rendering.
+  try{ renderEquityChart(selectedEntries, fullResults); }
+  catch(err){ console.error('Equity chart failed:', err); document.getElementById('chart-equity').innerHTML = `<div class="loading">Chart failed to render: ${err.message}</div>`; }
+
+  try{ renderMetricsComparison(selectedEntries, fullResults); }
+  catch(err){ console.error('Metrics table failed:', err); }
+
+  if(selectedEntries.length === 1){
+    tradesPanel.style.display = 'block';
+    document.getElementById('res-trades-label').textContent = selectedEntries[0].run_label;
+    renderTradesTable(fullResults[0].trades);
+  } else {
+    tradesPanel.style.display = 'none';
+  }
+}
+
+const RUN_COLORS = ['#ff9f1a', '#29c5f6', '#00d26a', '#ff3b30'];
+
+function renderEquityChart(entries, results){
+  document.getElementById('res-detail-panel').style.display = 'block';
+  document.getElementById('res-detail-label').textContent =
+    entries.length === 1 ? entries[0].run_label : `${entries.length} runs compared`;
+
+  let series, colors, strokeWidths, dashArrays;
+  if(entries.length === 1){
+    const eq = results[0].equity_curve;
+    series = [
+      {name: 'Realized', data: eq.map(p => ({x: new Date(p.date).getTime(), y: p.realized}))},
+      {name: 'Combined (incl. open MTM)', data: eq.map(p => ({x: new Date(p.date).getTime(), y: p.combined}))},
+    ];
+    colors = ['#00d26a', '#ff9f1a'];
+    strokeWidths = [2, 2];
+    dashArrays = [0, 4];
+  } else {
+    series = entries.map((e, i) => ({
+      name: e.run_label,
+      data: results[i].equity_curve.map(p => ({x: new Date(p.date).getTime(), y: p.combined})),
+    }));
+    colors = entries.map((_, i) => RUN_COLORS[i % RUN_COLORS.length]);
+    strokeWidths = entries.map(() => 2);
+    dashArrays = entries.map(() => 0);
+  }
+
+  if(equityChart) equityChart.destroy();
+  equityChart = new ApexCharts(document.getElementById('chart-equity'), {
+    chart: {type:'line', height:320, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series,
+    colors,
+    stroke: {width: strokeWidths, dashArray: dashArrays, curve:'straight'},
+    xaxis: {type:'datetime', labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => fmtRs(v)}},
+    grid: {borderColor:'#1e1e23'},
+    legend: {labels:{colors:'#e9e9ec'}},
+  });
+  equityChart.render();
+}
+
+const METRIC_ROWS = [
+  {key:'win_rate_pct', label:'Win Rate', fmt: fmtPct},
+  {key:'profit_factor', label:'Profit Factor', fmt: v => v!=null ? v.toFixed(2) : '—'},
+  {key:'max_drawdown_pct', label:'Max Drawdown', fmt: fmtPct},
+  {key:'total_closed_trades', label:'Closed Trades', fmt: v => v},
+  {key:'open_positions_count', label:'Open Positions', fmt: v => v},
+  {key:'avg_hold_days_winners', label:'Avg Hold — Winners (d)', fmt: v => v ?? '—'},
+  {key:'avg_hold_days_losers', label:'Avg Hold — Losers (d)', fmt: v => v ?? '—'},
+  {key:'realized_pl_rs', label:'Realized P&L', fmt: fmtRs},
+  {key:'open_mtm_rs', label:'Open MTM', fmt: fmtRs},
+  {key:'combined_pl_rs', label:'Combined P&L', fmt: fmtRs},
+];
+
+function renderMetricsComparison(entries, results){
+  document.getElementById('res-metrics-panel').style.display = 'block';
+  document.getElementById('res-metrics-head').innerHTML =
+    '<th>METRIC</th>' + entries.map(e => `<th>${e.run_label}</th>`).join('');
+  document.getElementById('res-metrics-body').innerHTML = METRIC_ROWS.map(row => `
+    <tr>
+      <td style="color:var(--dim);">${row.label}</td>
+      ${results.map(r => `<td>${row.fmt(r.metrics[row.key])}</td>`).join('')}
+    </tr>
+  `).join('');
+}
+
+function renderTradesTable(trades){
+  document.getElementById('res-trades-body').innerHTML = trades.map(t => `
+    <tr>
+      <td>${t.symbol}</td>
+      <td>${t.entry_date}</td>
+      <td>${t.exit_date}</td>
+      <td>₹${t.entry_price}</td>
+      <td>₹${t.exit_price}</td>
+      <td>${t.qty}</td>
+      <td style="color:${t.pl_rs>=0?'var(--green)':'var(--red)'}">${fmtRs(t.pl_rs)}</td>
+      <td style="color:${t.pl_pct>=0?'var(--green)':'var(--red)'}">${t.pl_pct>=0?'+':''}${t.pl_pct}%</td>
+      <td>${t.hold_days}</td>
+      <td>${t.had_addon ? 'Yes' : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('res-refresh').onclick = () => {
+  resFullCache = {};
+  loadRunIndex();
+};
+
+// Dashboard is the default landing page — initialize it eagerly, same as
+// Universe used to before Dashboard took over that slot.
+initDashboard();
+</script>
+</body>
+</html>
