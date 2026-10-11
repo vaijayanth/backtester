@@ -1,0 +1,63 @@
+name: Build Strangle Breakeven Screen
+
+# Manually triggered via GitHub's own "Run workflow" button, same pattern as
+# the other data-pipeline workflows. Computes monthly Win/Loose (open->close
+# return within/beyond +/-threshold%) for every F&O stock — the options
+# strangle strategy's breakeven-range backtest.
+
+on:
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: "Breakeven threshold % (each side) — matches the strategy's stated >10% target by default"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write   # needed to commit strangle_screen.json back to main
+
+jobs:
+  strangle_screen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Build screen
+        working-directory: main
+        run: python scripts/strangle_screen.py --out strangle_screen.json --threshold "${{ github.event.inputs.threshold }}"
+
+      - name: Commit screen
+        working-directory: main
+        run: |
+          git config user.name "strangle-bot"
+          git config user.email "actions@github.com"
+          git add strangle_screen.json
+          if git diff --cached --quiet; then
+            echo "No screen changes to commit"
+          else
+            git commit -m "Strangle breakeven screen: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
