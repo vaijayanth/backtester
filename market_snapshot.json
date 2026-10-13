@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-10-13T01:42:55.682215+00:00",
-  "as_of_date": "2026-10-12",
+  "generated_at": "2026-10-13T23:16:18.931584+00:00",
+  "as_of_date": "2026-10-13",
   "universe_size": 1466,
   "pulse": {
     "counted": 1444,
-    "above_ema50": 376,
-    "above_ema50_pct": 26.04,
+    "above_ema50": 374,
+    "above_ema50_pct": 25.9,
     "above_ema200": 578,
     "above_ema200_pct": 40.03,
-    "above_both": 328,
-    "above_both_pct": 22.71,
+    "above_both": 326,
+    "above_both_pct": 22.58,
     "below_both": 818,
     "below_both_pct": 56.65
   },
@@ -261,12 +261,12 @@
     },
     {
       "date": "2021-12-22",
-      "above_ema50_pct": 31.48,
+      "above_ema50_pct": 31.35,
       "above_ema200_pct": null
     },
     {
       "date": "2021-12-23",
-      "above_ema50_pct": 34.6,
+      "above_ema50_pct": 34.48,
       "above_ema200_pct": null
     },
     {
@@ -1012,12 +1012,12 @@
     {
       "date": "2022-07-28",
       "above_ema50_pct": 66.61,
-      "above_ema200_pct": 40.29
+      "above_ema200_pct": 40.36
     },
     {
       "date": "2022-07-29",
       "above_ema50_pct": 72.0,
-      "above_ema200_pct": 42.84
+      "above_ema200_pct": 42.93
     },
     {
       "date": "2022-08-01",
@@ -6196,6 +6196,11 @@
     },
     {
       "date": "2026-10-12",
+      "above_ema50_pct": 37.5,
+      "above_ema200_pct": 70.83
+    },
+    {
+      "date": "2026-10-13",
       "above_ema50_pct": 0.0,
       "above_ema200_pct": 100.0
     }
