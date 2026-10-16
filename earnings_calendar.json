@@ -1,13 +1,8 @@
 {
-  "generated_at": "2026-10-11T11:21:11.464204+00:00",
+  "generated_at": "2026-10-16T09:35:32.321654+00:00",
   "source": "sensibull_manual_upload",
   "source_rows": 222,
   "entries": [
-    {
-      "symbol": "TCS.NS",
-      "date": "2026-10-08",
-      "status": "scheduled"
-    },
     {
       "symbol": "ANANDRATHI.NS",
       "date": "2026-10-09",
@@ -74,6 +69,11 @@
       "status": "scheduled"
     },
     {
+      "symbol": "INDIANB.NS",
+      "date": "2026-10-15",
+      "status": "scheduled"
+    },
+    {
       "symbol": "IRFC.NS",
       "date": "2026-10-15",
       "status": "scheduled"
@@ -119,12 +119,27 @@
       "status": "scheduled"
     },
     {
+      "symbol": "DLF.NS",
+      "date": "2026-10-16",
+      "status": "scheduled"
+    },
+    {
       "symbol": "FEDERALBNK.NS",
       "date": "2026-10-16",
       "status": "scheduled"
     },
     {
       "symbol": "LTM.NS",
+      "date": "2026-10-16",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "OBEROIRLTY.NS",
+      "date": "2026-10-16",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "PNB.NS",
       "date": "2026-10-16",
       "status": "scheduled"
     },
@@ -159,8 +174,53 @@
       "status": "scheduled"
     },
     {
+      "symbol": "HINDZINC.NS",
+      "date": "2026-10-19",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "IREDA.NS",
+      "date": "2026-10-19",
+      "status": "scheduled"
+    },
+    {
       "symbol": "ULTRACEMCO.NS",
       "date": "2026-10-19",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "UNIONBANK.NS",
+      "date": "2026-10-19",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "ADANIGREEN.NS",
+      "date": "2026-10-21",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "ETERNAL.NS",
+      "date": "2026-10-21",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "INDHOTEL.NS",
+      "date": "2026-10-21",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "KEI.NS",
+      "date": "2026-10-21",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "SRF.NS",
+      "date": "2026-10-21",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "VMM.NS",
+      "date": "2026-10-21",
       "status": "scheduled"
     },
     {
@@ -169,7 +229,27 @@
       "status": "scheduled"
     },
     {
+      "symbol": "COLPAL.NS",
+      "date": "2026-10-22",
+      "status": "scheduled"
+    },
+    {
       "symbol": "HAVELLS.NS",
+      "date": "2026-10-22",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "HINDPETRO.NS",
+      "date": "2026-10-22",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "NAM-INDIA.NS",
+      "date": "2026-10-22",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "SAGILITY.NS",
       "date": "2026-10-22",
       "status": "scheduled"
     },
@@ -180,6 +260,16 @@
     },
     {
       "symbol": "ADANIPOWER.NS",
+      "date": "2026-10-23",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "BPCL.NS",
+      "date": "2026-10-23",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "CGPOWER.NS",
       "date": "2026-10-23",
       "status": "scheduled"
     },
@@ -219,6 +309,11 @@
       "status": "scheduled"
     },
     {
+      "symbol": "OFSS.NS",
+      "date": "2026-10-23",
+      "status": "scheduled"
+    },
+    {
       "symbol": "SHREECEM.NS",
       "date": "2026-10-23",
       "status": "scheduled"
@@ -226,6 +321,11 @@
     {
       "symbol": "TORNTPHARM.NS",
       "date": "2026-10-23",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "AUBANK.NS",
+      "date": "2026-10-24",
       "status": "scheduled"
     },
     {
@@ -245,6 +345,11 @@
     },
     {
       "symbol": "MANKIND.NS",
+      "date": "2026-10-26",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "PAYTM.NS",
       "date": "2026-10-26",
       "status": "scheduled"
     },
@@ -269,6 +374,11 @@
       "status": "scheduled"
     },
     {
+      "symbol": "LT.NS",
+      "date": "2026-10-27",
+      "status": "scheduled"
+    },
+    {
       "symbol": "MARUTI.NS",
       "date": "2026-10-27",
       "status": "scheduled"
@@ -284,7 +394,22 @@
       "status": "scheduled"
     },
     {
+      "symbol": "SBILIFE.NS",
+      "date": "2026-10-27",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "ADANIENT.NS",
+      "date": "2026-10-28",
+      "status": "scheduled"
+    },
+    {
       "symbol": "ADANIPORTS.NS",
+      "date": "2026-10-28",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "BANDHANBNK.NS",
       "date": "2026-10-28",
       "status": "scheduled"
     },
@@ -294,12 +419,27 @@
       "status": "scheduled"
     },
     {
+      "symbol": "HEROMOTOCO.NS",
+      "date": "2026-10-28",
+      "status": "scheduled"
+    },
+    {
       "symbol": "HINDUNILVR.NS",
       "date": "2026-10-28",
       "status": "scheduled"
     },
     {
+      "symbol": "KPITTECH.NS",
+      "date": "2026-10-28",
+      "status": "scheduled"
+    },
+    {
       "symbol": "PIDILITIND.NS",
+      "date": "2026-10-28",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "UNITDSPR.NS",
       "date": "2026-10-28",
       "status": "scheduled"
     },
@@ -329,12 +469,52 @@
       "status": "scheduled"
     },
     {
+      "symbol": "LAURUSLABS.NS",
+      "date": "2026-10-29",
+      "status": "scheduled"
+    },
+    {
       "symbol": "TRENT.NS",
       "date": "2026-10-29",
       "status": "scheduled"
     },
     {
+      "symbol": "ABCAPITAL.NS",
+      "date": "2026-10-30",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "GAIL.NS",
+      "date": "2026-10-30",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "GVT&D.NS",
+      "date": "2026-10-30",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "IOC.NS",
+      "date": "2026-10-30",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "SUNPHARMA.NS",
+      "date": "2026-10-30",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "CDSL.NS",
+      "date": "2026-10-31",
+      "status": "scheduled"
+    },
+    {
       "symbol": "MARICO.NS",
+      "date": "2026-11-02",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "PETRONET.NS",
       "date": "2026-11-02",
       "status": "scheduled"
     },
@@ -349,6 +529,21 @@
       "status": "scheduled"
     },
     {
+      "symbol": "MCX.NS",
+      "date": "2026-11-03",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "APOLLOHOSP.NS",
+      "date": "2026-11-04",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "BSE.NS",
+      "date": "2026-11-04",
+      "status": "scheduled"
+    },
+    {
       "symbol": "CUMMINSIND.NS",
       "date": "2026-11-04",
       "status": "scheduled"
@@ -356,6 +551,11 @@
     {
       "symbol": "DABUR.NS",
       "date": "2026-11-04",
+      "status": "scheduled"
+    },
+    {
+      "symbol": "LICI.NS",
+      "date": "2026-11-05",
       "status": "scheduled"
     },
     {
