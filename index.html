@@ -123,7 +123,10 @@
   .sym{background:var(--panel);padding:9px 12px;font-size:12px;color:var(--white);font-weight:500;}
   .sym:hover{background:var(--panel2);color:var(--amber);}
   .list-table{width:100%;border-collapse:collapse;}
-  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);white-space:nowrap;}
+  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);white-space:nowrap;cursor:pointer;user-select:none;}
+  .list-table th:hover{color:var(--white);}
+  .list-table th.sorted-col{color:var(--amber);}
+  .list-table th .sort-arrow{display:inline-block;margin-left:4px;font-size:8px;}
   .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
   .list-table tr:hover td{background:var(--panel2);}
   /* overflow-x is the fix for a real bug: without it, a table wider than
@@ -2420,6 +2423,89 @@ document.getElementById('ivp-search').addEventListener('input', () => { if(ivpDa
 // IVP Screener is the default landing page — initialize it eagerly, same
 // pattern Dashboard used before IVP Screener took over that slot.
 initIvpScreener();
+
+// ============================================================
+// GENERIC COLUMN SORT — every .list-table, every page, no per-table
+// wiring needed. One delegated click listener on <thead th> instead of
+// hooking each page's own render function (there are a dozen+ of them,
+// each with a different data shape) — this covers all of them, including
+// any added later, automatically.
+//
+// Re-sorts the CURRENTLY RENDERED rows by reordering <tr> DOM nodes
+// directly (not the underlying data), so it works regardless of how a
+// table was populated. Known limitation: a table's own re-render (search
+// filter, REFRESH button, switching pages) replaces tbody.innerHTML and
+// does not preserve the active sort — clicking the header again re-sorts
+// the new rows. Not persisted across re-renders; acceptable for a
+// lightweight generic implementation.
+// ============================================================
+function sortTableByColumn(table, colIndex, th){
+  const tbody = table.querySelector('tbody');
+  if(!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  if(rows.length < 2) return; // nothing meaningful to reorder
+
+  const newDir = th.getAttribute('data-sort-dir') === 'asc' ? 'desc' : 'asc';
+
+  const headRow = th.parentElement;
+  Array.from(headRow.children).forEach(h => {
+    h.removeAttribute('data-sort-dir');
+    h.classList.remove('sorted-col');
+    const arrow = h.querySelector('.sort-arrow');
+    if(arrow) arrow.remove();
+  });
+  th.setAttribute('data-sort-dir', newDir);
+  th.classList.add('sorted-col');
+  const arrow = document.createElement('span');
+  arrow.className = 'sort-arrow';
+  arrow.textContent = newDir === 'asc' ? '▲' : '▼';
+  th.appendChild(arrow);
+
+  // A cell can override what gets sorted via data-sort-value (e.g. a
+  // badge/tag cell whose visible text isn't the raw number) — falls back
+  // to the cell's own text. Strips ₹/%/,/+ so "₹1,790", "-0.44%", "+2.1"
+  // all parse as numbers; non-numeric text (stock symbols, dates like
+  // "17 Oct") falls back to a case-insensitive string compare — not
+  // chronologically correct for dates, a known simplification.
+  const rawValue = (row) => {
+    const cell = row.children[colIndex];
+    if(!cell) return '';
+    return cell.getAttribute('data-sort-value') ?? cell.textContent.trim();
+  };
+  const parsedValue = (raw) => {
+    if(raw === '' || raw === '—' || raw === '-') return null; // blanks always sort last
+    const cleaned = raw.replace(/[₹,%+\s]/g, '');
+    if(/^-?[\d.]+$/.test(cleaned) && cleaned !== '' && cleaned !== '-' && cleaned !== '.'){
+      const num = parseFloat(cleaned);
+      if(!isNaN(num)) return num;
+    }
+    return raw.toLowerCase();
+  };
+
+  rows.sort((a, b) => {
+    const va = parsedValue(rawValue(a));
+    const vb = parsedValue(rawValue(b));
+    if(va === null && vb === null) return 0;
+    if(va === null) return 1;
+    if(vb === null) return -1;
+    const cmp = (typeof va === 'number' && typeof vb === 'number')
+      ? va - vb
+      : String(va).localeCompare(String(vb));
+    return newDir === 'asc' ? cmp : -cmp;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('.list-table thead th');
+  if(!th) return;
+  const table = th.closest('table');
+  const headRow = th.parentElement;
+  const colIndex = Array.from(headRow.children).indexOf(th);
+  if(colIndex === -1) return;
+  sortTableByColumn(table, colIndex, th);
+});
 </script>
 </body>
 </html>
