@@ -225,12 +225,33 @@ A transient incremental-fetch failure does NOT mark a symbol FAILED (which would
 
 **Workflow — `.github/workflows/daily_update.yml`**: `schedule: cron: "30 12 * * 1-5"` (12:30 UTC = 18:00 IST, Mon-Fri only) plus `workflow_dispatch` for manual runs. NSE closes 15:30 IST (10:00 UTC); the 2.5hr buffer to 18:00 IST is deliberate slack for Yahoo Finance's own EOD data to actually post, not a guess. Chains the full pipeline in one run: update checkpoints -> commit to `backfill-checkpoints` branch -> rebuild `market_snapshot.json`, `market_screens.json` (F&O), `market_screens_full.json` (full universe), `strangle_screen.json` -> commit those to `main`. End to end, no manual trigger needed from here on for day-to-day freshness — the Dashboard, Strangle Screen, and the full-universe 52WH/5YH panels all update themselves the evening of every trading day.
 
-**Not yet exercised against a real scheduled run** — the workflow logic was built and locally unit-tested (merge/dedup logic, weekday bucketing, manifest I/O) against mocked yfinance responses only, since this sandbox's network proxy blocks Yahoo Finance outright (same restriction documented in section 4 for the original backfill). First real validation will be either the first scheduled firing or a manual `workflow_dispatch` trigger.
+**Validated against real scheduled runs, not just the mocked local test**: triggered manually once right after building (`38141547800`, success), then the `cron` schedule itself fired correctly on its own for the first time the next day and has run every weekday since (Oct 11, 13×2, 14, 15, 16 confirmed via commit history on both `main` and `backfill-checkpoints`) — data has stayed current through each session's close with zero manual intervention.
+
+**Pipeline status indicator added same week** — direct follow-up question from the user: "how do i know the latest data is updated?" The Dashboard's existing "Latest EOD" date only answered "how current is the DATA," not "did the robot actually run" (a stuck pipeline and a holiday with no new trading day look identical from the data's own as-of date alone). `update_ohlc.py --status-out pipeline_status.json` now writes last-run timestamps and per-bucket counts (incremental updated/unchanged/failed, full-refresh refreshed/failed, catchup validated/failed); the Dashboard's `loadPipelineStatus()` renders it as a line under the header — "last ran Nm/h ago, through <date> · N updated[, N failed]" — turning amber if nothing has run in >36h.
 
 ### Open / not built (carried forward)
 - IVP Screener sector filtering (section 12, still not built).
 - Capital constraint on the backtest engine (section 11, still open).
 - Options strategy side (section 3, still fully deferred).
+
+## 14. Mobile UI audit + fix (2026-10-17 session)
+
+User report: "this doesnt load in mobile properly ..can you do thorough testing and have good mobile UI." Done as a real audit, not guesswork — Playwright at 375px/320px viewports against live production data (not fixtures), every one of the 8 pages, before touching any code.
+
+**Two real bugs found, both with a measured causal chain, not assumed:**
+1. **`.table-scroll` had no `overflow-x`.** Confirmed via `document.documentElement.scrollWidth` measurement: the Dashboard hit 412px on a 375px viewport. Every table with 5+ columns either leaked past the page's right edge (forcing the WHOLE page to scroll sideways — Dashboard) or silently clipped with the cut-off columns completely unreachable, no scrollbar, no hint (Strangle Screen's 24-column monthly grid, IVP Screener's 9-column tables, Results, Backfill manifest — confirmed via real screenshots showing text cut off mid-word). Fixed: `overflow-x:auto` + `white-space:nowrap` on `.list-table` cells (the nowrap also stops headers like "WIN RATE" wrapping into two cramped lines instead of staying one line and letting the table scroll).
+2. **That fix alone made it worse** (scrollWidth went UP to 439px) — `.panel` sits inside a CSS grid (`.dash-split`), and grid items default to `min-width:auto`, which lets a non-shrinking child (the now-nowrap table) stretch the whole grid track past the viewport instead of being contained by the child's own `overflow-x:auto`. Classic, easy-to-miss flex/grid overflow trap. Fixed with `min-width:0` on `.panel`; verified the causal link directly by toggling just that one rule and watching scrollWidth flip between 375px and 439px.
+
+**Nav redesigned**, not just patched: the old mobile behavior collapsed the entire sidebar into one horizontal-scrolling strip of all 8 nav buttons — confirmed via screenshot that only 2-3 were visible at a time and the *active* page's own label was frequently scrolled half off-screen. Replaced with a slim fixed top bar (logo + hamburger) that opens a vertical dropdown drawer: full-width buttons, 41px measured tap targets (close to the 44px accessibility guideline), backdrop-tap-to-close, auto-closes on navigating. The top-bar height used for the drawer's/backdrop's offset (68px) was pixel-measured via Playwright, not guessed — an earlier guess of 60px left an 8px gap/overlap between the bar and page content.
+
+Added a static right-edge fade gradient on `.table-scroll` (mobile only) as a visual hint that a wide table has more columns reachable by swiping — not conditional on actual overflow (would need measuring every table's rendered width per call site for a cosmetic nicety), harmless on tables that already fit.
+
+**Verified, not just implemented**: zero horizontal page overflow on all 8 pages at both 375px and 320px viewports; desktop (1400px) screenshot and `scrollWidth` confirmed byte-for-byte unchanged from before (the CSS fixes are global, not mobile-only, so this was a real regression risk, not a formality); zero new console errors across every page at mobile viewport.
+
+### Standing process change (user's explicit instruction, applies going forward)
+> "next time i suggest any changes, you need to spin off agents to build on mobile and desktop and test as well."
+
+This mobile breakage shipped and sat unnoticed through several rounds of feature work before the user hit it directly on a real device — exactly the kind of gap dual-viewport testing before shipping would have caught. Recorded as a standing instruction in this repo's `CLAUDE.md` (new file, same session): future frontend changes to `index.html` get dispatched as parallel subagents — one verifying mobile viewports, one verifying desktop — before being reported done, not a single inline pass at one viewport.
 
 ## Status
 
