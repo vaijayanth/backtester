@@ -29,7 +29,7 @@
   ::selection{background:var(--amber);color:#000;}
 
   .sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#000;border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
-  .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border-soft);}
+  .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .sidebar-logo .logo{font-weight:700;color:var(--amber);letter-spacing:2px;font-size:15px;}
   .sidebar-logo .logo-sub{color:var(--muted);font-weight:400;letter-spacing:1px;font-size:10px;margin-top:3px;}
   .nav{display:flex;flex-direction:column;gap:2px;padding:14px 10px;flex:1;overflow-y:auto;}
@@ -40,17 +40,57 @@
   .sidebar-status{padding:14px 20px;border-top:1px solid var(--border-soft);font-size:10px;color:var(--dim);}
   .sidebar-status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;}
   .sidebar-status .status-sub{color:var(--muted);margin-top:3px;}
+  .mobile-nav-toggle{display:none;}
+  .mobile-nav-backdrop{display:none;}
 
   .main{margin-left:220px;}
+
+  /* Mobile nav — a slim fixed top bar (logo + hamburger) with the full nav
+     list collapsed into a dropdown drawer, toggled by the hamburger and
+     closed by tapping the backdrop or picking a page. Replaces the old
+     "whole sidebar becomes one horizontal scrolling strip" behavior, which
+     crammed 8 nav buttons + the status block into one row — only 2-3
+     items were visible at a time and the active page's own label was
+     often scrolled half off-screen (confirmed via real mobile-viewport
+     screenshots, not a guess). */
   @media (max-width:760px){
-    .sidebar{position:static;width:auto;flex-direction:row;overflow-x:auto;}
-    .nav{flex-direction:row;}
-    .main{margin-left:0;}
+    .sidebar{position:fixed;top:0;left:0;right:0;bottom:auto;width:auto;flex-direction:column;max-height:100vh;}
+    .sidebar-logo{padding:13px 14px;border-bottom:none;}
+    .mobile-nav-toggle{display:flex;align-items:center;justify-content:center;width:42px;height:42px;flex:none;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--white);font-size:18px;cursor:pointer;}
+    .mobile-nav-toggle:active{background:var(--border);}
+    .nav{display:none;flex-direction:column;padding:6px 10px 10px;max-height:calc(100vh - 68px);overflow-y:auto;border-top:1px solid var(--border-soft);}
+    .nav button{padding:13px 14px;font-size:13px;}
+    .sidebar.nav-open .nav{display:flex;}
+    .sidebar-status{display:none;}
+    .sidebar.nav-open .sidebar-status{display:block;}
+    .main{margin-left:0;margin-top:68px;}
+    .mobile-nav-backdrop{display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:40;}
+    .sidebar.nav-open ~ .mobile-nav-backdrop{display:block;}
+  }
+
+  /* Cosmetic hint that a wide table (every financial table with 5+
+     columns — Strangle Screen's monthly grid, IVP Screener, Results) can
+     be swiped horizontally on a narrow screen. A static right-edge fade,
+     not conditional on actual overflow — simpler than measuring every
+     table's rendered width per call site, and harmless on tables that
+     happen to already fit. */
+  @media (max-width:760px){
+    .table-scroll{position:relative;}
+    .table-scroll::after{content:'';position:absolute;top:0;right:0;bottom:0;width:18px;background:linear-gradient(to right, transparent, var(--panel));pointer-events:none;}
   }
 
   .page{display:none;padding:20px;max-width:1200px;margin:0 auto;}
   .page.active{display:block;}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;}
+  /* min-width:0 overrides the browser default of min-width:auto on grid/
+     flex items (.panel sits inside .dash-split, a grid). Without this, a
+     child that won't shrink below its content size — like a table with
+     white-space:nowrap cells — stretches the whole grid track wider than
+     the viewport instead of being clipped and scrolled by table-scroll's
+     own overflow-x:auto. Confirmed as the actual cause via a real
+     before/after measurement, not a guess: removing just this rule made
+     the Dashboard's scrollWidth go from 412px back up to 439px on a
+     375px viewport. */
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:16px;min-width:0;}
   .panel-head{padding:14px 18px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
   .panel-title{font-size:12px;font-weight:600;letter-spacing:1.5px;color:var(--dim);}
   .panel-title b{color:var(--white);}
@@ -83,10 +123,18 @@
   .sym{background:var(--panel);padding:9px 12px;font-size:12px;color:var(--white);font-weight:500;}
   .sym:hover{background:var(--panel2);color:var(--amber);}
   .list-table{width:100%;border-collapse:collapse;}
-  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);}
-  .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);}
+  .list-table th{text-align:left;font-size:9px;letter-spacing:1px;color:var(--muted);padding:8px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);white-space:nowrap;}
+  .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
   .list-table tr:hover td{background:var(--panel2);}
-  .table-scroll{max-height:560px;overflow-y:auto;}
+  /* overflow-x is the fix for a real bug: without it, a table wider than
+     its panel either leaks past the page's right edge (forcing the WHOLE
+     page to scroll horizontally, confirmed on Dashboard — F&O tables
+     pushed scrollWidth to 412px on a 375px viewport) or silently clips
+     with no way to reach the cut-off columns (confirmed on Strangle
+     Screen, IVP Screener, Results — text cut off mid-word at the edge).
+     white-space:nowrap on cells (above) stops headers like "WIN RATE"
+     wrapping into two cramped lines instead of just scrolling. */
+  .table-scroll{max-height:560px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .exch-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.5px;}
   .exch-tag.ns{background:var(--green-dim);color:var(--green);}
   .exch-tag.bo{background:var(--amber-glow);color:var(--amber);}
@@ -163,10 +211,13 @@
 </head>
 <body>
 
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo">BACKTESTER</div>
-    <div class="logo-sub">Market Intelligence</div>
+    <div>
+      <div class="logo">BACKTESTER</div>
+      <div class="logo-sub">Market Intelligence</div>
+    </div>
+    <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
   </div>
   <div class="nav">
     <button class="active" data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
@@ -180,6 +231,7 @@
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
+<div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
 
 <div class="main">
 
@@ -819,6 +871,8 @@ function switchPage(page){
   document.getElementById('nav-' + page).classList.add('active');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
+  closeMobileNav();
+  window.scrollTo(0, 0);
   if(page === 'dashboard' && !dashInitialized) initDashboard();
   if(page === 'universe' && !univInitialized) initUniverse();
   if(page === 'backfill' && !bfLoaded) loadBackfill();
@@ -828,6 +882,18 @@ function switchPage(page){
   if(page === 'strangle' && !ssInitialized) initStrangleScreen();
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
 }
+
+function toggleMobileNav(){
+  const sidebar = document.getElementById('sidebar');
+  const isOpen = sidebar.classList.toggle('nav-open');
+  document.getElementById('mobile-nav-toggle').setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+function closeMobileNav(){
+  document.getElementById('sidebar').classList.remove('nav-open');
+  document.getElementById('mobile-nav-toggle').setAttribute('aria-expanded', 'false');
+}
+document.getElementById('mobile-nav-toggle').onclick = toggleMobileNav;
+document.getElementById('mobile-nav-backdrop').onclick = closeMobileNav;
 document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
