@@ -220,8 +220,8 @@
     <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
   </div>
   <div class="nav">
-    <button class="active" data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
-    <button data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
+    <button class="active" data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
+    <button data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
     <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
     <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Stock Threshold Analysis</button>
     <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
@@ -236,7 +236,7 @@
 <div class="main">
 
 <!-- ============ DASHBOARD PAGE ============ -->
-<div class="page active" id="page-dashboard">
+<div class="page" id="page-dashboard">
 
   <div class="panel">
     <div class="dash-header">
@@ -790,7 +790,7 @@
 </div>
 
 <!-- ============ IVP SCREENER PAGE ============ -->
-<div class="page" id="page-ivp">
+<div class="page active" id="page-ivp">
 
   <div class="panel">
     <div class="dash-header">
@@ -896,8 +896,8 @@ function closeMobileNav(){
 }
 document.getElementById('mobile-nav-toggle').onclick = toggleMobileNav;
 document.getElementById('mobile-nav-backdrop').onclick = closeMobileNav;
-document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
 document.getElementById('nav-ivp').onclick = () => switchPage('ivp');
+document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
 document.getElementById('nav-stock').onclick = () => switchPage('stock');
 document.getElementById('nav-strangle').onclick = () => switchPage('strangle');
 document.getElementById('nav-results').onclick = () => switchPage('results');
@@ -2417,9 +2417,9 @@ document.getElementById('ivp-earnings-buffer').addEventListener('change', () => 
 document.getElementById('ivp-expiry-week').addEventListener('change', () => { if(ivpData) renderIvpScreener(); });
 document.getElementById('ivp-search').addEventListener('input', () => { if(ivpData) renderIvpScreener(); });
 
-// Dashboard is the default landing page — initialize it eagerly, same as
-// Universe used to before Dashboard took over that slot.
-initDashboard();
+// IVP Screener is the default landing page — initialize it eagerly, same
+// pattern Dashboard used before IVP Screener took over that slot.
+initIvpScreener();
 </script>
 </body>
 </html>
