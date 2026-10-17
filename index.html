@@ -221,13 +221,13 @@
   </div>
   <div class="nav">
     <button class="active" data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>Dashboard</button>
+    <button data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
+    <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
+    <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Stock Threshold Analysis</button>
+    <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
     <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
-    <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
-    <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
-    <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Strangle Screen</button>
-    <button data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -578,10 +578,12 @@
         <div class="sb-field"><label>Lock-in trigger %</label><input type="number" id="p-profit_lock_trigger_pct" value="6" step="0.5"></div>
       </div>
       <div class="sb-meta">Step-based ratchet — distance below peak price tightens as profit grows. One-directional, never loosens.</div>
-      <table class="list-table" id="sb-trail-table">
-        <thead><tr><th>PROFIT ≥ %</th><th>TRAIL DISTANCE %</th><th></th></tr></thead>
-        <tbody id="sb-trail-body"></tbody>
-      </table>
+      <div class="table-scroll" style="max-height:none;">
+        <table class="list-table" id="sb-trail-table">
+          <thead><tr><th>PROFIT ≥ %</th><th>TRAIL DISTANCE %</th><th></th></tr></thead>
+          <tbody id="sb-trail-body"></tbody>
+        </table>
+      </div>
       <button class="refresh-btn" id="sb-trail-add" style="margin:10px 18px;">+ ADD CHECKPOINT</button>
     </div>
 
@@ -680,7 +682,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">STRANGLE BREAKEVEN SCREEN</div>
+      <div class="dash-title">STOCK THRESHOLD ANALYSIS</div>
       <div class="dash-meta" id="ss-meta">Monthly open→close return vs separate CALL/PUT breakevens · F&amp;O universe</div>
     </div>
   </div>
@@ -895,13 +897,13 @@ function closeMobileNav(){
 document.getElementById('mobile-nav-toggle').onclick = toggleMobileNav;
 document.getElementById('mobile-nav-backdrop').onclick = closeMobileNav;
 document.getElementById('nav-dashboard').onclick = () => switchPage('dashboard');
+document.getElementById('nav-ivp').onclick = () => switchPage('ivp');
+document.getElementById('nav-stock').onclick = () => switchPage('stock');
+document.getElementById('nav-strangle').onclick = () => switchPage('strangle');
+document.getElementById('nav-results').onclick = () => switchPage('results');
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
-document.getElementById('nav-stock').onclick = () => switchPage('stock');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
-document.getElementById('nav-results').onclick = () => switchPage('results');
-document.getElementById('nav-strangle').onclick = () => switchPage('strangle');
-document.getElementById('nav-ivp').onclick = () => switchPage('ivp');
 
 // ============================================================
 // DASHBOARD PAGE
