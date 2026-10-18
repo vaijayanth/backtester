@@ -231,6 +231,7 @@
     <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
+    <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -865,6 +866,118 @@
   </div>
 </div>
 
+<!-- ============ ZERODHA OPTION TRADE ANALYSIS PAGE ============ -->
+<div class="page" id="page-opttrades">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
+      <div class="dash-meta" id="ot-meta">Upload your Zerodha Tradebook or P&amp;L export — analysed entirely in this browser tab, never uploaded or committed anywhere.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD TRADES <span class="panel-meta">Tradebook CSV or P&amp;L statement CSV from Console &rarr; Reports</span></div></div>
+    <div style="padding:18px;">
+      <div id="ot-dropzone" style="border:2px dashed var(--border);border-radius:6px;padding:28px 18px;text-align:center;cursor:pointer;">
+        <div style="font-size:13px;color:var(--white);margin-bottom:6px;">Drop a CSV file here, or click to browse</div>
+        <div style="font-size:11px;color:var(--muted);">Tradebook or P&amp;L statement — format is auto-detected from the column headers</div>
+        <input type="file" id="ot-file-input" accept=".csv,text/csv" style="display:none;">
+      </div>
+      <div style="margin-top:14px;">
+        <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">OR PASTE CSV TEXT</label>
+        <textarea id="ot-paste" rows="4" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px 12px;color:var(--white);font-family:inherit;font-size:11px;resize:vertical;" placeholder="Paste the full CSV content here, including the header row..."></textarea>
+        <button class="refresh-btn" id="ot-parse-paste" style="margin-top:8px;padding:11px 18px;">PARSE PASTED CSV</button>
+      </div>
+      <div id="ot-parse-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
+      <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
+        Nothing here leaves your browser — no server upload, no git commit, no localStorage persistence by default. Re-upload each time you want fresh analysis.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="ot-mapping-panel" style="display:none;">
+    <div class="panel-head"><div class="panel-title">CONFIRM COLUMN MAPPING <span class="panel-meta">auto-detected — check these before analysing</span></div></div>
+    <div style="padding:18px;">
+      <div class="dash-footnote" style="padding:0 0 14px;border-top:none;">I haven't seen your exact export format before, so double-check these match your file's actual columns before confirming. Unmapped/"—" fields are left out of analysis.</div>
+      <div id="ot-mapping-fields" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
+      <button class="refresh-btn" id="ot-confirm-mapping" style="margin-top:16px;padding:12px 20px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⧉ CONFIRM &amp; ANALYSE</button>
+    </div>
+  </div>
+
+  <div id="ot-results" style="display:none;">
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">SUMMARY <span class="panel-meta" id="ot-summary-meta">—</span></div></div>
+      <div class="stat-row" id="ot-summary-row"></div>
+    </div>
+
+    <div class="dash-split">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">CALL vs PUT SPLIT</div></div>
+        <div class="stat-row" id="ot-cepe-row"></div>
+        <div class="dash-footnote">Your own rule (CLAUDE.md): CE-heavy default (~5CE:4PE), bidirectional ~80% of the time. This counts closed positions, not raw fills.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">STRATEGY CHECKS <span class="panel-meta">beta — heuristic, not exact</span></div></div>
+        <div class="stat-row" id="ot-checks-row"></div>
+        <div class="dash-footnote" id="ot-checks-note">—</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">PER-STOCK BREAKDOWN <span class="panel-meta">click a column to sort</span></div></div>
+      <div class="table-scroll">
+        <table class="list-table" id="ot-stock-table">
+          <thead><tr>
+            <th>STOCK</th><th>SECTOR</th><th>POSITIONS</th><th>CLOSED</th><th>WIN RATE</th>
+            <th>CE</th><th>PE</th><th>REALISED P&amp;L</th><th>AVG HOLD (D)</th>
+          </tr></thead>
+          <tbody id="ot-stock-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">WEEKLY / EXPIRY P&amp;L <span class="panel-meta">grouped by expiry date</span></div></div>
+      <div class="table-scroll">
+        <table class="list-table" id="ot-weekly-table">
+          <thead><tr><th>EXPIRY</th><th>POSITIONS CLOSED</th><th>WINS</th><th>LOSSES</th><th>REALISED P&amp;L</th></tr></thead>
+          <tbody id="ot-weekly-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">ALL POSITIONS <span class="panel-meta">matched BUY/SELL legs per contract</span></div></div>
+      <div class="controls">
+        <input type="text" class="search-box" id="ot-positions-search" placeholder="filter by stock...">
+      </div>
+      <div class="table-scroll">
+        <table class="list-table" id="ot-positions-table">
+          <thead><tr>
+            <th>STOCK</th><th>TYPE</th><th>STRIKE</th><th>EXPIRY</th><th>STATUS</th>
+            <th>QTY</th><th>ENTRY</th><th>EXIT</th><th>HOLD (D)</th><th>REALISED P&amp;L</th>
+          </tr></thead>
+          <tbody id="ot-positions-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel" id="ot-unparsed-panel" style="display:none;">
+      <div class="panel-head"><div class="panel-title">UNPARSED SYMBOLS <span class="panel-meta">couldn't extract strike/expiry/CE-PE — excluded from analysis above</span></div></div>
+      <div class="table-scroll" style="max-height:220px;">
+        <table class="list-table">
+          <thead><tr><th>RAW SYMBOL</th><th>ROWS</th></tr></thead>
+          <tbody id="ot-unparsed-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -907,6 +1020,7 @@ document.getElementById('nav-results').onclick = () => switchPage('results');
 document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
+document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -2505,6 +2619,469 @@ document.addEventListener('click', (e) => {
   const colIndex = Array.from(headRow.children).indexOf(th);
   if(colIndex === -1) return;
   sortTableByColumn(table, colIndex, th);
+});
+
+// ============================================================
+// ZERODHA OPTION TRADE ANALYSIS — entirely client-side. Nothing here is
+// ever sent to a server or committed to the repo; it's personal trading
+// data. Supports two very different Zerodha export shapes, since the
+// user wasn't sure which they'd upload:
+//   - Tradebook (fill-by-fill: each BUY/SELL execution as its own row) —
+//     positions are reconstructed by netting BUY/SELL per option contract.
+//   - P&L statement (pre-aggregated: one row per already-closed position,
+//     with buy/sell value or a profit column directly) — no netting needed.
+// Column names are NOT hardcoded — auto-detected by header text against
+// known aliases, then shown to the user to confirm/override before
+// analysing, because this export format hasn't been verified against a
+// real file yet (see docs/SPEC.md).
+// ============================================================
+
+const OT_TRADEBOOK_FIELDS = [
+  {key:'symbol', label:'Symbol / Trading Symbol', required:true, aliases:['symbol','tradingsymbol','trading symbol','instrument']},
+  {key:'tradeType', label:'Trade Type (Buy/Sell)', required:true, aliases:['trade_type','trade type','type','transaction_type','transaction type','buy/sell']},
+  {key:'quantity', label:'Quantity', required:true, aliases:['quantity','qty']},
+  {key:'price', label:'Price', required:true, aliases:['price','trade_price','trade price','average_price','average price']},
+  {key:'date', label:'Trade Date', required:true, aliases:['trade_date','trade date','date','order_execution_time','order execution time']},
+];
+const OT_PNL_FIELDS = [
+  {key:'symbol', label:'Symbol', required:true, aliases:['symbol','tradingsymbol','trading symbol','instrument']},
+  {key:'entryDate', label:'Entry Date', required:true, aliases:['entry date','entry_date','buy date']},
+  {key:'exitDate', label:'Exit Date', required:true, aliases:['exit date','exit_date','sell date']},
+  {key:'quantity', label:'Quantity', required:false, aliases:['quantity','qty']},
+  {key:'buyValue', label:'Buy Value', required:false, aliases:['buy value','buy_value','buy amount','buyvalue']},
+  {key:'sellValue', label:'Sell Value', required:false, aliases:['sell value','sell_value','sell amount','sellvalue']},
+  {key:'profit', label:'Profit / Realised P&L', required:false, aliases:['profit','realised p&l','realized p&l','net profit','p&l','pnl']},
+];
+
+const OT_SECTOR_MAP = {
+  'JSWSTEEL':'Steel','TATASTEEL':'Steel','NMDC':'Steel','HINDALCO':'Steel','VEDL':'Steel',
+  'SUNPHARMA':'Pharma','CIPLA':'Pharma','DIVISLAB':'Pharma','DRREDDY':'Pharma','AUROPHARMA':'Pharma',
+  'BAJAJFINSV':'NBFC','BAJFINANCE':'NBFC','ICICIPRULI':'NBFC','HDFCAMC':'NBFC','MUTHOOTFIN':'NBFC',
+  'APOLLOHOSP':'Hospitals','MAXHEALTH':'Hospitals',
+  'TATAMOTORS':'Auto','BAJAJ-AUTO':'Auto','M&M':'Auto','MARUTI':'Auto','HEROMOTOCO':'Auto',
+  'ITC':'FMCG (situational)','SBIN':'PSU Bank (situational)','INFY':'IT (situational)','HINDUNILVR':'FMCG (situational)',
+};
+function otSector(underlying){ return OT_SECTOR_MAP[underlying] || 'Other / unlisted'; }
+
+let otMode = 'tradebook';
+let otHeaders = [];
+let otRawRows = [];
+let otAllPositions = [];
+let otUnparsedMap = {};
+
+// Minimal RFC4180-ish CSV parser — handles quoted fields with embedded
+// commas/newlines/escaped quotes ("" inside a quoted field).
+function otParseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    }else{
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if(field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+
+function otNormHeader(h){ return String(h||'').toLowerCase().trim().replace(/[_]+/g, ' ').replace(/\s+/g, ' '); }
+
+function otGuessColumn(headers, aliases){
+  const normed = headers.map(otNormHeader);
+  for(const alias of aliases){
+    const idx = normed.indexOf(alias);
+    if(idx !== -1) return idx;
+  }
+  for(const alias of aliases){
+    const idx = normed.findIndex(h => h.includes(alias));
+    if(idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function otDetectMode(headers){
+  const normed = headers.map(otNormHeader).join(' | ');
+  if(/entry date|exit date|buy value|sell value/.test(normed)) return 'pnl';
+  return 'tradebook';
+}
+
+function otParseDate(s){
+  if(!s) return null;
+  s = String(s).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})/);
+  if(m){ const d = new Date(`${m[2]} ${m[1]}, ${m[3]}`); if(!isNaN(d)) return d; }
+  const fb = new Date(s);
+  return isNaN(fb) ? null : fb;
+}
+function otFmtDate(d){ return d ? d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'2-digit'}) : '—'; }
+
+const OT_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const OT_WEEK_MONTH_CODE = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'7':6,'8':7,'9':8,'O':9,'N':10,'D':11};
+
+function otLastThursday(year, monthIdx){
+  const d = new Date(year, monthIdx+1, 0); // last day of month
+  const diff = (d.getDay() - 4 + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+
+// Parses standard NSE F&O trading symbols: monthly (BASE+YY+MON+STRIKE+CE/PE,
+// e.g. RELIANCE24NOV1300CE — expiry approximated as that month's last
+// Thursday, the actual NSE monthly-expiry rule) and weekly (BASE+YY+single
+// month-char+DD+STRIKE+CE/PE, e.g. NIFTY24O2824500CE — expiry is exact,
+// encoded in the symbol). Returns null (not a throw) for anything that
+// doesn't match either pattern — callers must handle that, not assume
+// every symbol parses.
+function otParseOptionSymbol(raw){
+  const sym = String(raw||'').trim().toUpperCase();
+  let m = sym.match(/^([A-Z][A-Z0-9&\-]*?)(\d{2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d+(?:\.\d+)?)(CE|PE)$/);
+  if(m){
+    const [, base, yy, mon, strike, opt] = m;
+    const year = 2000 + parseInt(yy, 10);
+    const monthIdx = OT_MONTHS.indexOf(mon);
+    const expiry = otLastThursday(year, monthIdx);
+    return {underlying: base, optType: opt, strike: parseFloat(strike), expiry, approxExpiry: true};
+  }
+  m = sym.match(/^([A-Z][A-Z0-9&\-]*?)(\d{2})([1-9OND])(\d{2})(\d+(?:\.\d+)?)(CE|PE)$/);
+  if(m){
+    const [, base, yy, mc, dd, strike, opt] = m;
+    const year = 2000 + parseInt(yy, 10);
+    const monthIdx = OT_WEEK_MONTH_CODE[mc];
+    const expiry = new Date(year, monthIdx, parseInt(dd, 10));
+    return {underlying: base, optType: opt, strike: parseFloat(strike), expiry, approxExpiry: false};
+  }
+  return null;
+}
+
+function otReadFile(file){
+  const reader = new FileReader();
+  reader.onload = () => otHandleCSVText(reader.result);
+  reader.onerror = () => otShowError('Could not read that file.');
+  reader.readAsText(file);
+}
+
+function otShowError(msg){
+  const el = document.getElementById('ot-parse-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function otClearError(){
+  document.getElementById('ot-parse-error').style.display = 'none';
+}
+
+function otHandleCSVText(text){
+  otClearError();
+  let rows;
+  try{ rows = otParseCSV(text); }
+  catch(e){ otShowError('Could not parse that as CSV: ' + e.message); return; }
+  if(rows.length < 2){ otShowError('Found fewer than 2 rows — need a header row plus at least one trade.'); return; }
+  otHeaders = rows[0];
+  otRawRows = rows.slice(1);
+  otMode = otDetectMode(otHeaders);
+  otRenderMappingUI();
+}
+
+function otRenderMappingUI(){
+  const panel = document.getElementById('ot-mapping-panel');
+  const container = document.getElementById('ot-mapping-fields');
+  const fields = otMode === 'pnl' ? OT_PNL_FIELDS : OT_TRADEBOOK_FIELDS;
+
+  const modeToggle = `
+    <div style="grid-column:1/-1;margin-bottom:4px;">
+      <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">EXPORT FORMAT</label>
+      <div class="tabs">
+        <button class="tab-btn ${otMode==='tradebook'?'active':''}" id="ot-mode-tradebook">TRADEBOOK (fill-by-fill)</button>
+        <button class="tab-btn ${otMode==='pnl'?'active':''}" id="ot-mode-pnl">P&amp;L STATEMENT (pre-aggregated)</button>
+      </div>
+    </div>`;
+
+  const fieldHtml = fields.map(f => {
+    const guess = otGuessColumn(otHeaders, f.aliases);
+    const options = ['<option value="-1">— not in file —</option>']
+      .concat(otHeaders.map((h, i) => `<option value="${i}" ${i===guess?'selected':''}>${h}</option>`));
+    return `<div class="sb-field"><label>${f.label}${f.required?' *':''}</label>
+      <select class="sd-select" id="ot-map-${f.key}" style="width:100%;">${options.join('')}</select></div>`;
+  }).join('');
+
+  container.innerHTML = modeToggle + fieldHtml;
+  panel.style.display = 'block';
+  document.getElementById('ot-mode-tradebook').onclick = () => { otMode = 'tradebook'; otRenderMappingUI(); };
+  document.getElementById('ot-mode-pnl').onclick = () => { otMode = 'pnl'; otRenderMappingUI(); };
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function otConfirmMapping(){
+  otClearError();
+  const fields = otMode === 'pnl' ? OT_PNL_FIELDS : OT_TRADEBOOK_FIELDS;
+  const mapping = {};
+  for(const f of fields){
+    const val = parseInt(document.getElementById('ot-map-' + f.key).value, 10);
+    mapping[f.key] = val;
+    if(f.required && val === -1){
+      otShowError(`"${f.label}" is required — pick a column for it.`);
+      return;
+    }
+  }
+
+  let positions, unparsed;
+  if(otMode === 'pnl'){
+    const rows = otRawRows.map(r => ({
+      symbol: mapping.symbol>=0 ? r[mapping.symbol] : '',
+      entryDate: otParseDate(mapping.entryDate>=0 ? r[mapping.entryDate] : null),
+      exitDate: otParseDate(mapping.exitDate>=0 ? r[mapping.exitDate] : null),
+      quantity: mapping.quantity>=0 ? parseFloat(r[mapping.quantity]) || 0 : 0,
+      buyValue: mapping.buyValue>=0 ? parseFloat(String(r[mapping.buyValue]).replace(/[₹,]/g,'')) : null,
+      sellValue: mapping.sellValue>=0 ? parseFloat(String(r[mapping.sellValue]).replace(/[₹,]/g,'')) : null,
+      profit: mapping.profit>=0 ? parseFloat(String(r[mapping.profit]).replace(/[₹,]/g,'')) : null,
+    }));
+    ({positions, unparsed} = otBuildPositionsFromPnl(rows));
+  }else{
+    const trades = otRawRows.map(r => ({
+      symbol: r[mapping.symbol],
+      tradeType: /sell|^s$/i.test(r[mapping.tradeType]) ? 'SELL' : 'BUY',
+      quantity: parseFloat(r[mapping.quantity]) || 0,
+      price: parseFloat(String(r[mapping.price]).replace(/[₹,]/g,'')) || 0,
+      date: otParseDate(r[mapping.date]),
+    })).filter(t => t.symbol && t.date);
+    ({positions, unparsed} = otBuildPositionsFromTradebook(trades));
+  }
+
+  if(positions.length === 0 && Object.keys(unparsed).length === 0){
+    otShowError('No usable rows found — check the column mapping above.');
+    return;
+  }
+  otAnalyze(positions, unparsed);
+}
+
+function otBuildPositionsFromTradebook(trades){
+  const bySymbol = {};
+  trades.forEach(t => { (bySymbol[t.symbol] = bySymbol[t.symbol] || []).push(t); });
+  const positions = [], unparsed = {};
+  Object.keys(bySymbol).forEach(sym => {
+    const parsed = otParseOptionSymbol(sym);
+    const rows = bySymbol[sym];
+    if(!parsed){ unparsed[sym] = (unparsed[sym]||0) + rows.length; return; }
+    let buyQty=0, sellQty=0, buyVal=0, sellVal=0, minDate=null, maxDate=null;
+    rows.forEach(t => {
+      const val = t.quantity * t.price;
+      if(t.tradeType === 'BUY'){ buyQty += t.quantity; buyVal += val; }
+      else { sellQty += t.quantity; sellVal += val; }
+      if(!minDate || t.date < minDate) minDate = t.date;
+      if(!maxDate || t.date > maxDate) maxDate = t.date;
+    });
+    const closed = buyQty === sellQty && buyQty > 0;
+    const status = closed ? 'CLOSED' : (buyQty===0 || sellQty===0 ? 'OPEN' : 'PARTIAL');
+    positions.push({
+      symbol: sym, underlying: parsed.underlying, optType: parsed.optType, strike: parsed.strike,
+      expiry: parsed.expiry, approxExpiry: parsed.approxExpiry,
+      buyQty, sellQty, netQty: Math.max(buyQty, sellQty), status,
+      pnl: closed ? (sellVal - buyVal) : null,
+      entryDate: minDate, exitDate: closed ? maxDate : null,
+      holdDays: closed ? Math.round((maxDate - minDate) / 86400000) : null,
+    });
+  });
+  return {positions, unparsed};
+}
+
+function otBuildPositionsFromPnl(rows){
+  const positions = [], unparsed = {};
+  rows.forEach(r => {
+    const parsed = otParseOptionSymbol(r.symbol);
+    if(!parsed){ unparsed[r.symbol] = (unparsed[r.symbol]||0) + 1; return; }
+    let pnl = r.profit;
+    if(pnl == null && r.buyValue != null && r.sellValue != null) pnl = r.sellValue - r.buyValue;
+    const holdDays = (r.entryDate && r.exitDate) ? Math.round((r.exitDate - r.entryDate) / 86400000) : null;
+    positions.push({
+      symbol: r.symbol, underlying: parsed.underlying, optType: parsed.optType, strike: parsed.strike,
+      expiry: parsed.expiry, approxExpiry: parsed.approxExpiry,
+      buyQty: r.quantity, sellQty: r.quantity, netQty: r.quantity, status: 'CLOSED',
+      pnl, entryDate: r.entryDate, exitDate: r.exitDate, holdDays,
+    });
+  });
+  return {positions, unparsed};
+}
+
+function otAnalyze(positions, unparsed){
+  otAllPositions = positions;
+  otUnparsedMap = unparsed;
+
+  document.getElementById('ot-mapping-panel').style.display = 'none';
+  const resultsEl = document.getElementById('ot-results');
+  resultsEl.style.display = 'block';
+
+  const closed = positions.filter(p => p.status === 'CLOSED' && p.pnl != null);
+  const open = positions.filter(p => p.status !== 'CLOSED');
+  const wins = closed.filter(p => p.pnl > 0);
+  const totalPnl = closed.reduce((s,p) => s + p.pnl, 0);
+  const winRate = closed.length ? (wins.length / closed.length * 100) : null;
+  const avgPnl = closed.length ? (totalPnl / closed.length) : null;
+  const avgHold = closed.filter(p=>p.holdDays!=null).length
+    ? closed.filter(p=>p.holdDays!=null).reduce((s,p)=>s+p.holdDays,0) / closed.filter(p=>p.holdDays!=null).length
+    : null;
+
+  document.getElementById('ot-summary-meta').textContent =
+    `${positions.length} contract${positions.length===1?'':'s'} · ${closed.length} closed, ${open.length} still open` +
+    (Object.keys(unparsed).length ? ` · ${Object.keys(unparsed).length} unparsed symbol(s)` : '');
+
+  document.getElementById('ot-summary-row').innerHTML = `
+    <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value">${closed.length}</div></div>
+    <div class="stat"><div class="stat-label">WIN RATE</div><div class="stat-value ${winRate==null?'':winRate>=50?'green':'red'}">${winRate!=null?winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">REALISED P&amp;L</div><div class="stat-value ${totalPnl>=0?'green':'red'}">₹${totalPnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">AVG P&amp;L / POSITION</div><div class="stat-value ${avgPnl==null?'':avgPnl>=0?'green':'red'}">${avgPnl!=null?'₹'+avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+    <div class="stat"><div class="stat-label">AVG HOLD</div><div class="stat-value">${avgHold!=null?avgHold.toFixed(1)+'d':'—'}</div></div>
+    <div class="stat"><div class="stat-label">STILL OPEN</div><div class="stat-value amber">${open.length}</div></div>
+  `;
+
+  const ceCount = closed.filter(p => p.optType === 'CE').length;
+  const peCount = closed.filter(p => p.optType === 'PE').length;
+  const ceRatio = peCount ? (ceCount / peCount) : null;
+  document.getElementById('ot-cepe-row').innerHTML = `
+    <div class="stat"><div class="stat-label">CALL (CE)</div><div class="stat-value">${ceCount}</div></div>
+    <div class="stat"><div class="stat-label">PUT (PE)</div><div class="stat-value">${peCount}</div></div>
+    <div class="stat"><div class="stat-label">CE : PE RATIO</div><div class="stat-value ${ceRatio!=null && ceRatio>=1 ? 'green':'amber'}">${ceRatio!=null?ceRatio.toFixed(2):'—'}</div></div>
+  `;
+
+  const expiryWeekViolations = closed.filter(p => {
+    if(!p.entryDate) return false;
+    const days = (p.expiry - p.entryDate) / 86400000;
+    return days >= 0 && days <= 6;
+  }).length;
+  const sectorsHit = new Set(closed.map(p => otSector(p.underlying))).size;
+  document.getElementById('ot-checks-row').innerHTML = `
+    <div class="stat"><div class="stat-label">ENTERED DURING EXPIRY WEEK</div><div class="stat-value ${expiryWeekViolations===0?'green':'red'}">${expiryWeekViolations}</div></div>
+    <div class="stat"><div class="stat-label">DISTINCT SECTORS TRADED</div><div class="stat-value ${sectorsHit>=4?'green':'amber'}">${sectorsHit}</div></div>
+  `;
+  document.getElementById('ot-checks-note').textContent =
+    'Your own rules: never enter expiry week; minimum 4 of 5 core sectors per expiry cycle. Expiry dates for monthly contracts are approximated (last Thursday of month) — exchange holidays can shift the real date by a day or two.';
+
+  otRenderStockTable(closed, open);
+  otRenderWeeklyTable(closed);
+  otRenderPositionsTable(positions);
+  otRenderUnparsed(unparsed);
+}
+
+function otRenderStockTable(closed, open){
+  const byStock = {};
+  closed.concat(open).forEach(p => {
+    const k = p.underlying;
+    if(!byStock[k]) byStock[k] = {positions:0, closed:0, wins:0, ce:0, pe:0, pnl:0, holdSum:0, holdN:0};
+    const s = byStock[k];
+    s.positions++;
+    if(p.optType==='CE') s.ce++; else if(p.optType==='PE') s.pe++;
+    if(p.status==='CLOSED' && p.pnl!=null){
+      s.closed++;
+      if(p.pnl>0) s.wins++;
+      s.pnl += p.pnl;
+      if(p.holdDays!=null){ s.holdSum += p.holdDays; s.holdN++; }
+    }
+  });
+  const rows = Object.keys(byStock).sort().map(stock => {
+    const s = byStock[stock];
+    const wr = s.closed ? (s.wins/s.closed*100) : null;
+    const avgHold = s.holdN ? (s.holdSum/s.holdN) : null;
+    return `<tr>
+      <td class="dash-run-label">${stock}</td>
+      <td>${otSector(stock)}</td>
+      <td>${s.positions}</td>
+      <td>${s.closed}</td>
+      <td data-sort-value="${wr!=null?wr:''}">${wr!=null?wr.toFixed(0)+'%':'—'}</td>
+      <td>${s.ce}</td>
+      <td>${s.pe}</td>
+      <td style="color:${s.pnl>=0?'var(--green)':'var(--red)'}">₹${s.pnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+      <td>${avgHold!=null?avgHold.toFixed(1):'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ot-stock-body').innerHTML = rows || '<tr><td colspan="9" class="loading">No parsed positions.</td></tr>';
+}
+
+function otRenderWeeklyTable(closed){
+  const byExpiry = {};
+  closed.forEach(p => {
+    if(!p.expiry) return;
+    const k = p.expiry.toISOString().slice(0,10);
+    if(!byExpiry[k]) byExpiry[k] = {date:p.expiry, n:0, wins:0, losses:0, pnl:0};
+    const g = byExpiry[k];
+    g.n++;
+    if(p.pnl>0) g.wins++; else g.losses++;
+    g.pnl += p.pnl;
+  });
+  const rows = Object.keys(byExpiry).sort().reverse().map(k => {
+    const g = byExpiry[k];
+    return `<tr>
+      <td>${otFmtDate(g.date)}</td>
+      <td>${g.n}</td>
+      <td style="color:var(--green)">${g.wins}</td>
+      <td style="color:var(--red)">${g.losses}</td>
+      <td style="color:${g.pnl>=0?'var(--green)':'var(--red)'}">₹${g.pnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ot-weekly-body').innerHTML = rows || '<tr><td colspan="5" class="loading">No closed positions with a parsed expiry.</td></tr>';
+}
+
+function otRenderPositionsTable(positions, filterText){
+  const term = (filterText||'').toUpperCase();
+  const filtered = term ? positions.filter(p => p.underlying.includes(term)) : positions;
+  const sorted = filtered.slice().sort((a,b) => (b.entryDate||0) - (a.entryDate||0));
+  const rows = sorted.map(p => {
+    const statusColor = p.status==='CLOSED' ? 'var(--dim)' : p.status==='OPEN' ? 'var(--amber)' : 'var(--muted)';
+    return `<tr>
+      <td class="dash-run-label">${p.underlying}</td>
+      <td>${p.optType}</td>
+      <td>${p.strike}</td>
+      <td data-sort-value="${p.expiry?p.expiry.getTime():''}">${otFmtDate(p.expiry)}${p.approxExpiry?' *':''}</td>
+      <td style="color:${statusColor}">${p.status}</td>
+      <td>${p.netQty}</td>
+      <td data-sort-value="${p.entryDate?p.entryDate.getTime():''}">${otFmtDate(p.entryDate)}</td>
+      <td data-sort-value="${p.exitDate?p.exitDate.getTime():''}">${otFmtDate(p.exitDate)}</td>
+      <td>${p.holdDays!=null?p.holdDays:'—'}</td>
+      <td style="color:${p.pnl==null?'var(--muted)':p.pnl>=0?'var(--green)':'var(--red)'}">${p.pnl!=null?'₹'+p.pnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ot-positions-body').innerHTML = rows || '<tr><td colspan="10" class="loading">No positions match.</td></tr>';
+}
+
+function otRenderUnparsed(unparsed){
+  const keys = Object.keys(unparsed);
+  const panel = document.getElementById('ot-unparsed-panel');
+  if(!keys.length){ panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  document.getElementById('ot-unparsed-body').innerHTML = keys.sort().map(sym =>
+    `<tr><td>${sym}</td><td>${unparsed[sym]}</td></tr>`
+  ).join('');
+}
+
+document.getElementById('ot-dropzone').onclick = () => document.getElementById('ot-file-input').click();
+document.getElementById('ot-file-input').addEventListener('change', (e) => {
+  if(e.target.files && e.target.files[0]) otReadFile(e.target.files[0]);
+});
+const otDropzone = document.getElementById('ot-dropzone');
+otDropzone.addEventListener('dragover', (e) => { e.preventDefault(); otDropzone.style.borderColor = 'var(--amber)'; });
+otDropzone.addEventListener('dragleave', () => { otDropzone.style.borderColor = 'var(--border)'; });
+otDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  otDropzone.style.borderColor = 'var(--border)';
+  if(e.dataTransfer.files && e.dataTransfer.files[0]) otReadFile(e.dataTransfer.files[0]);
+});
+document.getElementById('ot-parse-paste').onclick = () => {
+  const text = document.getElementById('ot-paste').value;
+  if(!text.trim()){ otShowError('Paste some CSV text first.'); return; }
+  otHandleCSVText(text);
+};
+document.getElementById('ot-confirm-mapping').onclick = otConfirmMapping;
+document.getElementById('ot-positions-search').addEventListener('input', (e) => {
+  otRenderPositionsTable(otAllPositions, e.target.value);
 });
 </script>
 </body>
