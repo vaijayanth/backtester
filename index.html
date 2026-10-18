@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     color-scheme: dark;
@@ -872,51 +873,22 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
-      <div class="dash-meta" id="ot-meta">Upload your Zerodha Tradebook or P&amp;L export — stored in a real SQL database (DuckDB-WASM) running entirely in this browser tab, never uploaded or committed anywhere.</div>
+      <div class="dash-meta" id="ot-meta">Upload your Zerodha P&amp;L statement (Console &rarr; Reports, Excel export) — stored in a real SQL database (DuckDB-WASM) running entirely in this browser tab, never uploaded or committed anywhere.</div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">DATABASE</div></div>
+    <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx) from Console &rarr; Reports</span></div></div>
     <div style="padding:18px;">
       <div id="ot-db-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-word;">initializing...</div>
-      <div class="dash-footnote" style="padding:0 0 14px;border-top:none;color:var(--amber);">
-        ⚠ This database lives only in THIS browser tab's memory — it is gone on reload. Since you're working across multiple devices/browsers, <b>Export after every upload</b> and <b>Import that file first</b> when you switch machines. Re-uploading the same CSV (even "since inception" every time) is safe — duplicate trades are detected and skipped automatically.
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="refresh-btn" id="ot-export-db" style="padding:11px 18px;">⬇ EXPORT DATABASE</button>
-        <button class="refresh-btn" id="ot-import-db-btn" style="padding:11px 18px;">⬆ IMPORT DATABASE</button>
-        <input type="file" id="ot-import-db-input" accept=".json" style="display:none;">
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD TRADES <span class="panel-meta">Tradebook CSV or P&amp;L statement CSV from Console &rarr; Reports — adds to the database above</span></div></div>
-    <div style="padding:18px;">
-      <div id="ot-dropzone" style="border:2px dashed var(--border);border-radius:6px;padding:28px 18px;text-align:center;cursor:pointer;">
-        <div style="font-size:13px;color:var(--white);margin-bottom:6px;">Drop a CSV file here, or click to browse</div>
-        <div style="font-size:11px;color:var(--muted);">Tradebook or P&amp;L statement — format is auto-detected from the column headers</div>
-        <input type="file" id="ot-file-input" accept=".csv,text/csv" style="display:none;">
-      </div>
-      <div style="margin-top:14px;">
-        <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">OR PASTE CSV TEXT</label>
-        <textarea id="ot-paste" rows="4" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px 12px;color:var(--white);font-family:inherit;font-size:11px;resize:vertical;" placeholder="Paste the full CSV content here, including the header row..."></textarea>
-        <button class="refresh-btn" id="ot-parse-paste" style="margin-top:8px;padding:11px 18px;">PARSE PASTED CSV</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" id="ot-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
+        <button class="refresh-btn" id="ot-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD</button>
       </div>
       <div id="ot-parse-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        Nothing here leaves your browser — no server upload, no git commit. Each upload is merged into the database above (new trades added, duplicates skipped) — analysis below always reflects everything stored so far, not just this file.
+        Nothing here leaves your browser — no server upload, no git commit. Columns are auto-detected from the header row. Re-uploading is safe any time — each contract's row is replaced with the latest numbers from the file, nothing is duplicated. This database lives only in this browser tab's memory — reload the page and it's gone, so re-upload your latest export whenever you come back.
       </div>
-    </div>
-  </div>
-
-  <div class="panel" id="ot-mapping-panel" style="display:none;">
-    <div class="panel-head"><div class="panel-title">CONFIRM COLUMN MAPPING <span class="panel-meta">auto-detected — check these before analysing</span></div></div>
-    <div style="padding:18px;">
-      <div class="dash-footnote" style="padding:0 0 14px;border-top:none;">I haven't seen your exact export format before, so double-check these match your file's actual columns before confirming. Unmapped/"—" fields are left out of analysis.</div>
-      <div id="ot-mapping-fields" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;"></div>
-      <button class="refresh-btn" id="ot-confirm-mapping" style="margin-top:16px;padding:12px 20px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⧉ CONFIRM &amp; ANALYSE</button>
     </div>
   </div>
 
@@ -927,17 +899,10 @@
       <div class="stat-row" id="ot-summary-row"></div>
     </div>
 
-    <div class="dash-split">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">CALL vs PUT SPLIT</div></div>
-        <div class="stat-row" id="ot-cepe-row"></div>
-        <div class="dash-footnote">Your own rule (CLAUDE.md): CE-heavy default (~5CE:4PE), bidirectional ~80% of the time. This counts closed positions, not raw fills.</div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">STRATEGY CHECKS <span class="panel-meta">beta — heuristic, not exact</span></div></div>
-        <div class="stat-row" id="ot-checks-row"></div>
-        <div class="dash-footnote" id="ot-checks-note">—</div>
-      </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">CALL vs PUT SPLIT</div></div>
+      <div class="stat-row" id="ot-cepe-row"></div>
+      <div class="dash-footnote">Your own rule (CLAUDE.md): CE-heavy default (~5CE:4PE), bidirectional ~80% of the time.</div>
     </div>
 
     <div class="panel">
@@ -945,8 +910,8 @@
       <div class="table-scroll">
         <table class="list-table" id="ot-stock-table">
           <thead><tr>
-            <th>STOCK</th><th>SECTOR</th><th>POSITIONS</th><th>CLOSED</th><th>WIN RATE</th>
-            <th>CE</th><th>PE</th><th>REALISED P&amp;L</th><th>AVG HOLD (D)</th>
+            <th>STOCK</th><th>SECTOR</th><th>POSITIONS</th><th>WIN RATE</th>
+            <th>CE</th><th>PE</th><th>REALISED P&amp;L</th><th>UNREALIZED P&amp;L</th>
           </tr></thead>
           <tbody id="ot-stock-body"></tbody>
         </table>
@@ -964,7 +929,7 @@
     </div>
 
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">ALL POSITIONS <span class="panel-meta">matched BUY/SELL legs per contract</span></div></div>
+      <div class="panel-head"><div class="panel-title">ALL POSITIONS <span class="panel-meta">from your uploaded P&amp;L statement</span></div></div>
       <div class="controls">
         <input type="text" class="search-box" id="ot-positions-search" placeholder="filter by stock...">
       </div>
@@ -972,7 +937,7 @@
         <table class="list-table" id="ot-positions-table">
           <thead><tr>
             <th>STOCK</th><th>TYPE</th><th>STRIKE</th><th>EXPIRY</th><th>STATUS</th>
-            <th>QTY</th><th>ENTRY</th><th>EXIT</th><th>HOLD (D)</th><th>REALISED P&amp;L</th>
+            <th>QTY</th><th>REALISED P&amp;L</th><th>UNREALIZED P&amp;L</th>
           </tr></thead>
           <tbody id="ot-positions-body"></tbody>
         </table>
@@ -2640,33 +2605,23 @@ document.addEventListener('click', (e) => {
 // ============================================================
 // ZERODHA OPTION TRADE ANALYSIS — entirely client-side. Nothing here is
 // ever sent to a server or committed to the repo; it's personal trading
-// data. Supports two very different Zerodha export shapes, since the
-// user wasn't sure which they'd upload:
-//   - Tradebook (fill-by-fill: each BUY/SELL execution as its own row) —
-//     positions are reconstructed by netting BUY/SELL per option contract.
-//   - P&L statement (pre-aggregated: one row per already-closed position,
-//     with buy/sell value or a profit column directly) — no netting needed.
-// Column names are NOT hardcoded — auto-detected by header text against
-// known aliases, then shown to the user to confirm/override before
-// analysing, because this export format hasn't been verified against a
-// real file yet (see docs/SPEC.md).
+// data. P&L-statement-only (Console -> Reports export): one row per
+// contract, a CUMULATIVE SNAPSHOT (not an append-only fill log) — no
+// entry/exit date columns, but Open Quantity/Open Value/Unrealized P&L
+// carry currently-open positions. Column names are NOT hardcoded —
+// auto-detected by header text against known aliases. No confirmation
+// step: Upload parses, maps, and stores in one action.
 // ============================================================
 
-const OT_TRADEBOOK_FIELDS = [
-  {key:'symbol', label:'Symbol / Trading Symbol', required:true, aliases:['symbol','tradingsymbol','trading symbol','instrument']},
-  {key:'tradeType', label:'Trade Type (Buy/Sell)', required:true, aliases:['trade_type','trade type','type','transaction_type','transaction type','buy/sell']},
-  {key:'quantity', label:'Quantity', required:true, aliases:['quantity','qty']},
-  {key:'price', label:'Price', required:true, aliases:['price','trade_price','trade price','average_price','average price']},
-  {key:'date', label:'Trade Date', required:true, aliases:['trade_date','trade date','date','order_execution_time','order execution time']},
-];
 const OT_PNL_FIELDS = [
   {key:'symbol', label:'Symbol', required:true, aliases:['symbol','tradingsymbol','trading symbol','instrument']},
-  {key:'entryDate', label:'Entry Date', required:true, aliases:['entry date','entry_date','buy date']},
-  {key:'exitDate', label:'Exit Date', required:true, aliases:['exit date','exit_date','sell date']},
-  {key:'quantity', label:'Quantity', required:false, aliases:['quantity','qty']},
-  {key:'buyValue', label:'Buy Value', required:false, aliases:['buy value','buy_value','buy amount','buyvalue']},
-  {key:'sellValue', label:'Sell Value', required:false, aliases:['sell value','sell_value','sell amount','sellvalue']},
-  {key:'profit', label:'Profit / Realised P&L', required:false, aliases:['profit','realised p&l','realized p&l','net profit','p&l','pnl']},
+  {key:'quantity', label:'Quantity', required:true, aliases:['quantity','qty']},
+  {key:'buyValue', label:'Buy Value', required:true, aliases:['buy value','buy_value','buy amount','buyvalue']},
+  {key:'sellValue', label:'Sell Value', required:true, aliases:['sell value','sell_value','sell amount','sellvalue']},
+  {key:'profit', label:'Realised P&L', required:false, aliases:['realized p&l','realised p&l','profit','net profit','p&l','pnl']},
+  {key:'openQuantity', label:'Open Quantity', required:false, aliases:['open quantity','open qty']},
+  {key:'openValue', label:'Open Value', required:false, aliases:['open value']},
+  {key:'unrealizedPnl', label:'Unrealized P&L', required:false, aliases:['unrealized p&l','unrealised p&l','unrealized pnl','unrealised pnl']},
 ];
 
 const OT_SECTOR_MAP = {
@@ -2679,34 +2634,8 @@ const OT_SECTOR_MAP = {
 };
 function otSector(underlying){ return OT_SECTOR_MAP[underlying] || 'Other / unlisted'; }
 
-let otMode = 'tradebook';
-let otHeaders = [];
-let otRawRows = [];
 let otAllPositions = [];
 let otUnparsedMap = {};
-
-// Minimal RFC4180-ish CSV parser — handles quoted fields with embedded
-// commas/newlines/escaped quotes ("" inside a quoted field).
-function otParseCSV(text){
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for(let i = 0; i < text.length; i++){
-    const c = text[i], next = text[i+1];
-    if(inQuotes){
-      if(c === '"' && next === '"'){ field += '"'; i++; }
-      else if(c === '"'){ inQuotes = false; }
-      else field += c;
-    }else{
-      if(c === '"') inQuotes = true;
-      else if(c === ','){ row.push(field); field = ''; }
-      else if(c === '\r'){ /* skip */ }
-      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
-      else field += c;
-    }
-  }
-  if(field !== '' || row.length){ row.push(field); rows.push(row); }
-  return rows.filter(r => r.some(c => c.trim() !== ''));
-}
 
 function otNormHeader(h){ return String(h||'').toLowerCase().trim().replace(/[_]+/g, ' ').replace(/\s+/g, ' '); }
 
@@ -2723,24 +2652,6 @@ function otGuessColumn(headers, aliases){
   return -1;
 }
 
-function otDetectMode(headers){
-  const normed = headers.map(otNormHeader).join(' | ');
-  if(/entry date|exit date|buy value|sell value/.test(normed)) return 'pnl';
-  return 'tradebook';
-}
-
-function otParseDate(s){
-  if(!s) return null;
-  s = String(s).trim();
-  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
-  m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
-  m = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})/);
-  if(m){ const d = new Date(`${m[2]} ${m[1]}, ${m[3]}`); if(!isNaN(d)) return d; }
-  const fb = new Date(s);
-  return isNaN(fb) ? null : fb;
-}
 function otFmtDate(d){ return d ? d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'2-digit'}) : '—'; }
 
 const OT_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -2785,11 +2696,18 @@ function otParseOptionSymbol(raw){
   return null;
 }
 
-function otReadFile(file){
-  const reader = new FileReader();
-  reader.onload = () => otHandleCSVText(reader.result);
-  reader.onerror = () => otShowError('Could not read that file.');
-  reader.readAsText(file);
+function otIsExcelFile(file){
+  return /\.xlsx?$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel';
+}
+
+// SheetJS cell values come through already typed (numbers as numbers, and
+// with cellDates:true, dates as JS Date objects). Normalise every cell to
+// a plain string so parseFloat on mapped columns works the same regardless
+// of the underlying cell type.
+function otExcelCellToStr(v){
+  if(v == null) return '';
+  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  return String(v);
 }
 
 function otShowError(msg){
@@ -2810,58 +2728,75 @@ function otClearError(){
   document.getElementById('ot-parse-error').style.display = 'none';
 }
 
-function otHandleCSVText(text){
+// One-click upload: pick file -> parse -> auto-detect columns -> store.
+// No intermediate confirmation screen — if a required column can't be
+// found, this fails with a clear error instead of guessing wrong.
+async function otUploadFile(){
   otClearError();
-  let rows;
-  try{ rows = otParseCSV(text); }
-  catch(e){ otShowError('Could not parse that as CSV: ' + e.message); return; }
-  if(rows.length < 2){ otShowError('Found fewer than 2 rows — need a header row plus at least one trade.'); return; }
-  otHeaders = rows[0];
-  otRawRows = rows.slice(1);
-  otMode = otDetectMode(otHeaders);
-  otRenderMappingUI();
-}
+  const fileInput = document.getElementById('ot-file-input');
+  const file = fileInput.files && fileInput.files[0];
+  if(!file){ otShowError('Choose a file first.'); return; }
+  if(!otIsExcelFile(file)){
+    otShowError('Only Excel (.xlsx/.xls) files are supported — export your P&L statement as Excel from Console → Reports.');
+    return;
+  }
+  if(typeof XLSX === 'undefined'){ otShowError('Excel reader failed to load — check your connection and retry.'); return; }
 
-function otRenderMappingUI(){
-  const panel = document.getElementById('ot-mapping-panel');
-  const container = document.getElementById('ot-mapping-fields');
-  const fields = otMode === 'pnl' ? OT_PNL_FIELDS : OT_TRADEBOOK_FIELDS;
+  const btn = document.getElementById('ot-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'UPLOADING...';
+  try{
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, {type:'array', cellDates:true});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:''});
+    const rows = aoa.map(r => r.map(otExcelCellToStr)).filter(r => r.some(c => String(c).trim() !== ''));
+    if(rows.length < 2){ otShowError('Found fewer than 2 rows — need a header row plus at least one position.'); return; }
 
-  const modeToggle = `
-    <div style="grid-column:1/-1;margin-bottom:4px;">
-      <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">EXPORT FORMAT</label>
-      <div class="tabs">
-        <button class="tab-btn ${otMode==='tradebook'?'active':''}" id="ot-mode-tradebook">TRADEBOOK (fill-by-fill)</button>
-        <button class="tab-btn ${otMode==='pnl'?'active':''}" id="ot-mode-pnl">P&amp;L STATEMENT (pre-aggregated)</button>
-      </div>
-    </div>`;
+    const headers = rows[0], rawRows = rows.slice(1);
+    const mapping = {};
+    for(const f of OT_PNL_FIELDS){
+      mapping[f.key] = otGuessColumn(headers, f.aliases);
+      if(f.required && mapping[f.key] === -1){
+        otShowError(`Couldn't find a "${f.label}" column in this file — check the header row matches your Zerodha export.`);
+        return;
+      }
+    }
 
-  const fieldHtml = fields.map(f => {
-    const guess = otGuessColumn(otHeaders, f.aliases);
-    const options = ['<option value="-1">— not in file —</option>']
-      .concat(otHeaders.map((h, i) => `<option value="${i}" ${i===guess?'selected':''}>${h}</option>`));
-    return `<div class="sb-field"><label>${f.label}${f.required?' *':''}</label>
-      <select class="sd-select" id="ot-map-${f.key}" style="width:100%;">${options.join('')}</select></div>`;
-  }).join('');
+    const parsed = rawRows.map(r => ({
+      symbol: r[mapping.symbol],
+      quantity: parseFloat(r[mapping.quantity]) || 0,
+      buyValue: parseFloat(String(r[mapping.buyValue]).replace(/[₹,]/g,'')) || 0,
+      sellValue: parseFloat(String(r[mapping.sellValue]).replace(/[₹,]/g,'')) || 0,
+      profit: mapping.profit>=0 ? parseFloat(String(r[mapping.profit]).replace(/[₹,]/g,'')) : null,
+      openQuantity: mapping.openQuantity>=0 ? parseFloat(r[mapping.openQuantity]) || 0 : 0,
+      openValue: mapping.openValue>=0 ? parseFloat(String(r[mapping.openValue]).replace(/[₹,]/g,'')) || 0 : 0,
+      unrealizedPnl: mapping.unrealizedPnl>=0 ? parseFloat(String(r[mapping.unrealizedPnl]).replace(/[₹,]/g,'')) : null,
+    })).filter(r => r.symbol);
+    if(!parsed.length){ otShowError('No usable rows found in that file.'); return; }
 
-  container.innerHTML = modeToggle + fieldHtml;
-  panel.style.display = 'block';
-  document.getElementById('ot-mode-tradebook').onclick = () => { otMode = 'tradebook'; otRenderMappingUI(); };
-  document.getElementById('ot-mode-pnl').onclick = () => { otMode = 'pnl'; otRenderMappingUI(); };
-  panel.scrollIntoView({behavior:'smooth', block:'start'});
+    const conn = await otGetConn();
+    const result = await otUpsertRows(conn, 'pnl_rows', OT_PNL_COLS, 'symbol', parsed.map(otPnlToSqlRow), 400);
+    document.getElementById('ot-results').style.display = 'block';
+    await otRenderFromDb();
+    otShowStatus(`Uploaded: ${result.new} new, ${result.updated} updated.`);
+    fileInput.value = '';
+  }catch(err){
+    console.error('Upload failed:', err);
+    otShowError('Could not process that file: ' + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '⬆ UPLOAD';
+  }
 }
 
 // ------------------------------------------------------------
-// DuckDB-WASM storage layer. Real SQL tables, in-memory per page load
-// (NOT OPFS-persisted — this sandbox can't verify OPFS/cross-origin-
-// isolation behavior live, and the user needs multi-device portability
-// anyway, which OPFS wouldn't give them regardless). Persistence is via
-// explicit Export/Import of a JSON snapshot instead: guaranteed to work
-// with no dependency on browser-specific storage APIs, and it's the
-// mechanism multi-device use actually needs. Dates are stored as
-// 'YYYY-MM-DD' VARCHAR, not DATE, to sidestep Arrow's date-type JS
-// conversion behavior entirely (another thing that can't be verified
-// live here) — parsed back to JS Date in otParseDate on the way out.
+// DuckDB-WASM storage layer. Real SQL tables, in-memory per page load only
+// (NOT OPFS/persisted across reloads — re-upload your latest export when
+// you come back). The expiry column is stored as 'YYYY-MM-DD' VARCHAR, not
+// DATE, to sidestep Arrow's date-type JS conversion behavior entirely
+// (can't be verified live in this sandbox, same CDN block as everything
+// else here).
 // ------------------------------------------------------------
 let otDb = null, otConn = null, otDbInitPromise = null;
 
@@ -2881,13 +2816,9 @@ async function otGetConn(){
       await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
       URL.revokeObjectURL(workerUrl);
       const conn = await db.connect();
-      await conn.query(`CREATE TABLE IF NOT EXISTS fills (
-        symbol VARCHAR, trade_type VARCHAR, quantity DOUBLE, price DOUBLE, trade_date VARCHAR,
-        underlying VARCHAR, opt_type VARCHAR, strike DOUBLE, expiry VARCHAR, approx_expiry BOOLEAN, parse_ok BOOLEAN
-      )`);
       await conn.query(`CREATE TABLE IF NOT EXISTS pnl_rows (
-        symbol VARCHAR, entry_date VARCHAR, exit_date VARCHAR, quantity DOUBLE,
-        buy_value DOUBLE, sell_value DOUBLE, profit DOUBLE,
+        symbol VARCHAR, quantity DOUBLE, buy_value DOUBLE, sell_value DOUBLE, profit DOUBLE,
+        open_quantity DOUBLE, open_value DOUBLE, unrealized_pnl DOUBLE,
         underlying VARCHAR, opt_type VARCHAR, strike DOUBLE, expiry VARCHAR, approx_expiry BOOLEAN, parse_ok BOOLEAN
       )`);
       otDb = db; otConn = conn;
@@ -2913,58 +2844,39 @@ async function otArrowToObjects(result){
   return out;
 }
 
-// Chunked dedup insert: builds a VALUES block + WHERE NOT EXISTS against
-// the matching natural-key columns, so re-uploading overlapping data
-// (the user's own "since inception every time" export habit) is a no-op
-// for rows already stored, not a duplicate.
-async function otDedupInsert(conn, table, cols, keyCols, rows, chunkSize){
-  if(!rows.length) return {inserted: 0, skipped: 0};
-  let inserted = 0, skipped = 0;
+// Zerodha's P&L export is a CUMULATIVE SNAPSHOT per contract, not an
+// append-only fill log — re-uploading later can show updated numbers for a
+// symbol still in progress (more realized, less open qty, etc). So this is
+// an upsert by Symbol: each chunk deletes any existing rows for the
+// symbols in that chunk, then inserts the chunk fresh. A fully-closed
+// contract that never changes again is a harmless no-op re-write; one
+// still in progress gets its numbers replaced with the latest truth
+// instead of silently duplicating.
+async function otUpsertRows(conn, table, cols, keyCol, rows, chunkSize){
+  if(!rows.length) return {new: 0, updated: 0};
+  let newCount = 0, updatedCount = 0;
   for(let i = 0; i < rows.length; i += chunkSize){
     const chunk = rows.slice(i, i + chunkSize);
+    const keys = chunk.map(r => r[keyCol]).join(',');
+    const existingRes = await conn.query(`SELECT COUNT(*) AS c FROM ${table} WHERE ${keyCol} IN (${keys})`);
+    const existing = Number((await otArrowToObjects(existingRes))[0].c);
+    updatedCount += existing;
+    newCount += (chunk.length - existing);
+    await conn.query(`DELETE FROM ${table} WHERE ${keyCol} IN (${keys})`);
     const values = chunk.map(r => '(' + cols.map(c => r[c]).join(',') + ')').join(',\n');
-    // Each column's match-or-both-null check MUST be parenthesized before
-    // joining with AND — without it, SQL's AND-binds-tighter-than-OR
-    // precedence collapses the whole clause so that a SINGLE matching
-    // column (e.g. just the symbol) satisfies the entire WHERE NOT EXISTS,
-    // silently treating genuinely new trades on a previously-seen symbol
-    // as duplicates and dropping them. Caught via manual SQL review, not
-    // a live test — cdn.jsdelivr.net (where duckdb-wasm loads from) is
-    // also blocked in this sandbox, same as every other external CDN.
-    const onClause = keyCols.map(k => `(t.${k} = v.${k} OR (t.${k} IS NULL AND v.${k} IS NULL))`).join(' AND ');
-    const countSql = `SELECT COUNT(*) AS c FROM (VALUES ${values}) AS v(${cols.join(',')})
-      WHERE NOT EXISTS (SELECT 1 FROM ${table} t WHERE ${onClause})`;
-    const beforeRes = await conn.query(countSql);
-    const newCount = Number((await otArrowToObjects(beforeRes))[0].c);
-    await conn.query(`INSERT INTO ${table}
-      SELECT * FROM (VALUES ${values}) AS v(${cols.join(',')})
-      WHERE NOT EXISTS (SELECT 1 FROM ${table} t WHERE ${onClause})`);
-    inserted += newCount;
-    skipped += (chunk.length - newCount);
+    await conn.query(`INSERT INTO ${table} SELECT * FROM (VALUES ${values}) AS v(${cols.join(',')})`);
   }
-  return {inserted, skipped};
+  return {new: newCount, updated: updatedCount};
 }
 
-const OT_FILLS_COLS = ['symbol','trade_type','quantity','price','trade_date','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
-const OT_FILLS_KEY = ['symbol','trade_type','quantity','price','trade_date'];
-const OT_PNL_COLS = ['symbol','entry_date','exit_date','quantity','buy_value','sell_value','profit','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
-const OT_PNL_KEY = ['symbol','entry_date','exit_date','quantity','buy_value','sell_value'];
+const OT_PNL_COLS = ['symbol','quantity','buy_value','sell_value','profit','open_quantity','open_value','unrealized_pnl','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
 
-function otFillToSqlRow(t){
-  const parsed = otParseOptionSymbol(t.symbol);
-  return {
-    symbol: otSqlStr(t.symbol), trade_type: otSqlStr(t.tradeType), quantity: otSqlNum(t.quantity),
-    price: otSqlNum(t.price), trade_date: otSqlStr(otDateIso(t.date)),
-    underlying: otSqlStr(parsed && parsed.underlying), opt_type: otSqlStr(parsed && parsed.optType),
-    strike: otSqlNum(parsed && parsed.strike), expiry: otSqlStr(parsed && otDateIso(parsed.expiry)),
-    approx_expiry: otSqlBool(parsed ? parsed.approxExpiry : null), parse_ok: otSqlBool(!!parsed),
-  };
-}
 function otPnlToSqlRow(r){
   const parsed = otParseOptionSymbol(r.symbol);
   return {
-    symbol: otSqlStr(r.symbol), entry_date: otSqlStr(otDateIso(r.entryDate)), exit_date: otSqlStr(otDateIso(r.exitDate)),
+    symbol: otSqlStr(r.symbol),
     quantity: otSqlNum(r.quantity), buy_value: otSqlNum(r.buyValue), sell_value: otSqlNum(r.sellValue), profit: otSqlNum(r.profit),
+    open_quantity: otSqlNum(r.openQuantity), open_value: otSqlNum(r.openValue), unrealized_pnl: otSqlNum(r.unrealizedPnl),
     underlying: otSqlStr(parsed && parsed.underlying), opt_type: otSqlStr(parsed && parsed.optType),
     strike: otSqlNum(parsed && parsed.strike), expiry: otSqlStr(parsed && otDateIso(parsed.expiry)),
     approx_expiry: otSqlBool(parsed ? parsed.approxExpiry : null), parse_ok: otSqlBool(!!parsed),
@@ -2973,149 +2885,33 @@ function otPnlToSqlRow(r){
 
 async function otUpdateDbMeta(){
   const conn = await otGetConn();
-  const f = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c, MIN(trade_date) AS mn, MAX(trade_date) AS mx FROM fills'));
-  const p = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c, MIN(entry_date) AS mn, MAX(exit_date) AS mx FROM pnl_rows'));
-  const fillCount = Number(f[0].c), pnlCount = Number(p[0].c);
-  const dates = [f[0].mn, f[0].mx, p[0].mn, p[0].mx].filter(Boolean).sort();
-  const rangeTxt = dates.length ? `${dates[0]} to ${dates[dates.length-1]}` : 'empty';
+  const p = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c FROM pnl_rows'));
+  const pnlCount = Number(p[0].c);
   document.getElementById('ot-db-meta').textContent =
-    `${fillCount} fill row${fillCount===1?'':'s'}, ${pnlCount} P&L row${pnlCount===1?'':'s'} stored · ${rangeTxt} · in-memory, this tab only — export after uploading`;
+    `${pnlCount} position${pnlCount===1?'':'s'} stored · in-memory, this browser tab only — re-upload any time to add/update`;
 }
 
 async function otRenderFromDb(){
   const conn = await otGetConn();
   await otUpdateDbMeta();
 
-  const fillRows = await otArrowToObjects(await conn.query('SELECT symbol, trade_type, quantity, price, trade_date FROM fills'));
-  const pnlRowsDb = await otArrowToObjects(await conn.query('SELECT symbol, entry_date, exit_date, quantity, buy_value, sell_value, profit FROM pnl_rows'));
+  const pnlRowsDb = await otArrowToObjects(await conn.query('SELECT symbol, quantity, buy_value, sell_value, profit, open_quantity, open_value, unrealized_pnl FROM pnl_rows'));
 
-  const trades = fillRows.map(r => ({
-    symbol: r.symbol, tradeType: r.trade_type, quantity: Number(r.quantity), price: Number(r.price),
-    date: otParseDate(r.trade_date),
-  }));
   const pnlRows = pnlRowsDb.map(r => ({
-    symbol: r.symbol, entryDate: otParseDate(r.entry_date), exitDate: otParseDate(r.exit_date),
+    symbol: r.symbol,
     quantity: r.quantity==null?null:Number(r.quantity), buyValue: r.buy_value==null?null:Number(r.buy_value),
     sellValue: r.sell_value==null?null:Number(r.sell_value), profit: r.profit==null?null:Number(r.profit),
+    openQuantity: r.open_quantity==null?0:Number(r.open_quantity), openValue: r.open_value==null?0:Number(r.open_value),
+    unrealizedPnl: r.unrealized_pnl==null?null:Number(r.unrealized_pnl),
   }));
 
-  const a = otBuildPositionsFromTradebook(trades);
-  const b = otBuildPositionsFromPnl(pnlRows);
-  const positions = a.positions.concat(b.positions);
-  const unparsed = {};
-  [a.unparsed, b.unparsed].forEach(u => Object.keys(u).forEach(k => { unparsed[k] = (unparsed[k]||0) + u[k]; }));
+  const {positions, unparsed} = otBuildPositionsFromPnl(pnlRows);
 
   if(positions.length === 0 && Object.keys(unparsed).length === 0){
     document.getElementById('ot-results').style.display = 'none';
     return;
   }
   otAnalyze(positions, unparsed);
-}
-
-async function otConfirmMapping(){
-  otClearError();
-  const fields = otMode === 'pnl' ? OT_PNL_FIELDS : OT_TRADEBOOK_FIELDS;
-  const mapping = {};
-  for(const f of fields){
-    const val = parseInt(document.getElementById('ot-map-' + f.key).value, 10);
-    mapping[f.key] = val;
-    if(f.required && val === -1){
-      otShowError(`"${f.label}" is required — pick a column for it.`);
-      return;
-    }
-  }
-
-  const btn = document.getElementById('ot-confirm-mapping');
-  btn.disabled = true;
-  btn.textContent = 'STORING...';
-  try{
-    const conn = await otGetConn();
-    let result;
-    if(otMode === 'pnl'){
-      const rows = otRawRows.map(r => ({
-        symbol: mapping.symbol>=0 ? r[mapping.symbol] : '',
-        entryDate: otParseDate(mapping.entryDate>=0 ? r[mapping.entryDate] : null),
-        exitDate: otParseDate(mapping.exitDate>=0 ? r[mapping.exitDate] : null),
-        quantity: mapping.quantity>=0 ? parseFloat(r[mapping.quantity]) || 0 : 0,
-        buyValue: mapping.buyValue>=0 ? parseFloat(String(r[mapping.buyValue]).replace(/[₹,]/g,'')) : null,
-        sellValue: mapping.sellValue>=0 ? parseFloat(String(r[mapping.sellValue]).replace(/[₹,]/g,'')) : null,
-        profit: mapping.profit>=0 ? parseFloat(String(r[mapping.profit]).replace(/[₹,]/g,'')) : null,
-      })).filter(r => r.symbol);
-      if(!rows.length){ otShowError('No usable rows found — check the column mapping above.'); return; }
-      result = await otDedupInsert(conn, 'pnl_rows', OT_PNL_COLS, OT_PNL_KEY, rows.map(otPnlToSqlRow), 400);
-    }else{
-      const trades = otRawRows.map(r => ({
-        symbol: r[mapping.symbol],
-        tradeType: /sell|^s$/i.test(r[mapping.tradeType]) ? 'SELL' : 'BUY',
-        quantity: parseFloat(r[mapping.quantity]) || 0,
-        price: parseFloat(String(r[mapping.price]).replace(/[₹,]/g,'')) || 0,
-        date: otParseDate(r[mapping.date]),
-      })).filter(t => t.symbol && t.date);
-      if(!trades.length){ otShowError('No usable rows found — check the column mapping above.'); return; }
-      result = await otDedupInsert(conn, 'fills', OT_FILLS_COLS, OT_FILLS_KEY, trades.map(otFillToSqlRow), 400);
-    }
-    document.getElementById('ot-mapping-panel').style.display = 'none';
-    document.getElementById('ot-results').style.display = 'block';
-    await otRenderFromDb();
-    otShowStatus(`Stored: ${result.inserted} new, ${result.skipped} already in the database (skipped).`);
-  }catch(err){
-    console.error('DuckDB insert failed:', err);
-    otShowError('Could not store in the database: ' + err.message);
-  }finally{
-    btn.disabled = false;
-    btn.textContent = '⧉ CONFIRM & ANALYSE';
-  }
-}
-
-async function otExportDb(){
-  try{
-    const conn = await otGetConn();
-    const fills = await otArrowToObjects(await conn.query('SELECT * FROM fills'));
-    const pnl = await otArrowToObjects(await conn.query('SELECT * FROM pnl_rows'));
-    const snapshot = {exported_at: new Date().toISOString(), fills, pnl_rows: pnl};
-    const blob = new Blob([JSON.stringify(snapshot)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `option-trades-db-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }catch(err){
-    console.error('Export failed:', err);
-    otShowError('Export failed: ' + err.message);
-  }
-}
-
-async function otImportDbFile(file){
-  try{
-    const text = await file.text();
-    const snapshot = JSON.parse(text);
-    if(!snapshot || !Array.isArray(snapshot.fills) || !Array.isArray(snapshot.pnl_rows)){
-      otShowError('That file does not look like an exported database snapshot.');
-      return;
-    }
-    const conn = await otGetConn();
-    const fillRows = snapshot.fills.map(r => ({
-      symbol: otSqlStr(r.symbol), trade_type: otSqlStr(r.trade_type), quantity: otSqlNum(r.quantity),
-      price: otSqlNum(r.price), trade_date: otSqlStr(r.trade_date), underlying: otSqlStr(r.underlying),
-      opt_type: otSqlStr(r.opt_type), strike: otSqlNum(r.strike), expiry: otSqlStr(r.expiry),
-      approx_expiry: otSqlBool(r.approx_expiry), parse_ok: otSqlBool(r.parse_ok),
-    }));
-    const pnlRows = snapshot.pnl_rows.map(r => ({
-      symbol: otSqlStr(r.symbol), entry_date: otSqlStr(r.entry_date), exit_date: otSqlStr(r.exit_date),
-      quantity: otSqlNum(r.quantity), buy_value: otSqlNum(r.buy_value), sell_value: otSqlNum(r.sell_value),
-      profit: otSqlNum(r.profit), underlying: otSqlStr(r.underlying), opt_type: otSqlStr(r.opt_type),
-      strike: otSqlNum(r.strike), expiry: otSqlStr(r.expiry), approx_expiry: otSqlBool(r.approx_expiry),
-      parse_ok: otSqlBool(r.parse_ok),
-    }));
-    const fRes = await otDedupInsert(conn, 'fills', OT_FILLS_COLS, OT_FILLS_KEY, fillRows, 400);
-    const pRes = await otDedupInsert(conn, 'pnl_rows', OT_PNL_COLS, OT_PNL_KEY, pnlRows, 400);
-    await otRenderFromDb();
-    otShowStatus(`Imported: ${fRes.inserted + pRes.inserted} new rows, ${fRes.skipped + pRes.skipped} already present.`);
-  }catch(err){
-    console.error('Import failed:', err);
-    otShowError('Import failed: ' + err.message);
-  }
 }
 
 let otInitialized = false;
@@ -3130,36 +2926,6 @@ async function otInit(){
   }
 }
 
-function otBuildPositionsFromTradebook(trades){
-  const bySymbol = {};
-  trades.forEach(t => { (bySymbol[t.symbol] = bySymbol[t.symbol] || []).push(t); });
-  const positions = [], unparsed = {};
-  Object.keys(bySymbol).forEach(sym => {
-    const parsed = otParseOptionSymbol(sym);
-    const rows = bySymbol[sym];
-    if(!parsed){ unparsed[sym] = (unparsed[sym]||0) + rows.length; return; }
-    let buyQty=0, sellQty=0, buyVal=0, sellVal=0, minDate=null, maxDate=null;
-    rows.forEach(t => {
-      const val = t.quantity * t.price;
-      if(t.tradeType === 'BUY'){ buyQty += t.quantity; buyVal += val; }
-      else { sellQty += t.quantity; sellVal += val; }
-      if(!minDate || t.date < minDate) minDate = t.date;
-      if(!maxDate || t.date > maxDate) maxDate = t.date;
-    });
-    const closed = buyQty === sellQty && buyQty > 0;
-    const status = closed ? 'CLOSED' : (buyQty===0 || sellQty===0 ? 'OPEN' : 'PARTIAL');
-    positions.push({
-      symbol: sym, underlying: parsed.underlying, optType: parsed.optType, strike: parsed.strike,
-      expiry: parsed.expiry, approxExpiry: parsed.approxExpiry,
-      buyQty, sellQty, netQty: Math.max(buyQty, sellQty), status,
-      pnl: closed ? (sellVal - buyVal) : null,
-      entryDate: minDate, exitDate: closed ? maxDate : null,
-      holdDays: closed ? Math.round((maxDate - minDate) / 86400000) : null,
-    });
-  });
-  return {positions, unparsed};
-}
-
 function otBuildPositionsFromPnl(rows){
   const positions = [], unparsed = {};
   rows.forEach(r => {
@@ -3167,12 +2933,14 @@ function otBuildPositionsFromPnl(rows){
     if(!parsed){ unparsed[r.symbol] = (unparsed[r.symbol]||0) + 1; return; }
     let pnl = r.profit;
     if(pnl == null && r.buyValue != null && r.sellValue != null) pnl = r.sellValue - r.buyValue;
-    const holdDays = (r.entryDate && r.exitDate) ? Math.round((r.exitDate - r.entryDate) / 86400000) : null;
+    const closedQty = r.quantity || 0;
+    const openQty = r.openQuantity || 0;
+    const status = openQty > 0 ? (closedQty > 0 ? 'PARTIAL' : 'OPEN') : 'CLOSED';
     positions.push({
       symbol: r.symbol, underlying: parsed.underlying, optType: parsed.optType, strike: parsed.strike,
       expiry: parsed.expiry, approxExpiry: parsed.approxExpiry,
-      buyQty: r.quantity, sellQty: r.quantity, netQty: r.quantity, status: 'CLOSED',
-      pnl, entryDate: r.entryDate, exitDate: r.exitDate, holdDays,
+      closedQty, openQty, netQty: closedQty + openQty, status,
+      pnl: closedQty > 0 ? pnl : null, unrealizedPnl: r.unrealizedPnl,
     });
   });
   return {positions, unparsed};
@@ -3182,19 +2950,16 @@ function otAnalyze(positions, unparsed){
   otAllPositions = positions;
   otUnparsedMap = unparsed;
 
-  document.getElementById('ot-mapping-panel').style.display = 'none';
   const resultsEl = document.getElementById('ot-results');
   resultsEl.style.display = 'block';
 
-  const closed = positions.filter(p => p.status === 'CLOSED' && p.pnl != null);
+  const closed = positions.filter(p => p.pnl != null);
   const open = positions.filter(p => p.status !== 'CLOSED');
   const wins = closed.filter(p => p.pnl > 0);
   const totalPnl = closed.reduce((s,p) => s + p.pnl, 0);
   const winRate = closed.length ? (wins.length / closed.length * 100) : null;
   const avgPnl = closed.length ? (totalPnl / closed.length) : null;
-  const avgHold = closed.filter(p=>p.holdDays!=null).length
-    ? closed.filter(p=>p.holdDays!=null).reduce((s,p)=>s+p.holdDays,0) / closed.filter(p=>p.holdDays!=null).length
-    : null;
+  const totalUnrealized = open.reduce((s,p) => s + (p.unrealizedPnl || 0), 0);
 
   document.getElementById('ot-summary-meta').textContent =
     `${positions.length} contract${positions.length===1?'':'s'} · ${closed.length} closed, ${open.length} still open` +
@@ -3205,12 +2970,12 @@ function otAnalyze(positions, unparsed){
     <div class="stat"><div class="stat-label">WIN RATE</div><div class="stat-value ${winRate==null?'':winRate>=50?'green':'red'}">${winRate!=null?winRate.toFixed(1)+'%':'—'}</div></div>
     <div class="stat"><div class="stat-label">REALISED P&amp;L</div><div class="stat-value ${totalPnl>=0?'green':'red'}">₹${totalPnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
     <div class="stat"><div class="stat-label">AVG P&amp;L / POSITION</div><div class="stat-value ${avgPnl==null?'':avgPnl>=0?'green':'red'}">${avgPnl!=null?'₹'+avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
-    <div class="stat"><div class="stat-label">AVG HOLD</div><div class="stat-value">${avgHold!=null?avgHold.toFixed(1)+'d':'—'}</div></div>
     <div class="stat"><div class="stat-label">STILL OPEN</div><div class="stat-value amber">${open.length}</div></div>
+    <div class="stat"><div class="stat-label">UNREALIZED P&amp;L</div><div class="stat-value ${totalUnrealized>=0?'green':'red'}">₹${totalUnrealized.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
   `;
 
-  const ceCount = closed.filter(p => p.optType === 'CE').length;
-  const peCount = closed.filter(p => p.optType === 'PE').length;
+  const ceCount = positions.filter(p => p.optType === 'CE').length;
+  const peCount = positions.filter(p => p.optType === 'PE').length;
   const ceRatio = peCount ? (ceCount / peCount) : null;
   document.getElementById('ot-cepe-row').innerHTML = `
     <div class="stat"><div class="stat-label">CALL (CE)</div><div class="stat-value">${ceCount}</div></div>
@@ -3218,57 +2983,42 @@ function otAnalyze(positions, unparsed){
     <div class="stat"><div class="stat-label">CE : PE RATIO</div><div class="stat-value ${ceRatio!=null && ceRatio>=1 ? 'green':'amber'}">${ceRatio!=null?ceRatio.toFixed(2):'—'}</div></div>
   `;
 
-  const expiryWeekViolations = closed.filter(p => {
-    if(!p.entryDate) return false;
-    const days = (p.expiry - p.entryDate) / 86400000;
-    return days >= 0 && days <= 6;
-  }).length;
-  const sectorsHit = new Set(closed.map(p => otSector(p.underlying))).size;
-  document.getElementById('ot-checks-row').innerHTML = `
-    <div class="stat"><div class="stat-label">ENTERED DURING EXPIRY WEEK</div><div class="stat-value ${expiryWeekViolations===0?'green':'red'}">${expiryWeekViolations}</div></div>
-    <div class="stat"><div class="stat-label">DISTINCT SECTORS TRADED</div><div class="stat-value ${sectorsHit>=4?'green':'amber'}">${sectorsHit}</div></div>
-  `;
-  document.getElementById('ot-checks-note').textContent =
-    'Your own rules: never enter expiry week; minimum 4 of 5 core sectors per expiry cycle. Expiry dates for monthly contracts are approximated (last Thursday of month) — exchange holidays can shift the real date by a day or two.';
-
-  otRenderStockTable(closed, open);
+  otRenderStockTable(positions);
   otRenderWeeklyTable(closed);
   otRenderPositionsTable(positions);
   otRenderUnparsed(unparsed);
 }
 
-function otRenderStockTable(closed, open){
+function otRenderStockTable(positions){
   const byStock = {};
-  closed.concat(open).forEach(p => {
+  positions.forEach(p => {
     const k = p.underlying;
-    if(!byStock[k]) byStock[k] = {positions:0, closed:0, wins:0, ce:0, pe:0, pnl:0, holdSum:0, holdN:0};
+    if(!byStock[k]) byStock[k] = {positions:0, closedN:0, wins:0, ce:0, pe:0, pnl:0, unrealized:0};
     const s = byStock[k];
     s.positions++;
     if(p.optType==='CE') s.ce++; else if(p.optType==='PE') s.pe++;
-    if(p.status==='CLOSED' && p.pnl!=null){
-      s.closed++;
+    if(p.pnl!=null){
+      s.closedN++;
       if(p.pnl>0) s.wins++;
       s.pnl += p.pnl;
-      if(p.holdDays!=null){ s.holdSum += p.holdDays; s.holdN++; }
     }
+    s.unrealized += (p.unrealizedPnl || 0);
   });
   const rows = Object.keys(byStock).sort().map(stock => {
     const s = byStock[stock];
-    const wr = s.closed ? (s.wins/s.closed*100) : null;
-    const avgHold = s.holdN ? (s.holdSum/s.holdN) : null;
+    const wr = s.closedN ? (s.wins/s.closedN*100) : null;
     return `<tr>
       <td class="dash-run-label">${stock}</td>
       <td>${otSector(stock)}</td>
       <td>${s.positions}</td>
-      <td>${s.closed}</td>
       <td data-sort-value="${wr!=null?wr:''}">${wr!=null?wr.toFixed(0)+'%':'—'}</td>
       <td>${s.ce}</td>
       <td>${s.pe}</td>
       <td style="color:${s.pnl>=0?'var(--green)':'var(--red)'}">₹${s.pnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
-      <td>${avgHold!=null?avgHold.toFixed(1):'—'}</td>
+      <td style="color:${s.unrealized>=0?'var(--green)':'var(--red)'}">${s.unrealized?'₹'+s.unrealized.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('ot-stock-body').innerHTML = rows || '<tr><td colspan="9" class="loading">No parsed positions.</td></tr>';
+  document.getElementById('ot-stock-body').innerHTML = rows || '<tr><td colspan="8" class="loading">No parsed positions.</td></tr>';
 }
 
 function otRenderWeeklyTable(closed){
@@ -3298,23 +3048,19 @@ function otRenderWeeklyTable(closed){
 function otRenderPositionsTable(positions, filterText){
   const term = (filterText||'').toUpperCase();
   const filtered = term ? positions.filter(p => p.underlying.includes(term)) : positions;
-  const sorted = filtered.slice().sort((a,b) => (b.entryDate||0) - (a.entryDate||0));
-  const rows = sorted.map(p => {
-    const statusColor = p.status==='CLOSED' ? 'var(--dim)' : p.status==='OPEN' ? 'var(--amber)' : 'var(--muted)';
-    return `<tr>
+  const sorted = filtered.slice().sort((a,b) => (Math.abs(b.pnl||b.unrealizedPnl||0)) - (Math.abs(a.pnl||a.unrealizedPnl||0)));
+  const statusColor = {CLOSED:'var(--dim)', OPEN:'var(--amber)', PARTIAL:'var(--muted)'};
+  const rows = sorted.map(p => `<tr>
       <td class="dash-run-label">${p.underlying}</td>
       <td>${p.optType}</td>
       <td>${p.strike}</td>
       <td data-sort-value="${p.expiry?p.expiry.getTime():''}">${otFmtDate(p.expiry)}${p.approxExpiry?' *':''}</td>
-      <td style="color:${statusColor}">${p.status}</td>
+      <td style="color:${statusColor[p.status]||'var(--muted)'}">${p.status}</td>
       <td>${p.netQty}</td>
-      <td data-sort-value="${p.entryDate?p.entryDate.getTime():''}">${otFmtDate(p.entryDate)}</td>
-      <td data-sort-value="${p.exitDate?p.exitDate.getTime():''}">${otFmtDate(p.exitDate)}</td>
-      <td>${p.holdDays!=null?p.holdDays:'—'}</td>
       <td style="color:${p.pnl==null?'var(--muted)':p.pnl>=0?'var(--green)':'var(--red)'}">${p.pnl!=null?'₹'+p.pnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('ot-positions-body').innerHTML = rows || '<tr><td colspan="10" class="loading">No positions match.</td></tr>';
+      <td style="color:${!p.unrealizedPnl?'var(--muted)':p.unrealizedPnl>=0?'var(--green)':'var(--red)'}">${p.unrealizedPnl?'₹'+p.unrealizedPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+    </tr>`).join('');
+  document.getElementById('ot-positions-body').innerHTML = rows || '<tr><td colspan="8" class="loading">No positions match.</td></tr>';
 }
 
 function otRenderUnparsed(unparsed){
@@ -3327,31 +3073,9 @@ function otRenderUnparsed(unparsed){
   ).join('');
 }
 
-document.getElementById('ot-dropzone').onclick = () => document.getElementById('ot-file-input').click();
-document.getElementById('ot-file-input').addEventListener('change', (e) => {
-  if(e.target.files && e.target.files[0]) otReadFile(e.target.files[0]);
-});
-const otDropzone = document.getElementById('ot-dropzone');
-otDropzone.addEventListener('dragover', (e) => { e.preventDefault(); otDropzone.style.borderColor = 'var(--amber)'; });
-otDropzone.addEventListener('dragleave', () => { otDropzone.style.borderColor = 'var(--border)'; });
-otDropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  otDropzone.style.borderColor = 'var(--border)';
-  if(e.dataTransfer.files && e.dataTransfer.files[0]) otReadFile(e.dataTransfer.files[0]);
-});
-document.getElementById('ot-parse-paste').onclick = () => {
-  const text = document.getElementById('ot-paste').value;
-  if(!text.trim()){ otShowError('Paste some CSV text first.'); return; }
-  otHandleCSVText(text);
-};
-document.getElementById('ot-confirm-mapping').onclick = otConfirmMapping;
+document.getElementById('ot-upload-btn').onclick = otUploadFile;
 document.getElementById('ot-positions-search').addEventListener('input', (e) => {
   otRenderPositionsTable(otAllPositions, e.target.value);
-});
-document.getElementById('ot-export-db').onclick = otExportDb;
-document.getElementById('ot-import-db-btn').onclick = () => document.getElementById('ot-import-db-input').click();
-document.getElementById('ot-import-db-input').addEventListener('change', (e) => {
-  if(e.target.files && e.target.files[0]) otImportDbFile(e.target.files[0]);
 });
 </script>
 </body>

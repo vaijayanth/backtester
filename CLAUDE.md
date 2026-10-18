@@ -18,6 +18,20 @@ Context: a mobile layout bug (two real CSS issues — missing `overflow-x` on sc
 
 This applies even when the user's request doesn't mention mobile or testing — it's a standing requirement for this repo, not something to be asked for each time.
 
+## Workflow requirement — confirm before building
+
+**User's explicit instruction (2026-10-18, verbatim):** "first of all i didnt want you to go ahead and bulilt it without my permission. Going forward remember the context..my style is that you understand the requirements, confirm with me and ask questions and show me steps as what you want to do and then post my confirmation to build."
+
+This happened after a direct request ("start from empty database for options") was reasonably but wrongly read as license to also design and build Excel-upload support unasked. Don't repeat that reading.
+
+**For any non-trivial change (new feature, format/schema change, UI rework — not a one-line fix the user described exactly):**
+1. Understand the request. Ask clarifying questions where there's real ambiguity (format, placement, scope, persistence model, etc.) rather than assuming.
+2. State back, in plain steps, what you intend to build — before writing any code.
+3. Wait for explicit go-ahead.
+4. Only then build (and, per the rule above, verify via mobile+desktop subagents before reporting done).
+
+A request to fix/change X is not blanket permission to also design and build Y, even if Y seems like a natural companion. If the user's message implies a follow-on decision (e.g. "upload Excel from now on" implies "add .xlsx support"), surface that as a numbered step to confirm, not as something already built when you report back.
+
 ## Repo & branch
 - Repo: `vaijayanth/backtester`
 - Single branch: `main` for code + generated JSON data, `backfill-checkpoints` for the raw OHLC parquet (kept separate — see `docs/SPEC.md` section 4 for why).
