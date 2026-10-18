@@ -2710,6 +2710,28 @@ function otExcelCellToStr(v){
   return String(v);
 }
 
+// Zerodha's real Console P&L export is NOT a plain one-table sheet: it's a
+// multi-sheet workbook (an "F&O" sheet plus an unrelated "Other Debits and
+// Credits" sheet), and the F&O sheet itself has ~37 rows of title/Client-ID/
+// Summary/Charges-breakdown ABOVE the real header row — confirmed from a
+// real user-uploaded file, not a guess. So the header row can't be assumed
+// to be row 1 of sheet 1; every sheet's first 200 rows are scanned for the
+// one row that actually contains a "Symbol" column.
+function otFindPnlTable(wb){
+  for(const sheetName of wb.SheetNames){
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, raw:true, defval:''})
+      .map(r => r.map(otExcelCellToStr));
+    for(let i = 0; i < Math.min(aoa.length, 200); i++){
+      const row = aoa[i];
+      if(row.some(c => otNormHeader(c) === 'symbol')){
+        const dataRows = aoa.slice(i+1).filter(r => r.some(c => String(c).trim() !== ''));
+        return {sheetName, headers: row, dataRows};
+      }
+    }
+  }
+  return null;
+}
+
 function otShowError(msg){
   const el = document.getElementById('ot-parse-error');
   el.textContent = msg;
@@ -2748,12 +2770,11 @@ async function otUploadFile(){
   try{
     const buffer = await file.arrayBuffer();
     const wb = XLSX.read(buffer, {type:'array', cellDates:true});
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:''});
-    const rows = aoa.map(r => r.map(otExcelCellToStr)).filter(r => r.some(c => String(c).trim() !== ''));
-    if(rows.length < 2){ otShowError('Found fewer than 2 rows — need a header row plus at least one position.'); return; }
+    const table = otFindPnlTable(wb);
+    if(!table){ otShowError('Could not find a table with a "Symbol" column in this file — checked every sheet.'); return; }
+    if(!table.dataRows.length){ otShowError(`Found the "${table.sheetName}" sheet's header row, but no data rows under it.`); return; }
 
-    const headers = rows[0], rawRows = rows.slice(1);
+    const headers = table.headers, rawRows = table.dataRows;
     const mapping = {};
     for(const f of OT_PNL_FIELDS){
       mapping[f.key] = otGuessColumn(headers, f.aliases);
