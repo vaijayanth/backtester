@@ -2762,7 +2762,11 @@ function otLastThursday(year, monthIdx){
 // every symbol parses.
 function otParseOptionSymbol(raw){
   const sym = String(raw||'').trim().toUpperCase();
-  let m = sym.match(/^([A-Z][A-Z0-9&\-]*?)(\d{2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d+(?:\.\d+)?)(CE|PE)$/);
+  // Base symbol can start with a DIGIT — real NSE tickers like 360ONE,
+  // 3MINDIA, 5PAISA, 63MOONS. A real upload sent every 360ONE contract to
+  // "Unparsed" with the previous [A-Z]-first pattern — confirmed from an
+  // actual export, not a guess, before fixing.
+  let m = sym.match(/^([A-Z0-9][A-Z0-9&\-]*?)(\d{2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d+(?:\.\d+)?)(CE|PE)$/);
   if(m){
     const [, base, yy, mon, strike, opt] = m;
     const year = 2000 + parseInt(yy, 10);
@@ -2770,7 +2774,7 @@ function otParseOptionSymbol(raw){
     const expiry = otLastThursday(year, monthIdx);
     return {underlying: base, optType: opt, strike: parseFloat(strike), expiry, approxExpiry: true};
   }
-  m = sym.match(/^([A-Z][A-Z0-9&\-]*?)(\d{2})([1-9OND])(\d{2})(\d+(?:\.\d+)?)(CE|PE)$/);
+  m = sym.match(/^([A-Z0-9][A-Z0-9&\-]*?)(\d{2})([1-9OND])(\d{2})(\d+(?:\.\d+)?)(CE|PE)$/);
   if(m){
     const [, base, yy, mc, dd, strike, opt] = m;
     const year = 2000 + parseInt(yy, 10);
