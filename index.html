@@ -872,12 +872,27 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
-      <div class="dash-meta" id="ot-meta">Upload your Zerodha Tradebook or P&amp;L export — analysed entirely in this browser tab, never uploaded or committed anywhere.</div>
+      <div class="dash-meta" id="ot-meta">Upload your Zerodha Tradebook or P&amp;L export — stored in a real SQL database (DuckDB-WASM) running entirely in this browser tab, never uploaded or committed anywhere.</div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD TRADES <span class="panel-meta">Tradebook CSV or P&amp;L statement CSV from Console &rarr; Reports</span></div></div>
+    <div class="panel-head"><div class="panel-title">DATABASE</div></div>
+    <div style="padding:18px;">
+      <div id="ot-db-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-word;">initializing...</div>
+      <div class="dash-footnote" style="padding:0 0 14px;border-top:none;color:var(--amber);">
+        ⚠ This database lives only in THIS browser tab's memory — it is gone on reload. Since you're working across multiple devices/browsers, <b>Export after every upload</b> and <b>Import that file first</b> when you switch machines. Re-uploading the same CSV (even "since inception" every time) is safe — duplicate trades are detected and skipped automatically.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="refresh-btn" id="ot-export-db" style="padding:11px 18px;">⬇ EXPORT DATABASE</button>
+        <button class="refresh-btn" id="ot-import-db-btn" style="padding:11px 18px;">⬆ IMPORT DATABASE</button>
+        <input type="file" id="ot-import-db-input" accept=".json" style="display:none;">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD TRADES <span class="panel-meta">Tradebook CSV or P&amp;L statement CSV from Console &rarr; Reports — adds to the database above</span></div></div>
     <div style="padding:18px;">
       <div id="ot-dropzone" style="border:2px dashed var(--border);border-radius:6px;padding:28px 18px;text-align:center;cursor:pointer;">
         <div style="font-size:13px;color:var(--white);margin-bottom:6px;">Drop a CSV file here, or click to browse</div>
@@ -891,7 +906,7 @@
       </div>
       <div id="ot-parse-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        Nothing here leaves your browser — no server upload, no git commit, no localStorage persistence by default. Re-upload each time you want fresh analysis.
+        Nothing here leaves your browser — no server upload, no git commit. Each upload is merged into the database above (new trades added, duplicates skipped) — analysis below always reflects everything stored so far, not just this file.
       </div>
     </div>
   </div>
@@ -999,6 +1014,7 @@ function switchPage(page){
   if(page === 'results' && !resInitialized) initResults();
   if(page === 'strangle' && !ssInitialized) initStrangleScreen();
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
+  if(page === 'opttrades' && !otInitialized) otInit();
 }
 
 function toggleMobileNav(){
@@ -2776,6 +2792,15 @@ function otShowError(msg){
   const el = document.getElementById('ot-parse-error');
   el.textContent = msg;
   el.style.display = 'block';
+  el.style.background = 'var(--red-dim)';
+  el.style.color = 'var(--red)';
+}
+function otShowStatus(msg){
+  const el = document.getElementById('ot-parse-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = 'var(--green-dim)';
+  el.style.color = 'var(--green)';
 }
 function otClearError(){
   document.getElementById('ot-parse-error').style.display = 'none';
@@ -2822,7 +2847,168 @@ function otRenderMappingUI(){
   panel.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function otConfirmMapping(){
+// ------------------------------------------------------------
+// DuckDB-WASM storage layer. Real SQL tables, in-memory per page load
+// (NOT OPFS-persisted — this sandbox can't verify OPFS/cross-origin-
+// isolation behavior live, and the user needs multi-device portability
+// anyway, which OPFS wouldn't give them regardless). Persistence is via
+// explicit Export/Import of a JSON snapshot instead: guaranteed to work
+// with no dependency on browser-specific storage APIs, and it's the
+// mechanism multi-device use actually needs. Dates are stored as
+// 'YYYY-MM-DD' VARCHAR, not DATE, to sidestep Arrow's date-type JS
+// conversion behavior entirely (another thing that can't be verified
+// live here) — parsed back to JS Date in otParseDate on the way out.
+// ------------------------------------------------------------
+let otDb = null, otConn = null, otDbInitPromise = null;
+
+async function otGetConn(){
+  if(otConn) return otConn;
+  if(!otDbInitPromise){
+    otDbInitPromise = (async () => {
+      const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm');
+      const bundles = duckdb.getJsDelivrBundles();
+      const bundle = await duckdb.selectBundle(bundles);
+      const workerUrl = URL.createObjectURL(
+        new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+      );
+      const worker = new Worker(workerUrl);
+      const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
+      const db = new duckdb.AsyncDuckDB(logger, worker);
+      await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+      URL.revokeObjectURL(workerUrl);
+      const conn = await db.connect();
+      await conn.query(`CREATE TABLE IF NOT EXISTS fills (
+        symbol VARCHAR, trade_type VARCHAR, quantity DOUBLE, price DOUBLE, trade_date VARCHAR,
+        underlying VARCHAR, opt_type VARCHAR, strike DOUBLE, expiry VARCHAR, approx_expiry BOOLEAN, parse_ok BOOLEAN
+      )`);
+      await conn.query(`CREATE TABLE IF NOT EXISTS pnl_rows (
+        symbol VARCHAR, entry_date VARCHAR, exit_date VARCHAR, quantity DOUBLE,
+        buy_value DOUBLE, sell_value DOUBLE, profit DOUBLE,
+        underlying VARCHAR, opt_type VARCHAR, strike DOUBLE, expiry VARCHAR, approx_expiry BOOLEAN, parse_ok BOOLEAN
+      )`);
+      otDb = db; otConn = conn;
+      return conn;
+    })();
+  }
+  return otDbInitPromise;
+}
+
+function otSqlStr(v){ return v == null ? 'NULL' : "'" + String(v).replace(/'/g, "''") + "'"; }
+function otSqlNum(v){ return (v == null || isNaN(v)) ? 'NULL' : Number(v); }
+function otSqlBool(v){ return v == null ? 'NULL' : (v ? 'true' : 'false'); }
+function otDateIso(d){ return d ? d.toISOString().slice(0,10) : null; }
+
+async function otArrowToObjects(result){
+  const fields = result.schema.fields.map(f => f.name);
+  const out = [];
+  for(const row of result){
+    const obj = {};
+    for(const f of fields) obj[f] = row[f];
+    out.push(obj);
+  }
+  return out;
+}
+
+// Chunked dedup insert: builds a VALUES block + WHERE NOT EXISTS against
+// the matching natural-key columns, so re-uploading overlapping data
+// (the user's own "since inception every time" export habit) is a no-op
+// for rows already stored, not a duplicate.
+async function otDedupInsert(conn, table, cols, keyCols, rows, chunkSize){
+  if(!rows.length) return {inserted: 0, skipped: 0};
+  let inserted = 0, skipped = 0;
+  for(let i = 0; i < rows.length; i += chunkSize){
+    const chunk = rows.slice(i, i + chunkSize);
+    const values = chunk.map(r => '(' + cols.map(c => r[c]).join(',') + ')').join(',\n');
+    // Each column's match-or-both-null check MUST be parenthesized before
+    // joining with AND — without it, SQL's AND-binds-tighter-than-OR
+    // precedence collapses the whole clause so that a SINGLE matching
+    // column (e.g. just the symbol) satisfies the entire WHERE NOT EXISTS,
+    // silently treating genuinely new trades on a previously-seen symbol
+    // as duplicates and dropping them. Caught via manual SQL review, not
+    // a live test — cdn.jsdelivr.net (where duckdb-wasm loads from) is
+    // also blocked in this sandbox, same as every other external CDN.
+    const onClause = keyCols.map(k => `(t.${k} = v.${k} OR (t.${k} IS NULL AND v.${k} IS NULL))`).join(' AND ');
+    const countSql = `SELECT COUNT(*) AS c FROM (VALUES ${values}) AS v(${cols.join(',')})
+      WHERE NOT EXISTS (SELECT 1 FROM ${table} t WHERE ${onClause})`;
+    const beforeRes = await conn.query(countSql);
+    const newCount = Number((await otArrowToObjects(beforeRes))[0].c);
+    await conn.query(`INSERT INTO ${table}
+      SELECT * FROM (VALUES ${values}) AS v(${cols.join(',')})
+      WHERE NOT EXISTS (SELECT 1 FROM ${table} t WHERE ${onClause})`);
+    inserted += newCount;
+    skipped += (chunk.length - newCount);
+  }
+  return {inserted, skipped};
+}
+
+const OT_FILLS_COLS = ['symbol','trade_type','quantity','price','trade_date','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
+const OT_FILLS_KEY = ['symbol','trade_type','quantity','price','trade_date'];
+const OT_PNL_COLS = ['symbol','entry_date','exit_date','quantity','buy_value','sell_value','profit','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
+const OT_PNL_KEY = ['symbol','entry_date','exit_date','quantity','buy_value','sell_value'];
+
+function otFillToSqlRow(t){
+  const parsed = otParseOptionSymbol(t.symbol);
+  return {
+    symbol: otSqlStr(t.symbol), trade_type: otSqlStr(t.tradeType), quantity: otSqlNum(t.quantity),
+    price: otSqlNum(t.price), trade_date: otSqlStr(otDateIso(t.date)),
+    underlying: otSqlStr(parsed && parsed.underlying), opt_type: otSqlStr(parsed && parsed.optType),
+    strike: otSqlNum(parsed && parsed.strike), expiry: otSqlStr(parsed && otDateIso(parsed.expiry)),
+    approx_expiry: otSqlBool(parsed ? parsed.approxExpiry : null), parse_ok: otSqlBool(!!parsed),
+  };
+}
+function otPnlToSqlRow(r){
+  const parsed = otParseOptionSymbol(r.symbol);
+  return {
+    symbol: otSqlStr(r.symbol), entry_date: otSqlStr(otDateIso(r.entryDate)), exit_date: otSqlStr(otDateIso(r.exitDate)),
+    quantity: otSqlNum(r.quantity), buy_value: otSqlNum(r.buyValue), sell_value: otSqlNum(r.sellValue), profit: otSqlNum(r.profit),
+    underlying: otSqlStr(parsed && parsed.underlying), opt_type: otSqlStr(parsed && parsed.optType),
+    strike: otSqlNum(parsed && parsed.strike), expiry: otSqlStr(parsed && otDateIso(parsed.expiry)),
+    approx_expiry: otSqlBool(parsed ? parsed.approxExpiry : null), parse_ok: otSqlBool(!!parsed),
+  };
+}
+
+async function otUpdateDbMeta(){
+  const conn = await otGetConn();
+  const f = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c, MIN(trade_date) AS mn, MAX(trade_date) AS mx FROM fills'));
+  const p = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c, MIN(entry_date) AS mn, MAX(exit_date) AS mx FROM pnl_rows'));
+  const fillCount = Number(f[0].c), pnlCount = Number(p[0].c);
+  const dates = [f[0].mn, f[0].mx, p[0].mn, p[0].mx].filter(Boolean).sort();
+  const rangeTxt = dates.length ? `${dates[0]} to ${dates[dates.length-1]}` : 'empty';
+  document.getElementById('ot-db-meta').textContent =
+    `${fillCount} fill row${fillCount===1?'':'s'}, ${pnlCount} P&L row${pnlCount===1?'':'s'} stored · ${rangeTxt} · in-memory, this tab only — export after uploading`;
+}
+
+async function otRenderFromDb(){
+  const conn = await otGetConn();
+  await otUpdateDbMeta();
+
+  const fillRows = await otArrowToObjects(await conn.query('SELECT symbol, trade_type, quantity, price, trade_date FROM fills'));
+  const pnlRowsDb = await otArrowToObjects(await conn.query('SELECT symbol, entry_date, exit_date, quantity, buy_value, sell_value, profit FROM pnl_rows'));
+
+  const trades = fillRows.map(r => ({
+    symbol: r.symbol, tradeType: r.trade_type, quantity: Number(r.quantity), price: Number(r.price),
+    date: otParseDate(r.trade_date),
+  }));
+  const pnlRows = pnlRowsDb.map(r => ({
+    symbol: r.symbol, entryDate: otParseDate(r.entry_date), exitDate: otParseDate(r.exit_date),
+    quantity: r.quantity==null?null:Number(r.quantity), buyValue: r.buy_value==null?null:Number(r.buy_value),
+    sellValue: r.sell_value==null?null:Number(r.sell_value), profit: r.profit==null?null:Number(r.profit),
+  }));
+
+  const a = otBuildPositionsFromTradebook(trades);
+  const b = otBuildPositionsFromPnl(pnlRows);
+  const positions = a.positions.concat(b.positions);
+  const unparsed = {};
+  [a.unparsed, b.unparsed].forEach(u => Object.keys(u).forEach(k => { unparsed[k] = (unparsed[k]||0) + u[k]; }));
+
+  if(positions.length === 0 && Object.keys(unparsed).length === 0){
+    document.getElementById('ot-results').style.display = 'none';
+    return;
+  }
+  otAnalyze(positions, unparsed);
+}
+
+async function otConfirmMapping(){
   otClearError();
   const fields = otMode === 'pnl' ? OT_PNL_FIELDS : OT_TRADEBOOK_FIELDS;
   const mapping = {};
@@ -2835,34 +3021,109 @@ function otConfirmMapping(){
     }
   }
 
-  let positions, unparsed;
-  if(otMode === 'pnl'){
-    const rows = otRawRows.map(r => ({
-      symbol: mapping.symbol>=0 ? r[mapping.symbol] : '',
-      entryDate: otParseDate(mapping.entryDate>=0 ? r[mapping.entryDate] : null),
-      exitDate: otParseDate(mapping.exitDate>=0 ? r[mapping.exitDate] : null),
-      quantity: mapping.quantity>=0 ? parseFloat(r[mapping.quantity]) || 0 : 0,
-      buyValue: mapping.buyValue>=0 ? parseFloat(String(r[mapping.buyValue]).replace(/[₹,]/g,'')) : null,
-      sellValue: mapping.sellValue>=0 ? parseFloat(String(r[mapping.sellValue]).replace(/[₹,]/g,'')) : null,
-      profit: mapping.profit>=0 ? parseFloat(String(r[mapping.profit]).replace(/[₹,]/g,'')) : null,
-    }));
-    ({positions, unparsed} = otBuildPositionsFromPnl(rows));
-  }else{
-    const trades = otRawRows.map(r => ({
-      symbol: r[mapping.symbol],
-      tradeType: /sell|^s$/i.test(r[mapping.tradeType]) ? 'SELL' : 'BUY',
-      quantity: parseFloat(r[mapping.quantity]) || 0,
-      price: parseFloat(String(r[mapping.price]).replace(/[₹,]/g,'')) || 0,
-      date: otParseDate(r[mapping.date]),
-    })).filter(t => t.symbol && t.date);
-    ({positions, unparsed} = otBuildPositionsFromTradebook(trades));
+  const btn = document.getElementById('ot-confirm-mapping');
+  btn.disabled = true;
+  btn.textContent = 'STORING...';
+  try{
+    const conn = await otGetConn();
+    let result;
+    if(otMode === 'pnl'){
+      const rows = otRawRows.map(r => ({
+        symbol: mapping.symbol>=0 ? r[mapping.symbol] : '',
+        entryDate: otParseDate(mapping.entryDate>=0 ? r[mapping.entryDate] : null),
+        exitDate: otParseDate(mapping.exitDate>=0 ? r[mapping.exitDate] : null),
+        quantity: mapping.quantity>=0 ? parseFloat(r[mapping.quantity]) || 0 : 0,
+        buyValue: mapping.buyValue>=0 ? parseFloat(String(r[mapping.buyValue]).replace(/[₹,]/g,'')) : null,
+        sellValue: mapping.sellValue>=0 ? parseFloat(String(r[mapping.sellValue]).replace(/[₹,]/g,'')) : null,
+        profit: mapping.profit>=0 ? parseFloat(String(r[mapping.profit]).replace(/[₹,]/g,'')) : null,
+      })).filter(r => r.symbol);
+      if(!rows.length){ otShowError('No usable rows found — check the column mapping above.'); return; }
+      result = await otDedupInsert(conn, 'pnl_rows', OT_PNL_COLS, OT_PNL_KEY, rows.map(otPnlToSqlRow), 400);
+    }else{
+      const trades = otRawRows.map(r => ({
+        symbol: r[mapping.symbol],
+        tradeType: /sell|^s$/i.test(r[mapping.tradeType]) ? 'SELL' : 'BUY',
+        quantity: parseFloat(r[mapping.quantity]) || 0,
+        price: parseFloat(String(r[mapping.price]).replace(/[₹,]/g,'')) || 0,
+        date: otParseDate(r[mapping.date]),
+      })).filter(t => t.symbol && t.date);
+      if(!trades.length){ otShowError('No usable rows found — check the column mapping above.'); return; }
+      result = await otDedupInsert(conn, 'fills', OT_FILLS_COLS, OT_FILLS_KEY, trades.map(otFillToSqlRow), 400);
+    }
+    document.getElementById('ot-mapping-panel').style.display = 'none';
+    document.getElementById('ot-results').style.display = 'block';
+    await otRenderFromDb();
+    otShowStatus(`Stored: ${result.inserted} new, ${result.skipped} already in the database (skipped).`);
+  }catch(err){
+    console.error('DuckDB insert failed:', err);
+    otShowError('Could not store in the database: ' + err.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '⧉ CONFIRM & ANALYSE';
   }
+}
 
-  if(positions.length === 0 && Object.keys(unparsed).length === 0){
-    otShowError('No usable rows found — check the column mapping above.');
-    return;
+async function otExportDb(){
+  try{
+    const conn = await otGetConn();
+    const fills = await otArrowToObjects(await conn.query('SELECT * FROM fills'));
+    const pnl = await otArrowToObjects(await conn.query('SELECT * FROM pnl_rows'));
+    const snapshot = {exported_at: new Date().toISOString(), fills, pnl_rows: pnl};
+    const blob = new Blob([JSON.stringify(snapshot)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `option-trades-db-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }catch(err){
+    console.error('Export failed:', err);
+    otShowError('Export failed: ' + err.message);
   }
-  otAnalyze(positions, unparsed);
+}
+
+async function otImportDbFile(file){
+  try{
+    const text = await file.text();
+    const snapshot = JSON.parse(text);
+    if(!snapshot || !Array.isArray(snapshot.fills) || !Array.isArray(snapshot.pnl_rows)){
+      otShowError('That file does not look like an exported database snapshot.');
+      return;
+    }
+    const conn = await otGetConn();
+    const fillRows = snapshot.fills.map(r => ({
+      symbol: otSqlStr(r.symbol), trade_type: otSqlStr(r.trade_type), quantity: otSqlNum(r.quantity),
+      price: otSqlNum(r.price), trade_date: otSqlStr(r.trade_date), underlying: otSqlStr(r.underlying),
+      opt_type: otSqlStr(r.opt_type), strike: otSqlNum(r.strike), expiry: otSqlStr(r.expiry),
+      approx_expiry: otSqlBool(r.approx_expiry), parse_ok: otSqlBool(r.parse_ok),
+    }));
+    const pnlRows = snapshot.pnl_rows.map(r => ({
+      symbol: otSqlStr(r.symbol), entry_date: otSqlStr(r.entry_date), exit_date: otSqlStr(r.exit_date),
+      quantity: otSqlNum(r.quantity), buy_value: otSqlNum(r.buy_value), sell_value: otSqlNum(r.sell_value),
+      profit: otSqlNum(r.profit), underlying: otSqlStr(r.underlying), opt_type: otSqlStr(r.opt_type),
+      strike: otSqlNum(r.strike), expiry: otSqlStr(r.expiry), approx_expiry: otSqlBool(r.approx_expiry),
+      parse_ok: otSqlBool(r.parse_ok),
+    }));
+    const fRes = await otDedupInsert(conn, 'fills', OT_FILLS_COLS, OT_FILLS_KEY, fillRows, 400);
+    const pRes = await otDedupInsert(conn, 'pnl_rows', OT_PNL_COLS, OT_PNL_KEY, pnlRows, 400);
+    await otRenderFromDb();
+    otShowStatus(`Imported: ${fRes.inserted + pRes.inserted} new rows, ${fRes.skipped + pRes.skipped} already present.`);
+  }catch(err){
+    console.error('Import failed:', err);
+    otShowError('Import failed: ' + err.message);
+  }
+}
+
+let otInitialized = false;
+async function otInit(){
+  otInitialized = true;
+  try{
+    await otGetConn();
+    await otUpdateDbMeta();
+  }catch(err){
+    console.error('DuckDB init failed:', err);
+    document.getElementById('ot-db-meta').textContent = 'Database failed to initialize: ' + err.message;
+  }
 }
 
 function otBuildPositionsFromTradebook(trades){
@@ -3082,6 +3343,11 @@ document.getElementById('ot-parse-paste').onclick = () => {
 document.getElementById('ot-confirm-mapping').onclick = otConfirmMapping;
 document.getElementById('ot-positions-search').addEventListener('input', (e) => {
   otRenderPositionsTable(otAllPositions, e.target.value);
+});
+document.getElementById('ot-export-db').onclick = otExportDb;
+document.getElementById('ot-import-db-btn').onclick = () => document.getElementById('ot-import-db-input').click();
+document.getElementById('ot-import-db-input').addEventListener('change', (e) => {
+  if(e.target.files && e.target.files[0]) otImportDbFile(e.target.files[0]);
 });
 </script>
 </body>
