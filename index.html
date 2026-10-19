@@ -3785,7 +3785,7 @@ function eqComputeSignal(pos, stEntry){
   const stColor = stEntry ? stEntry.color : null;
   const stFlippedToday = stEntry ? stEntry.flipped_today : false;
 
-  if(stColor === null) return {type: 'UNKNOWN', label: '— no Supertrend data'};
+  if(stColor === null) return {type: 'UNKNOWN', label: '— not in price universe'};
   if(plPct > 0 && stColor === 'red'){
     return {type: 'EXIT', label: stFlippedToday ? '🔴 EXIT — ST flipped red today' : '🔴 EXIT — ST red (trailing SL hit)'};
   }
@@ -3826,10 +3826,18 @@ async function eqRefresh(){
 function eqRenderOpen(open, stMap){
   open.forEach(p => {
     const st = stMap ? stMap[p.symbol] : null;
-    p.cmp = st ? st.close : p.avgEntry;
-    p.plPct = p.avgEntry > 0 ? ((p.cmp - p.avgEntry) / p.avgEntry) * 100 : 0;
+    // No fabricated CMP/P&L — a stock outside the Supertrend universe
+    // (no price history at all, not just no Supertrend) shows as missing
+    // data, never as a fake 0% P&L.
+    p.cmp = st ? st.close : null;
+    p.plPct = (st && p.avgEntry > 0) ? ((p.cmp - p.avgEntry) / p.avgEntry) * 100 : null;
   });
-  open.sort((a, b) => a.plPct - b.plPct);
+  open.sort((a, b) => {
+    if (a.plPct === null && b.plPct === null) return 0;
+    if (a.plPct === null) return 1;  // no-data rows sink to the bottom
+    if (b.plPct === null) return -1;
+    return a.plPct - b.plPct;
+  });
 
   document.getElementById('eq-open-count-text').textContent = `${open.length} open position${open.length===1?'':'s'}`;
   const tbody = document.getElementById('eq-open-tbody');
@@ -3837,7 +3845,7 @@ function eqRenderOpen(open, stMap){
     const st = stMap ? stMap[p.symbol] : null;
     const sig = eqComputeSignal(p, st);
     const stLabel = st ? (st.color === 'green' ? '🟢 Green' : '🔴 Red') + (st.flipped_today ? ' (flip today)' : '') : '—';
-    const plColor = p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
+    const plColor = p.plPct === null ? 'var(--muted)' : p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
     const sigColor = sig.type === 'EXIT' ? 'var(--red)' : sig.type === 'ADDON' ? 'var(--green)' : 'var(--muted)';
     return `<tr>
       <td>${p.symbol}</td>
@@ -3845,8 +3853,8 @@ function eqRenderOpen(open, stMap){
       <td>${eqFmtRs(p.avgEntry)}</td>
       <td>${p.entryDate}</td>
       <td>${eqDaysBetween(p.entryDate, eqTodayIso())}d</td>
-      <td>${eqFmtRs(p.cmp)}</td>
-      <td style="color:${plColor};font-weight:700">${eqFmtPct(p.plPct)}</td>
+      <td>${p.cmp === null ? '—' : eqFmtRs(p.cmp)}</td>
+      <td style="color:${plColor};font-weight:700">${p.plPct === null ? '— no data' : eqFmtPct(p.plPct)}</td>
       <td>${stLabel}</td>
       <td style="color:${sigColor};font-weight:700">${sig.label}</td>
     </tr>`;
