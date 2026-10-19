@@ -126,8 +126,24 @@ def fetch_one(symbol: str) -> dict:
 
     is_valid, err = validate_ohlc(df)
     if not is_valid:
-        row["error"] = err
-        return row
+        # A handful of real, actively-traded NSE small/micro-caps come back
+        # with only a few dozen rows under period="5y" — not delisted, not
+        # a bad symbol, just a yfinance quirk for thinly-covered tickers
+        # (confirmed by hand for GSPL/HALDYNGL/VELJAN: all three are real,
+        # correctly-ticketed, currently trading). period="max" sometimes
+        # returns the ticker's full available history where "5y" truncates
+        # it — worth one extra attempt before giving up on the symbol.
+        try:
+            df_max = ticker.history(period="max", auto_adjust=True)
+        except Exception as e:
+            row["error"] = f"{err}; max-period retry also failed: {type(e).__name__}: {e}"
+            return row
+        is_valid_max, err_max = validate_ohlc(df_max)
+        if is_valid_max:
+            df = df_max
+        else:
+            row["error"] = f"{err} (period=5y); {err_max} (period=max)"
+            return row
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
