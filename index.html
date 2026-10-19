@@ -3695,9 +3695,27 @@ async function eqUploadFile(){
 
     if(!fills.length){ eqShowStatus('No valid fill rows found after parsing.', true); return; }
 
+    btn.textContent = 'CHECKING FOR DUPLICATES...';
+    const existingKeys = await eqFetchExistingRawKeys();
+    const seenInBatch = new Set();
+    const newFills = fills.filter(f => {
+      const key = eqRawFillKey(f);
+      if(existingKeys.has(key) || seenInBatch.has(key)) return false;
+      seenInBatch.add(key);
+      return true;
+    });
+    const skippedCount = fills.length - newFills.length;
+
+    if(!newFills.length){
+      eqShowStatus(`All ${fills.length} fills in this file are already in the sheet — nothing to upload.`, false);
+      fileInput.value = '';
+      await eqRefresh();
+      return;
+    }
+
     btn.textContent = 'SYNCING TO SHEET...';
-    const result = await eqPostFills(fills);
-    eqShowStatus(`Synced: ${result.inserted} new fill${result.inserted===1?'':'s'} added, ${result.skipped} already in the sheet (${fills.length} total in file).`, false);
+    const result = await eqPostFills(newFills);
+    eqShowStatus(`Synced: ${result.inserted} new fill${result.inserted===1?'':'s'} added, ${skippedCount} already in the sheet (${fills.length} total in file).`, false);
     fileInput.value = '';
     await eqRefresh();
   } catch(e){
@@ -3763,6 +3781,34 @@ async function eqFetchAllFills(){
   return (data.rows || [])
     .filter(r => !eqIsLongTermExcluded(r.symbol))
     .map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
+}
+
+// Dedup key for a raw (un-aliased, un-split-adjusted) fill — symbol + tradeId
+// + quantity + price. Deliberately excludes tradeDate: the sheet round-trips
+// it through Sheets' own Date-typed cells, which renders inconsistently
+// depending on how a given row was last written (plain string vs Date
+// object), so date alone is NOT a safe dedup field from the client. TradeID
+// alone had ~9 collisions out of 3843 real fills (same ID reused across
+// different stocks), so symbol+tradeId+qty+price is the robust combination.
+function eqRawFillKey(f){
+  return [String(f.symbol || '').trim(), String(f.tradeId || '').trim(),
+          Number(f.quantity) || 0, Number(f.price) || 0].join('|');
+}
+
+// Client-side dedup, run BEFORE every POST — this is the real defense
+// against duplicate rows now, not the Apps Script's own server-side dedup.
+// Rationale: twice in practice, a deployed Apps Script fix silently failed
+// to take effect (editing+saving the script does not update an
+// already-published web app unless you explicitly pick "New version" under
+// Manage deployments), and every re-upload re-duplicated the entire sheet.
+// Filtering client-side means correctness no longer depends on that manual
+// GAS deployment step at all — a `git push` here takes effect immediately.
+async function eqFetchExistingRawKeys(){
+  const res = await fetch(EQ_SHEET_URL);
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return new Set((data.rows || []).map(eqRawFillKey));
 }
 
 async function eqPostFills(fills){
