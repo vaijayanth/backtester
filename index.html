@@ -2624,13 +2624,88 @@ const OT_PNL_FIELDS = [
   {key:'unrealizedPnl', label:'Unrealized P&L', required:false, aliases:['unrealized p&l','unrealised p&l','unrealized pnl','unrealised pnl']},
 ];
 
+// Covers the full 213-stock F&O universe in data/fno_universe.csv, per
+// standard NSE sectoral classification. Built from general sector
+// knowledge, not an official per-stock data feed — treat as a reasonable
+// default, not ground truth; a stock trading outside this universe (or a
+// sector reclassification NSE itself makes later) falls back to
+// 'Other / unlisted' below rather than guessing wrong silently.
 const OT_SECTOR_MAP = {
-  'JSWSTEEL':'Steel','TATASTEEL':'Steel','NMDC':'Steel','HINDALCO':'Steel','VEDL':'Steel',
+  // Metals & Mining
+  'JSWSTEEL':'Metals','TATASTEEL':'Metals','NMDC':'Metals','HINDALCO':'Metals','VEDL':'Metals',
+  'JINDALSTEL':'Metals','SAIL':'Metals','NATIONALUM':'Metals','HINDZINC':'Metals','APLAPOLLO':'Metals',
+  'COALINDIA':'Metals',
+  // Pharma
   'SUNPHARMA':'Pharma','CIPLA':'Pharma','DIVISLAB':'Pharma','DRREDDY':'Pharma','AUROPHARMA':'Pharma',
+  'ALKEM':'Pharma','BIOCON':'Pharma','GLENMARK':'Pharma','LAURUSLABS':'Pharma','LUPIN':'Pharma',
+  'MANKIND':'Pharma','TORNTPHARM':'Pharma','ZYDUSLIFE':'Pharma',
+  // Hospitals / Healthcare
+  'APOLLOHOSP':'Hospitals','MAXHEALTH':'Hospitals','FORTIS':'Hospitals',
+  // NBFC / Financial Services
   'BAJAJFINSV':'NBFC','BAJFINANCE':'NBFC','ICICIPRULI':'NBFC','HDFCAMC':'NBFC','MUTHOOTFIN':'NBFC',
-  'APOLLOHOSP':'Hospitals','MAXHEALTH':'Hospitals',
-  'TATAMOTORS':'Auto','BAJAJ-AUTO':'Auto','M&M':'Auto','MARUTI':'Auto','HEROMOTOCO':'Auto',
-  'ITC':'FMCG (situational)','SBIN':'PSU Bank (situational)','INFY':'IT (situational)','HINDUNILVR':'FMCG (situational)',
+  'ABCAPITAL':'NBFC','ANANDRATHI':'NBFC','ANGELONE':'NBFC','BSE':'NBFC','CAMS':'NBFC','CDSL':'NBFC',
+  'CHOLAFIN':'NBFC','ICICIGI':'NBFC','IEX':'NBFC','IREDA':'NBFC','KFINTECH':'NBFC','LICHSGFIN':'NBFC',
+  'LICI':'NBFC','MANAPPURAM':'NBFC','MCX':'NBFC','MFSL':'NBFC','MOTILALOFS':'NBFC','PFC':'NBFC',
+  'PNBHOUSING':'NBFC','POLICYBZR':'NBFC','RECLTD':'NBFC','SBICARD':'NBFC','SHRIRAMFIN':'NBFC',
+  'HDFCLIFE':'NBFC','SBILIFE':'NBFC','JIOFIN':'NBFC','360ONE':'NBFC','LTF':'NBFC','IRFC':'NBFC',
+  'NAM-INDIA':'NBFC','NUVAMA':'NBFC','SAMMAANCAP':'NBFC',
+  // Banks
+  'SBIN':'Banks','AXISBANK':'Banks','HDFCBANK':'Banks','ICICIBANK':'Banks','KOTAKBANK':'Banks',
+  'AUBANK':'Banks','BANDHANBNK':'Banks','BANKBARODA':'Banks','BANKINDIA':'Banks','CANBK':'Banks',
+  'FEDERALBNK':'Banks','IDFCFIRSTB':'Banks','INDIANB':'Banks','INDUSINDBK':'Banks','MAHABANK':'Banks',
+  'PNB':'Banks','RBLBANK':'Banks','UJJIVANSFB':'Banks','UNIONBANK':'Banks','YESBANK':'Banks',
+  // Auto (OEM)
+  'BAJAJ-AUTO':'Auto','M&M':'Auto','MARUTI':'Auto','HEROMOTOCO':'Auto','TMPV':'Auto',
+  'EICHERMOT':'Auto','TVSMOTOR':'Auto','ASHOKLEY':'Auto','HYUNDAI':'Auto','FORCEMOT':'Auto',
+  // Auto Ancillary
+  'MOTHERSON':'Auto Ancillary','BOSCHLTD':'Auto Ancillary','BHARATFORG':'Auto Ancillary',
+  'SONACOMS':'Auto Ancillary','UNOMINDA':'Auto Ancillary','TIINDIA':'Auto Ancillary','EXIDEIND':'Auto Ancillary',
+  // FMCG
+  'ITC':'FMCG','HINDUNILVR':'FMCG','NESTLEIND':'FMCG','BRITANNIA':'FMCG','TATACONSUM':'FMCG',
+  'DABUR':'FMCG','MARICO':'FMCG','COLPAL':'FMCG','GODFRYPHLP':'FMCG','PATANJALI':'FMCG',
+  'RADICO':'FMCG','UNITDSPR':'FMCG','VBL':'FMCG','JUBLFOOD':'FMCG','GODREJCP':'FMCG','PAGEIND':'FMCG',
+  // IT
+  'INFY':'IT','TCS':'IT','HCLTECH':'IT','WIPRO':'IT','TECHM':'IT','COFORGE':'IT','PERSISTENT':'IT',
+  'MPHASIS':'IT','OFSS':'IT','KPITTECH':'IT','NAUKRI':'IT','SAGILITY':'IT','TATAELXSI':'IT','LTM':'IT',
+  // Telecom
+  'BHARTIARTL':'Telecom','IDEA':'Telecom','INDUSTOWER':'Telecom',
+  // Oil & Gas / Energy
+  'ONGC':'Oil & Gas','IOC':'Oil & Gas','RELIANCE':'Oil & Gas','BPCL':'Oil & Gas','HINDPETRO':'Oil & Gas',
+  'GAIL':'Oil & Gas','OIL':'Oil & Gas','PETRONET':'Oil & Gas',
+  // Power & Utilities
+  'NTPC':'Power','POWERGRID':'Power','TATAPOWER':'Power','JSWENERGY':'Power','ADANIPOWER':'Power',
+  'ADANIENSOL':'Power','ADANIGREEN':'Power','NHPC':'Power','CGPOWER':'Power','POWERINDIA':'Power','GVT&D':'Power',
+  // Renewable / EV
+  'ATHERENERG':'Renewable/EV','SUZLON':'Renewable/EV','INOXWIND':'Renewable/EV',
+  'WAAREEENER':'Renewable/EV','PREMIERENE':'Renewable/EV',
+  // Cement
+  'ULTRACEMCO':'Cement','GRASIM':'Cement','AMBUJACEM':'Cement','SHREECEM':'Cement','DALBHARAT':'Cement',
+  // Paints / Chemicals
+  'ASIANPAINT':'Chemicals','PIDILITIND':'Chemicals','SRF':'Chemicals','UPL':'Chemicals',
+  'PIIND':'Chemicals','SOLARINDS':'Chemicals',
+  // Capital Goods / Industrials
+  'LT':'Capital Goods','SIEMENS':'Capital Goods','ABB':'Capital Goods','BHEL':'Capital Goods',
+  'CUMMINSIND':'Capital Goods','HAVELLS':'Capital Goods','POLYCAB':'Capital Goods','KEI':'Capital Goods',
+  'VOLTAS':'Capital Goods','BLUESTARCO':'Capital Goods','CROMPTON':'Capital Goods','KAYNES':'Capital Goods',
+  'DIXON':'Capital Goods','AMBER':'Capital Goods','PGEL':'Capital Goods','SUPREMEIND':'Capital Goods',
+  'ASTRAL':'Capital Goods',
+  // Realty / Infra
+  'DLF':'Realty','GODREJPROP':'Realty','OBEROIRLTY':'Realty','PRESTIGE':'Realty','LODHA':'Realty',
+  'PHOENIXLTD':'Realty','NBCC':'Realty','RVNL':'Realty',
+  // Logistics / Transport / Aviation
+  'CONCOR':'Logistics','DELHIVERY':'Logistics','GMRAIRPORT':'Logistics','INDIGO':'Logistics',
+  // Defense
+  'BEL':'Defense','HAL':'Defense','BDL':'Defense','MAZDOCK':'Defense','COCHINSHIP':'Defense',
+  // Retail / Consumer Discretionary
+  'TITAN':'Retail','TRENT':'Retail','DMART':'Retail','KALYANKJIL':'Retail','VMM':'Retail',
+  // New-age / Internet
+  'ETERNAL':'Internet','NYKAA':'Internet','PAYTM':'Internet','SWIGGY':'Internet',
+  // Conglomerate / Holding
+  'ADANIENT':'Conglomerate','ADANIPORTS':'Conglomerate','BAJAJHLDNG':'Conglomerate',
+  // Hospitality
+  'INDHOTEL':'Hospitality',
+  // Indices (not stocks — no sector applies)
+  'NIFTY':'Index','BANKNIFTY':'Index','FINNIFTY':'Index','MIDCPNIFTY':'Index','SENSEX':'Index',
 };
 function otSector(underlying){ return OT_SECTOR_MAP[underlying] || 'Other / unlisted'; }
 
