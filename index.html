@@ -3743,7 +3743,7 @@ function eqCanonicalSymbol(sym){ return EQ_SYMBOL_ALIASES[sym] || sym; }
 // Long-term holdings — not part of the swing FIFO journal, handled separately.
 // Excluded from fills (so they never enter FIFO open/closed positions) and
 // from the Holdings snapshot (so they never show up as a Reconciliation row).
-const EQ_LONGTERM_EXCLUDE = ['BEL', 'LIQUIDCASE', 'LIQUIDBEES', 'RECLTD', 'BSE'];
+const EQ_LONGTERM_EXCLUDE = ['BEL', 'LIQUIDCASE', 'LIQUIDBEES', 'RECLTD', 'BSE', 'LTGILTBEES'];
 function eqIsLongTermExcluded(sym){
   const stripped = typeof eqStripSeriesSuffix === 'function' ? eqStripSeriesSuffix(sym) : sym;
   return EQ_LONGTERM_EXCLUDE.includes(sym) || EQ_LONGTERM_EXCLUDE.includes(stripped);
