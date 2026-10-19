@@ -921,6 +921,29 @@
     </div>
 
     <div class="panel">
+      <div class="panel-head"><div class="panel-title">CALL vs PUT — WHICH IS WORKING <span class="panel-meta">closed positions only</span></div></div>
+      <div class="stat-row" id="ot-cepe-perf-row"></div>
+      <div class="dash-split">
+        <div class="chart-box"><div id="chart-ot-ce-donut" style="height:260px;"></div></div>
+        <div class="chart-box"><div id="chart-ot-pe-donut" style="height:260px;"></div></div>
+      </div>
+      <div class="chart-box"><div id="chart-ot-cepe-pnl" style="height:220px;"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">STOCK ROI — RETURN ON PREMIUM COLLECTED <span class="panel-meta">realised P&amp;L &divide; premium sold, stocks with &ge;2 closed positions</span></div></div>
+      <div class="chart-box" style="max-height:600px;overflow-y:auto;"><div id="chart-ot-stock-roi" style="height:420px;"></div></div>
+      <div class="dash-footnote" id="ot-roi-insight">—</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">TRAILING SL EFFECTIVENESS <span class="panel-meta">target: exit at 3&times; premium collected, on losing trades</span></div></div>
+      <div class="stat-row" id="ot-sl-row"></div>
+      <div class="chart-box"><div id="chart-ot-sl-hist" style="height:280px;"></div></div>
+      <div class="dash-footnote" id="ot-sl-insight">—</div>
+    </div>
+
+    <div class="panel">
       <div class="panel-head"><div class="panel-title">PER-STOCK BREAKDOWN <span class="panel-meta">click a column to sort</span></div></div>
       <div class="table-scroll">
         <table class="list-table" id="ot-stock-table">
@@ -3011,6 +3034,7 @@ function otBuildPositionsFromPnl(rows){
       expiry: parsed.expiry, approxExpiry: parsed.approxExpiry,
       closedQty, openQty, netQty: closedQty + openQty, status,
       pnl: closedQty > 0 ? pnl : null, unrealizedPnl: r.unrealizedPnl,
+      buyValue: r.buyValue, sellValue: r.sellValue,
     });
   });
   return {positions, unparsed};
@@ -3057,6 +3081,188 @@ function otAnalyze(positions, unparsed){
   otRenderWeeklyTable(closed);
   otRenderPositionsTable(positions);
   otRenderUnparsed(unparsed);
+  otRenderCePePerf(closed);
+  otRenderStockRoi(closed);
+  otRenderSlEffectiveness(closed);
+}
+
+let otCeDonut = null, otPeDonut = null, otCepePnlChart = null, otStockRoiChart = null, otSlHistChart = null;
+
+// "Call vs Put — which is working": win rate / avg P&L / total P&L split by
+// option type, plus a win/loss donut per type and a P&L comparison bar.
+// Win-rate% and ₹ P&L are different units, so they're two separate charts,
+// never one dual-axis chart.
+function otRenderCePePerf(closed){
+  const ce = closed.filter(p => p.optType === 'CE');
+  const pe = closed.filter(p => p.optType === 'PE');
+  const stat = arr => {
+    const wins = arr.filter(p => p.pnl > 0).length;
+    const total = arr.reduce((s,p) => s + p.pnl, 0);
+    return {
+      n: arr.length, wins, losses: arr.length - wins,
+      winRate: arr.length ? wins / arr.length * 100 : null,
+      avgPnl: arr.length ? total / arr.length : null,
+      total,
+    };
+  };
+  const ceS = stat(ce), peS = stat(pe);
+
+  document.getElementById('ot-cepe-perf-row').innerHTML = `
+    <div class="stat"><div class="stat-label">CE WIN RATE</div><div class="stat-value ${ceS.winRate==null?'':ceS.winRate>=50?'green':'red'}">${ceS.winRate!=null?ceS.winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">PE WIN RATE</div><div class="stat-value ${peS.winRate==null?'':peS.winRate>=50?'green':'red'}">${peS.winRate!=null?peS.winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">CE AVG P&amp;L</div><div class="stat-value ${ceS.avgPnl==null?'':ceS.avgPnl>=0?'green':'red'}">${ceS.avgPnl!=null?'₹'+ceS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+    <div class="stat"><div class="stat-label">PE AVG P&amp;L</div><div class="stat-value ${peS.avgPnl==null?'':peS.avgPnl>=0?'green':'red'}">${peS.avgPnl!=null?'₹'+peS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+  `;
+
+  if(otCeDonut) otCeDonut.destroy();
+  if(otPeDonut) otPeDonut.destroy();
+  if(otCepePnlChart) otCepePnlChart.destroy();
+
+  const donutOpts = (s, title) => ({
+    chart: {type:'donut', height:260, background:'transparent'},
+    theme: {mode:'dark'},
+    series: [s.wins, s.losses],
+    labels: ['Wins', 'Losses'],
+    colors: ['#00d26a', '#ff3b30'],
+    title: {text: title, style:{color:'#e9e9ec', fontSize:'12px'}},
+    legend: {labels:{colors:'#9a9aa4'}},
+    dataLabels: {enabled: true, formatter: (val, o) => o.w.config.series[o.seriesIndex]},
+    stroke: {colors: ['#111114']},
+    tooltip: {theme:'dark'},
+  });
+  if(ce.length){
+    otCeDonut = new ApexCharts(document.getElementById('chart-ot-ce-donut'), donutOpts(ceS, `CALL (CE) — n=${ceS.n}`));
+    otCeDonut.render();
+  } else {
+    document.getElementById('chart-ot-ce-donut').innerHTML = '<div class="loading">No closed CE positions.</div>';
+  }
+  if(pe.length){
+    otPeDonut = new ApexCharts(document.getElementById('chart-ot-pe-donut'), donutOpts(peS, `PUT (PE) — n=${peS.n}`));
+    otPeDonut.render();
+  } else {
+    document.getElementById('chart-ot-pe-donut').innerHTML = '<div class="loading">No closed PE positions.</div>';
+  }
+
+  otCepePnlChart = new ApexCharts(document.getElementById('chart-ot-cepe-pnl'), {
+    chart: {type:'bar', height:220, background:'transparent', toolbar:{show:false}},
+    theme: {mode:'dark'},
+    series: [{name:'Total Realised P&L', data:[
+      {x:'CALL (CE)', y:Math.round(ceS.total), fillColor: ceS.total>=0?'#00d26a':'#ff3b30'},
+      {x:'PUT (PE)', y:Math.round(peS.total), fillColor: peS.total>=0?'#00d26a':'#ff3b30'},
+    ]}],
+    plotOptions: {bar:{columnWidth:'45%', distributed:true}},
+    legend: {show:false},
+    xaxis: {labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => '₹'+(v/1000).toFixed(0)+'k'}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:true, formatter: v => '₹'+v.toLocaleString('en-IN',{maximumFractionDigits:0}), style:{colors:['#e9e9ec']}},
+    tooltip: {theme:'dark', y:{formatter: v => '₹'+v.toLocaleString('en-IN',{maximumFractionDigits:0})}},
+  });
+  otCepePnlChart.render();
+}
+
+// Stock ROI: realised P&L as a % of premium collected (Sell Value) — the
+// right proxy here since margin-blocked capital isn't in this data at all.
+function otRenderStockRoi(closed){
+  const byStock = {};
+  closed.forEach(p => {
+    if(p.sellValue == null || p.sellValue === 0) return;
+    if(!byStock[p.underlying]) byStock[p.underlying] = {pnl:0, sellValue:0, n:0};
+    byStock[p.underlying].pnl += p.pnl;
+    byStock[p.underlying].sellValue += p.sellValue;
+    byStock[p.underlying].n++;
+  });
+  const rows = Object.keys(byStock)
+    .map(stock => ({stock, ...byStock[stock], roi: byStock[stock].pnl / byStock[stock].sellValue * 100}))
+    .filter(r => r.n >= 2)
+    .sort((a,b) => b.roi - a.roi);
+
+  if(otStockRoiChart) otStockRoiChart.destroy();
+  if(!rows.length){
+    document.getElementById('chart-ot-stock-roi').innerHTML = '<div class="loading">Not enough closed positions per stock yet (need ≥2 per stock).</div>';
+    document.getElementById('ot-roi-insight').textContent = '—';
+    return;
+  }
+  otStockRoiChart = new ApexCharts(document.getElementById('chart-ot-stock-roi'), {
+    chart: {type:'bar', height: Math.max(280, rows.length*26), background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [{name:'ROI on premium collected', data: rows.map(r => ({x:r.stock, y:+r.roi.toFixed(1), fillColor: r.roi>=0?'#00d26a':'#ff3b30'}))}],
+    plotOptions: {bar:{horizontal:true, barHeight:'70%', distributed:true}},
+    legend: {show:false},
+    xaxis: {labels:{style:{colors:'#8a8a93'}, formatter: v => v+'%'}},
+    yaxis: {labels:{style:{colors:'#8a8a93', fontSize:'10px'}}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:true, formatter: v => v+'%', style:{colors:['#e9e9ec']}},
+    tooltip: {theme:'dark', y:{formatter: v => v+'%'}},
+  });
+  otStockRoiChart.render();
+
+  const best = rows[0], worst = rows[rows.length-1];
+  document.getElementById('ot-roi-insight').textContent =
+    `Best: ${best.stock} at ${best.roi.toFixed(1)}% of premium collected (${best.n} closed). Worst: ${worst.stock} at ${worst.roi.toFixed(1)}% (${worst.n} closed). ROI = realised P&L ÷ premium collected — not return on margin, since margin isn't in this export.`;
+}
+
+// Trailing SL effectiveness: for closed LOSING trades, BuyValue/SellValue is
+// the exit cost relative to premium collected. At a true 3x stop this ratio
+// should sit right around 3.0 — well above means slippage/gaps blew through
+// the stop, well below means something else closed it first (manual call or
+// an A1-A5 adjustment).
+function otRenderSlEffectiveness(closed){
+  const losers = closed.filter(p => p.pnl < 0 && p.sellValue > 0 && p.buyValue != null)
+    .map(p => ({...p, ratio: p.buyValue / p.sellValue}));
+
+  if(otSlHistChart) otSlHistChart.destroy();
+  if(!losers.length){
+    document.getElementById('ot-sl-row').innerHTML = '<div class="stat"><div class="stat-label">LOSING TRADES</div><div class="stat-value">0</div></div>';
+    document.getElementById('chart-ot-sl-hist').innerHTML = '<div class="loading">No closed losing positions yet.</div>';
+    document.getElementById('ot-sl-insight').textContent = '—';
+    return;
+  }
+
+  const avgRatio = losers.reduce((s,p) => s+p.ratio, 0) / losers.length;
+  const inBand = losers.filter(p => p.ratio >= 2.5 && p.ratio <= 3.5).length;
+  const overshot = losers.filter(p => p.ratio > 3.5).length;
+  const undershot = losers.filter(p => p.ratio < 2.5).length;
+
+  document.getElementById('ot-sl-row').innerHTML = `
+    <div class="stat"><div class="stat-label">LOSING TRADES</div><div class="stat-value">${losers.length}</div></div>
+    <div class="stat"><div class="stat-label">AVG EXIT MULTIPLE</div><div class="stat-value ${Math.abs(avgRatio-3)<=0.5?'green':'amber'}">${avgRatio.toFixed(2)}&times;</div></div>
+    <div class="stat"><div class="stat-label">NEAR TARGET (2.5&ndash;3.5&times;)</div><div class="stat-value green">${(inBand/losers.length*100).toFixed(0)}%</div></div>
+    <div class="stat"><div class="stat-label">OVERSHOT &gt;3.5&times;</div><div class="stat-value ${overshot?'red':'green'}">${(overshot/losers.length*100).toFixed(0)}%</div></div>
+  `;
+
+  const buckets = [
+    {label:'<1.5×', min:0, max:1.5}, {label:'1.5–2×', min:1.5, max:2},
+    {label:'2–2.5×', min:2, max:2.5}, {label:'2.5–3×', min:2.5, max:3},
+    {label:'3–3.5×', min:3, max:3.5}, {label:'3.5–4×', min:3.5, max:4},
+    {label:'4–5×', min:4, max:5}, {label:'>5×', min:5, max:Infinity},
+  ];
+  const counts = buckets.map(b => losers.filter(p => p.ratio >= b.min && p.ratio < b.max).length);
+
+  otSlHistChart = new ApexCharts(document.getElementById('chart-ot-sl-hist'), {
+    chart: {type:'bar', height:280, background:'transparent', toolbar:{show:true}},
+    theme: {mode:'dark'},
+    series: [{name:'Losing trades', data: buckets.map((b,i) => ({
+      x:b.label, y:counts[i],
+      fillColor: (b.min>=2.5 && b.max<=3.5) ? '#00d26a' : (b.min>=3.5 ? '#ff3b30' : '#ff9f1a'),
+    }))}],
+    plotOptions: {bar:{columnWidth:'70%', distributed:true}},
+    legend: {show:false},
+    xaxis: {title:{text:'Exit cost ÷ premium collected', style:{color:'#8a8a93'}}, labels:{style:{colors:'#8a8a93'}}},
+    yaxis: {title:{text:'Losing trades', style:{color:'#8a8a93'}}, labels:{style:{colors:'#8a8a93'}, formatter: v=>v.toFixed(0)}},
+    grid: {borderColor:'#1e1e23'},
+    dataLabels: {enabled:true, style:{colors:['#e9e9ec']}},
+    annotations: {
+      xaxis: [{x:'2.5–3×', x2:'3–3.5×', fillColor:'#00d26a', opacity:0.08, label:{text:'target band', style:{color:'#fff', background:'#00d26a', fontSize:'10px'}}}],
+    },
+    tooltip: {theme:'dark'},
+  });
+  otSlHistChart.render();
+
+  document.getElementById('ot-sl-insight').textContent =
+    `${inBand} of ${losers.length} losing trades (${(inBand/losers.length*100).toFixed(0)}%) closed within 2.5–3.5× premium collected — in line with a 3× stop. ` +
+    `${overshot} (${(overshot/losers.length*100).toFixed(0)}%) closed above 3.5× — the stop likely didn't fill in time (slippage/gap). ` +
+    `${undershot} (${(undershot/losers.length*100).toFixed(0)}%) closed below 2.5× — exited earlier than the stop, by choice or adjustment.`;
 }
 
 function otRenderStockTable(positions){
