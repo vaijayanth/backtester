@@ -3800,18 +3800,22 @@ function eqFmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
 
 async function eqRefresh(){
   document.getElementById('eq-open-count-text').textContent = 'Loading…';
-  try{
-    const [fills, stMap] = await Promise.all([eqFetchAllFills(), eqFetchSupertrend()]);
-    window._eqFills = fills;
-    window._eqSupertrend = stMap;
-    const {open, closed} = eqBuildPositions(fills);
-    window._eqOpen = open;
-    window._eqClosed = closed;
-    eqRenderOpen(open, stMap);
-    eqRenderClosed(closed);
-  } catch(e){
-    document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + e.message;
+  // allSettled, not all — a failed sheet fetch shouldn't discard a
+  // successful Supertrend fetch (or vice versa); each degrades on its own.
+  const [fillsResult, stResult] = await Promise.allSettled([eqFetchAllFills(), eqFetchSupertrend()]);
+  const stMap = stResult.status === 'fulfilled' ? stResult.value : null;
+  window._eqSupertrend = stMap;
+  if(fillsResult.status !== 'fulfilled'){
+    document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + fillsResult.reason.message;
+    return;
   }
+  const fills = fillsResult.value;
+  window._eqFills = fills;
+  const {open, closed} = eqBuildPositions(fills);
+  window._eqOpen = open;
+  window._eqClosed = closed;
+  eqRenderOpen(open, stMap);
+  eqRenderClosed(closed);
 }
 
 function eqRenderOpen(open, stMap){
