@@ -237,6 +237,7 @@
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
     <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
+    <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1131,6 +1132,101 @@
 
 </div>
 
+<!-- ============ EQUITY ALERTS PAGE ============ -->
+<!-- Reuses the Equity Trading Journal's already-fetched state (window._eqOpen,
+     window._eqSupertrend) — never re-fetches on its own. Surfaces the same
+     EXIT/ADDON/HOLD signal logic already in eqComputeSignal as a prioritized
+     action list instead of a flat table, plus a universe-wide "new bullish
+     signals" watchlist independent of current holdings. -->
+<div class="page" id="page-eqalerts">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">EQUITY ALERTS</div>
+      <div class="dash-meta" id="eqa-meta">What needs action today, across your open positions and the full universe</div>
+      <div class="dash-meta" id="eqa-sync-status">—</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="eqa-exit-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-exit-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th></tr></thead>
+        <tbody id="eqa-exit-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">In profit, Supertrend flipped red — trailing SL hit per your rule.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-addon-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th></tr></thead>
+        <tbody id="eqa-addon-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Loss worse than −6%, Supertrend green, not added to this week — average in 1/10 qty.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">⏳ ALREADY ADDED THIS WEEK <span class="panel-meta" id="eqa-cooldown-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-cooldown-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
+        <tbody id="eqa-cooldown-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Would otherwise qualify for an add-on, but already added within the last 7 days — shown so it's not mistaken for a miss.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">⚠ APPROACHING ADD-ON THRESHOLD <span class="panel-meta" id="eqa-approach-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-approach-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th></tr></thead>
+        <tbody id="eqa-approach-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Loss between −4% and −6% — early warning before it crosses into add-on territory.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">⏸ HOLD / WAIT FOR STRUCTURE <span class="panel-meta" id="eqa-hold-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-hold-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
+        <tbody id="eqa-hold-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Loss worse than −6%, Supertrend still red — no action, wait for structure to return.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🆕 NEW BULLISH SIGNALS — UNIVERSE <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-newsig-table">
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>FLIPPED</th><th>ABOVE 50 EMA</th></tr></thead>
+        <tbody id="eqa-newsig-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Supertrend flipped green in the last 7 days, anywhere in the full universe (not just what you hold) — catches a flip even if you missed checking for a day or two. Excludes stocks you already hold.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">— NO PRICE DATA <span class="panel-meta" id="eqa-nodata-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-nodata-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th></tr></thead>
+        <tbody id="eqa-nodata-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Not in the price universe or too little OHLC history for a Supertrend read — can't compute a signal for these.</div>
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -1154,6 +1250,7 @@ function switchPage(page){
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
   if(page === 'opttrades' && !otInitialized) otInit();
   if(page === 'journal' && !eqInitialized) eqInit();
+  if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
 }
 
 function toggleEqUploadBox(){
@@ -1185,6 +1282,7 @@ document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
 document.getElementById('nav-journal').onclick = () => switchPage('journal');
+document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -4441,6 +4539,127 @@ function eqInit(){
   document.getElementById('eq-holdings-upload-btn').onclick = eqUploadHoldings;
   eqShowLastSync();
   eqRefresh();
+}
+
+// ============================================================
+// EQUITY ALERTS PAGE
+// ============================================================
+// Approaching-threshold early warning band — loss between this and the
+// real −6% add-on trigger (EQ_LOSS_THRESHOLD_PCT) gets flagged before it
+// crosses into add-on territory, not after.
+const EQ_APPROACH_THRESHOLD_PCT = -4;
+
+let eqAlertsInitialized = false;
+
+function eqAlertsInit(){
+  eqAlertsInitialized = true;
+  eqAlertsRefresh();
+}
+
+function eqStripNs(sym){ return String(sym || '').replace(/\.NS$/, ''); }
+
+async function eqAlertsRefresh(){
+  document.getElementById('eqa-sync-status').innerHTML = '<span class="eq-spinner"></span> Loading…';
+  // Reuses the Journal's own state — never fetches independently. If the
+  // Journal tab hasn't been visited yet this session, window._eqOpen is
+  // undefined and eqRefresh() populates it (and window._eqSupertrend) once.
+  if(!window._eqOpen || !window._eqSupertrend){
+    await eqRefresh();
+  }
+  eqAlertsRender();
+  document.getElementById('eqa-sync-status').textContent =
+    'Last updated ' + eqFmtTime(Date.now()) + ' — using the same data as Equity Trading Journal';
+}
+
+function eqAlertsRow(p, st){
+  const cmp = st ? st.close : null;
+  const plPct = (st && p.avgEntry > 0) ? ((cmp - p.avgEntry) / p.avgEntry) * 100 : null;
+  return {...p, cmp, plPct, st};
+}
+
+function eqAlertsRenderTable(tbodyId, countId, rows, cols){
+  document.getElementById(countId).textContent = rows.length ? `${rows.length} stock${rows.length===1?'':'s'}` : 'none';
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = rows.map(cols).join('') ||
+    `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px">Nothing here right now.</td></tr>`;
+}
+
+function eqAlertsRender(){
+  const open = window._eqOpen || [];
+  const stMap = window._eqSupertrend || {};
+
+  const exitNow = [], addOnEligible = [], addOnCooldown = [], approaching = [], holdWait = [], noData = [];
+
+  open.forEach(p => {
+    const st = stMap[p.symbol];
+    if(!st || st.color == null){ noData.push(eqAlertsRow(p, st)); return; }
+
+    const row = eqAlertsRow(p, st);
+    const plPct = row.plPct;
+
+    if(plPct !== null && plPct > 0 && st.color === 'red'){ exitNow.push(row); return; }
+
+    if(plPct !== null && plPct <= EQ_LOSS_THRESHOLD_PCT){
+      if(st.color === 'green'){
+        if(eqAddedWithinCooldown(p.fills)) addOnCooldown.push(row);
+        else addOnEligible.push(row);
+      } else {
+        holdWait.push(row);
+      }
+      return;
+    }
+
+    if(plPct !== null && plPct <= EQ_APPROACH_THRESHOLD_PCT && plPct > EQ_LOSS_THRESHOLD_PCT){
+      approaching.push(row);
+    }
+  });
+
+  const sortByPl = (a, b) => (a.plPct ?? 0) - (b.plPct ?? 0);
+  exitNow.sort(sortByPl); addOnEligible.sort(sortByPl); addOnCooldown.sort(sortByPl);
+  approaching.sort(sortByPl); holdWait.sort(sortByPl);
+
+  const stLabel = st => st ? (st.color === 'green' ? '🟢 Green' : '🔴 Red') + (st.flipped_today ? ' (flip today)' : '') : '—';
+  const plCell = p => {
+    const color = p.plPct == null ? 'var(--muted)' : p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<td style="color:${color};font-weight:700">${p.plPct == null ? '—' : eqFmtPct(p.plPct)}</td>`;
+  };
+
+  eqAlertsRenderTable('eqa-exit-tbody', 'eqa-exit-count', exitNow, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
+    ${plCell(p)}<td>${stLabel(p.st)}</td></tr>`);
+
+  eqAlertsRenderTable('eqa-addon-tbody', 'eqa-addon-count', addOnEligible, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
+    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td></tr>`);
+
+  eqAlertsRenderTable('eqa-cooldown-tbody', 'eqa-cooldown-count', addOnCooldown, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
+    ${plCell(p)}</tr>`);
+
+  eqAlertsRenderTable('eqa-approach-tbody', 'eqa-approach-count', approaching, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
+    ${plCell(p)}<td>${stLabel(p.st)}</td></tr>`);
+
+  eqAlertsRenderTable('eqa-hold-tbody', 'eqa-hold-count', holdWait, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
+    ${plCell(p)}</tr>`);
+
+  eqAlertsRenderTable('eqa-nodata-tbody', 'eqa-nodata-count', noData, p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td></tr>`);
+
+  // Universe-wide new bullish signals — independent of current holdings,
+  // this is an entry-candidate watchlist, not a position alert. Excludes
+  // anything already held so it stays focused on genuinely new ideas.
+  const heldSymbols = new Set(open.map(p => p.symbol));
+  const newSignals = Object.values(stMap)
+    .filter(e => e.recent_bullish_flip_days_ago != null && !heldSymbols.has(eqStripNs(e.symbol)))
+    .sort((a, b) => a.recent_bullish_flip_days_ago - b.recent_bullish_flip_days_ago);
+
+  eqAlertsRenderTable('eqa-newsig-tbody', 'eqa-newsig-count', newSignals, e => {
+    const flipLabel = e.recent_bullish_flip_days_ago === 0 ? 'Today' : `${e.recent_bullish_flip_days_ago}d ago (${e.recent_bullish_flip_date})`;
+    const emaLabel = e.above_ema50 === true ? '✓ Above' : e.above_ema50 === false ? '✗ Below' : '—';
+    return `<tr><td>${eqStripNs(e.symbol)}</td><td>${eqFmtRs(e.close)}</td><td>${flipLabel}</td><td>${emaLabel}</td></tr>`;
+  });
 }
 
 document.getElementById('ot-upload-btn').onclick = otUploadFile;
