@@ -564,6 +564,21 @@
 
   <div class="panel">
     <div class="panel-head">
+      <div class="panel-title">INTEGRATIONS</div>
+      <div class="panel-meta">saved in this browser only — never committed to git</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-section-title">OPTION TRADE ANALYSIS — GOOGLE SHEET URL</div>
+      <div class="sb-field">
+        <label>Apps Script Web App URL</label>
+        <input type="text" id="cfg-ot-sheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="sb-meta">Used by the Zerodha Option Trade Analysis page to store/fetch your trade data. Set it once here.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
       <div class="panel-title">SST STRATEGY PARAMETERS</div>
       <div class="panel-meta">every value here is tunable — matches docs/SPEC.md section 7 exactly</div>
     </div>
@@ -880,10 +895,6 @@
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx) from Console &rarr; Reports</span></div></div>
     <div style="padding:18px;">
-      <div style="margin-bottom:14px;">
-        <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">GOOGLE SHEET URL (APPS SCRIPT WEB APP) — paste once, saved in this browser only</label>
-        <input type="text" id="ot-sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:9px 12px;color:var(--white);font-family:inherit;font-size:12px;">
-      </div>
       <div id="ot-db-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-word;">initializing...</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ot-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
@@ -891,7 +902,7 @@
       </div>
       <div id="ot-parse-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        Stored server-side in your own Google Sheet — not in this browser, not committed to git. Columns are auto-detected from the header row. Re-uploading is safe any time — each contract's row is replaced with the latest numbers from the file, nothing is duplicated. Open this page from any device and your data is already there, as long as you've pasted the same Sheet URL.
+        Stored server-side in your own Google Sheet — not in this browser, not committed to git. Columns are auto-detected from the header row. Re-uploading is safe any time — each contract's row is replaced with the latest numbers from the file, nothing is duplicated. Set the Sheet URL once on the Strategy Builder page (INTEGRATIONS panel) — open this page from any device with that same URL set and your data is already there.
       </div>
     </div>
   </div>
@@ -2982,7 +2993,6 @@ async function otRenderFromDb(){
 let otInitialized = false;
 async function otInit(){
   otInitialized = true;
-  document.getElementById('ot-sheet-url-input').value = otGetSheetUrl();
   await otRenderFromDb();
 }
 
@@ -3137,9 +3147,10 @@ document.getElementById('ot-upload-btn').onclick = otUploadFile;
 document.getElementById('ot-positions-search').addEventListener('input', (e) => {
   otRenderPositionsTable(otAllPositions, e.target.value);
 });
-document.getElementById('ot-sheet-url-input').addEventListener('change', async (e) => {
+document.getElementById('cfg-ot-sheet-url').value = otGetSheetUrl();
+document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e) => {
   otSaveSheetUrl(e.target.value);
-  await otRenderFromDb();
+  if(otInitialized) await otRenderFromDb();
 });
 </script>
 </body>
