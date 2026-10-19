@@ -47,6 +47,16 @@ YEARS = 5
 RETRY_DELAYS = [5, 15, 30]       # seconds, escalating backoff within one run
 MAX_AUTO_RETRY_ATTEMPTS = 3      # across separate runs — beyond this, stop auto-retrying
 
+# Was a flat 100 — rejected real, legitimate stocks whose Yahoo coverage is
+# shorter than 5 years (confirmed by hand for HALDYNGL: Yahoo genuinely
+# only carries ~43 rows for it, matching what the user independently saw
+# on another platform — not broken data, just shorter history). Supertrend
+# itself only needs ATR_PERIOD+2 (12) rows to produce a direction; this
+# floor gives a little buffer above that bare minimum rather than demanding
+# a full 5yr window just to accept a symbol at all. EMA50 still silently
+# comes back as unavailable (not wrong) below 50 rows — see supertrend.py.
+MIN_ROWS = 20
+
 MANIFEST_FIELDS = [
     "symbol", "status", "records", "first_date", "last_date",
     "error", "attempts", "last_attempt_utc",
@@ -106,8 +116,8 @@ def validate_ohlc(df: pd.DataFrame) -> tuple[bool, str]:
         return False, "High < Low on at least one row"
     if (df["Close"] <= 0).any() or (df["Open"] <= 0).any():
         return False, "non-positive price present"
-    if len(df) < 100:
-        return False, f"only {len(df)} rows — too little history for real {YEARS}yr data"
+    if len(df) < MIN_ROWS:
+        return False, f"only {len(df)} rows — below the {MIN_ROWS}-row floor for a usable Supertrend/EMA read"
     return True, ""
 
 

@@ -169,7 +169,12 @@ def build_supertrend(universe="fno"):
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
 
         ema50 = compute_ema(closes, EMA_FAST)
-        above_ema50 = ema50[-1] is not None and latest_close > ema50[-1]
+        # None (not False) when there isn't enough history for a real 50
+        # EMA read — a stock with, say, 43 rows previously got silently
+        # reported as "below the 50 EMA" when the true answer is "unknown,
+        # insufficient data" — those are not the same thing to a consumer
+        # making an add-on/exit decision off this field.
+        above_ema50 = (latest_close > ema50[-1]) if ema50[-1] is not None else None
 
         entry = {
             "symbol": symbol, "close": round(latest_close, 2),
