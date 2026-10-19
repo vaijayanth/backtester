@@ -42,6 +42,7 @@ FNO_UNIVERSE_CSV = ROOT / "data" / "fno_universe.csv"
 ATR_PERIOD = 10
 MULTIPLIER = 3.0
 EMA_FAST = 50  # matches market_snapshot.py's EMA_FAST exactly — same formula, same period
+RECENT_FLIP_LOOKBACK_DAYS = 7  # catches a flip a day or two of inattention would otherwise miss
 
 
 def compute_ema(values, period):
@@ -143,6 +144,26 @@ def load_fno_symbols():
     return df["symbol"].tolist()
 
 
+def _recent_bullish_flip(direction, dates):
+    """Was there a red/unknown -> green flip in the last
+    RECENT_FLIP_LOOKBACK_DAYS trading days (not just yesterday->today)? A
+    user checking every day never misses a flip, but a day or two of
+    inattention would — this lets the Equity Alerts page catch it late
+    rather than silently never. Scans backwards from today so a more
+    recent flip always wins if there happened to be more than one."""
+    n = len(direction)
+    lookback = min(RECENT_FLIP_LOOKBACK_DAYS, n - 1)
+    for days_ago in range(lookback):
+        idx = n - 1 - days_ago
+        prev_idx = idx - 1
+        if prev_idx < 0:
+            break
+        cur, prev = direction[idx], direction[prev_idx]
+        if cur == "up" and prev is not None and prev != "up":
+            return days_ago, str(dates[idx].date())
+    return None, None
+
+
 def _cmp_only_entry(symbol, latest_close, latest_date):
     """Not enough history for a trustworthy Supertrend/EMA read, but still
     enough for a CMP — surface it rather than dropping the symbol entirely.
@@ -153,6 +174,7 @@ def _cmp_only_entry(symbol, latest_close, latest_date):
     return {
         "symbol": symbol, "close": round(latest_close, 2),
         "color": None, "flipped_today": False, "above_ema50": None, "date": latest_date,
+        "recent_bullish_flip_days_ago": None, "recent_bullish_flip_date": None,
     }
 
 
@@ -198,6 +220,7 @@ def build_supertrend(universe="fno"):
             continue
 
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
+        recent_flip_days_ago, recent_flip_date = _recent_bullish_flip(direction, df.index)
 
         ema50 = compute_ema(closes, EMA_FAST)
         # None (not False) when there isn't enough history for a real 50
@@ -211,6 +234,8 @@ def build_supertrend(universe="fno"):
             "symbol": symbol, "close": round(latest_close, 2),
             "color": "green" if today_dir == "up" else "red",
             "flipped_today": flipped, "above_ema50": above_ema50, "date": latest_date,
+            "recent_bullish_flip_days_ago": recent_flip_days_ago,
+            "recent_bullish_flip_date": recent_flip_date,
         }
         entries.append(entry)
         if flipped:
