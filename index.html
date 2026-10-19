@@ -1069,7 +1069,9 @@
           <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
           <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
           <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
+          <button id="eq-force-clear-btn" onclick="eqForceClearFills()" style="padding:10px 14px;font-size:11px;font-weight:700;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;">⚠ FORCE CLEAR FILLS</button>
         </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">Wipes ALL stored fills (not Holdings) so you can re-upload the Tradebook fresh, bypassing dedup entirely. Use if a sync looks duplicated or stuck.</div>
         <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
       </div>
 
@@ -3775,6 +3777,28 @@ async function eqPostFills(fills){
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
   return data;
+}
+
+async function eqForceClearFills(){
+  const sure = confirm('This permanently deletes ALL stored fills in the FILLS sheet (Holdings is untouched). You will need to re-upload your Tradebook from scratch afterward. This cannot be undone. Continue?');
+  if(!sure) return;
+  const typed = prompt('Type DELETE to confirm wiping all fills:');
+  if(typed !== 'DELETE'){ eqShowStatus('Force clear cancelled.', false); return; }
+  try{
+    eqShowStatus('Clearing all fills…', false);
+    const res = await fetch(EQ_SHEET_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({type: 'clear_fills', confirm: 'DELETE_ALL_FILLS'}),
+    });
+    if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+    eqShowStatus(`Cleared ${data.cleared} fills. Upload your Tradebook fresh now.`, false);
+    await eqRefresh();
+  }catch(e){
+    eqShowStatus('Force clear failed: ' + e.message, true);
+  }
 }
 
 async function eqFetchSupertrend(){
