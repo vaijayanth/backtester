@@ -3720,6 +3720,15 @@ const EQ_SYMBOL_ALIASES = {
 };
 function eqCanonicalSymbol(sym){ return EQ_SYMBOL_ALIASES[sym] || sym; }
 
+// Long-term holdings — not part of the swing FIFO journal, handled separately.
+// Excluded from fills (so they never enter FIFO open/closed positions) and
+// from the Holdings snapshot (so they never show up as a Reconciliation row).
+const EQ_LONGTERM_EXCLUDE = ['BEL', 'LIQUIDCASE', 'LIQUIDBEES', 'RECLTD', 'BSE'];
+function eqIsLongTermExcluded(sym){
+  const stripped = typeof eqStripSeriesSuffix === 'function' ? eqStripSeriesSuffix(sym) : sym;
+  return EQ_LONGTERM_EXCLUDE.includes(sym) || EQ_LONGTERM_EXCLUDE.includes(stripped);
+}
+
 // A Tradebook fill records the RAW quantity/price as traded at the time —
 // a later stock split/bonus is never retroactively applied to it. But
 // Zerodha's live Positions view, and this app's CMP feed (yfinance
@@ -3749,7 +3758,9 @@ async function eqFetchAllFills(){
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return (data.rows || []).map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
+  return (data.rows || [])
+    .filter(r => !eqIsLongTermExcluded(r.symbol))
+    .map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
 }
 
 async function eqPostFills(fills){
@@ -4084,7 +4095,7 @@ async function eqFetchHoldings(){
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return data.rows || [];
+  return (data.rows || []).filter(h => !eqIsLongTermExcluded(String(h.instrument || '').trim()));
 }
 
 async function eqPostHoldings(holdings){
