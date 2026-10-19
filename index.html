@@ -1186,36 +1186,9 @@
     <div id="chart-eqdash-equity"></div>
   </div>
 
-  <!-- Alerts -->
-  <div class="panel" id="eqd-stred-card" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">⚠ SUPERTREND RED — HOLD ONLY, NO NEW ENTRY <span class="panel-meta" id="eqd-stred-count">—</span></div></div>
-    <div class="dash-footnote">Open positions currently in the red Supertrend phase — hold per SST rules, don't add new entries against the trend.</div>
-  </div>
-
-  <div class="panel" id="eqd-longloss-card" style="border-color:var(--red-dim);">
-    <div class="panel-head"><div class="panel-title">⚠ LONG-HELD LOSERS — FUNDAMENTAL REVIEW DUE <span class="panel-meta" id="eqd-longloss-count">—</span></div></div>
-    <div class="dash-footnote" style="margin-bottom:10px;">Open positions in loss for 90+ days — SST holds losses by design, but these warrant a fundamental check (earnings, sector, 200 SMA status).</div>
-    <div id="eqd-longloss-body"></div>
-  </div>
-
   <div class="panel">
     <div class="panel-head"><div class="panel-title">⚡ SYSTEM MOMENTUM — LAST 10 EXITS</div></div>
     <div id="eqd-momentum-body"></div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">↩ RE-ENTRY WATCHLIST <span class="panel-meta" id="eqd-reentry-meta">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="eqd-reentry-table">
-        <thead><tr><th>#</th><th>STOCK</th><th>LAST CLOSED</th><th>DAYS SINCE</th><th>LAST P&amp;L%</th><th>TIMES TRADED</th><th>HISTORY</th></tr></thead>
-        <tbody id="eqd-reentry-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="panel" id="eqd-addon-card" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">🟢 ADD-ON WATCHLIST — SIGNAL PENDING <span class="panel-meta" id="eqd-addon-count">—</span></div></div>
-    <div class="dash-footnote">Loss worse than −6%, Supertrend green, not added this week — add 1/10 qty each. Full list on the Equity Alerts tab.</div>
   </div>
 
   <!-- P&L Calendar -->
@@ -4916,8 +4889,7 @@ function eqDashRenderAll(){
   // down every panel after it in this list (same reasoning as
   // initAnalysisCharts's own try-catch wrapping).
   [eqDashRenderFySummary, eqDashRenderOpenBook, eqDashRenderEdge, eqDashRenderLossBuckets,
-   eqDashRenderEquityChart, eqDashRenderStRedAlert, eqDashRenderLongLossAlert,
-   eqDashRenderMomentum, eqDashRenderReentry, eqDashRenderAddonCount, eqDashRenderCalendar,
+   eqDashRenderEquityChart, eqDashRenderMomentum, eqDashRenderCalendar,
    eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
    eqDashRenderConcentration, eqDashRenderPerfSummary,
   ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
@@ -5034,23 +5006,6 @@ function eqDashRenderEquityChart(s){
   eqDashEquityChart.render();
 }
 
-function eqDashRenderStRedAlert(s){
-  const stRed = s.openLive.filter(p => p.st && p.st.color === 'red');
-  document.getElementById('eqd-stred-count').textContent = `${stRed.length} positions`;
-  document.getElementById('eqd-stred-card').style.display = stRed.length ? '' : 'none';
-}
-
-function eqDashRenderLongLossAlert(s){
-  const longLoss = s.openLive.filter(p => p.age != null && p.age > 90 && p.plPct != null && p.plPct < 0)
-    .sort((a, b) => b.age - a.age);
-  document.getElementById('eqd-longloss-count').textContent = `${longLoss.length} positions`;
-  document.getElementById('eqd-longloss-card').style.display = longLoss.length ? '' : 'none';
-  document.getElementById('eqd-longloss-body').innerHTML = longLoss.map(p =>
-    `<span style="display:inline-block;margin:3px 6px 3px 0;padding:4px 10px;border-radius:6px;background:var(--red-dim);font-size:11px;">
-      <b>${p.symbol}</b> <span style="color:var(--red)">${eqFmtPct(p.plPct)}</span> · ${p.age}d</span>`
-  ).join('');
-}
-
 function eqDashRenderMomentum(s){
   const recentClosed = s.closed.slice().sort((a, b) => a.exitDate < b.exitDate ? -1 : 1).slice(-10);
   const circles = recentClosed.map((t, i) => {
@@ -5076,42 +5031,6 @@ function eqDashRenderMomentum(s){
   document.getElementById('eqd-momentum-body').innerHTML =
     `<div style="margin-bottom:10px;">${circles}</div>
      <div style="font-size:11.5px;color:${streakWin ? 'var(--green)' : 'var(--amber)'};">${streakMsg}</div>`;
-}
-
-function eqDashRenderReentry(s){
-  const openSymbols = new Set(s.openLive.map(p => p.symbol));
-  const bySymbol = {};
-  s.closed.forEach(t => {
-    if(!bySymbol[t.symbol]) bySymbol[t.symbol] = [];
-    bySymbol[t.symbol].push(t);
-  });
-  const rows = [];
-  Object.keys(bySymbol).forEach(sym => {
-    if(openSymbols.has(sym)) return;
-    const trades = bySymbol[sym].slice().sort((a, b) => a.exitDate < b.exitDate ? -1 : 1);
-    const last = trades[trades.length - 1];
-    const daysSince = eqTradingDaysBetween(last.exitDate, s.todayIso);
-    if(daysSince < 6) return;
-    const w = trades.filter(t => t.pl > 0).length;
-    rows.push({symbol: sym, lastClosed: last.exitDate, daysSince, lastPlPct: last.plPct, timesTraded: trades.length, w, l: trades.length - w});
-  });
-  rows.sort((a, b) => a.daysSince - b.daysSince);
-  document.getElementById('eqd-reentry-meta').textContent = `${rows.length} stocks eligible for re-entry`;
-  document.getElementById('eqd-reentry-tbody').innerHTML = rows.map((r, i) => `<tr>
-    <td>${i + 1}</td><td>${r.symbol}</td><td>${r.lastClosed}</td><td>${r.daysSince} trading days</td>
-    <td style="color:${r.lastPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${eqFmtPct(r.lastPlPct)}</td>
-    <td>${r.timesTraded}</td><td>${r.w}W / ${r.l}L</td></tr>`).join('') ||
-    '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Nothing eligible right now.</td></tr>';
-}
-
-function eqDashRenderAddonCount(s){
-  const eligible = s.openLive.filter(p => {
-    if(p.plPct == null || p.plPct > EQ_LOSS_THRESHOLD_PCT) return false;
-    if(!p.st || p.st.color !== 'green') return false;
-    return !eqAddedWithinCooldown(p.fills);
-  });
-  document.getElementById('eqd-addon-count').textContent = `${eligible.length} positions`;
-  document.getElementById('eqd-addon-card').style.display = eligible.length ? '' : 'none';
 }
 
 function eqDashCalNav(dir){ eqDashCalOffset += dir; eqDashRenderCalendar(eqDashComputeStats()); }
