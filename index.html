@@ -4186,16 +4186,18 @@ function eqBuildPositions(fills){
       if(qty <= 0) return;
 
       if(type === 'buy'){
-        if(lots.length === 0 && !trip) trip = {symbol: sym, buys: [], sells: []};
+        if(lots.length === 0 && !trip) trip = {symbol: sym, buys: [], sells: [], matchedSellQty: 0, matchedSellValue: 0};
         lots.push({qty, price, date});
         trip.buys.push({qty, price, date});
       } else if(type === 'sell'){
-        if(!trip) trip = {symbol: sym, buys: [], sells: []}; // sell with no prior buy history in file
+        if(!trip) trip = {symbol: sym, buys: [], sells: [], matchedSellQty: 0, matchedSellValue: 0}; // sell with no prior buy history in file
         let remaining = qty;
         while(remaining > 0 && lots.length > 0){
           const lot = lots[0];
           const matchQty = Math.min(lot.qty, remaining);
           lot.qty -= matchQty; remaining -= matchQty;
+          trip.matchedSellQty += matchQty;
+          trip.matchedSellValue += matchQty * price;
           if(lot.qty <= 1e-9) lots.shift();
         }
         trip.sells.push({qty, price, date});
@@ -4210,19 +4212,35 @@ function eqBuildPositions(fills){
   return {open, closed};
 }
 
+// Realized P&L is computed from the MATCHED sell quantity/value only — the
+// portion with a known cost basis from this trip's own buy fills. A sell
+// that exceeds available lots ("oversell") means the Tradebook can't see
+// the real cost basis for part of the position — a bonus/split/demerger
+// never recorded as an ordinary buy fill, or an off-market transfer/gift
+// (the user confirmed every Tradebook export is full account history, so
+// this isn't a truncated-export gap). That unmatched portion has NO
+// verified cost and must never be silently credited as pure profit, which
+// is what the previous version did — verified against real data: 108 such
+// events totaling ~₹69L of phantom "profit" inflating closed-trade P&L
+// (PIDILITIND, ITC, SIEMENS, DIVISLAB and ~60 other symbols). Flagged via
+// unmatchedQty so the UI can surface it rather than show a clean, wrong
+// number; real fix per symbol is the already-documented
+// EQ_SPLIT_ADJUSTMENTS/EQ_MANUAL_FILLS remediation once confirmed with the
+// user (see CLAUDE.md).
 function eqFinalizeClosed(trip){
   const totalBuyQty = trip.buys.reduce((s, b) => s + b.qty, 0);
   const totalBuyValue = trip.buys.reduce((s, b) => s + b.qty * b.price, 0);
   const totalSellQty = trip.sells.reduce((s, s2) => s + s2.qty, 0);
-  const totalSellValue = trip.sells.reduce((s, s2) => s + s2.qty * s2.price, 0);
+  const unmatchedQty = Math.max(0, totalSellQty - trip.matchedSellQty);
   const avgEntry = totalBuyQty > 0 ? totalBuyValue / totalBuyQty : 0;
-  const avgExit = totalSellQty > 0 ? totalSellValue / totalSellQty : 0;
+  const avgExit = trip.matchedSellQty > 0 ? trip.matchedSellValue / trip.matchedSellQty : 0;
   const entryDate = trip.buys.length ? trip.buys[0].date : (trip.sells[0] ? trip.sells[0].date : '');
   const exitDate = trip.sells.length ? trip.sells[trip.sells.length - 1].date : entryDate;
-  const pl = totalSellValue - totalBuyValue;
+  const pl = trip.matchedSellValue - totalBuyValue;
   const plPct = totalBuyValue > 0 ? (pl / totalBuyValue) * 100 : 0;
   return {symbol: trip.symbol, qty: totalSellQty, avgEntry, avgExit, entryDate, exitDate,
-    daysHeld: Math.max(0, eqDaysBetween(entryDate, exitDate)), pl, plPct};
+    daysHeld: Math.max(0, eqDaysBetween(entryDate, exitDate)), pl, plPct,
+    unmatchedQty: unmatchedQty > 0.5 ? Math.round(unmatchedQty) : 0};
 }
 
 function eqFinalizeOpen(symbol, lots, allFillsForSymbol){
@@ -4374,8 +4392,9 @@ function eqRenderClosed(closed){
   const tbody = document.getElementById('eq-closed-tbody');
   tbody.innerHTML = closed.map(t => {
     const plColor = t.pl >= 0 ? 'var(--green)' : 'var(--red)';
+    const anomaly = t.unmatchedQty ? ` <span title="${t.unmatchedQty} of ${t.qty} sold shares have no matching buy in this Tradebook export — likely a bonus/split/demerger or off-market transfer not recorded as a buy. Cost basis unknown for those shares, so they're excluded from this P&L (not counted as profit). See CLAUDE.md EQ_SPLIT_ADJUSTMENTS/EQ_MANUAL_FILLS." style="color:var(--amber);cursor:help;">⚠</span>` : '';
     return `<tr>
-      <td>${t.symbol}</td>
+      <td>${t.symbol}${anomaly}</td>
       <td>${t.qty}</td>
       <td>${eqFmtRs(t.avgEntry)}</td>
       <td>${eqFmtRs(t.avgExit)}</td>
