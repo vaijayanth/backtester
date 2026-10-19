@@ -4865,22 +4865,16 @@ function eqDashStatHtml(label, value, color, sub){
 
 function eqDashRenderAll(){
   const s = eqDashComputeStats();
-  eqDashRenderFySummary(s);
-  eqDashRenderOpenBook(s);
-  eqDashRenderEdge(s);
-  eqDashRenderLossBuckets(s);
-  eqDashRenderEquityChart(s);
-  eqDashRenderStRedAlert(s);
-  eqDashRenderLongLossAlert(s);
-  eqDashRenderMomentum(s);
-  eqDashRenderReentry(s);
-  eqDashRenderAddonCount(s);
-  eqDashRenderCalendar(s);
-  eqDashRenderHeatmap(s);
-  eqDashRenderTopStocks(s);
-  eqDashRenderLossSummary(s);
-  eqDashRenderConcentration(s);
-  eqDashRenderPerfSummary(s);
+  // Each render wrapped individually — e.g. if ApexCharts hasn't loaded
+  // (slow/blocked CDN), eqDashRenderEquityChart throwing must not take
+  // down every panel after it in this list (same reasoning as
+  // initAnalysisCharts's own try-catch wrapping).
+  [eqDashRenderFySummary, eqDashRenderOpenBook, eqDashRenderEdge, eqDashRenderLossBuckets,
+   eqDashRenderEquityChart, eqDashRenderStRedAlert, eqDashRenderLongLossAlert,
+   eqDashRenderMomentum, eqDashRenderReentry, eqDashRenderAddonCount, eqDashRenderCalendar,
+   eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
+   eqDashRenderConcentration, eqDashRenderPerfSummary,
+  ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
 }
 
 function eqDashRenderFySummary(s){
@@ -5243,7 +5237,14 @@ function eqAlertsRender(){
 
     if(plPct !== null && plPct <= EQ_APPROACH_THRESHOLD_PCT && plPct > EQ_LOSS_THRESHOLD_PCT){
       approaching.push(row);
+      return;
     }
+
+    // Catch-all: small loss (−4% to 0%) or in profit without an exit
+    // signal (ST not red). Needs no action right now, but must still
+    // land somewhere rather than silently vanishing from the page —
+    // matches eqComputeSignal's own default HOLD case on the Journal.
+    holdWait.push(row);
   });
 
   const sortByPl = (a, b) => (a.plPct ?? 0) - (b.plPct ?? 0);
