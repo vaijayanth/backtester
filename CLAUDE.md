@@ -5,6 +5,10 @@ Shared backtesting engine + manual strategy builder, serving both the SST equity
 
 Full architecture and every design decision — including the ones that reverse or correct an earlier decision — is recorded in [`docs/SPEC.md`](docs/SPEC.md). Read it before making a non-trivial change; nothing in this repo should contradict it, and if a change requires deviating from it, the spec gets updated as part of that change, not left stale.
 
+## Equity Trading Journal — Reconciliation Rule (CRITICAL)
+
+This repo hosts a synced copy of the Equity Trading Journal feature (FIFO positions computed from a Zerodha Tradebook, reconciled against an uploaded Holdings snapshot). **On any mismatch between FIFO and Holdings, Holdings is always the final reference** — it's what Zerodha actually shows the user holds right now. The full rule (how to tell a split from an off-market transfer from a merger, and which `index.html` structures — `EQ_SPLIT_ADJUSTMENTS` / `EQ_MANUAL_FILLS` — to use for each) is documented in `vaijayanth/TradingJournal`'s `CLAUDE.md` under "Equity Trading Journal — Reconciliation Rule". Any fix made there must be mirrored here, and vice versa — the two `index.html` Equity Journal sections (search `EQ_LONGTERM_EXCLUDE`) must stay in sync.
+
 ## Workflow requirement — mobile + desktop testing via subagents
 
 **User's explicit instruction (2026-10-17, verbatim):** "next time i suggest any changes, you need to spin off agents to build on mobile and desktop and test as well."
