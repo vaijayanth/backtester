@@ -1158,6 +1158,7 @@
   <!-- FY / Quarter summary -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">FY SUMMARY <span class="panel-meta" id="eqd-fy-label">—</span></div></div>
+    <div id="eqd-fy-months" style="display:flex;gap:6px;padding:12px 14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border-soft);flex-wrap:nowrap"></div>
     <div class="stat-row" id="eqd-fy-row"></div>
     <div class="stat-row" id="eqd-qtr-row" style="border-top:1px solid var(--border-soft)"></div>
   </div>
@@ -4895,17 +4896,57 @@ function eqDashRenderAll(){
   ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
 }
 
+function eqFmtK(v){
+  const a = Math.abs(v), sign = v < 0 ? '-' : '+';
+  if(a >= 10000000) return sign + '₹' + (a/10000000).toFixed(2) + 'Cr';
+  if(a >= 100000) return sign + '₹' + (a/100000).toFixed(2) + 'L';
+  if(a >= 1000) return sign + '₹' + (a/1000).toFixed(1) + 'k';
+  return sign + '₹' + Math.round(a);
+}
+
 function eqDashRenderFySummary(s){
   const today = new Date(s.todayIso);
   const fy = eqFyYear(today);
   document.getElementById('eqd-fy-label').textContent = `FY${String(fy).slice(2)}-${String(fy + 1).slice(2)}`;
 
+  // Month chips — same pattern as the SST Dashboard's own FY Summary card:
+  // one scrollable chip per month with trades, most recent first, current
+  // month outlined. Built from s.closed (the clean-start window), so the
+  // strip naturally starts at EQ_DASHBOARD_START_DATE rather than trailing
+  // off into the pre-cutoff history.
+  const monthMap = {};
+  s.closed.forEach(t => {
+    const d = new Date(t.exitDate);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    monthMap[key] = (monthMap[key] || 0) + t.pl;
+  });
+  const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthsEl = document.getElementById('eqd-fy-months');
+  if(monthsEl){
+    monthsEl.innerHTML = Object.keys(monthMap).sort().reverse().map(key => {
+      const [yr, mo] = key.split('-').map(Number);
+      const pl = monthMap[key];
+      const isActive = (mo - 1) === today.getMonth() && yr === today.getFullYear();
+      const isPos = pl >= 0;
+      const bg = isPos ? 'var(--green-dim)' : 'var(--red-dim)';
+      const color = isPos ? 'var(--green)' : 'var(--red)';
+      const border = isActive ? `2px solid ${color}` : '1px solid var(--border-soft)';
+      return `<div style="flex-shrink:0;min-width:90px;padding:8px 10px;border-radius:8px;background:${bg};border:${border};">
+        <div style="font-size:10px;font-weight:700;color:${color};margin-bottom:3px;">${MNAMES[mo - 1]} ${yr}</div>
+        <div style="font-size:12px;font-weight:800;color:${color};white-space:nowrap;">${eqFmtK(pl)}</div>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted);font-size:11px;">No closed trades yet.</div>';
+  }
+
   const fyClosed = s.closed.filter(t => eqFyYear(new Date(t.exitDate)) === fy);
   const fyPl = fyClosed.reduce((sum, t) => sum + t.pl, 0);
   const fyWins = fyClosed.filter(t => t.pl > 0).length;
+  const curMonKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+  const curMonPl = monthMap[curMonKey] || 0;
   document.getElementById('eqd-fy-row').innerHTML = [
     eqDashStatHtml('STARTING CAPITAL (PEAK DEPLOYED)', eqFmtRs(s.initialCapital)),
     eqDashStatHtml(`P&amp;L (SINCE ${EQ_DASHBOARD_START_DATE})`, eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
+    eqDashStatHtml('THIS MONTH P&amp;L', eqFmtRs(curMonPl), curMonPl >= 0 ? 'var(--green)' : 'var(--red)', MNAMES[today.getMonth()] + ' ' + today.getFullYear()),
     eqDashStatHtml('COMBINED P&amp;L (ALL-TIME)', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', `${eqFmtRs(s.realizedPLAllTime)} realized (all-time) + ${eqFmtRs(s.unrealizedMTM)} open MTM`),
     eqDashStatHtml(`WIN RATE (SINCE ${EQ_DASHBOARD_START_DATE})`, s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
   ].join('');
