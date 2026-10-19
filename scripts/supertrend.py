@@ -139,7 +139,6 @@ def build_supertrend(universe="fno"):
     entries = []
     bullish_flips = []
     bearish_flips = []
-    entry_signals = []
     skipped = []
 
     for symbol in target_symbols:
@@ -180,10 +179,6 @@ def build_supertrend(universe="fno"):
         entries.append(entry)
         if flipped:
             (bullish_flips if today_dir == "up" else bearish_flips).append(entry)
-            # User's own entry rule: Supertrend flips green (red->green) AND
-            # price above the 50 EMA — both conditions, not just the flip.
-            if today_dir == "up" and above_ema50:
-                entry_signals.append(entry)
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -192,11 +187,12 @@ def build_supertrend(universe="fno"):
         "params": {"atr_period": ATR_PERIOD, "multiplier": MULTIPLIER, "ema_fast": EMA_FAST},
         "skipped": skipped,
         "entries": entries,
+        # Every flip entry also carries above_ema50 — your entry rule is
+        # "flip + above 50 EMA", shown as a column, not a hard filter, so a
+        # fresh flip still below the 50 EMA stays visible rather than
+        # disappearing.
         "bullish_flips": bullish_flips,
         "bearish_flips": bearish_flips,
-        # Your entry rule: Supertrend red->green flip AND close above 50 EMA,
-        # both today. A subset of bullish_flips, not a separate signal.
-        "entry_signals": entry_signals,
     }
 
 
@@ -213,7 +209,6 @@ def main():
     print(f"Entries: {len(result['entries'])}")
     print(f"Bullish flips today: {len(result['bullish_flips'])}")
     print(f"Bearish flips today: {len(result['bearish_flips'])}")
-    print(f"Entry signals (flip green + above 50 EMA): {len(result['entry_signals'])}")
     print(f"Written to {args.out}")
 
 

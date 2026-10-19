@@ -361,16 +361,16 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">ENTRY SIGNALS <span class="panel-meta">F&amp;O · Supertrend flips red&rarr;green AND close above 50 EMA, both today</span></div>
+      <div class="panel-title">ENTRY SIGNALS <span class="panel-meta">F&amp;O · Supertrend flipped red&rarr;green today &middot; 50 EMA shown, not filtered</span></div>
     </div>
     <div class="table-scroll" style="max-height:280px;">
       <table class="list-table">
-        <thead><tr><th>STOCK</th><th>CLOSE</th><th>SIGNAL</th></tr></thead>
-        <tbody id="dash-st-entry-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        <thead><tr><th>STOCK</th><th>CLOSE</th><th>SIGNAL</th><th>ABOVE 50 EMA</th></tr></thead>
+        <tbody id="dash-st-entry-body"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
-    <div class="row-count" id="dash-st-entry-empty" style="display:none;">No F&amp;O stocks meet both entry conditions today.</div>
-    <div class="dash-footnote">Your own rule: Supertrend(10,3) flips from red to green and price is above the 50 EMA, both on the same day — a subset of the Bullish Flips list above, not every green flip qualifies.</div>
+    <div class="row-count" id="dash-st-entry-empty" style="display:none;">No F&amp;O stocks flipped bullish today.</div>
+    <div class="dash-footnote">Your own rule: Supertrend(10,3) flips from red to green, with the 50 EMA position shown alongside — every fresh bullish flip is listed, whether or not it's above the 50 EMA.</div>
   </div>
 
   <div class="dash-split">
@@ -1095,14 +1095,14 @@ async function initDashboard(){
 // Supertrend(10,3) flips — scripts/supertrend.py runs daily alongside
 // market_screens.py, F&O universe only (same scope as the RSI panels).
 async function loadSupertrend(){
-  const bodies = ['dash-st-bull-body', 'dash-st-bear-body'];
+  const bodies = ['dash-st-bull-body', 'dash-st-bear-body', 'dash-st-entry-body'];
   let st;
   try{
     const resp = await fetch('supertrend.json?t=' + Date.now());
     if(!resp.ok) throw new Error('supertrend.json not found — run the "Build Market Screens" workflow');
     st = await resp.json();
   }catch(err){
-    bodies.forEach(id => document.getElementById(id).innerHTML = `<tr><td colspan="3" class="loading">${err.message}</td></tr>`);
+    bodies.forEach(id => document.getElementById(id).innerHTML = `<tr><td colspan="4" class="loading">${err.message}</td></tr>`);
     return;
   }
 
@@ -1127,8 +1127,28 @@ async function loadSupertrend(){
   catch(err){ console.error('Supertrend bullish flips table failed:', err); }
   try{ renderTable('dash-st-bear-body', 'dash-st-bear-empty', st.bearish_flips, 'bear'); }
   catch(err){ console.error('Supertrend bearish flips table failed:', err); }
-  try{ renderTable('dash-st-entry-body', 'dash-st-entry-empty', st.entry_signals || [], 'bull'); }
-  catch(err){ console.error('Supertrend entry signals table failed:', err); }
+
+  // Entry Signals: every bullish flip, same data as the Bullish Flips panel
+  // above, plus the 50 EMA position shown as a column rather than used as
+  // a filter — a fresh flip still below the 50 EMA stays visible.
+  try{
+    const tbody = document.getElementById('dash-st-entry-body');
+    const empty = document.getElementById('dash-st-entry-empty');
+    const rows = st.bullish_flips || [];
+    if(!rows.length){
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+    }else{
+      empty.style.display = 'none';
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td class="dash-run-label">${symLabel(r.symbol)}</td>
+          <td>₹${r.close.toLocaleString('en-IN')}</td>
+          <td><span class="dash-rsi-tag bull">BULL</span></td>
+          <td style="color:${r.above_ema50?'var(--green)':'var(--muted)'}">${r.above_ema50==null?'—':(r.above_ema50?'Yes':'No')}</td>
+        </tr>`).join('');
+    }
+  }catch(err){ console.error('Supertrend entry signals table failed:', err); }
 }
 
 // Reads pipeline_status.json, written by the scheduled daily_update.yml
