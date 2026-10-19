@@ -4933,9 +4933,9 @@ function eqDashRenderFySummary(s){
   const fyWins = fyClosed.filter(t => t.pl > 0).length;
   document.getElementById('eqd-fy-row').innerHTML = [
     eqDashStatHtml('STARTING CAPITAL (PEAK DEPLOYED)', eqFmtRs(s.initialCapital)),
-    eqDashStatHtml('FY P&amp;L', eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
-    eqDashStatHtml('COMBINED P&amp;L', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', 'all-time realized + open MTM'),
-    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
+    eqDashStatHtml(`P&amp;L (SINCE ${EQ_DASHBOARD_START_DATE})`, eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
+    eqDashStatHtml('COMBINED P&amp;L (ALL-TIME)', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', `${eqFmtRs(s.realizedPLAllTime)} realized (all-time) + ${eqFmtRs(s.unrealizedMTM)} open MTM`),
+    eqDashStatHtml(`WIN RATE (SINCE ${EQ_DASHBOARD_START_DATE})`, s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
   ].join('');
 
   const qtrCells = [1, 2, 3, 4].map(q => {
