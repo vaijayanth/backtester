@@ -80,12 +80,8 @@
     .table-scroll::after{content:'';position:absolute;top:0;right:0;bottom:0;width:18px;background:linear-gradient(to right, transparent, var(--panel));pointer-events:none;}
   }
 
-  .page{display:none;padding:20px;max-width:1200px;margin:0 auto;}
+  .page{display:none;padding:20px;max-width:none;margin:0 auto;}
   .page.active{display:block;}
-  /* Journal page uses the full viewport width (not the shared 1200px cap)
-     since its tables grow columns over time and should never need
-     horizontal scroll on desktop. */
-  #page-journal{max-width:none;}
   #page-journal .table-scroll{overflow-x:visible;}
   .eq-spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:eq-spin 0.7s linear infinite;}
   @keyframes eq-spin{to{transform:rotate(360deg);}}
