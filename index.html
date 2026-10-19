@@ -359,6 +359,20 @@
     </div>
   </div>
 
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">ENTRY SIGNALS <span class="panel-meta">F&amp;O · Supertrend flips red&rarr;green AND close above 50 EMA, both today</span></div>
+    </div>
+    <div class="table-scroll" style="max-height:280px;">
+      <table class="list-table">
+        <thead><tr><th>STOCK</th><th>CLOSE</th><th>SIGNAL</th></tr></thead>
+        <tbody id="dash-st-entry-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="dash-st-entry-empty" style="display:none;">No F&amp;O stocks meet both entry conditions today.</div>
+    <div class="dash-footnote">Your own rule: Supertrend(10,3) flips from red to green and price is above the 50 EMA, both on the same day — a subset of the Bullish Flips list above, not every green flip qualifies.</div>
+  </div>
+
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
@@ -1113,6 +1127,8 @@ async function loadSupertrend(){
   catch(err){ console.error('Supertrend bullish flips table failed:', err); }
   try{ renderTable('dash-st-bear-body', 'dash-st-bear-empty', st.bearish_flips, 'bear'); }
   catch(err){ console.error('Supertrend bearish flips table failed:', err); }
+  try{ renderTable('dash-st-entry-body', 'dash-st-entry-empty', st.entry_signals || [], 'bull'); }
+  catch(err){ console.error('Supertrend entry signals table failed:', err); }
 }
 
 // Reads pipeline_status.json, written by the scheduled daily_update.yml

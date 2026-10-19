@@ -41,6 +41,20 @@ FNO_UNIVERSE_CSV = ROOT / "data" / "fno_universe.csv"
 
 ATR_PERIOD = 10
 MULTIPLIER = 3.0
+EMA_FAST = 50  # matches market_snapshot.py's EMA_FAST exactly — same formula, same period
+
+
+def compute_ema(values, period):
+    out = [None] * len(values)
+    if len(values) < period:
+        return out
+    ema = sum(values[:period]) / period
+    out[period - 1] = ema
+    mult = 2 / (period + 1)
+    for i in range(period, len(values)):
+        ema = (values[i] - ema) * mult + ema
+        out[i] = ema
+    return out
 
 
 def compute_atr(highs, lows, closes, period=ATR_PERIOD):
@@ -125,6 +139,7 @@ def build_supertrend(universe="fno"):
     entries = []
     bullish_flips = []
     bearish_flips = []
+    entry_signals = []
     skipped = []
 
     for symbol in target_symbols:
@@ -153,24 +168,35 @@ def build_supertrend(universe="fno"):
         latest_close = closes[-1]
         latest_date = str(df.index[-1].date())
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
+
+        ema50 = compute_ema(closes, EMA_FAST)
+        above_ema50 = ema50[-1] is not None and latest_close > ema50[-1]
+
         entry = {
             "symbol": symbol, "close": round(latest_close, 2),
             "color": "green" if today_dir == "up" else "red",
-            "flipped_today": flipped, "date": latest_date,
+            "flipped_today": flipped, "above_ema50": above_ema50, "date": latest_date,
         }
         entries.append(entry)
         if flipped:
             (bullish_flips if today_dir == "up" else bearish_flips).append(entry)
+            # User's own entry rule: Supertrend flips green (red->green) AND
+            # price above the 50 EMA — both conditions, not just the flip.
+            if today_dir == "up" and above_ema50:
+                entry_signals.append(entry)
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "universe": "nse_fno" if universe == "fno" else "full_backtester_universe",
         "universe_size": len(target_symbols),
-        "params": {"atr_period": ATR_PERIOD, "multiplier": MULTIPLIER},
+        "params": {"atr_period": ATR_PERIOD, "multiplier": MULTIPLIER, "ema_fast": EMA_FAST},
         "skipped": skipped,
         "entries": entries,
         "bullish_flips": bullish_flips,
         "bearish_flips": bearish_flips,
+        # Your entry rule: Supertrend red->green flip AND close above 50 EMA,
+        # both today. A subset of bullish_flips, not a separate signal.
+        "entry_signals": entry_signals,
     }
 
 
@@ -187,6 +213,7 @@ def main():
     print(f"Entries: {len(result['entries'])}")
     print(f"Bullish flips today: {len(result['bullish_flips'])}")
     print(f"Bearish flips today: {len(result['bearish_flips'])}")
+    print(f"Entry signals (flip green + above 50 EMA): {len(result['entry_signals'])}")
     print(f"Written to {args.out}")
 
 
