@@ -3137,16 +3137,37 @@ async function otPostRows(rows){
   return data;
 }
 
+function otFmtTime(ms){
+  const d = new Date(ms);
+  let h = d.getHours(), m = String(d.getMinutes()).padStart(2, '0');
+  const ap = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${m}${ap}`;
+}
+
+function otShowLastFetch(){
+  const raw = localStorage.getItem('ot_last_fetch');
+  if(!raw) return;
+  try{
+    const {ts, count} = JSON.parse(raw);
+    document.getElementById('ot-db-meta').innerHTML =
+      `${count} position${count===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(ts)}`;
+  } catch(e){}
+}
+
 async function otUpdateDbMeta(){
   const url = otGetSheetUrl();
   if(!url){
     document.getElementById('ot-db-meta').textContent = 'No Google Sheet connected yet — paste your Apps Script URL above.';
     return;
   }
+  document.getElementById('ot-db-meta').innerHTML = '<span class="eq-spinner"></span> Fetching from sheet…';
   try{
     const rows = await otFetchAllRows();
+    const now = Date.now();
+    localStorage.setItem('ot_last_fetch', JSON.stringify({ts: now, count: rows.length}));
     document.getElementById('ot-db-meta').textContent =
-      `${rows.length} position${rows.length===1?'':'s'} stored in your Google Sheet · fetched fresh every time you open this page`;
+      `${rows.length} position${rows.length===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(now)}`;
   }catch(err){
     document.getElementById('ot-db-meta').textContent = 'Could not reach the Sheet: ' + err.message;
   }
@@ -3178,6 +3199,7 @@ async function otRenderFromDb(){
 let otInitialized = false;
 async function otInit(){
   otInitialized = true;
+  otShowLastFetch();
   await otRenderFromDb();
 }
 
