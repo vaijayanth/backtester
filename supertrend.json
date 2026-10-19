@@ -1,88 +1,100 @@
 {
-  "generated_at": "2026-10-19T05:22:19.639696+00:00",
+  "generated_at": "2026-10-19T05:32:23.917990+00:00",
   "universe": "nse_fno",
   "universe_size": 213,
   "params": {
     "atr_period": 10,
-    "multiplier": 3.0
+    "multiplier": 3.0,
+    "ema_fast": 50
   },
   "skipped": [],
   "entries": [
     {
       "symbol": "JSWSTEEL.NS",
-      "close": 1223.5,
+      "close": 1227.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TATASTEEL.NS",
-      "close": 175.31,
+      "close": 175.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NMDC.NS",
-      "close": 71.43,
+      "close": 71.42,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HINDALCO.NS",
-      "close": 908.45,
+      "close": 908.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "VEDL.NS",
-      "close": 245.45,
+      "close": 245.65,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SUNPHARMA.NS",
-      "close": 1750.5,
+      "close": 1753.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CIPLA.NS",
-      "close": 1327.0,
+      "close": 1329.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "DIVISLAB.NS",
-      "close": 9215.0,
+      "close": 9219.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "DRREDDY.NS",
-      "close": 1233.7,
+      "close": 1234.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "AUROPHARMA.NS",
-      "close": 1656.2,
+      "close": 1654.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BAJAJFINSV.NS",
-      "close": 1714.2,
+      "close": 1716.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -90,55 +102,63 @@
       "close": 974.95,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 438.25,
+      "close": 437.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HDFCAMC.NS",
-      "close": 2389.7,
+      "close": 2397.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MUTHOOTFIN.NS",
-      "close": 2597.9,
+      "close": 2603.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "APOLLOHOSP.NS",
-      "close": 7802.0,
+      "close": 7810.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MAXHEALTH.NS",
-      "close": 845.35,
+      "close": 846.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TMPV.NS",
-      "close": 284.05,
+      "close": 284.35,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
-      "close": 10443.0,
+      "close": 10460.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -146,76 +166,87 @@
       "close": 2900.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MARUTI.NS",
-      "close": 11600.0,
+      "close": 11617.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HEROMOTOCO.NS",
-      "close": 5267.5,
-      "color": "red",
-      "flipped_today": false,
+      "close": 5292.5,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ITC.NS",
-      "close": 261.95,
+      "close": 262.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SBIN.NS",
-      "close": 973.25,
+      "close": 975.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "INFY.NS",
-      "close": 1145.0,
+      "close": 1143.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "HINDUNILVR.NS",
-      "close": 1865.5,
+      "close": 1869.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ETERNAL.NS",
-      "close": 325.4,
+      "close": 325.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "NYKAA.NS",
-      "close": 339.9,
+      "close": 339.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ONGC.NS",
-      "close": 224.66,
+      "close": 224.56,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "IOC.NS",
-      "close": 130.45,
+      "close": 130.47,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -223,412 +254,471 @@
       "close": 17.35,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "RELIANCE.NS",
-      "close": 1221.0,
+      "close": 1221.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ADANIENT.NS",
-      "close": 2679.8,
+      "close": 2683.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ADANIPORTS.NS",
-      "close": 1761.0,
+      "close": 1762.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ASIANPAINT.NS",
-      "close": 2321.6,
+      "close": 2324.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "AXISBANK.NS",
-      "close": 1238.6,
+      "close": 1242.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BEL.NS",
-      "close": 377.9,
+      "close": 378.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BHARTIARTL.NS",
-      "close": 1897.4,
+      "close": 1896.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "BRITANNIA.NS",
-      "close": 4776.7,
+      "close": 4782.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "COALINDIA.NS",
-      "close": 415.9,
+      "close": 415.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "EICHERMOT.NS",
-      "close": 7405.0,
+      "close": 7426.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "GRASIM.NS",
-      "close": 2934.5,
+      "close": 2938.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HCLTECH.NS",
-      "close": 1387.9,
+      "close": 1388.6,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "HDFCBANK.NS",
-      "close": 712.75,
+      "close": 713.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HDFCLIFE.NS",
-      "close": 545.45,
+      "close": 544.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ICICIBANK.NS",
-      "close": 1383.4,
+      "close": 1384.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "JIOFIN.NS",
-      "close": 216.55,
+      "close": 216.27,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KOTAKBANK.NS",
-      "close": 443.3,
+      "close": 443.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "LT.NS",
-      "close": 3673.8,
+      "close": 3679.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NESTLEIND.NS",
-      "close": 1255.0,
+      "close": 1257.5,
       "color": "red",
       "flipped_today": true,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NTPC.NS",
-      "close": 312.75,
+      "close": 313.55,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "POWERGRID.NS",
-      "close": 251.5,
+      "close": 252.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SBILIFE.NS",
-      "close": 1652.2,
+      "close": 1654.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SHRIRAMFIN.NS",
-      "close": 930.6,
+      "close": 931.75,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TCS.NS",
-      "close": 2478.0,
+      "close": 2477.4,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "TATACONSUM.NS",
-      "close": 965.25,
+      "close": 966.15,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TECHM.NS",
-      "close": 1782.7,
+      "close": 1784.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "TITAN.NS",
-      "close": 4466.8,
+      "close": 4472.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TRENT.NS",
-      "close": 2901.6,
+      "close": 2906.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ULTRACEMCO.NS",
-      "close": 11155.0,
-      "color": "red",
-      "flipped_today": false,
+      "close": 11203.0,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "WIPRO.NS",
-      "close": 184.36,
+      "close": 184.49,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "360ONE.NS",
-      "close": 1053.0,
+      "close": 1050.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ABB.NS",
-      "close": 6942.0,
+      "close": 6943.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ABCAPITAL.NS",
-      "close": 379.85,
+      "close": 380.05,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ADANIENSOL.NS",
-      "close": 1374.5,
+      "close": 1377.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ADANIGREEN.NS",
-      "close": 1306.2,
+      "close": 1306.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ADANIPOWER.NS",
-      "close": 195.17,
+      "close": 195.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ALKEM.NS",
-      "close": 5064.5,
+      "close": 5065.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "AMBER.NS",
-      "close": 6631.0,
+      "close": 6632.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "AMBUJACEM.NS",
-      "close": 364.25,
+      "close": 364.45,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ANANDRATHI.NS",
-      "close": 2166.8,
+      "close": 2161.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ANGELONE.NS",
-      "close": 300.25,
+      "close": 299.55,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "APLAPOLLO.NS",
-      "close": 2143.8,
+      "close": 2146.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "ASHOKLEY.NS",
-      "close": 148.13,
+      "close": 148.48,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ASTRAL.NS",
-      "close": 1433.0,
+      "close": 1433.6,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ATHERENERG.NS",
-      "close": 1491.9,
+      "close": 1493.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "AUBANK.NS",
-      "close": 979.5,
+      "close": 978.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BAJAJHLDNG.NS",
-      "close": 11265.0,
+      "close": 11271.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "BANDHANBNK.NS",
-      "close": 166.15,
+      "close": 165.75,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BANKBARODA.NS",
-      "close": 234.28,
+      "close": 234.84,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BANKINDIA.NS",
-      "close": 134.92,
+      "close": 134.96,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BDL.NS",
-      "close": 1096.5,
+      "close": 1098.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BHARATFORG.NS",
-      "close": 1817.5,
+      "close": 1820.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BHEL.NS",
-      "close": 434.5,
+      "close": 434.35,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "BIOCON.NS",
-      "close": 346.9,
+      "close": 346.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BLUESTARCO.NS",
-      "close": 1555.3,
+      "close": 1554.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "BOSCHLTD.NS",
-      "close": 45480.0,
+      "close": 45525.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BPCL.NS",
-      "close": 294.7,
+      "close": 295.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "BSE.NS",
-      "close": 3364.6,
+      "close": 3364.9,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
@@ -636,237 +726,271 @@
       "close": 690.35,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CANBK.NS",
-      "close": 121.74,
+      "close": 121.84,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CDSL.NS",
-      "close": 1273.7,
+      "close": 1274.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CGPOWER.NS",
-      "close": 852.45,
+      "close": 855.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CHOLAFIN.NS",
-      "close": 1583.3,
+      "close": 1584.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "COCHINSHIP.NS",
-      "close": 1236.6,
+      "close": 1236.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "COFORGE.NS",
-      "close": 1947.2,
+      "close": 1943.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "COLPAL.NS",
-      "close": 1739.3,
+      "close": 1738.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CONCOR.NS",
-      "close": 444.75,
+      "close": 444.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CROMPTON.NS",
-      "close": 211.09,
+      "close": 210.97,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "CUMMINSIND.NS",
-      "close": 4616.4,
+      "close": 4625.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "DABUR.NS",
-      "close": 381.3,
+      "close": 381.45,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "DELHIVERY.NS",
-      "close": 399.7,
+      "close": 399.25,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "DIXON.NS",
-      "close": 12436.0,
+      "close": 12474.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "DLF.NS",
-      "close": 674.6,
+      "close": 677.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "DMART.NS",
-      "close": 3333.3,
+      "close": 3336.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ENRIN.NS",
-      "close": 2878.9,
+      "close": 2878.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "FEDERALBNK.NS",
-      "close": 345.85,
+      "close": 346.75,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "FORCEMOT.NS",
-      "close": 17845.0,
+      "close": 17847.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "FORTIS.NS",
-      "close": 738.4,
+      "close": 738.55,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GAIL.NS",
-      "close": 168.05,
+      "close": 168.1,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GLENMARK.NS",
-      "close": 2235.8,
+      "close": 2236.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GMRAIRPORT.NS",
-      "close": 90.15,
+      "close": 90.22,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GODFRYPHLP.NS",
-      "close": 1816.9,
+      "close": 1813.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GODREJCP.NS",
-      "close": 847.35,
+      "close": 847.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GODREJPROP.NS",
-      "close": 1605.3,
+      "close": 1609.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "GVT&D.NS",
-      "close": 3930.1,
+      "close": 3935.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HAL.NS",
-      "close": 4972.6,
+      "close": 4983.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "HAVELLS.NS",
-      "close": 1111.7,
+      "close": 1111.2,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HINDPETRO.NS",
-      "close": 347.65,
+      "close": 348.55,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HINDZINC.NS",
-      "close": 543.15,
+      "close": 543.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "HYUNDAI.NS",
-      "close": 1968.0,
+      "close": 1969.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ICICIGI.NS",
-      "close": 1658.3,
+      "close": 1657.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "IDEA.NS",
-      "close": 12.58,
+      "close": 12.56,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -874,55 +998,63 @@
       "close": 77.97,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "IEX.NS",
-      "close": 106.04,
+      "close": 106.18,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDHOTEL.NS",
-      "close": 772.25,
+      "close": 772.8,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDIANB.NS",
-      "close": 859.15,
+      "close": 860.05,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDIGO.NS",
-      "close": 4693.2,
+      "close": 4702.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDUSINDBK.NS",
-      "close": 871.55,
+      "close": 872.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDUSTOWER.NS",
-      "close": 387.95,
+      "close": 387.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "INOXWIND.NS",
-      "close": 66.37,
+      "close": 66.08,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -930,83 +1062,95 @@
       "close": 109.46,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "IRFC.NS",
-      "close": 79.64,
+      "close": 79.69,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "JINDALSTEL.NS",
-      "close": 1050.0,
+      "close": 1051.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "JSWENERGY.NS",
-      "close": 480.85,
+      "close": 480.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "JUBLFOOD.NS",
-      "close": 416.25,
+      "close": 416.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KALYANKJIL.NS",
-      "close": 556.9,
+      "close": 558.05,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KAYNES.NS",
-      "close": 3252.5,
+      "close": 3254.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KEI.NS",
-      "close": 4441.6,
+      "close": 4448.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KFINTECH.NS",
-      "close": 872.55,
+      "close": 870.45,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "KPITTECH.NS",
-      "close": 541.5,
+      "close": 539.55,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "LAURUSLABS.NS",
-      "close": 2069.6,
+      "close": 2068.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "LICHSGFIN.NS",
-      "close": 518.85,
+      "close": 519.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -1014,188 +1158,215 @@
       "close": 394.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "LODHA.NS",
-      "close": 1038.5,
+      "close": 1041.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "LTF.NS",
-      "close": 253.95,
+      "close": 254.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "LTM.NS",
-      "close": 4351.8,
+      "close": 4349.5,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "LUPIN.NS",
-      "close": 1958.0,
+      "close": 1959.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MAHABANK.NS",
-      "close": 80.11,
+      "close": 80.21,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MANAPPURAM.NS",
-      "close": 322.3,
+      "close": 322.55,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MANKIND.NS",
-      "close": 2308.2,
+      "close": 2310.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MARICO.NS",
-      "close": 785.65,
+      "close": 785.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MAZDOCK.NS",
-      "close": 2073.0,
+      "close": 2075.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MCX.NS",
-      "close": 3212.4,
+      "close": 3211.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "MFSL.NS",
-      "close": 1272.4,
+      "close": 1270.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "MOTHERSON.NS",
-      "close": 159.6,
+      "close": 159.77,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "MOTILALOFS.NS",
-      "close": 1042.7,
+      "close": 1040.95,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "MPHASIS.NS",
-      "close": 2489.0,
+      "close": 2486.4,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "NAM-INDIA.NS",
-      "close": 1047.6,
+      "close": 1049.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NATIONALUM.NS",
-      "close": 321.15,
+      "close": 321.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NAUKRI.NS",
-      "close": 1255.0,
+      "close": 1245.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "NBCC.NS",
-      "close": 74.9,
+      "close": 74.98,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "NHPC.NS",
-      "close": 70.96,
+      "close": 70.99,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "OBEROIRLTY.NS",
-      "close": 1688.3,
+      "close": 1693.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "OFSS.NS",
-      "close": 10255.0,
+      "close": 10279.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "OIL.NS",
-      "close": 448.4,
+      "close": 448.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PAGEIND.NS",
-      "close": 35955.0,
+      "close": 35965.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PATANJALI.NS",
-      "close": 363.0,
+      "close": 362.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PAYTM.NS",
-      "close": 1699.0,
+      "close": 1703.1,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "PERSISTENT.NS",
-      "close": 5827.5,
+      "close": 5839.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
@@ -1203,202 +1374,231 @@
       "close": 293.85,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "PFC.NS",
-      "close": 334.6,
+      "close": 334.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PGEL.NS",
-      "close": 509.85,
+      "close": 513.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PHOENIXLTD.NS",
-      "close": 1918.5,
+      "close": 1919.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "PIDILITIND.NS",
-      "close": 1495.7,
+      "close": 1491.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PIIND.NS",
-      "close": 2205.9,
+      "close": 2198.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PNB.NS",
-      "close": 122.28,
+      "close": 122.2,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "PNBHOUSING.NS",
-      "close": 1161.9,
+      "close": 1161.6,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "POLICYBZR.NS",
-      "close": 1049.0,
+      "close": 1051.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "POLYCAB.NS",
-      "close": 8011.0,
+      "close": 8041.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "POWERINDIA.NS",
-      "close": 28795.0,
+      "close": 28820.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PREMIERENE.NS",
-      "close": 921.25,
+      "close": 919.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "PRESTIGE.NS",
-      "close": 1493.1,
+      "close": 1495.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "RADICO.NS",
-      "close": 4478.9,
+      "close": 4475.5,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "RBLBANK.NS",
-      "close": 378.25,
+      "close": 378.35,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "RECLTD.NS",
-      "close": 307.0,
+      "close": 308.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "RVNL.NS",
-      "close": 198.13,
+      "close": 197.82,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SAGILITY.NS",
-      "close": 44.38,
+      "close": 44.3,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "SAIL.NS",
-      "close": 170.06,
+      "close": 170.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SBICARD.NS",
-      "close": 572.75,
+      "close": 576.2,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SHREECEM.NS",
-      "close": 22820.0,
+      "close": 22800.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SIEMENS.NS",
-      "close": 3630.4,
+      "close": 3637.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SOLARINDS.NS",
-      "close": 19930.0,
+      "close": 19951.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "SONACOMS.NS",
-      "close": 805.9,
+      "close": 805.7,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "SRF.NS",
-      "close": 2438.1,
+      "close": 2440.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SUPREMEIND.NS",
-      "close": 3630.0,
+      "close": 3625.0,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "SUZLON.NS",
-      "close": 40.9,
+      "close": 40.93,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "SWIGGY.NS",
-      "close": 232.45,
+      "close": 232.7,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TATAELXSI.NS",
-      "close": 3808.8,
+      "close": 3806.1,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
@@ -1406,48 +1606,55 @@
       "close": 351.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TIINDIA.NS",
-      "close": 2197.5,
+      "close": 2201.8,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TORNTPHARM.NS",
-      "close": 4606.6,
+      "close": 4606.7,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "TVSMOTOR.NS",
-      "close": 4120.5,
+      "close": 4126.9,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "UJJIVANSFB.NS",
-      "close": 63.05,
+      "close": 63.07,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "UNIONBANK.NS",
-      "close": 176.24,
+      "close": 176.81,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "UNITDSPR.NS",
-      "close": 1372.0,
+      "close": 1372.6,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
@@ -1455,80 +1662,149 @@
       "close": 1108.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "UPL.NS",
-      "close": 533.5,
+      "close": 533.55,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "VBL.NS",
-      "close": 422.4,
+      "close": 422.1,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "VMM.NS",
-      "close": 95.03,
+      "close": 95.1,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "VOLTAS.NS",
-      "close": 1020.8,
+      "close": 1021.4,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "WAAREEENER.NS",
-      "close": 2533.2,
+      "close": 2534.9,
       "color": "green",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     },
     {
       "symbol": "ZYDUSLIFE.NS",
-      "close": 1125.5,
+      "close": 1125.0,
       "color": "red",
       "flipped_today": false,
+      "above_ema50": false,
       "date": "2026-10-19"
     }
   ],
   "bullish_flips": [
     {
-      "symbol": "FEDERALBNK.NS",
-      "close": 345.85,
+      "symbol": "HEROMOTOCO.NS",
+      "close": 5292.5,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "ULTRACEMCO.NS",
+      "close": 11203.0,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "FEDERALBNK.NS",
+      "close": 346.75,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "INDIANB.NS",
-      "close": 859.15,
+      "close": 860.05,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     },
     {
       "symbol": "PNB.NS",
-      "close": 122.28,
+      "close": 122.2,
       "color": "green",
       "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     }
   ],
   "bearish_flips": [
     {
       "symbol": "NESTLEIND.NS",
-      "close": 1255.0,
+      "close": 1257.5,
       "color": "red",
       "flipped_today": true,
+      "above_ema50": false,
+      "date": "2026-10-19"
+    }
+  ],
+  "entry_signals": [
+    {
+      "symbol": "HEROMOTOCO.NS",
+      "close": 5292.5,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "ULTRACEMCO.NS",
+      "close": 11203.0,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "FEDERALBNK.NS",
+      "close": 346.75,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "INDIANB.NS",
+      "close": 860.05,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
+      "date": "2026-10-19"
+    },
+    {
+      "symbol": "PNB.NS",
+      "close": 122.2,
+      "color": "green",
+      "flipped_today": true,
+      "above_ema50": true,
       "date": "2026-10-19"
     }
   ]
