@@ -4,11 +4,28 @@ name: Daily OHLC Update
 # today's EOD close, and regenerates every JSON the Dashboard/Strangle
 # Screen/IVP Screener pages read from it, with no manual trigger needed.
 #
-# Cron is UTC. NSE closes 15:30 IST (10:00 UTC); 12:30 UTC (18:00 IST) gives
-# a 2.5hr buffer for Yahoo Finance's own EOD data to actually post — running
-# right at the close has previously returned incomplete/stale same-day rows
-# in ad-hoc testing for other tickers, this is deliberate slack, not a
-# guess. Mon-Fri only (NSE doesn't trade weekends — a weekend run would just
+# Cron is UTC. Two runs per weekday, both IST:
+#
+#   - 02:30 UTC (08:00 IST) — morning safety-net re-run, before NSE opens
+#     at 09:15 IST. The prior evening's run can fail partway (e.g. a
+#     checkpoint-branch push race if another workflow writes to
+#     backfill-checkpoints around the same time — observed and fixed for
+#     one specific case, but the underlying race is structural and can
+#     recur for any two concurrent writers) or a symbol can have a
+#     transient fetch failure. This run gets another shot at landing a
+#     complete, current dataset before the trading day starts. It's NOT
+#     expected to find new OHLC rows (market hasn't opened yet) — its job
+#     is to retry anything the evening run didn't finish, and to
+#     regenerate Supertrend/screens from whatever IS on disk so a late
+#     evening failure doesn't leave the site stale all morning.
+#
+#   - 12:30 UTC (18:00 IST) — primary EOD run. NSE closes 15:30 IST
+#     (10:00 UTC); this gives a 2.5hr buffer for Yahoo Finance's own EOD
+#     data to actually post — running right at the close has previously
+#     returned incomplete/stale same-day rows in ad-hoc testing for other
+#     tickers, this is deliberate slack, not a guess.
+#
+# Mon-Fri only (NSE doesn't trade weekends — a weekend run would just
 # find zero new rows for every symbol and do nothing productive).
 #
 # See scripts/update_ohlc.py's own docstring for why this is NOT a full
@@ -19,6 +36,7 @@ name: Daily OHLC Update
 
 on:
   schedule:
+    - cron: "30 2 * * 1-5"
     - cron: "30 12 * * 1-5"
   workflow_dispatch: {}
 
