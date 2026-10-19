@@ -4806,9 +4806,20 @@ function eqDashMaxDrawdownPct(curvePoints){
   return maxDD;
 }
 
+// Dashboard performance stats start clean from this date — closed trades
+// before it are excluded from every closed-trade-derived number (win rate,
+// P&L, profit factor, FY/quarter summary, equity curve, momentum, top
+// stocks...). This sidesteps ~100 historical trades whose P&L is
+// distorted by pre-Oct-2026 oversell anomalies (bonus issues/splits/
+// off-market transfers never recorded as buy fills — see
+// eqFinalizeClosed's own comment) without having to resolve each one's
+// real cause first. The open book is untouched — it comes from Holdings,
+// which is always a live, accurate snapshot regardless of trade history.
+const EQ_DASHBOARD_START_DATE = '2026-10-01';
+
 function eqDashComputeStats(){
   const open = window._eqOpen || [];
-  const closed = window._eqClosed || [];
+  const closed = (window._eqClosed || []).filter(t => t.exitDate >= EQ_DASHBOARD_START_DATE);
   const fills = window._eqFills || [];
   const stMap = window._eqSupertrend || {};
   const todayIso = eqTodayIso();
@@ -4861,7 +4872,7 @@ function eqDashComputeStats(){
   const curvePoints = eqDashRealizedCurve(closed, initialCapital);
   const maxDDPct = eqDashMaxDrawdownPct(curvePoints);
 
-  const firstTradeDate = fills.length ? fills.reduce((min, f) => f.tradeDate < min ? f.tradeDate : min, fills[0].tradeDate) : todayIso;
+  const firstTradeDate = EQ_DASHBOARD_START_DATE;
   const yearsElapsed = Math.max(eqDaysBetween(firstTradeDate, todayIso) / 365, 1 / 365);
   const cagrPct = initialCapital > 0 && combinedValue > 0
     ? (Math.pow(combinedValue / initialCapital, 1 / yearsElapsed) - 1) * 100 : null;
@@ -5183,7 +5194,7 @@ function eqDashRenderPerfSummary(s){
     eqDashStatHtml('AVG HOLD', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, 'closed trades'),
   ].join('');
   document.getElementById('eqd-perf-footer').textContent =
-    `${s.closed.length} closed trades · ${s.openLive.length} open positions · since ${s.firstTradeDate} (${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is an approximation (peak deployed), not a configured figure.`;
+    `${s.closed.length} closed trades · ${s.openLive.length} open positions · performance since ${s.firstTradeDate} (clean-start cutoff, ${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is peak deployed capital, all-time, not a configured figure.`;
 }
 
 // ============================================================
