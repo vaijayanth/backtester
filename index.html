@@ -233,6 +233,7 @@
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
     <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
+    <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1037,6 +1038,61 @@
 
 </div>
 
+<!-- ============ EQUITY TRADING JOURNAL PAGE ============ -->
+<!-- Ported from TradingJournal's Journal tab, hosted here instead so it can
+     read supertrend_full.json same-origin — no cross-repo fetch, no .NS
+     suffix surprise living two repos away from where it's generated. -->
+<div class="page" id="page-journal">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">EQUITY TRADING JOURNAL</div>
+      <div class="dash-meta" id="eq-meta">Zerodha Tradebook (Console &rarr; Reports &rarr; Tradebook &rarr; Equity, Excel export) &rarr; FIFO positions &rarr; Supertrend(10,3) exit/add-on signals</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD TRADEBOOK <span class="panel-meta">Excel (.xlsx), fill-by-fill — not the P&amp;L statement</span></div></div>
+    <div style="padding:18px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't. Stored server-side in your own Google Sheet, deduped by a composite key so re-uploading a longer-history file is always safe.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
+        <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
+        <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
+      </div>
+      <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eq-open-table">
+        <thead><tr>
+          <th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>ENTRY DATE</th><th>DAYS HELD</th>
+          <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>SIGNAL</th>
+        </tr></thead>
+        <tbody id="eq-open-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">🔴 EXIT — in profit, Supertrend red (trailing SL hit) &middot; 🟢 ADD-ON — loss worse than &minus;6%, Supertrend green, average in 1/10 qty (max once/week/stock) &middot; ⏸ HOLD — loss worse than &minus;6%, Supertrend red, wait for structure &middot; ⏳ HOLD — loss within 0% to &minus;6%</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="eq-closed-count-text">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eq-closed-table">
+        <thead><tr>
+          <th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>AVG EXIT ₹</th><th>ENTRY DATE</th>
+          <th>EXIT DATE</th><th>DAYS HELD</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
+        </tr></thead>
+        <tbody id="eq-closed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -1059,6 +1115,7 @@ function switchPage(page){
   if(page === 'strangle' && !ssInitialized) initStrangleScreen();
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
   if(page === 'opttrades' && !otInitialized) otInit();
+  if(page === 'journal' && !eqInitialized) eqInit();
 }
 
 function toggleMobileNav(){
@@ -1081,6 +1138,7 @@ document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
+document.getElementById('nav-journal').onclick = () => switchPage('journal');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -3447,6 +3505,369 @@ function otRenderUnparsed(unparsed){
   document.getElementById('ot-unparsed-body').innerHTML = keys.sort().map(sym =>
     `<tr><td>${sym}</td><td>${unparsed[sym]}</td></tr>`
   ).join('');
+}
+
+// ============================================================
+// EQUITY TRADING JOURNAL
+// ============================================================
+// Zerodha Tradebook (fill-by-fill) -> own Google Sheet (Equity Trade
+// Analysis DB / FILLS tab, deduped by a full-row composite key since
+// Trade ID alone has collisions) -> client-side FIFO lot matching ->
+// Supertrend(10,3) overlay for exit/add-on/hold signals. Reads
+// supertrend_full.json same-origin (this repo generates it daily) instead
+// of a cross-repo fetch from TradingJournal.
+let eqInitialized = false;
+
+const EQ_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyMNI8hj7lfWQLLEfcBYL3CgCFCdca7gJsOoaiR6KWC5vq_EiyyahYTyrRmrw0uAfk/exec';
+const EQ_SUPERTREND_URL = 'supertrend_full.json';
+const EQ_ADDON_FRACTION = 1 / 10;
+const EQ_LOSS_THRESHOLD_PCT = -6;
+const EQ_ADDON_COOLDOWN_DAYS = 7;
+
+const EQ_FILL_FIELDS = [
+  { key: 'symbol', label: 'Symbol', required: true, aliases: ['symbol', 'tradingsymbol', 'trading symbol'] },
+  { key: 'isin', label: 'ISIN', required: false, aliases: ['isin'] },
+  { key: 'tradeDate', label: 'Trade Date', required: true, aliases: ['trade date', 'tradedate'] },
+  { key: 'exchange', label: 'Exchange', required: false, aliases: ['exchange'] },
+  { key: 'segment', label: 'Segment', required: false, aliases: ['segment'] },
+  { key: 'series', label: 'Series', required: false, aliases: ['series'] },
+  { key: 'tradeType', label: 'Trade Type', required: true, aliases: ['trade type', 'tradetype'] },
+  { key: 'auction', label: 'Auction', required: false, aliases: ['auction'] },
+  { key: 'quantity', label: 'Quantity', required: true, aliases: ['quantity', 'qty'] },
+  { key: 'price', label: 'Price', required: true, aliases: ['price'] },
+  { key: 'tradeId', label: 'Trade ID', required: false, aliases: ['trade id', 'tradeid'] },
+];
+
+function eqNormHeader(h){ return String(h || '').toLowerCase().trim().replace(/[_]+/g, ' ').replace(/\s+/g, ' '); }
+
+function eqGuessColumn(headers, aliases){
+  const normed = headers.map(eqNormHeader);
+  for(const alias of aliases){ const idx = normed.indexOf(alias); if(idx !== -1) return idx; }
+  for(const alias of aliases){ const idx = normed.findIndex(h => h.includes(alias)); if(idx !== -1) return idx; }
+  return -1;
+}
+
+function eqExcelCellToStr(v){
+  if(v == null) return '';
+  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  return String(v);
+}
+
+function eqIsExcelFile(file){
+  return /\.xlsx?$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel';
+}
+
+// Zerodha's Tradebook export has the same junk-rows-before-header pattern
+// as the P&L statement (confirmed against a real export: real header row
+// at index 14, rows 0-13 are blank/Client-ID/title text). Scan every
+// sheet's first 200 rows for the one with a "Symbol" column.
+function eqFindFillTable(wb){
+  for(const sheetName of wb.SheetNames){
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, raw:true, defval:''})
+      .map(r => r.map(eqExcelCellToStr));
+    for(let i = 0; i < Math.min(aoa.length, 200); i++){
+      const row = aoa[i];
+      if(row.some(c => eqNormHeader(c) === 'symbol')){
+        const dataRows = aoa.slice(i+1).filter(r => r.some(c => String(c).trim() !== ''));
+        return {sheetName, headers: row, dataRows};
+      }
+    }
+  }
+  return null;
+}
+
+function eqShowStatus(msg, isError){
+  const el = document.getElementById('eq-parse-status');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim)';
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+}
+
+async function eqUploadFile(){
+  const fileInput = document.getElementById('eq-file-input');
+  const file = fileInput.files && fileInput.files[0];
+  if(!file){ eqShowStatus('Choose a file first.', true); return; }
+  if(!eqIsExcelFile(file)){ eqShowStatus('Only Excel (.xlsx/.xls) files are supported — export your Tradebook as Excel from Console → Reports.', true); return; }
+  if(typeof XLSX === 'undefined'){ eqShowStatus('Excel reader failed to load — check your connection and retry.', true); return; }
+
+  const btn = document.getElementById('eq-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'UPLOADING...';
+  try{
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, {type:'array', cellDates:true});
+    const table = eqFindFillTable(wb);
+    if(!table){ eqShowStatus('Could not find a table with a "Symbol" column in this file — checked every sheet.', true); return; }
+    if(!table.dataRows.length){ eqShowStatus(`Found the "${table.sheetName}" sheet's header row, but no data rows under it.`, true); return; }
+
+    const headers = table.headers, rawRows = table.dataRows;
+    const mapping = {};
+    for(const f of EQ_FILL_FIELDS){
+      mapping[f.key] = eqGuessColumn(headers, f.aliases);
+      if(f.required && mapping[f.key] === -1){
+        eqShowStatus(`Couldn't find a "${f.label}" column in this file — check the header row matches your Zerodha Tradebook export.`, true);
+        return;
+      }
+    }
+
+    const fills = rawRows.map(r => ({
+      symbol: mapping.symbol !== -1 ? r[mapping.symbol] : '',
+      isin: mapping.isin !== -1 ? r[mapping.isin] : '',
+      tradeDate: mapping.tradeDate !== -1 ? r[mapping.tradeDate] : '',
+      exchange: mapping.exchange !== -1 ? r[mapping.exchange] : '',
+      segment: mapping.segment !== -1 ? r[mapping.segment] : '',
+      series: mapping.series !== -1 ? r[mapping.series] : '',
+      tradeType: mapping.tradeType !== -1 ? String(r[mapping.tradeType]).toLowerCase() : '',
+      auction: mapping.auction !== -1 ? r[mapping.auction] : '',
+      quantity: mapping.quantity !== -1 ? parseFloat(r[mapping.quantity]) || 0 : 0,
+      price: mapping.price !== -1 ? parseFloat(r[mapping.price]) || 0 : 0,
+      tradeId: mapping.tradeId !== -1 ? r[mapping.tradeId] : '',
+    })).filter(f => f.symbol && f.quantity > 0);
+
+    if(!fills.length){ eqShowStatus('No valid fill rows found after parsing.', true); return; }
+
+    btn.textContent = 'SYNCING TO SHEET...';
+    const result = await eqPostFills(fills);
+    eqShowStatus(`Synced: ${result.inserted} new fill${result.inserted===1?'':'s'} added, ${result.skipped} already in the sheet (${fills.length} total in file).`, false);
+    fileInput.value = '';
+    await eqRefresh();
+  } catch(e){
+    eqShowStatus('Upload failed: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬆ UPLOAD & SYNC';
+  }
+}
+
+async function eqFetchAllFills(){
+  const res = await fetch(EQ_SHEET_URL);
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data.rows || [];
+}
+
+async function eqPostFills(fills){
+  // text/plain avoids a CORS preflight — Apps Script Web Apps don't
+  // handle an OPTIONS preflight request, so the POST has to stay "simple".
+  const res = await fetch(EQ_SHEET_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({rows: fills}),
+  });
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data;
+}
+
+async function eqFetchSupertrend(){
+  try{
+    const res = await fetch(EQ_SUPERTREND_URL);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const bySymbol = {};
+    // This feed is Yahoo Finance tickers ("THYROCARE.NS"); Zerodha
+    // Tradebook fills are plain NSE symbols ("THYROCARE") — strip the
+    // suffix so the two line up.
+    (data.entries || []).forEach(e => { bySymbol[e.symbol.replace(/\.NS$/, '')] = e; });
+    return bySymbol;
+  } catch(e){
+    return null; // signals degrade to "—" rather than block the page
+  }
+}
+
+function eqDaysBetween(d1, d2){
+  const a = (d1 instanceof Date) ? d1 : new Date(d1);
+  const b = (d2 instanceof Date) ? d2 : new Date(d2);
+  return Math.round((b - a) / (1000*60*60*24));
+}
+function eqTodayIso(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// True FIFO lot matching per stock. A position is "closed" the moment its
+// running lot queue empties to zero; any buys after that start a fresh
+// round-trip. Handles multiple partial fills and multiple round-trips per
+// stock correctly — a sell only finalizes a closed trade when it fully
+// drains the FIFO queue, not on every sell fill.
+function eqBuildPositions(fills){
+  const bySymbol = {};
+  fills.forEach(f => { (bySymbol[f.symbol] = bySymbol[f.symbol] || []).push(f); });
+
+  const open = [], closed = [];
+
+  Object.keys(bySymbol).forEach(sym => {
+    const list = bySymbol[sym].slice().sort((a, b) => {
+      if(a.tradeDate !== b.tradeDate) return a.tradeDate < b.tradeDate ? -1 : 1;
+      return String(a.tradeId).localeCompare(String(b.tradeId));
+    });
+
+    let lots = [], trip = null;
+
+    list.forEach(f => {
+      const qty = Number(f.quantity) || 0, price = Number(f.price) || 0;
+      const type = String(f.tradeType).toLowerCase(), date = f.tradeDate;
+      if(qty <= 0) return;
+
+      if(type === 'buy'){
+        if(lots.length === 0 && !trip) trip = {symbol: sym, buys: [], sells: []};
+        lots.push({qty, price, date});
+        trip.buys.push({qty, price, date});
+      } else if(type === 'sell'){
+        if(!trip) trip = {symbol: sym, buys: [], sells: []}; // sell with no prior buy history in file
+        let remaining = qty;
+        while(remaining > 0 && lots.length > 0){
+          const lot = lots[0];
+          const matchQty = Math.min(lot.qty, remaining);
+          lot.qty -= matchQty; remaining -= matchQty;
+          if(lot.qty <= 1e-9) lots.shift();
+        }
+        trip.sells.push({qty, price, date});
+        if(lots.length === 0){ closed.push(eqFinalizeClosed(trip)); trip = null; }
+      }
+    });
+
+    if(lots.length > 0) open.push(eqFinalizeOpen(sym, lots, list));
+  });
+
+  closed.sort((a, b) => a.exitDate < b.exitDate ? 1 : -1);
+  return {open, closed};
+}
+
+function eqFinalizeClosed(trip){
+  const totalBuyQty = trip.buys.reduce((s, b) => s + b.qty, 0);
+  const totalBuyValue = trip.buys.reduce((s, b) => s + b.qty * b.price, 0);
+  const totalSellQty = trip.sells.reduce((s, s2) => s + s2.qty, 0);
+  const totalSellValue = trip.sells.reduce((s, s2) => s + s2.qty * s2.price, 0);
+  const avgEntry = totalBuyQty > 0 ? totalBuyValue / totalBuyQty : 0;
+  const avgExit = totalSellQty > 0 ? totalSellValue / totalSellQty : 0;
+  const entryDate = trip.buys.length ? trip.buys[0].date : (trip.sells[0] ? trip.sells[0].date : '');
+  const exitDate = trip.sells.length ? trip.sells[trip.sells.length - 1].date : entryDate;
+  const pl = totalSellValue - totalBuyValue;
+  const plPct = totalBuyValue > 0 ? (pl / totalBuyValue) * 100 : 0;
+  return {symbol: trip.symbol, qty: totalSellQty, avgEntry, avgExit, entryDate, exitDate,
+    daysHeld: Math.max(0, eqDaysBetween(entryDate, exitDate)), pl, plPct};
+}
+
+function eqFinalizeOpen(symbol, lots, allFillsForSymbol){
+  const qty = lots.reduce((s, l) => s + l.qty, 0);
+  const invested = lots.reduce((s, l) => s + l.qty * l.price, 0);
+  const avgEntry = qty > 0 ? invested / qty : 0;
+  const entryDate = lots[0].date; // oldest unconsumed lot — entry of the current open leg
+  return {symbol, qty, avgEntry, entryDate, fills: allFillsForSymbol};
+}
+
+// "Max once per week per stock", derived directly from the tradebook's own
+// fill history rather than tracked state — any BUY fill (initial entry or
+// prior add-on) within the trailing 7 days blocks a new add-on signal.
+function eqAddedWithinCooldown(fillsForSymbol){
+  const buys = fillsForSymbol.filter(f => String(f.tradeType).toLowerCase() === 'buy');
+  if(!buys.length) return false;
+  const lastBuyDate = buys.reduce((max, f) => (f.tradeDate > max ? f.tradeDate : max), buys[0].tradeDate);
+  return eqDaysBetween(lastBuyDate, eqTodayIso()) < EQ_ADDON_COOLDOWN_DAYS;
+}
+
+// Signal logic:
+//  1. In profit + Supertrend red           -> EXIT
+//  2. Loss worse than -6% + Supertrend green -> ADD-ON (1/10 qty, 1x/week/stock)
+//  3. Loss worse than -6% + Supertrend red   -> HOLD (no action)
+//  4. Loss between 0% and -6%                -> HOLD
+function eqComputeSignal(pos, stEntry){
+  const plPct = pos.plPct;
+  const stColor = stEntry ? stEntry.color : null;
+  const stFlippedToday = stEntry ? stEntry.flipped_today : false;
+
+  if(stColor === null) return {type: 'UNKNOWN', label: '— no Supertrend data'};
+  if(plPct > 0 && stColor === 'red'){
+    return {type: 'EXIT', label: stFlippedToday ? '🔴 EXIT — ST flipped red today' : '🔴 EXIT — ST red (trailing SL hit)'};
+  }
+  if(plPct <= EQ_LOSS_THRESHOLD_PCT){
+    if(stColor === 'green'){
+      if(eqAddedWithinCooldown(pos.fills)) return {type: 'HOLD', label: '⏳ Already added this week'};
+      const addQty = Math.ceil(pos.qty * EQ_ADDON_FRACTION);
+      return {type: 'ADDON', label: `🟢 ADD-ON — buy ${addQty} more (1/10 qty)`};
+    }
+    return {type: 'HOLD', label: '⏸ Hold — ST red, wait for structure'};
+  }
+  return {type: 'HOLD', label: '⏳ Hold — within 0% to −6%'};
+}
+
+function eqFmtRs(v){ return '₹' + Math.round(v).toLocaleString('en-IN'); }
+function eqFmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+
+async function eqRefresh(){
+  document.getElementById('eq-open-count-text').textContent = 'Loading…';
+  try{
+    const [fills, stMap] = await Promise.all([eqFetchAllFills(), eqFetchSupertrend()]);
+    window._eqFills = fills;
+    window._eqSupertrend = stMap;
+    const {open, closed} = eqBuildPositions(fills);
+    window._eqOpen = open;
+    window._eqClosed = closed;
+    eqRenderOpen(open, stMap);
+    eqRenderClosed(closed);
+  } catch(e){
+    document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + e.message;
+  }
+}
+
+function eqRenderOpen(open, stMap){
+  open.forEach(p => {
+    const st = stMap ? stMap[p.symbol] : null;
+    p.cmp = st ? st.close : p.avgEntry;
+    p.plPct = p.avgEntry > 0 ? ((p.cmp - p.avgEntry) / p.avgEntry) * 100 : 0;
+  });
+  open.sort((a, b) => a.plPct - b.plPct);
+
+  document.getElementById('eq-open-count-text').textContent = `${open.length} open position${open.length===1?'':'s'}`;
+  const tbody = document.getElementById('eq-open-tbody');
+  tbody.innerHTML = open.map(p => {
+    const st = stMap ? stMap[p.symbol] : null;
+    const sig = eqComputeSignal(p, st);
+    const stLabel = st ? (st.color === 'green' ? '🟢 Green' : '🔴 Red') + (st.flipped_today ? ' (flip today)' : '') : '—';
+    const plColor = p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
+    const sigColor = sig.type === 'EXIT' ? 'var(--red)' : sig.type === 'ADDON' ? 'var(--green)' : 'var(--muted)';
+    return `<tr>
+      <td>${p.symbol}</td>
+      <td>${p.qty}</td>
+      <td>${eqFmtRs(p.avgEntry)}</td>
+      <td>${p.entryDate}</td>
+      <td>${eqDaysBetween(p.entryDate, eqTodayIso())}d</td>
+      <td>${eqFmtRs(p.cmp)}</td>
+      <td style="color:${plColor};font-weight:700">${eqFmtPct(p.plPct)}</td>
+      <td>${stLabel}</td>
+      <td style="color:${sigColor};font-weight:700">${sig.label}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
+}
+
+function eqRenderClosed(closed){
+  document.getElementById('eq-closed-count-text').textContent = `${closed.length} closed trade${closed.length===1?'':'s'}`;
+  const tbody = document.getElementById('eq-closed-tbody');
+  tbody.innerHTML = closed.map(t => {
+    const plColor = t.pl >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<tr>
+      <td>${t.symbol}</td>
+      <td>${t.qty}</td>
+      <td>${eqFmtRs(t.avgEntry)}</td>
+      <td>${eqFmtRs(t.avgExit)}</td>
+      <td>${t.entryDate}</td>
+      <td>${t.exitDate}</td>
+      <td>${t.daysHeld}d</td>
+      <td style="color:${plColor};font-weight:700">${eqFmtRs(t.pl)}</td>
+      <td style="color:${plColor};font-weight:700">${eqFmtPct(t.plPct)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="loading">No closed trades yet.</td></tr>';
+}
+
+function eqInit(){
+  eqInitialized = true;
+  document.getElementById('eq-upload-btn').onclick = eqUploadFile;
+  document.getElementById('eq-refresh-btn').onclick = eqRefresh;
+  eqRefresh();
 }
 
 document.getElementById('ot-upload-btn').onclick = otUploadFile;
