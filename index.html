@@ -3749,6 +3749,42 @@ function eqIsLongTermExcluded(sym){
   return EQ_LONGTERM_EXCLUDE.includes(sym) || EQ_LONGTERM_EXCLUDE.includes(stripped);
 }
 
+// Manual, one-off corrections for share movements the Tradebook can never
+// capture — an off-market transfer, gift-out, pledge invocation, etc.
+// Modeled as a same-cost "sell" (zero artificial realized P&L: sell price
+// = the weighted avg cost of the lots being removed) so FIFO's resulting
+// open qty matches the real Holdings snapshot without distorting P&L.
+// Add an entry here only after confirming with the user that FIFO's count
+// is wrong and Holdings' count is the real one (never guess this).
+const EQ_MANUAL_FILLS = [
+  // GE Vernova T&D India (GVT&D): FIFO showed 7 shares open (1 @ ₹4,249.50
+  // bought 2026-04-21, 1 @ ₹5,140 bought 2026-05-29, 5 @ ₹4,805.60 bought
+  // 2026-09-09) but Holdings showed only 5 — user confirmed 5 is correct.
+  // No public buyback/capital-reduction found for this stock in 2026, so
+  // the 2 oldest shares most likely left via an untracked transfer. Modeled
+  // as a sell of those 2 oldest lots at their own avg cost (₹4,694.75),
+  // dated just before the 2026-09-09 buy.
+  { symbol: 'GVT&D', isin: 'INE200A01026', tradeDate: '2026-09-08', exchange: 'NSE', segment: 'EQ', series: 'EQ', tradeType: 'sell', auction: false, quantity: 2, price: 4694.75, tradeId: 'MANUAL-GVTD-TRANSFER-1' },
+
+  // JB Chemicals & Pharmaceuticals merged into Torrent Pharmaceuticals
+  // (NCLT Ahmedabad sanctioned 2026-07-06, record date 2026-07-17, swap
+  // ratio 51 Torrent shares per 100 JB shares — JB face value Re.1, Torrent
+  // Rs.5). JBCHEPHARM is delisted post-merger. Only the 13 JBCHEPHARM
+  // shares still open AT the record date convert — an earlier Jun-8/Jun-22
+  // buy-sell round trip in JBCHEPHARM had already closed out before the
+  // merger and must stay attributed to JBCHEPHARM with its own real
+  // realized P&L, which is why this is a manual correction (close the
+  // surviving lot, open the converted one) rather than a blanket per-row
+  // symbol rewrite — a blanket rewrite would have silently relabeled that
+  // earlier, unrelated closed trade as a TORNTPHARM trade too.
+  // 13 × 0.51 = 6.63, floored to 6 (real corporate actions round down with
+  // cash for the fraction) — confirmed correct by the user's own later
+  // Aug-10 sell of exactly 6 TORNTPHARM shares with no other buy to match
+  // against (the only source for those 6 shares is this conversion).
+  { symbol: 'JBCHEPHARM', isin: 'INE572A01036', tradeDate: '2026-07-16', exchange: 'NSE', segment: 'EQ', series: 'EQ', tradeType: 'sell', auction: false, quantity: 13, price: 2309, tradeId: 'MANUAL-JBCHEPHARM-MERGER-EXIT' },
+  { symbol: 'TORNTPHARM', isin: 'INE685A01028', tradeDate: '2026-07-17', exchange: 'NSE', segment: 'EQ', series: 'EQ', tradeType: 'buy', auction: false, quantity: 6, price: 4527.45, tradeId: 'MANUAL-JBCHEPHARM-MERGER-ENTRY' },
+];
+
 // A Tradebook fill records the RAW quantity/price as traded at the time —
 // a later stock split/bonus is never retroactively applied to it. But
 // Zerodha's live Positions view, and this app's CMP feed (yfinance
@@ -3807,6 +3843,7 @@ async function eqFetchAllFills(){
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
   return (data.rows || [])
+    .concat(EQ_MANUAL_FILLS)
     .filter(r => !eqIsLongTermExcluded(r.symbol))
     .map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
 }
