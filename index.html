@@ -873,13 +873,17 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
-      <div class="dash-meta" id="ot-meta">Upload your Zerodha P&amp;L statement (Console &rarr; Reports, Excel export) — stored in a real SQL database (DuckDB-WASM) running entirely in this browser tab, never uploaded or committed anywhere.</div>
+      <div class="dash-meta" id="ot-meta">Upload your Zerodha P&amp;L statement (Console &rarr; Reports, Excel export) — stored server-side in your own Google Sheet, fetched fresh every time you open this page.</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx) from Console &rarr; Reports</span></div></div>
     <div style="padding:18px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:10px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px;">GOOGLE SHEET URL (APPS SCRIPT WEB APP) — paste once, saved in this browser only</label>
+        <input type="text" id="ot-sheet-url-input" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:9px 12px;color:var(--white);font-family:inherit;font-size:12px;">
+      </div>
       <div id="ot-db-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-word;">initializing...</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ot-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
@@ -887,7 +891,7 @@
       </div>
       <div id="ot-parse-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        Nothing here leaves your browser — no server upload, no git commit. Columns are auto-detected from the header row. Re-uploading is safe any time — each contract's row is replaced with the latest numbers from the file, nothing is duplicated. This database lives only in this browser tab's memory — reload the page and it's gone, so re-upload your latest export whenever you come back.
+        Stored server-side in your own Google Sheet — not in this browser, not committed to git. Columns are auto-detected from the header row. Re-uploading is safe any time — each contract's row is replaced with the latest numbers from the file, nothing is duplicated. Open this page from any device and your data is already there, as long as you've pasted the same Sheet URL.
       </div>
     </div>
   </div>
@@ -2837,6 +2841,7 @@ async function otUploadFile(){
     otShowError('Only Excel (.xlsx/.xls) files are supported — export your P&L statement as Excel from Console → Reports.');
     return;
   }
+  if(!otGetSheetUrl()){ otShowError('Paste your Google Sheet URL above first, then upload.'); return; }
   if(typeof XLSX === 'undefined'){ otShowError('Excel reader failed to load — check your connection and retry.'); return; }
 
   const btn = document.getElementById('ot-upload-btn');
@@ -2871,11 +2876,10 @@ async function otUploadFile(){
     })).filter(r => r.symbol);
     if(!parsed.length){ otShowError('No usable rows found in that file.'); return; }
 
-    const conn = await otGetConn();
-    const result = await otUpsertRows(conn, 'pnl_rows', OT_PNL_COLS, 'symbol', parsed.map(otPnlToSqlRow), 400);
+    const result = await otPostRows(parsed.map(otRowToSheetRow));
     document.getElementById('ot-results').style.display = 'block';
     await otRenderFromDb();
-    otShowStatus(`Uploaded: ${result.new} new, ${result.updated} updated.`);
+    otShowStatus(`Uploaded: ${result.inserted} new, ${result.updated} updated.`);
     fileInput.value = '';
   }catch(err){
     console.error('Upload failed:', err);
@@ -2887,122 +2891,87 @@ async function otUploadFile(){
 }
 
 // ------------------------------------------------------------
-// DuckDB-WASM storage layer. Real SQL tables, in-memory per page load only
-// (NOT OPFS/persisted across reloads — re-upload your latest export when
-// you come back). The expiry column is stored as 'YYYY-MM-DD' VARCHAR, not
-// DATE, to sidestep Arrow's date-type JS conversion behavior entirely
-// (can't be verified live in this sandbox, same CDN block as everything
-// else here).
+// Google Sheets storage layer. Server-side persistence via a small Apps
+// Script Web App (same pattern as the sibling TradingJournal project) —
+// GET returns everything stored, POST upserts by Symbol. The Web App URL
+// is pasted in once and kept in localStorage only — never committed to
+// git, since anyone holding that URL can read/write the sheet.
 // ------------------------------------------------------------
-let otDb = null, otConn = null, otDbInitPromise = null;
+const OT_SHEET_URL_KEY = 'ot_sheet_url';
+function otGetSheetUrl(){ return (localStorage.getItem(OT_SHEET_URL_KEY) || '').trim(); }
+function otSaveSheetUrl(url){ localStorage.setItem(OT_SHEET_URL_KEY, url.trim()); }
 
-async function otGetConn(){
-  if(otConn) return otConn;
-  if(!otDbInitPromise){
-    otDbInitPromise = (async () => {
-      const duckdb = await import('https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.28.0/+esm');
-      const bundles = duckdb.getJsDelivrBundles();
-      const bundle = await duckdb.selectBundle(bundles);
-      const workerUrl = URL.createObjectURL(
-        new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
-      );
-      const worker = new Worker(workerUrl);
-      const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
-      const db = new duckdb.AsyncDuckDB(logger, worker);
-      await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-      URL.revokeObjectURL(workerUrl);
-      const conn = await db.connect();
-      await conn.query(`CREATE TABLE IF NOT EXISTS pnl_rows (
-        symbol VARCHAR, quantity DOUBLE, buy_value DOUBLE, sell_value DOUBLE, profit DOUBLE,
-        open_quantity DOUBLE, open_value DOUBLE, unrealized_pnl DOUBLE,
-        underlying VARCHAR, opt_type VARCHAR, strike DOUBLE, expiry VARCHAR, approx_expiry BOOLEAN, parse_ok BOOLEAN
-      )`);
-      otDb = db; otConn = conn;
-      return conn;
-    })();
-  }
-  return otDbInitPromise;
-}
-
-function otSqlStr(v){ return v == null ? 'NULL' : "'" + String(v).replace(/'/g, "''") + "'"; }
-function otSqlNum(v){ return (v == null || isNaN(v)) ? 'NULL' : Number(v); }
-function otSqlBool(v){ return v == null ? 'NULL' : (v ? 'true' : 'false'); }
 function otDateIso(d){ return d ? d.toISOString().slice(0,10) : null; }
 
-async function otArrowToObjects(result){
-  const fields = result.schema.fields.map(f => f.name);
-  const out = [];
-  for(const row of result){
-    const obj = {};
-    for(const f of fields) obj[f] = row[f];
-    out.push(obj);
-  }
-  return out;
-}
-
-// Zerodha's P&L export is a CUMULATIVE SNAPSHOT per contract, not an
-// append-only fill log — re-uploading later can show updated numbers for a
-// symbol still in progress (more realized, less open qty, etc). So this is
-// an upsert by Symbol: each chunk deletes any existing rows for the
-// symbols in that chunk, then inserts the chunk fresh. A fully-closed
-// contract that never changes again is a harmless no-op re-write; one
-// still in progress gets its numbers replaced with the latest truth
-// instead of silently duplicating.
-async function otUpsertRows(conn, table, cols, keyCol, rows, chunkSize){
-  if(!rows.length) return {new: 0, updated: 0};
-  let newCount = 0, updatedCount = 0;
-  for(let i = 0; i < rows.length; i += chunkSize){
-    const chunk = rows.slice(i, i + chunkSize);
-    const keys = chunk.map(r => r[keyCol]).join(',');
-    const existingRes = await conn.query(`SELECT COUNT(*) AS c FROM ${table} WHERE ${keyCol} IN (${keys})`);
-    const existing = Number((await otArrowToObjects(existingRes))[0].c);
-    updatedCount += existing;
-    newCount += (chunk.length - existing);
-    await conn.query(`DELETE FROM ${table} WHERE ${keyCol} IN (${keys})`);
-    const values = chunk.map(r => '(' + cols.map(c => r[c]).join(',') + ')').join(',\n');
-    await conn.query(`INSERT INTO ${table} SELECT * FROM (VALUES ${values}) AS v(${cols.join(',')})`);
-  }
-  return {new: newCount, updated: updatedCount};
-}
-
-const OT_PNL_COLS = ['symbol','quantity','buy_value','sell_value','profit','open_quantity','open_value','unrealized_pnl','underlying','opt_type','strike','expiry','approx_expiry','parse_ok'];
-
-function otPnlToSqlRow(r){
+function otRowToSheetRow(r){
   const parsed = otParseOptionSymbol(r.symbol);
   return {
-    symbol: otSqlStr(r.symbol),
-    quantity: otSqlNum(r.quantity), buy_value: otSqlNum(r.buyValue), sell_value: otSqlNum(r.sellValue), profit: otSqlNum(r.profit),
-    open_quantity: otSqlNum(r.openQuantity), open_value: otSqlNum(r.openValue), unrealized_pnl: otSqlNum(r.unrealizedPnl),
-    underlying: otSqlStr(parsed && parsed.underlying), opt_type: otSqlStr(parsed && parsed.optType),
-    strike: otSqlNum(parsed && parsed.strike), expiry: otSqlStr(parsed && otDateIso(parsed.expiry)),
-    approx_expiry: otSqlBool(parsed ? parsed.approxExpiry : null), parse_ok: otSqlBool(!!parsed),
+    Symbol: r.symbol, Quantity: r.quantity ?? '', BuyValue: r.buyValue ?? '', SellValue: r.sellValue ?? '',
+    RealizedPnl: r.profit ?? '', OpenQuantity: r.openQuantity ?? '', OpenValue: r.openValue ?? '',
+    UnrealizedPnl: r.unrealizedPnl ?? '',
+    Underlying: parsed ? parsed.underlying : '', OptType: parsed ? parsed.optType : '',
+    Strike: parsed ? parsed.strike : '', Expiry: parsed ? otDateIso(parsed.expiry) : '',
+    ApproxExpiry: parsed ? !!parsed.approxExpiry : '',
   };
 }
 
+async function otFetchAllRows(){
+  const url = otGetSheetUrl();
+  if(!url) throw new Error('No Google Sheet URL configured yet — paste it above.');
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data.rows || [];
+}
+
+async function otPostRows(rows){
+  const url = otGetSheetUrl();
+  if(!url) throw new Error('No Google Sheet URL configured yet — paste it above.');
+  // text/plain avoids a CORS preflight — Apps Script Web Apps don't
+  // handle an OPTIONS preflight request, so the POST has to stay "simple".
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({rows}),
+  });
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data;
+}
+
 async function otUpdateDbMeta(){
-  const conn = await otGetConn();
-  const p = await otArrowToObjects(await conn.query('SELECT COUNT(*) AS c FROM pnl_rows'));
-  const pnlCount = Number(p[0].c);
-  document.getElementById('ot-db-meta').textContent =
-    `${pnlCount} position${pnlCount===1?'':'s'} stored · in-memory, this browser tab only — re-upload any time to add/update`;
+  const url = otGetSheetUrl();
+  if(!url){
+    document.getElementById('ot-db-meta').textContent = 'No Google Sheet connected yet — paste your Apps Script URL above.';
+    return;
+  }
+  try{
+    const rows = await otFetchAllRows();
+    document.getElementById('ot-db-meta').textContent =
+      `${rows.length} position${rows.length===1?'':'s'} stored in your Google Sheet · fetched fresh every time you open this page`;
+  }catch(err){
+    document.getElementById('ot-db-meta').textContent = 'Could not reach the Sheet: ' + err.message;
+  }
 }
 
 async function otRenderFromDb(){
-  const conn = await otGetConn();
   await otUpdateDbMeta();
+  if(!otGetSheetUrl()) return;
+  let sheetRows;
+  try{ sheetRows = await otFetchAllRows(); }
+  catch(err){ otShowError('Could not load from the Sheet: ' + err.message); return; }
 
-  const pnlRowsDb = await otArrowToObjects(await conn.query('SELECT symbol, quantity, buy_value, sell_value, profit, open_quantity, open_value, unrealized_pnl FROM pnl_rows'));
-
-  const pnlRows = pnlRowsDb.map(r => ({
-    symbol: r.symbol,
-    quantity: r.quantity==null?null:Number(r.quantity), buyValue: r.buy_value==null?null:Number(r.buy_value),
-    sellValue: r.sell_value==null?null:Number(r.sell_value), profit: r.profit==null?null:Number(r.profit),
-    openQuantity: r.open_quantity==null?0:Number(r.open_quantity), openValue: r.open_value==null?0:Number(r.open_value),
-    unrealizedPnl: r.unrealized_pnl==null?null:Number(r.unrealized_pnl),
+  const pnlRows = sheetRows.map(r => ({
+    symbol: r.Symbol,
+    quantity: r.Quantity===''?null:Number(r.Quantity), buyValue: r.BuyValue===''?null:Number(r.BuyValue),
+    sellValue: r.SellValue===''?null:Number(r.SellValue), profit: r.RealizedPnl===''?null:Number(r.RealizedPnl),
+    openQuantity: r.OpenQuantity===''?0:Number(r.OpenQuantity), openValue: r.OpenValue===''?0:Number(r.OpenValue),
+    unrealizedPnl: r.UnrealizedPnl===''?null:Number(r.UnrealizedPnl),
   }));
 
   const {positions, unparsed} = otBuildPositionsFromPnl(pnlRows);
-
   if(positions.length === 0 && Object.keys(unparsed).length === 0){
     document.getElementById('ot-results').style.display = 'none';
     return;
@@ -3013,13 +2982,8 @@ async function otRenderFromDb(){
 let otInitialized = false;
 async function otInit(){
   otInitialized = true;
-  try{
-    await otGetConn();
-    await otUpdateDbMeta();
-  }catch(err){
-    console.error('DuckDB init failed:', err);
-    document.getElementById('ot-db-meta').textContent = 'Database failed to initialize: ' + err.message;
-  }
+  document.getElementById('ot-sheet-url-input').value = otGetSheetUrl();
+  await otRenderFromDb();
 }
 
 function otBuildPositionsFromPnl(rows){
@@ -3172,6 +3136,10 @@ function otRenderUnparsed(unparsed){
 document.getElementById('ot-upload-btn').onclick = otUploadFile;
 document.getElementById('ot-positions-search').addEventListener('input', (e) => {
   otRenderPositionsTable(otAllPositions, e.target.value);
+});
+document.getElementById('ot-sheet-url-input').addEventListener('change', async (e) => {
+  otSaveSheetUrl(e.target.value);
+  await otRenderFromDb();
 });
 </script>
 </body>
