@@ -125,6 +125,17 @@ def load_validated_set():
     return set(manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist())
 
 
+def load_partial_set():
+    """PARTIAL = real, structurally-sound OHLC but below backfill.py's
+    MIN_ROWS floor — not enough for a trustworthy Supertrend/EMA read, but
+    still enough for a CMP. Surfaced as a close-only entry below rather
+    than skipped outright."""
+    if not MANIFEST_CSV.exists():
+        return set()
+    manifest = pd.read_csv(MANIFEST_CSV)
+    return set(manifest[manifest["status"] == "PARTIAL"]["symbol"].tolist())
+
+
 def load_fno_symbols():
     if not FNO_UNIVERSE_CSV.exists():
         return []
@@ -132,9 +143,24 @@ def load_fno_symbols():
     return df["symbol"].tolist()
 
 
+def _cmp_only_entry(symbol, latest_close, latest_date):
+    """Not enough history for a trustworthy Supertrend/EMA read, but still
+    enough for a CMP — surface it rather than dropping the symbol entirely.
+    Null signal fields already render correctly downstream as "not in price
+    universe" / unknown (not a fake 0% P&L) — see TradingJournal's
+    index.html eqComputeSignal, which has handled a null color since before
+    any backend ever actually emitted one."""
+    return {
+        "symbol": symbol, "close": round(latest_close, 2),
+        "color": None, "flipped_today": False, "above_ema50": None, "date": latest_date,
+    }
+
+
 def build_supertrend(universe="fno"):
     validated = load_validated_set()
-    target_symbols = load_fno_symbols() if universe == "fno" else sorted(validated)
+    partial = load_partial_set()
+    available = validated | partial
+    target_symbols = load_fno_symbols() if universe == "fno" else sorted(available)
 
     entries = []
     bullish_flips = []
@@ -142,7 +168,7 @@ def build_supertrend(universe="fno"):
     skipped = []
 
     for symbol in target_symbols:
-        if symbol not in validated:
+        if symbol not in available:
             skipped.append(symbol)
             continue
         path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
@@ -154,18 +180,23 @@ def build_supertrend(universe="fno"):
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df = df.sort_index()
         highs, lows, closes = df["High"].tolist(), df["Low"].tolist(), df["Close"].tolist()
-        if len(closes) < ATR_PERIOD + 2:
-            skipped.append(symbol)
-            continue
-
-        direction, _, _ = compute_supertrend(highs, lows, closes)
-        today_dir, yesterday_dir = direction[-1], direction[-2]
-        if today_dir is None:
+        if not closes:
             skipped.append(symbol)
             continue
 
         latest_close = closes[-1]
         latest_date = str(df.index[-1].date())
+
+        if len(closes) < ATR_PERIOD + 2:
+            entries.append(_cmp_only_entry(symbol, latest_close, latest_date))
+            continue
+
+        direction, _, _ = compute_supertrend(highs, lows, closes)
+        today_dir, yesterday_dir = direction[-1], direction[-2]
+        if today_dir is None:
+            entries.append(_cmp_only_entry(symbol, latest_close, latest_date))
+            continue
+
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
 
         ema50 = compute_ema(closes, EMA_FAST)
