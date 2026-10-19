@@ -1064,14 +1064,14 @@
 
       <div style="padding:18px;border-bottom:1px solid var(--border);">
         <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD TRADEBOOK <span style="font-weight:400;color:var(--muted);">— Excel (.xlsx), fill-by-fill, not the P&amp;L statement</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't. Stored server-side in your own Google Sheet, deduped by a composite key so re-uploading a longer-history file is always safe.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Export covering your FULL trade history from account inception (not a partial date range) — each upload REPLACES the entire stored history with this file's content, same as Holdings below. Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
           <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
           <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
           <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
           <button id="eq-force-clear-btn" onclick="eqForceClearFills()" style="padding:10px 14px;font-size:11px;font-weight:700;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;">⚠ FORCE CLEAR FILLS</button>
         </div>
-        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">Wipes ALL stored fills (not Holdings) so you can re-upload the Tradebook fresh, bypassing dedup entirely. Use if a sync looks duplicated or stuck.</div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">Wipes ALL stored fills (not Holdings) without uploading anything new. Rarely needed now — every Tradebook upload already replaces the full history on its own.</div>
         <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
       </div>
 
@@ -1096,7 +1096,7 @@
             <tbody id="eq-recon-tbody"></tbody>
           </table>
         </div>
-        <div class="dash-footnote">A ratio close to a clean number (2.00&times;, 0.50&times;, 3.00&times;...) usually means an unadjusted stock split/bonus — add it to EQ_SPLIT_ADJUSTMENTS once you confirm the ratio and record date. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
+        <div class="dash-footnote">Informational only — Open Positions above already shows Holdings' own qty/avg cost wherever a match exists, so a MISMATCH row here doesn't need any action to fix what's displayed. It's here so you can still spot a surprising corporate action (clean ratios like 2.00&times;, 0.50&times;, 3.00&times; usually mean an unadjusted split/bonus/demerger) if you want to understand it. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
       </div>
 
     </div>
@@ -3695,27 +3695,25 @@ async function eqUploadFile(){
 
     if(!fills.length){ eqShowStatus('No valid fill rows found after parsing.', true); return; }
 
-    btn.textContent = 'CHECKING FOR DUPLICATES...';
-    const existingKeys = await eqFetchExistingRawKeys();
+    // The sheet is now a full REPLACE on every upload (not append+dedupe) —
+    // this file's content becomes the entire FILLS history, matching how
+    // Holdings already works. Safe because every Tradebook export is the
+    // complete trade history from account inception (confirmed), never a
+    // partial window. Dedup here is just a within-file safety net, in case
+    // the export itself contains a literal duplicate row.
     const seenInBatch = new Set();
-    const newFills = fills.filter(f => {
+    const dedupedFills = fills.filter(f => {
       const key = eqRawFillKey(f);
-      if(existingKeys.has(key) || seenInBatch.has(key)) return false;
+      if(seenInBatch.has(key)) return false;
       seenInBatch.add(key);
       return true;
     });
-    const skippedCount = fills.length - newFills.length;
-
-    if(!newFills.length){
-      eqShowStatus(`All ${fills.length} fills in this file are already in the sheet — nothing to upload.`, false);
-      fileInput.value = '';
-      await eqRefresh();
-      return;
-    }
+    const dupesInFile = fills.length - dedupedFills.length;
 
     btn.textContent = 'SYNCING TO SHEET...';
-    const result = await eqPostFills(newFills);
-    eqShowStatus(`Synced: ${result.inserted} new fill${result.inserted===1?'':'s'} added, ${skippedCount} already in the sheet (${fills.length} total in file).`, false);
+    const result = await eqPostFills(dedupedFills);
+    eqShowStatus(`Synced: sheet now has ${result.replaced} fills from this upload` +
+      (dupesInFile ? ` (${dupesInFile} duplicate row${dupesInFile===1?'':'s'} within the file skipped).` : '.'), false);
     fileInput.value = '';
     await eqRefresh();
   } catch(e){
@@ -3848,32 +3846,14 @@ async function eqFetchAllFills(){
     .map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
 }
 
-// Dedup key for a raw (un-aliased, un-split-adjusted) fill — symbol + tradeId
-// + quantity + price. Deliberately excludes tradeDate: the sheet round-trips
-// it through Sheets' own Date-typed cells, which renders inconsistently
-// depending on how a given row was last written (plain string vs Date
-// object), so date alone is NOT a safe dedup field from the client. TradeID
-// alone had ~9 collisions out of 3843 real fills (same ID reused across
-// different stocks), so symbol+tradeId+qty+price is the robust combination.
+// Key for a single parsed fill row, used only as a WITHIN-FILE dedup
+// safety net now (symbol + tradeId + qty + price — deliberately excludes
+// tradeDate, which doesn't round-trip predictably through Sheets' own
+// Date-cell coercion). The sheet itself is a full replace per upload (see
+// eqPostFills), so there's no existing-vs-incoming comparison anymore.
 function eqRawFillKey(f){
   return [String(f.symbol || '').trim(), String(f.tradeId || '').trim(),
           Number(f.quantity) || 0, Number(f.price) || 0].join('|');
-}
-
-// Client-side dedup, run BEFORE every POST — this is the real defense
-// against duplicate rows now, not the Apps Script's own server-side dedup.
-// Rationale: twice in practice, a deployed Apps Script fix silently failed
-// to take effect (editing+saving the script does not update an
-// already-published web app unless you explicitly pick "New version" under
-// Manage deployments), and every re-upload re-duplicated the entire sheet.
-// Filtering client-side means correctness no longer depends on that manual
-// GAS deployment step at all — a `git push` here takes effect immediately.
-async function eqFetchExistingRawKeys(){
-  const res = await fetch(EQ_SHEET_URL);
-  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
-  const data = await res.json();
-  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return new Set((data.rows || []).map(eqRawFillKey));
 }
 
 async function eqPostFills(fills){
@@ -4073,11 +4053,15 @@ function eqShowLastSync(){
 async function eqRefresh(){
   document.getElementById('eq-open-count-text').textContent = 'Loading…';
   eqSetSyncStatus('<span class="eq-spinner"></span> Fetching fills from sheet…');
-  // allSettled, not all — a failed sheet fetch shouldn't discard a
-  // successful Supertrend fetch (or vice versa); each degrades on its own.
-  const [fillsResult, stResult] = await Promise.allSettled([eqFetchAllFills(), eqFetchSupertrend()]);
+  // allSettled, not all — a failed fetch of one source shouldn't discard a
+  // successful fetch of another; each degrades on its own.
+  const [fillsResult, stResult, holdingsResult] = await Promise.allSettled([
+    eqFetchAllFills(), eqFetchSupertrend(), eqFetchHoldings(),
+  ]);
   const stMap = stResult.status === 'fulfilled' ? stResult.value : null;
   window._eqSupertrend = stMap;
+  const holdings = holdingsResult.status === 'fulfilled' ? holdingsResult.value : [];
+  window._eqHoldings = holdings;
   if(fillsResult.status !== 'fulfilled'){
     document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + fillsResult.reason.message;
     eqSetSyncStatus(`<span style="color:var(--red)">Failed to load fills</span>`);
@@ -4086,15 +4070,22 @@ async function eqRefresh(){
   const fills = fillsResult.value;
   window._eqFills = fills;
   eqSetSyncStatus(`<span class="eq-spinner"></span> ${fills.length} fills loaded — building positions…`);
-  const {open, closed} = eqBuildPositions(fills);
-  window._eqOpen = open;
+  const {open: fifoOpen, closed} = eqBuildPositions(fills);
+  window._eqOpenFifo = fifoOpen;
   window._eqClosed = closed;
+
+  eqRenderReconciliation(holdings.length ? eqReconcile(fifoOpen, holdings) : []);
+
+  // Holdings is the final reference — Open Positions shows ITS numbers
+  // wherever it has a match, not FIFO's own (see eqApplyHoldingsOverride).
+  const open = eqApplyHoldingsOverride(fifoOpen, holdings);
+  window._eqOpen = open;
   eqRenderOpen(open, stMap);
   eqRenderClosed(closed);
+
   const now = Date.now();
   localStorage.setItem('bt_eq_last_sync', JSON.stringify({ts: now, fillCount: fills.length, openCount: open.length, closedCount: closed.length}));
   eqSetSyncStatus(`${fills.length} fills · ${open.length} open · ${closed.length} closed — last updated ${eqFmtTime(now)}`);
-  eqRefreshReconciliation();
 }
 
 function eqRenderOpen(open, stMap){
@@ -4122,11 +4113,11 @@ function eqRenderOpen(open, stMap){
     const plColor = p.plPct === null ? 'var(--muted)' : p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
     const sigColor = sig.type === 'EXIT' ? 'var(--red)' : sig.type === 'ADDON' ? 'var(--green)' : 'var(--muted)';
     return `<tr>
-      <td>${p.symbol}</td>
+      <td>${p.symbol}${p._holdingsOnly ? ' <span style="color:var(--muted);font-size:10px">(Holdings only)</span>' : ''}</td>
       <td>${p.qty}</td>
       <td>${eqFmtRs(p.avgEntry)}</td>
-      <td>${p.entryDate}</td>
-      <td>${eqDaysBetween(p.entryDate, eqTodayIso())}d</td>
+      <td>${p.entryDate || '—'}</td>
+      <td>${p.entryDate ? eqDaysBetween(p.entryDate, eqTodayIso()) + 'd' : '—'}</td>
       <td>${p.cmp === null ? '—' : eqFmtRs(p.cmp)}</td>
       <td style="color:${plColor};font-weight:700">${p.plPct === null ? '— no data' : eqFmtPct(p.plPct)}</td>
       <td>${stLabel}</td>
@@ -4284,24 +4275,83 @@ function eqStripSeriesSuffix(sym){
   return sym;
 }
 
-function eqReconcile(fifoOpen, holdings){
+// Shared Holdings-matching logic — same exact-symbol-then-series-suffix
+// fallback used both for the Reconciliation table's display and for
+// overriding Open Positions' numbers with Holdings (see
+// eqApplyHoldingsOverride). Each caller passes its OWN matchedKeys Set so
+// the two passes never interfere with each other.
+function eqBuildHoldingsIndex(holdings){
   const bySymbol = {};
   holdings.forEach(h => {
     const raw = String(h.instrument || '').trim();
     bySymbol[raw] = {...h, rawSymbol: raw, strippedSymbol: eqStripSeriesSuffix(raw)};
   });
+  return bySymbol;
+}
+function eqFindHoldingsMatch(symbol, bySymbol, matchedKeys){
+  let match = bySymbol[symbol];
+  let matchedVia = 'exact';
+  if(!match){
+    match = Object.values(bySymbol).find(h => h.strippedSymbol === symbol && !matchedKeys.has(h.rawSymbol));
+    matchedVia = 'series-suffix';
+  }
+  if(match) matchedKeys.add(match.rawSymbol);
+  return match ? {match, matchedVia} : null;
+}
+
+// Holdings is the final reference (user's standing rule — see CLAUDE.md
+// "Equity Trading Journal — Reconciliation Rule") — wherever Holdings has
+// a position, ITS qty/avg cost become the displayed numbers, overriding
+// whatever FIFO computed from fills. This makes Open Positions correct
+// automatically regardless of undiscovered splits/demergers/mergers/
+// off-market transfers, without needing per-stock manual research each
+// time one shows up. FIFO's own entryDate/fills are kept where available
+// (Holdings has no history), only qty/avgEntry are overridden.
+function eqApplyHoldingsOverride(fifoOpen, holdings){
+  if(!holdings || !holdings.length) return fifoOpen; // no Holdings uploaded yet — show FIFO as-is
+
+  const bySymbol = eqBuildHoldingsIndex(holdings);
+  const matchedKeys = new Set();
+  const result = [];
+
+  fifoOpen.forEach(p => {
+    const found = eqFindHoldingsMatch(p.symbol, bySymbol, matchedKeys);
+    if(!found) return; // Holdings says you don't actually hold this — drop it, don't show a stale FIFO row
+    const {match} = found;
+    result.push({
+      ...p,
+      qty: Number(match.quantity),
+      avgEntry: Number(match.avgCost),
+      _fifoQty: p.qty, _fifoAvgEntry: p.avgEntry, _holdingsOverridden: true,
+    });
+  });
+
+  // Holdings has a position FIFO never built at all (a gap in the
+  // uploaded Tradebook) — still show it; Holdings is ground truth, even
+  // with no real entry date to offer.
+  Object.values(bySymbol).forEach(h => {
+    if(matchedKeys.has(h.rawSymbol)) return;
+    const qty = Number(h.quantity);
+    if(!(qty > 0)) return;
+    result.push({
+      symbol: h.rawSymbol, qty, avgEntry: Number(h.avgCost),
+      entryDate: null, fills: [], _holdingsOnly: true,
+    });
+  });
+
+  return result;
+}
+
+function eqReconcile(fifoOpen, holdings){
+  const bySymbol = eqBuildHoldingsIndex(holdings);
 
   const rows = [];
   const matchedKeys = new Set();
 
   fifoOpen.forEach(p => {
-    let match = bySymbol[p.symbol];
-    let matchedVia = 'exact';
-    if(!match){
-      match = Object.values(bySymbol).find(h => h.strippedSymbol === p.symbol && !matchedKeys.has(h.rawSymbol));
-      matchedVia = 'series-suffix';
-    }
-    if(match) matchedKeys.add(match.rawSymbol);
+    const found = eqFindHoldingsMatch(p.symbol, bySymbol, matchedKeys);
+    const match = found ? found.match : null;
+    const matchedVia = found ? found.matchedVia : null;
 
     const fifoQty = p.qty, fifoAvg = p.avgEntry;
     const hQty = match ? Number(match.quantity) : null;
@@ -4370,12 +4420,15 @@ async function eqRefreshReconciliation(){
   try{
     const holdings = await eqFetchHoldings();
     window._eqHoldings = holdings;
-    if(!holdings.length || !window._eqOpen){
-      eqRenderReconciliation([]);
-      return;
-    }
-    const rows = eqReconcile(window._eqOpen, holdings);
-    eqRenderReconciliation(rows);
+    const fifoOpen = window._eqOpenFifo || [];
+    eqRenderReconciliation((holdings.length && fifoOpen.length) ? eqReconcile(fifoOpen, holdings) : []);
+
+    // Holdings just changed (this runs after a standalone Holdings
+    // upload) — Open Positions must reflect the new override too, not
+    // just the Reconciliation table.
+    const open = eqApplyHoldingsOverride(fifoOpen, holdings);
+    window._eqOpen = open;
+    eqRenderOpen(open, window._eqSupertrend);
   } catch(e){
     document.getElementById('eq-recon-count-text').textContent = 'Failed to load holdings: ' + e.message;
   }
