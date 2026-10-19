@@ -82,6 +82,11 @@
 
   .page{display:none;padding:20px;max-width:1200px;margin:0 auto;}
   .page.active{display:block;}
+  /* Journal page uses the full viewport width (not the shared 1200px cap)
+     since its tables grow columns over time and should never need
+     horizontal scroll on desktop. */
+  #page-journal{max-width:none;}
+  #page-journal .table-scroll{overflow-x:visible;}
   /* min-width:0 overrides the browser default of min-width:auto on grid/
      flex items (.panel sits inside .dash-split, a grid). Without this, a
      child that won't shrink below its content size — like a table with
