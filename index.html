@@ -1069,6 +1069,32 @@
   </div>
 
   <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD HOLDINGS <span class="panel-meta">CSV, Kite &rarr; Portfolio &rarr; Holdings &rarr; Download</span></div></div>
+    <div style="padding:18px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">A point-in-time snapshot of what you actually hold — used to reconcile against the FIFO positions computed from your Tradebook fills below. Catches stock splits, bonus issues, and symbol mismatches (e.g. a stock moving to the trade-for-trade "-BE" series) that the raw fill history alone can't reveal. Each upload REPLACES the stored snapshot — it's not accumulated like fills.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" id="eq-holdings-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
+        <button class="refresh-btn" id="eq-holdings-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD HOLDINGS</button>
+      </div>
+      <div id="eq-holdings-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">RECONCILIATION <span class="panel-meta" id="eq-recon-count-text">upload Holdings to compare against your Tradebook positions</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eq-recon-table">
+        <thead><tr>
+          <th>STOCK</th><th>FIFO QTY</th><th>FIFO AVG ₹</th><th>HOLDINGS QTY</th><th>HOLDINGS AVG ₹</th>
+          <th>QTY RATIO</th><th>STATUS</th>
+        </tr></thead>
+        <tbody id="eq-recon-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">A ratio close to a clean number (2.00&times;, 0.50&times;, 3.00&times;...) usually means an unadjusted stock split/bonus — add it to EQ_SPLIT_ADJUSTMENTS once you confirm the ratio and record date. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
+  </div>
+
+  <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eq-open-table">
@@ -3908,6 +3934,7 @@ async function eqRefresh(){
   const now = Date.now();
   localStorage.setItem('bt_eq_last_sync', JSON.stringify({ts: now, fillCount: fills.length, openCount: open.length, closedCount: closed.length}));
   eqSetSyncStatus(`${fills.length} fills · ${open.length} open · ${closed.length} closed — last updated ${eqFmtTime(now)}`);
+  eqRefreshReconciliation();
 }
 
 function eqRenderOpen(open, stMap){
@@ -3967,10 +3994,234 @@ function eqRenderClosed(closed){
   }).join('') || '<tr><td colspan="9" class="loading">No closed trades yet.</td></tr>';
 }
 
+// ============================================================
+// HOLDINGS + RECONCILIATION
+// ============================================================
+// Zerodha's Holdings CSV (Kite -> Portfolio -> Holdings -> Download) is a
+// single clean table, no junk rows — unlike the Tradebook export.
+// Header: Instrument,Qty.,Avg. cost,LTP,Invested,Cur. val,P&L,Net chg.,Day chg.
+function eqParseCsvLine(line){
+  const out = [];
+  let cur = '', inQuotes = false;
+  for(let i = 0; i < line.length; i++){
+    const c = line[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else cur += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ out.push(cur); cur = ''; }
+      else cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function eqNormHoldingsHeader(h){ return String(h || '').toLowerCase().replace(/\./g, '').trim().replace(/\s+/g, ' '); }
+
+const EQ_HOLDINGS_FIELDS = [
+  { key: 'instrument', required: true, aliases: ['instrument', 'symbol'] },
+  { key: 'quantity', required: true, aliases: ['qty'] },
+  { key: 'avgCost', required: true, aliases: ['avg cost'] },
+  { key: 'ltp', required: false, aliases: ['ltp'] },
+  { key: 'invested', required: false, aliases: ['invested'] },
+  { key: 'curVal', required: false, aliases: ['cur val', 'current value'] },
+  { key: 'pnl', required: false, aliases: ['p&l', 'pnl'] },
+  { key: 'netChgPct', required: false, aliases: ['net chg'] },
+  { key: 'dayChgPct', required: false, aliases: ['day chg'] },
+];
+
+function eqParseHoldingsCsv(text){
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim() !== '');
+  if(!lines.length) return null;
+  const headers = eqParseCsvLine(lines[0]).map(eqNormHoldingsHeader);
+  const mapping = {};
+  for(const f of EQ_HOLDINGS_FIELDS){
+    mapping[f.key] = headers.findIndex(h => f.aliases.includes(h));
+    if(f.required && mapping[f.key] === -1) return { error: `Couldn't find a "${f.key}" column — check this is the Holdings export, not something else.` };
+  }
+  const rows = lines.slice(1).map(l => eqParseCsvLine(l)).filter(r => r.some(c => String(c).trim() !== ''));
+  const holdings = rows.map(r => ({
+    instrument: mapping.instrument !== -1 ? r[mapping.instrument] : '',
+    quantity: mapping.quantity !== -1 ? parseFloat(r[mapping.quantity]) || 0 : 0,
+    avgCost: mapping.avgCost !== -1 ? parseFloat(r[mapping.avgCost]) || 0 : 0,
+    ltp: mapping.ltp !== -1 ? parseFloat(r[mapping.ltp]) || 0 : 0,
+    invested: mapping.invested !== -1 ? parseFloat(r[mapping.invested]) || 0 : 0,
+    curVal: mapping.curVal !== -1 ? parseFloat(r[mapping.curVal]) || 0 : 0,
+    pnl: mapping.pnl !== -1 ? parseFloat(r[mapping.pnl]) || 0 : 0,
+    netChgPct: mapping.netChgPct !== -1 ? parseFloat(r[mapping.netChgPct]) || 0 : 0,
+    dayChgPct: mapping.dayChgPct !== -1 ? parseFloat(r[mapping.dayChgPct]) || 0 : 0,
+  })).filter(h => h.instrument && h.quantity > 0);
+  return { holdings };
+}
+
+function eqShowHoldingsStatus(msg, isError){
+  const el = document.getElementById('eq-holdings-status');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim)';
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+}
+
+async function eqFetchHoldings(){
+  const res = await fetch(EQ_SHEET_URL + '?type=holdings');
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data.rows || [];
+}
+
+async function eqPostHoldings(holdings){
+  const res = await fetch(EQ_SHEET_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({type: 'holdings', rows: holdings}),
+  });
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data;
+}
+
+async function eqUploadHoldings(){
+  const fileInput = document.getElementById('eq-holdings-file-input');
+  const file = fileInput.files && fileInput.files[0];
+  if(!file){ eqShowHoldingsStatus('Choose a file first.', true); return; }
+
+  const btn = document.getElementById('eq-holdings-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'UPLOADING...';
+  try{
+    const text = await file.text();
+    const result = eqParseHoldingsCsv(text);
+    if(!result || result.error){ eqShowHoldingsStatus(result ? result.error : 'Could not read this file.', true); return; }
+    if(!result.holdings.length){ eqShowHoldingsStatus('No holdings rows found after parsing.', true); return; }
+
+    btn.textContent = 'SYNCING TO SHEET...';
+    const res = await eqPostHoldings(result.holdings);
+    eqShowHoldingsStatus(`Synced ${res.replaced} holdings — snapshot replaced.`, false);
+    fileInput.value = '';
+    await eqRefreshReconciliation();
+  } catch(e){
+    eqShowHoldingsStatus('Upload failed: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬆ UPLOAD HOLDINGS';
+  }
+}
+
+// NSE series suffixes that can appear on a Holdings symbol but never show
+// up in Tradebook fills for the same stock (e.g. a stock moved to
+// trade-for-trade "-BE"). Tried only as a fallback when an exact match
+// fails — never silently preferred over an exact match.
+const EQ_SERIES_SUFFIXES = ['-BE', '-BZ', '-BL', '-SM', '-ST'];
+function eqStripSeriesSuffix(sym){
+  for(const suf of EQ_SERIES_SUFFIXES){
+    if(sym.endsWith(suf)) return sym.slice(0, -suf.length);
+  }
+  return sym;
+}
+
+function eqReconcile(fifoOpen, holdings){
+  const bySymbol = {};
+  holdings.forEach(h => {
+    const raw = String(h.instrument || '').trim();
+    bySymbol[raw] = {...h, rawSymbol: raw, strippedSymbol: eqStripSeriesSuffix(raw)};
+  });
+
+  const rows = [];
+  const matchedKeys = new Set();
+
+  fifoOpen.forEach(p => {
+    let match = bySymbol[p.symbol];
+    let matchedVia = 'exact';
+    if(!match){
+      match = Object.values(bySymbol).find(h => h.strippedSymbol === p.symbol && !matchedKeys.has(h.rawSymbol));
+      matchedVia = 'series-suffix';
+    }
+    if(match) matchedKeys.add(match.rawSymbol);
+
+    const fifoQty = p.qty, fifoAvg = p.avgEntry;
+    const hQty = match ? Number(match.quantity) : null;
+    const hAvg = match ? Number(match.avgCost) : null;
+    const qtyRatio = (match && fifoQty > 0) ? hQty / fifoQty : null;
+    const qtyMatches = match && Math.abs(hQty - fifoQty) < 0.5;
+    const avgMatches = match && fifoAvg > 0 && Math.abs(hAvg - fifoAvg) / fifoAvg < 0.01;
+    let status;
+    if(!match) status = 'MISSING_IN_HOLDINGS';
+    else if(qtyMatches && avgMatches) status = 'OK';
+    else status = 'MISMATCH';
+
+    rows.push({
+      symbol: p.symbol, holdingsSymbol: match ? match.rawSymbol : null, matchedVia: match ? matchedVia : null,
+      fifoQty, fifoAvg, holdingsQty: hQty, holdingsAvg: hAvg, qtyRatio, status,
+    });
+  });
+
+  Object.values(bySymbol).forEach(h => {
+    if(!matchedKeys.has(h.rawSymbol) && Number(h.quantity) > 0){
+      rows.push({
+        symbol: null, holdingsSymbol: h.rawSymbol, matchedVia: null,
+        fifoQty: null, fifoAvg: null, holdingsQty: Number(h.quantity), holdingsAvg: Number(h.avgCost),
+        qtyRatio: null, status: 'MISSING_IN_FIFO',
+      });
+    }
+  });
+
+  const statusOrder = {MISMATCH: 0, MISSING_IN_HOLDINGS: 1, MISSING_IN_FIFO: 1, OK: 2};
+  rows.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+  return rows;
+}
+
+function eqRenderReconciliation(rows){
+  const mismatchCount = rows.filter(r => r.status !== 'OK').length;
+  document.getElementById('eq-recon-count-text').textContent =
+    mismatchCount > 0 ? `${mismatchCount} of ${rows.length} need attention` : `all ${rows.length} match`;
+  const tbody = document.getElementById('eq-recon-tbody');
+  tbody.innerHTML = rows.map(r => {
+    const statusColor = r.status === 'OK' ? 'var(--green)' : r.status === 'MISMATCH' ? 'var(--red)' : 'var(--amber)';
+    const statusLabel = r.status === 'OK' ? '✓ OK'
+      : r.status === 'MISMATCH' ? '⚠ MISMATCH'
+      : r.status === 'MISSING_IN_HOLDINGS' ? '— not in Holdings'
+      : '— not in Tradebook';
+    const stockLabel = r.symbol && r.holdingsSymbol && r.symbol !== r.holdingsSymbol
+      ? `${r.symbol} <span style="color:var(--muted);font-size:10px">(${r.holdingsSymbol}, ${r.matchedVia})</span>`
+      : (r.symbol || r.holdingsSymbol);
+    const ratioLabel = r.qtyRatio != null ? r.qtyRatio.toFixed(2) + '×' : '—';
+    return `<tr>
+      <td>${stockLabel}</td>
+      <td>${r.fifoQty ?? '—'}</td>
+      <td>${r.fifoAvg != null ? eqFmtRs(r.fifoAvg) : '—'}</td>
+      <td>${r.holdingsQty ?? '—'}</td>
+      <td>${r.holdingsAvg != null ? eqFmtRs(r.holdingsAvg) : '—'}</td>
+      <td>${ratioLabel}</td>
+      <td style="color:${statusColor};font-weight:700">${statusLabel}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="loading">Upload Holdings to compare against your Tradebook positions.</td></tr>';
+}
+
+async function eqRefreshReconciliation(){
+  try{
+    const holdings = await eqFetchHoldings();
+    window._eqHoldings = holdings;
+    if(!holdings.length || !window._eqOpen){
+      eqRenderReconciliation([]);
+      return;
+    }
+    const rows = eqReconcile(window._eqOpen, holdings);
+    eqRenderReconciliation(rows);
+  } catch(e){
+    document.getElementById('eq-recon-count-text').textContent = 'Failed to load holdings: ' + e.message;
+  }
+}
+
 function eqInit(){
   eqInitialized = true;
   document.getElementById('eq-upload-btn').onclick = eqUploadFile;
   document.getElementById('eq-refresh-btn').onclick = eqRefresh;
+  document.getElementById('eq-holdings-upload-btn').onclick = eqUploadHoldings;
   eqShowLastSync();
   eqRefresh();
 }
