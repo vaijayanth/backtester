@@ -232,7 +232,7 @@ def fetch_with_retry(symbol: str, prior_attempts: int) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None, help="max symbols to process this run")
-    parser.add_argument("--symbol", type=str, default=None, help="process a single symbol, forcing a retry even if exhausted")
+    parser.add_argument("--symbol", type=str, default=None, help="process one or more comma-separated symbols, forcing a retry even if exhausted (e.g. RELIANCE.NS or RELIANCE.NS,TCS.NS)")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     args = parser.parse_args()
 
@@ -248,7 +248,7 @@ def main():
             }
 
     if args.symbol:
-        targets = [args.symbol]
+        targets = [s.strip() for s in args.symbol.split(",") if s.strip()]
     else:
         targets = [s for s in universe if is_retryable(manifest[s])]
         if args.limit:

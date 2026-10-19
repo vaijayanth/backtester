@@ -14,7 +14,7 @@ on:
         required: false
         default: "1"
       symbol:
-        description: "Single symbol to force-retry, e.g. RELIANCE.NS (overrides limit)"
+        description: "One or more comma-separated symbols to force-retry, e.g. RELIANCE.NS or RELIANCE.NS,TCS.NS (overrides limit)"
         required: false
         default: ""
 
