@@ -3680,12 +3680,36 @@ const EQ_SYMBOL_ALIASES = {
 };
 function eqCanonicalSymbol(sym){ return EQ_SYMBOL_ALIASES[sym] || sym; }
 
+// A Tradebook fill records the RAW quantity/price as traded at the time —
+// a later stock split/bonus is never retroactively applied to it. But
+// Zerodha's live Positions view, and this app's CMP feed (yfinance
+// auto_adjust), both show CURRENT, post-split terms. Left unadjusted, a
+// pre-split fill's entry price is compared against a post-split CMP,
+// producing a wildly wrong P&L (confirmed for BLSE: raw fills gave qty 62
+// @ avg ₹325.80 vs Zerodha's real 124 @ ₹162.90 — exactly a 1:2 split,
+// record date 2026-10-06, NSE circular NSE/CML/76548). Fills dated on or
+// before the split's record date get qty × ratio, price ÷ ratio, so
+// every fill lands in today's terms before any FIFO matching happens.
+// Add an entry here whenever a held stock announces a split/bonus.
+const EQ_SPLIT_ADJUSTMENTS = {
+  'BLSE': [{ onOrBefore: '2026-10-05', ratio: 2 }], // 1:2 split, record date 2026-10-06
+};
+function eqApplySplitAdjustment(fill){
+  const adjustments = EQ_SPLIT_ADJUSTMENTS[fill.symbol];
+  if(!adjustments) return fill;
+  let quantity = fill.quantity, price = fill.price;
+  adjustments.forEach(a => {
+    if(fill.tradeDate <= a.onOrBefore){ quantity *= a.ratio; price /= a.ratio; }
+  });
+  return {...fill, quantity, price};
+}
+
 async function eqFetchAllFills(){
   const res = await fetch(EQ_SHEET_URL);
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return (data.rows || []).map(r => ({...r, symbol: eqCanonicalSymbol(r.symbol)}));
+  return (data.rows || []).map(r => eqApplySplitAdjustment({...r, symbol: eqCanonicalSymbol(r.symbol)}));
 }
 
 async function eqPostFills(fills){
