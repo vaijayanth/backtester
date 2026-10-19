@@ -1,0 +1,194 @@
+"""
+Supertrend(10, 3) — daily colour (bullish/bearish) and today's flips, for
+either the F&O universe (options screening) or the full backtester
+universe (SST equity swing screening). Same structure as market_screens.py
+so the two run side by side in the daily pipeline.
+
+Standard Supertrend algorithm (period=10 ATR, multiplier=3):
+  mid = (High + Low) / 2
+  basic_upper = mid + multiplier * ATR
+  basic_lower = mid - multiplier * ATR
+  final_upper[i] = basic_upper[i] if (basic_upper[i] < final_upper[i-1] or
+                                       close[i-1] > final_upper[i-1])
+                   else final_upper[i-1]
+  final_lower[i] = basic_lower[i] if (basic_lower[i] > final_lower[i-1] or
+                                       close[i-1] < final_lower[i-1])
+                   else final_lower[i-1]
+  direction flips to bearish (red) when close crosses below final_upper;
+  flips to bullish (green) when close crosses above final_lower; otherwise
+  holds the previous direction and follows the matching band.
+
+ATR(10) uses the same Wilder smoothing as RSI14 in market_screens.py (simple
+average to seed, then avg = (avg*9 + new)/10) — same principle as the EMA/
+RSI formula parity already enforced elsewhere in this repo.
+
+Usage:
+  python scripts/supertrend.py --universe fno --out supertrend.json
+  python scripts/supertrend.py --universe full --out supertrend_full.json
+"""
+
+import argparse
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).parent.parent
+RAW_DIR = ROOT / "checkpoints" / "raw"
+MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
+FNO_UNIVERSE_CSV = ROOT / "data" / "fno_universe.csv"
+
+ATR_PERIOD = 10
+MULTIPLIER = 3.0
+
+
+def compute_atr(highs, lows, closes, period=ATR_PERIOD):
+    n = len(closes)
+    tr = [None] * n
+    tr[0] = highs[0] - lows[0]
+    for i in range(1, n):
+        tr[i] = max(
+            highs[i] - lows[i],
+            abs(highs[i] - closes[i - 1]),
+            abs(lows[i] - closes[i - 1]),
+        )
+    atr = [None] * n
+    if n < period:
+        return atr
+    atr[period - 1] = sum(tr[0:period]) / period
+    for i in range(period, n):
+        atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period
+    return atr
+
+
+def compute_supertrend(highs, lows, closes, period=ATR_PERIOD, multiplier=MULTIPLIER):
+    """Returns (direction, final_upper, final_lower) lists, 'up'/'down'/None per bar."""
+    n = len(closes)
+    atr = compute_atr(highs, lows, closes, period)
+    final_upper = [None] * n
+    final_lower = [None] * n
+    direction = [None] * n
+
+    start = period - 1
+    if start >= n:
+        return direction, final_upper, final_lower
+
+    mid0 = (highs[start] + lows[start]) / 2
+    final_upper[start] = mid0 + multiplier * atr[start]
+    final_lower[start] = mid0 - multiplier * atr[start]
+    direction[start] = "down" if closes[start] <= final_upper[start] else "up"
+
+    for i in range(start + 1, n):
+        mid = (highs[i] + lows[i]) / 2
+        basic_upper = mid + multiplier * atr[i]
+        basic_lower = mid - multiplier * atr[i]
+
+        final_upper[i] = (
+            basic_upper
+            if (basic_upper < final_upper[i - 1] or closes[i - 1] > final_upper[i - 1])
+            else final_upper[i - 1]
+        )
+        final_lower[i] = (
+            basic_lower
+            if (basic_lower > final_lower[i - 1] or closes[i - 1] < final_lower[i - 1])
+            else final_lower[i - 1]
+        )
+
+        prev_dir = direction[i - 1]
+        if prev_dir == "down":
+            direction[i] = "up" if closes[i] > final_upper[i] else "down"
+        else:
+            direction[i] = "down" if closes[i] < final_lower[i] else "up"
+
+    return direction, final_upper, final_lower
+
+
+def load_validated_set():
+    if not MANIFEST_CSV.exists():
+        return set()
+    manifest = pd.read_csv(MANIFEST_CSV)
+    return set(manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist())
+
+
+def load_fno_symbols():
+    if not FNO_UNIVERSE_CSV.exists():
+        return []
+    df = pd.read_csv(FNO_UNIVERSE_CSV)
+    return df["symbol"].tolist()
+
+
+def build_supertrend(universe="fno"):
+    validated = load_validated_set()
+    target_symbols = load_fno_symbols() if universe == "fno" else sorted(validated)
+
+    entries = []
+    bullish_flips = []
+    bearish_flips = []
+    skipped = []
+
+    for symbol in target_symbols:
+        if symbol not in validated:
+            skipped.append(symbol)
+            continue
+        path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
+        if not path.exists():
+            skipped.append(symbol)
+            continue
+
+        df = pd.read_parquet(path)
+        df.index = pd.to_datetime(df.index).tz_localize(None)
+        df = df.sort_index()
+        highs, lows, closes = df["High"].tolist(), df["Low"].tolist(), df["Close"].tolist()
+        if len(closes) < ATR_PERIOD + 2:
+            skipped.append(symbol)
+            continue
+
+        direction, _, _ = compute_supertrend(highs, lows, closes)
+        today_dir, yesterday_dir = direction[-1], direction[-2]
+        if today_dir is None:
+            skipped.append(symbol)
+            continue
+
+        latest_close = closes[-1]
+        latest_date = str(df.index[-1].date())
+        flipped = yesterday_dir is not None and today_dir != yesterday_dir
+        entry = {
+            "symbol": symbol, "close": round(latest_close, 2),
+            "color": "green" if today_dir == "up" else "red",
+            "flipped_today": flipped, "date": latest_date,
+        }
+        entries.append(entry)
+        if flipped:
+            (bullish_flips if today_dir == "up" else bearish_flips).append(entry)
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "universe": "nse_fno" if universe == "fno" else "full_backtester_universe",
+        "universe_size": len(target_symbols),
+        "params": {"atr_period": ATR_PERIOD, "multiplier": MULTIPLIER},
+        "skipped": skipped,
+        "entries": entries,
+        "bullish_flips": bullish_flips,
+        "bearish_flips": bearish_flips,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--universe", choices=["fno", "full"], default="fno")
+    parser.add_argument("--out", type=str, default="supertrend.json")
+    args = parser.parse_args()
+
+    result = build_supertrend(universe=args.universe)
+    Path(args.out).write_text(json.dumps(result, indent=2))
+
+    print(f"Universe ({args.universe}): {result['universe_size']} symbols ({len(result['skipped'])} skipped)")
+    print(f"Entries: {len(result['entries'])}")
+    print(f"Bullish flips today: {len(result['bullish_flips'])}")
+    print(f"Bearish flips today: {len(result['bearish_flips'])}")
+    print(f"Written to {args.out}")
+
+
+if __name__ == "__main__":
+    main()

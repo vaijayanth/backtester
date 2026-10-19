@@ -87,12 +87,18 @@ jobs:
         working-directory: main
         run: python scripts/strangle_screen.py --out strangle_screen.json --threshold 10
 
+      - name: Rebuild Supertrend (F&O + full universe)
+        working-directory: main
+        run: |
+          python scripts/supertrend.py --universe fno --out supertrend.json
+          python scripts/supertrend.py --universe full --out supertrend_full.json
+
       - name: Commit regenerated JSON to main
         working-directory: main
         run: |
           git config user.name "daily-update-bot"
           git config user.email "actions@github.com"
-          git add market_snapshot.json market_screens.json market_screens_full.json strangle_screen.json pipeline_status.json
+          git add market_snapshot.json market_screens.json market_screens_full.json strangle_screen.json supertrend.json supertrend_full.json pipeline_status.json
           if git diff --cached --quiet; then
             echo "No output changes to commit"
           else

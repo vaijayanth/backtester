@@ -196,8 +196,8 @@
   .dash-run-label{color:var(--amber);font-weight:600;}
   .dash-footnote{padding:10px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);line-height:1.6;}
   .dash-rsi-tag{font-size:9px;padding:2px 7px;border-radius:2px;letter-spacing:0.5px;font-weight:700;}
-  .dash-rsi-tag.ob{background:var(--red-dim);color:var(--red);}
-  .dash-rsi-tag.os{background:var(--green-dim);color:var(--green);}
+  .dash-rsi-tag.ob,.dash-rsi-tag.bear{background:var(--red-dim);color:var(--red);}
+  .dash-rsi-tag.os,.dash-rsi-tag.bull{background:var(--green-dim);color:var(--green);}
 
   .ss-search-dropdown{position:absolute;z-index:40;background:var(--panel2);border:1px solid var(--border);border-radius:4px;max-height:220px;overflow-y:auto;width:100%;max-width:340px;margin-top:4px;}
   .ss-search-dropdown .ss-opt{padding:8px 12px;font-size:12px;cursor:pointer;color:var(--white);}
@@ -329,6 +329,33 @@
         </table>
       </div>
       <div class="row-count" id="dash-rsi-os-empty" style="display:none;">No F&amp;O stocks currently oversold (RSI14 ≤ 30).</div>
+    </div>
+  </div>
+
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">SUPERTREND — BULLISH FLIPS TODAY <span class="panel-meta">F&amp;O · (10, 3) &middot; red&rarr;green</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>SIGNAL</th></tr></thead>
+          <tbody id="dash-st-bull-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-st-bull-empty" style="display:none;">No F&amp;O stocks flipped bullish today.</div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">SUPERTREND — BEARISH FLIPS TODAY <span class="panel-meta">F&amp;O · (10, 3) &middot; green&rarr;red</span></div>
+      </div>
+      <div class="table-scroll" style="max-height:280px;">
+        <table class="list-table">
+          <thead><tr><th>STOCK</th><th>CLOSE</th><th>SIGNAL</th></tr></thead>
+          <tbody id="dash-st-bear-body"><tr><td colspan="3" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="dash-st-bear-empty" style="display:none;">No F&amp;O stocks flipped bearish today.</div>
     </div>
   </div>
 
@@ -1048,7 +1075,44 @@ let dashInitialized = false;
 
 async function initDashboard(){
   dashInitialized = true;
-  await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar(), loadPipelineStatus()]);
+  await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar(), loadPipelineStatus(), loadSupertrend()]);
+}
+
+// Supertrend(10,3) flips — scripts/supertrend.py runs daily alongside
+// market_screens.py, F&O universe only (same scope as the RSI panels).
+async function loadSupertrend(){
+  const bodies = ['dash-st-bull-body', 'dash-st-bear-body'];
+  let st;
+  try{
+    const resp = await fetch('supertrend.json?t=' + Date.now());
+    if(!resp.ok) throw new Error('supertrend.json not found — run the "Build Market Screens" workflow');
+    st = await resp.json();
+  }catch(err){
+    bodies.forEach(id => document.getElementById(id).innerHTML = `<tr><td colspan="3" class="loading">${err.message}</td></tr>`);
+    return;
+  }
+
+  const renderTable = (bodyId, emptyId, rows, tagClass) => {
+    const tbody = document.getElementById(bodyId);
+    const empty = document.getElementById(emptyId);
+    if(!rows.length){
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="dash-run-label">${symLabel(r.symbol)}</td>
+        <td>₹${r.close.toLocaleString('en-IN')}</td>
+        <td><span class="dash-rsi-tag ${tagClass}">${tagClass.toUpperCase()}</span></td>
+      </tr>`).join('');
+  };
+
+  try{ renderTable('dash-st-bull-body', 'dash-st-bull-empty', st.bullish_flips, 'bull'); }
+  catch(err){ console.error('Supertrend bullish flips table failed:', err); }
+  try{ renderTable('dash-st-bear-body', 'dash-st-bear-empty', st.bearish_flips, 'bear'); }
+  catch(err){ console.error('Supertrend bearish flips table failed:', err); }
 }
 
 // Reads pipeline_status.json, written by the scheduled daily_update.yml
