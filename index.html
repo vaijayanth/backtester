@@ -1056,42 +1056,48 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD TRADEBOOK <span class="panel-meta">Excel (.xlsx), fill-by-fill — not the P&amp;L statement</span></div></div>
-    <div style="padding:18px;">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't. Stored server-side in your own Google Sheet, deduped by a composite key so re-uploading a longer-history file is always safe.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
-        <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
-        <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
-      </div>
-      <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+    <div class="panel-head" style="cursor:pointer;" onclick="toggleEqUploadBox()">
+      <div class="panel-title">UPLOAD &amp; RECONCILE <span class="panel-meta" id="eq-recon-count-text-collapsed">upload Holdings to compare against your Tradebook positions</span></div>
+      <span id="eq-upload-chevron" style="font-size:12px;color:var(--muted);">&#9660;</span>
     </div>
-  </div>
+    <div id="eq-upload-body" style="display:none;">
 
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD HOLDINGS <span class="panel-meta">CSV, Kite &rarr; Portfolio &rarr; Holdings &rarr; Download</span></div></div>
-    <div style="padding:18px;">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">A point-in-time snapshot of what you actually hold — used to reconcile against the FIFO positions computed from your Tradebook fills below. Catches stock splits, bonus issues, and symbol mismatches (e.g. a stock moving to the trade-for-trade "-BE" series) that the raw fill history alone can't reveal. Each upload REPLACES the stored snapshot — it's not accumulated like fills.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <input type="file" id="eq-holdings-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
-        <button class="refresh-btn" id="eq-holdings-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD HOLDINGS</button>
+      <div style="padding:18px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD TRADEBOOK <span style="font-weight:400;color:var(--muted);">— Excel (.xlsx), fill-by-fill, not the P&amp;L statement</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't. Stored server-side in your own Google Sheet, deduped by a composite key so re-uploading a longer-history file is always safe.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
+          <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
+          <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
+        </div>
+        <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
       </div>
-      <div id="eq-holdings-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
-    </div>
-  </div>
 
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">RECONCILIATION <span class="panel-meta" id="eq-recon-count-text">upload Holdings to compare against your Tradebook positions</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="eq-recon-table">
-        <thead><tr>
-          <th>STOCK</th><th>FIFO QTY</th><th>FIFO AVG ₹</th><th>HOLDINGS QTY</th><th>HOLDINGS AVG ₹</th>
-          <th>QTY RATIO</th><th>STATUS</th>
-        </tr></thead>
-        <tbody id="eq-recon-tbody"></tbody>
-      </table>
+      <div style="padding:18px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD HOLDINGS <span style="font-weight:400;color:var(--muted);">— CSV, Kite &rarr; Portfolio &rarr; Holdings &rarr; Download</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">A point-in-time snapshot of what you actually hold — used to reconcile against the FIFO positions computed from your Tradebook fills below. Catches stock splits, bonus issues, and symbol mismatches (e.g. a stock moving to the trade-for-trade "-BE" series) that the raw fill history alone can't reveal. Each upload REPLACES the stored snapshot — it's not accumulated like fills.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="file" id="eq-holdings-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
+          <button class="refresh-btn" id="eq-holdings-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD HOLDINGS</button>
+        </div>
+        <div id="eq-holdings-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+      </div>
+
+      <div style="padding:18px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">RECONCILIATION <span style="font-weight:400;color:var(--muted);" id="eq-recon-count-text">upload Holdings to compare against your Tradebook positions</span></div>
+        <div class="table-scroll">
+          <table class="list-table" id="eq-recon-table">
+            <thead><tr>
+              <th>STOCK</th><th>FIFO QTY</th><th>FIFO AVG ₹</th><th>HOLDINGS QTY</th><th>HOLDINGS AVG ₹</th>
+              <th>QTY RATIO</th><th>STATUS</th>
+            </tr></thead>
+            <tbody id="eq-recon-tbody"></tbody>
+          </table>
+        </div>
+        <div class="dash-footnote">A ratio close to a clean number (2.00&times;, 0.50&times;, 3.00&times;...) usually means an unadjusted stock split/bonus — add it to EQ_SPLIT_ADJUSTMENTS once you confirm the ratio and record date. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
+      </div>
+
     </div>
-    <div class="dash-footnote">A ratio close to a clean number (2.00&times;, 0.50&times;, 3.00&times;...) usually means an unadjusted stock split/bonus — add it to EQ_SPLIT_ADJUSTMENTS once you confirm the ratio and record date. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
   </div>
 
   <div class="panel">
@@ -1148,6 +1154,14 @@ function switchPage(page){
   if(page === 'journal' && !eqInitialized) eqInit();
 }
 
+function toggleEqUploadBox(){
+  const body = document.getElementById('eq-upload-body');
+  const chevron = document.getElementById('eq-upload-chevron');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? '' : 'none';
+  if (chevron) chevron.innerHTML = open ? '&#9650;' : '&#9660;';
+}
 function toggleMobileNav(){
   const sidebar = document.getElementById('sidebar');
   const isOpen = sidebar.classList.toggle('nav-open');
@@ -4177,8 +4191,12 @@ function eqReconcile(fifoOpen, holdings){
 
 function eqRenderReconciliation(rows){
   const mismatchCount = rows.filter(r => r.status !== 'OK').length;
-  document.getElementById('eq-recon-count-text').textContent =
-    mismatchCount > 0 ? `${mismatchCount} of ${rows.length} need attention` : `all ${rows.length} match`;
+  const summaryText = rows.length
+    ? (mismatchCount > 0 ? `${mismatchCount} of ${rows.length} need attention` : `all ${rows.length} match`)
+    : 'upload Holdings to compare against your Tradebook positions';
+  document.getElementById('eq-recon-count-text').textContent = summaryText;
+  const collapsedEl = document.getElementById('eq-recon-count-text-collapsed');
+  if (collapsedEl) collapsedEl.textContent = summaryText;
   const tbody = document.getElementById('eq-recon-tbody');
   tbody.innerHTML = rows.map(r => {
     const statusColor = r.status === 'OK' ? 'var(--green)' : r.status === 'MISMATCH' ? 'var(--red)' : 'var(--amber)';
