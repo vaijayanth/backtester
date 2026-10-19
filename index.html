@@ -236,8 +236,9 @@
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
     <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
-    <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
+    <button data-page="eqdash" id="nav-eqdash"><span class="nav-icon">◆</span>Equity Dashboard</button>
     <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
+    <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1132,6 +1133,147 @@
 
 </div>
 
+<!-- ============ EQUITY DASHBOARD PAGE ============ -->
+<!-- Mirrors the SST Trading Journal's Dashboard tab (same sections, same
+     visual language), computed from the Equity Journal's own open/closed
+     positions instead of the SST sheet. No "initial capital" exists for
+     this journal the way SST has a configured ₹50L, so Total Return/CAGR
+     use PEAK DEPLOYED CAPITAL (the highest total invested value ever
+     simultaneously held, reconstructed from full fill history) as the
+     baseline — an approximation, not a real number, per explicit user
+     choice (2026-10-19). No GTT/200-SMA concept exists here either —
+     the "hold only" alert below uses Supertrend Red instead (also an
+     explicit user choice), and there's no GTT Price Calculator section
+     (nothing to calculate: no stop-loss column in this journal's model). -->
+<div class="page" id="page-eqdash">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">EQUITY DASHBOARD</div>
+      <div class="dash-meta" id="eqd-meta">Peak deployed capital, realized + unrealized combined</div>
+      <div class="dash-meta" id="eqd-sync-status">—</div>
+    </div>
+  </div>
+
+  <!-- FY / Quarter summary -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">FY SUMMARY <span class="panel-meta" id="eqd-fy-label">—</span></div></div>
+    <div class="stat-row" id="eqd-fy-row"></div>
+    <div class="stat-row" id="eqd-qtr-row" style="border-top:1px solid var(--border-soft)"></div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">OPEN BOOK</div></div>
+      <div class="stat-row" id="eqd-openbook-row"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">SYSTEM EDGE</div></div>
+      <div class="stat-row" id="eqd-edge-row"></div>
+    </div>
+  </div>
+
+  <!-- Loss buckets -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">LOSS BUCKETS <span class="panel-meta" id="eqd-lossbucket-meta">—</span></div></div>
+    <div id="eqd-lossbucket-body"></div>
+  </div>
+
+  <!-- Equity curve -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div id="chart-eqdash-equity"></div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="panel" id="eqd-stred-card" style="border-color:var(--amber-dim);">
+    <div class="panel-head"><div class="panel-title">⚠ SUPERTREND RED — HOLD ONLY, NO NEW ENTRY <span class="panel-meta" id="eqd-stred-count">—</span></div></div>
+    <div class="dash-footnote">Open positions currently in the red Supertrend phase — hold per SST rules, don't add new entries against the trend.</div>
+  </div>
+
+  <div class="panel" id="eqd-longloss-card" style="border-color:var(--red-dim);">
+    <div class="panel-head"><div class="panel-title">⚠ LONG-HELD LOSERS — FUNDAMENTAL REVIEW DUE <span class="panel-meta" id="eqd-longloss-count">—</span></div></div>
+    <div class="dash-footnote" style="margin-bottom:10px;">Open positions in loss for 90+ days — SST holds losses by design, but these warrant a fundamental check (earnings, sector, 200 SMA status).</div>
+    <div id="eqd-longloss-body"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">⚡ SYSTEM MOMENTUM — LAST 10 EXITS</div></div>
+    <div id="eqd-momentum-body"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">↩ RE-ENTRY WATCHLIST <span class="panel-meta" id="eqd-reentry-meta">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqd-reentry-table">
+        <thead><tr><th>#</th><th>STOCK</th><th>LAST CLOSED</th><th>DAYS SINCE</th><th>LAST P&amp;L%</th><th>TIMES TRADED</th><th>HISTORY</th></tr></thead>
+        <tbody id="eqd-reentry-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="eqd-addon-card" style="border-color:var(--amber-dim);">
+    <div class="panel-head"><div class="panel-title">🟢 ADD-ON WATCHLIST — SIGNAL PENDING <span class="panel-meta" id="eqd-addon-count">—</span></div></div>
+    <div class="dash-footnote">Loss worse than −6%, Supertrend green, not added this week — add 1/10 qty each. Full list on the Equity Alerts tab.</div>
+  </div>
+
+  <!-- P&L Calendar -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">P&amp;L CALENDAR</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="refresh-btn" onclick="eqDashCalNav(-1)" style="padding:4px 10px;">‹</button>
+        <span id="eqd-cal-label" class="panel-meta">—</span>
+        <button class="refresh-btn" onclick="eqDashCalNav(1)" style="padding:4px 10px;">›</button>
+      </div>
+    </div>
+    <div id="eqd-cal-body"></div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS AT A GLANCE <span class="panel-meta" id="eqd-heatmap-meta">—</span></div></div>
+    <div id="eqd-heatmap-body" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+  </div>
+
+  <!-- Top stocks + loss summary -->
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">TOP 10 STOCKS — CUMULATIVE PROFIT</div></div>
+      <div class="table-scroll">
+        <table class="list-table" id="eqd-top-table">
+          <thead><tr><th>STOCK</th><th>CUMULATIVE P&amp;L ₹</th></tr></thead>
+          <tbody id="eqd-top-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">STOCK POSITIONS — IN LOSS</div></div>
+      <div class="stat-row" id="eqd-lossummary-row"></div>
+    </div>
+  </div>
+
+  <!-- Capital concentration -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CAPITAL CONCENTRATION — TOP POSITIONS</div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqd-conc-table">
+        <thead><tr><th>STOCK</th><th>DEPLOYED ₹</th><th>% OF TOTAL</th></tr></thead>
+        <tbody id="eqd-conc-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Performance summary -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">PERFORMANCE SUMMARY</div></div>
+    <div class="stat-row" id="eqd-perf-row"></div>
+    <div class="dash-footnote" id="eqd-perf-footer">—</div>
+  </div>
+
+</div>
+
 <!-- ============ EQUITY ALERTS PAGE ============ -->
 <!-- Reuses the Equity Trading Journal's already-fetched state (window._eqOpen,
      window._eqSupertrend) — never re-fetches on its own. Surfaces the same
@@ -1251,6 +1393,7 @@ function switchPage(page){
   if(page === 'opttrades' && !otInitialized) otInit();
   if(page === 'journal' && !eqInitialized) eqInit();
   if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
+  if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
 }
 
 function toggleEqUploadBox(){
@@ -1283,6 +1426,7 @@ document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
 document.getElementById('nav-journal').onclick = () => switchPage('journal');
 document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
+document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -4539,6 +4683,493 @@ function eqInit(){
   document.getElementById('eq-holdings-upload-btn').onclick = eqUploadHoldings;
   eqShowLastSync();
   eqRefresh();
+}
+
+// ============================================================
+// EQUITY DASHBOARD PAGE
+// ============================================================
+let eqDashInitialized = false;
+let eqDashEquityChart = null;
+let eqDashCalOffset = 0; // months from current month, for P&L Calendar nav
+
+function eqDashInit(){
+  eqDashInitialized = true;
+  eqDashRefresh();
+}
+
+async function eqDashRefresh(){
+  document.getElementById('eqd-sync-status').innerHTML = '<span class="eq-spinner"></span> Loading…';
+  if(!window._eqOpen || !window._eqClosed || !window._eqSupertrend){
+    await eqRefresh();
+  }
+  eqDashRenderAll();
+  document.getElementById('eqd-sync-status').textContent =
+    'Last updated ' + eqFmtTime(Date.now()) + ' — using the same data as Equity Trading Journal';
+}
+
+// Mon-Fri count between two ISO dates, exclusive of the start day.
+function eqTradingDaysBetween(fromIso, toIso){
+  let d = new Date(fromIso);
+  const to = new Date(toIso);
+  let count = 0;
+  while(d < to){
+    d = new Date(d.getTime() + 86400000);
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
+
+function eqFyYear(d){ return d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; }
+function eqQuarterOf(d){
+  const m = d.getMonth(); // 0-11
+  if(m >= 3 && m <= 5) return 1;   // Apr-Jun
+  if(m >= 6 && m <= 8) return 2;   // Jul-Sep
+  if(m >= 9 && m <= 11) return 3;  // Oct-Dec
+  return 4;                        // Jan-Mar
+}
+
+// Peak deployed capital — the highest total invested value ever
+// simultaneously held across the full fill history, reconstructed via
+// global (cross-symbol) chronological FIFO. Used as the "initial capital"
+// baseline for Total Return/CAGR since this journal has no configured
+// starting capital the way the SST sheet does (explicit user choice,
+// 2026-10-19 — "Derive it from data").
+function eqComputePeakDeployedCapital(fills){
+  const sorted = fills.slice().sort((a, b) => {
+    if(a.tradeDate !== b.tradeDate) return a.tradeDate < b.tradeDate ? -1 : 1;
+    return String(a.tradeId).localeCompare(String(b.tradeId));
+  });
+  const lotsBySymbol = {};
+  let totalInvested = 0, peak = 0;
+  sorted.forEach(f => {
+    const qty = Number(f.quantity) || 0, price = Number(f.price) || 0;
+    const type = String(f.tradeType).toLowerCase();
+    if(qty <= 0) return;
+    if(!lotsBySymbol[f.symbol]) lotsBySymbol[f.symbol] = [];
+    const lots = lotsBySymbol[f.symbol];
+    if(type === 'buy'){
+      lots.push({qty, price});
+      totalInvested += qty * price;
+    } else if(type === 'sell'){
+      let remaining = qty;
+      while(remaining > 0 && lots.length > 0){
+        const lot = lots[0];
+        const take = Math.min(lot.qty, remaining);
+        totalInvested -= take * lot.price;
+        lot.qty -= take;
+        remaining -= take;
+        if(lot.qty <= 1e-9) lots.shift();
+      }
+    }
+    if(totalInvested > peak) peak = totalInvested;
+  });
+  return peak;
+}
+
+// Realized-only cumulative equity curve points, sorted by exit date —
+// shared by the chart and the max-drawdown calc.
+function eqDashRealizedCurve(closed, initialCapital){
+  const sorted = closed.slice().sort((a, b) => a.exitDate < b.exitDate ? -1 : 1);
+  let cum = initialCapital;
+  return sorted.map(t => { cum += t.pl; return {date: t.exitDate, value: cum}; });
+}
+
+function eqDashMaxDrawdownPct(curvePoints){
+  let peak = curvePoints.length ? curvePoints[0].value : 0;
+  let maxDD = 0;
+  curvePoints.forEach(p => {
+    if(p.value > peak) peak = p.value;
+    const dd = peak > 0 ? ((peak - p.value) / peak) * 100 : 0;
+    if(dd > maxDD) maxDD = dd;
+  });
+  return maxDD;
+}
+
+function eqDashComputeStats(){
+  const open = window._eqOpen || [];
+  const closed = window._eqClosed || [];
+  const fills = window._eqFills || [];
+  const stMap = window._eqSupertrend || {};
+  const todayIso = eqTodayIso();
+
+  // Attach live cmp/plPct to open positions (same calc as eqRenderOpen,
+  // duplicated locally so this page never depends on Journal having
+  // rendered first).
+  const openLive = open.map(p => {
+    const st = stMap[p.symbol];
+    const cmp = st ? st.close : null;
+    const plPct = (st && p.avgEntry > 0) ? ((cmp - p.avgEntry) / p.avgEntry) * 100 : null;
+    const deployed = p.qty * p.avgEntry;
+    const age = p.entryDate ? eqDaysBetween(p.entryDate, todayIso) : null;
+    return {...p, cmp, plPct, st, deployed, age};
+  });
+
+  const initialCapital = eqComputePeakDeployedCapital(fills);
+  const totalDeployed = openLive.reduce((s, p) => s + p.deployed, 0);
+  const realizedPL = closed.reduce((s, t) => s + t.pl, 0);
+  const unrealizedMTM = openLive.reduce((s, p) => s + (p.cmp != null ? (p.cmp - p.avgEntry) * p.qty : 0), 0);
+  const currentValueRealized = initialCapital + realizedPL;
+  const combinedValue = currentValueRealized + unrealizedMTM;
+
+  const wins = closed.filter(t => t.pl > 0);
+  const losses = closed.filter(t => t.pl < 0);
+  const openWinning = openLive.filter(p => p.plPct != null && p.plPct > 0);
+  const openLosing = openLive.filter(p => p.plPct != null && p.plPct <= 0);
+  const openAtTarget = openLive.filter(p => p.plPct != null && p.plPct >= 7);
+
+  const winRatePct = closed.length ? (wins.length / closed.length) * 100 : null;
+  const avgWinRs = wins.length ? wins.reduce((s, t) => s + t.pl, 0) / wins.length : 0;
+  const avgLossRs = losses.length ? Math.abs(losses.reduce((s, t) => s + t.pl, 0) / losses.length) : 0;
+  const avgWinPct = wins.length ? wins.reduce((s, t) => s + t.plPct, 0) / wins.length : 0;
+  const avgLossPct = losses.length ? Math.abs(losses.reduce((s, t) => s + t.plPct, 0) / losses.length) : 0;
+  const winLossRsRatio = avgLossRs > 0 ? avgWinRs / avgLossRs : null;
+  const positiveOpenMTM = openLive.reduce((s, p) => s + (p.cmp != null && (p.cmp - p.avgEntry) * p.qty > 0 ? (p.cmp - p.avgEntry) * p.qty : 0), 0);
+  const closedLossesAbs = Math.abs(losses.reduce((s, t) => s + t.pl, 0));
+  const profitFactor = closedLossesAbs > 0 ? (wins.reduce((s, t) => s + t.pl, 0) + positiveOpenMTM) / closedLossesAbs : null;
+  const strikeRatePct = (openLive.length + closed.length) ? ((openWinning.length + wins.length) / (openLive.length + closed.length)) * 100 : null;
+
+  const avgHoldOpen = openLive.filter(p => p.age != null).length
+    ? openLive.filter(p => p.age != null).reduce((s, p) => s + p.age, 0) / openLive.filter(p => p.age != null).length : null;
+  const avgHoldClosedWinners = wins.length ? wins.reduce((s, t) => s + t.daysHeld, 0) / wins.length : null;
+  const avgHoldClosedLosers = losses.length ? losses.reduce((s, t) => s + t.daysHeld, 0) / losses.length : null;
+  const avgHoldClosed = closed.length ? closed.reduce((s, t) => s + t.daysHeld, 0) / closed.length : null;
+
+  const bestOpen = openLive.filter(p => p.plPct != null).sort((a, b) => b.plPct - a.plPct)[0] || null;
+  const worstOpen = openLive.filter(p => p.plPct != null).sort((a, b) => a.plPct - b.plPct)[0] || null;
+
+  const curvePoints = eqDashRealizedCurve(closed, initialCapital);
+  const maxDDPct = eqDashMaxDrawdownPct(curvePoints);
+
+  const firstTradeDate = fills.length ? fills.reduce((min, f) => f.tradeDate < min ? f.tradeDate : min, fills[0].tradeDate) : todayIso;
+  const yearsElapsed = Math.max(eqDaysBetween(firstTradeDate, todayIso) / 365, 1 / 365);
+  const cagrPct = initialCapital > 0 && combinedValue > 0
+    ? (Math.pow(combinedValue / initialCapital, 1 / yearsElapsed) - 1) * 100 : null;
+  const calmar = (maxDDPct > 0 && cagrPct != null) ? (cagrPct / maxDDPct) : null;
+
+  return {
+    openLive, closed, initialCapital, totalDeployed, realizedPL, unrealizedMTM,
+    currentValueRealized, combinedValue, wins, losses, openWinning, openLosing, openAtTarget,
+    winRatePct, avgWinRs, avgLossRs, avgWinPct, avgLossPct, winLossRsRatio, profitFactor,
+    strikeRatePct, avgHoldOpen, avgHoldClosedWinners, avgHoldClosedLosers, avgHoldClosed,
+    bestOpen, worstOpen, curvePoints, maxDDPct, cagrPct, calmar, firstTradeDate, todayIso,
+  };
+}
+
+function eqDashStatHtml(label, value, color, sub){
+  return `<div class="stat"><div class="stat-label">${label}</div>
+    <div class="dash-pulse-value" style="${color ? 'color:' + color + ';' : ''}font-size:20px;">${value}</div>
+    ${sub ? `<div class="dash-pulse-sub" style="font-size:10px;color:var(--muted);margin-top:4px;">${sub}</div>` : ''}</div>`;
+}
+
+function eqDashRenderAll(){
+  const s = eqDashComputeStats();
+  eqDashRenderFySummary(s);
+  eqDashRenderOpenBook(s);
+  eqDashRenderEdge(s);
+  eqDashRenderLossBuckets(s);
+  eqDashRenderEquityChart(s);
+  eqDashRenderStRedAlert(s);
+  eqDashRenderLongLossAlert(s);
+  eqDashRenderMomentum(s);
+  eqDashRenderReentry(s);
+  eqDashRenderAddonCount(s);
+  eqDashRenderCalendar(s);
+  eqDashRenderHeatmap(s);
+  eqDashRenderTopStocks(s);
+  eqDashRenderLossSummary(s);
+  eqDashRenderConcentration(s);
+  eqDashRenderPerfSummary(s);
+}
+
+function eqDashRenderFySummary(s){
+  const today = new Date(s.todayIso);
+  const fy = eqFyYear(today);
+  document.getElementById('eqd-fy-label').textContent = `FY${String(fy).slice(2)}-${String(fy + 1).slice(2)}`;
+
+  const fyClosed = s.closed.filter(t => eqFyYear(new Date(t.exitDate)) === fy);
+  const fyPl = fyClosed.reduce((sum, t) => sum + t.pl, 0);
+  const fyWins = fyClosed.filter(t => t.pl > 0).length;
+  document.getElementById('eqd-fy-row').innerHTML = [
+    eqDashStatHtml('STARTING CAPITAL (PEAK DEPLOYED)', eqFmtRs(s.initialCapital)),
+    eqDashStatHtml('FY P&amp;L', eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
+    eqDashStatHtml('COMBINED P&amp;L', eqFmtRs(s.realizedPL + s.unrealizedMTM), (s.realizedPL + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', 'realized + open MTM'),
+    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
+  ].join('');
+
+  const qtrCells = [1, 2, 3, 4].map(q => {
+    const qClosed = fyClosed.filter(t => eqQuarterOf(new Date(t.exitDate)) === q);
+    const qPl = qClosed.reduce((sum, t) => sum + t.pl, 0);
+    const qWins = qClosed.filter(t => t.pl > 0).length;
+    const isCurrent = q === eqQuarterOf(today);
+    const labels = {1: 'Q1 (Apr-Jun)', 2: 'Q2 (Jul-Sep)', 3: 'Q3 (Oct-Dec)', 4: 'Q4 (Jan-Mar)'};
+    return eqDashStatHtml(labels[q] + (isCurrent ? ' ←' : ''), qClosed.length ? eqFmtRs(qPl) : '—',
+      qClosed.length ? (qPl >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted)',
+      qClosed.length ? `${qWins}W / ${qClosed.length - qWins}L` : 'No trades');
+  });
+  document.getElementById('eqd-qtr-row').innerHTML = qtrCells.join('');
+}
+
+function eqDashRenderOpenBook(s){
+  const bookHealthPct = s.openLive.length ? (s.openWinning.length / s.openLive.length) * 100 : null;
+  document.getElementById('eqd-openbook-row').innerHTML = [
+    eqDashStatHtml('TOTAL OPEN', s.openLive.length, null, `${s.openWinning.length} profit · ${s.openLosing.length} loss`),
+    eqDashStatHtml('AT TARGET ≥7%', s.openAtTarget.length, 'var(--green)'),
+    eqDashStatHtml('BOOK HEALTH', bookHealthPct == null ? '—' : bookHealthPct.toFixed(0) + '%', bookHealthPct >= 60 ? 'var(--green)' : 'var(--amber)', 'target ≥60%'),
+    eqDashStatHtml('UNREALISED MTM', eqFmtRs(s.unrealizedMTM), s.unrealizedMTM >= 0 ? 'var(--green)' : 'var(--red)'),
+    eqDashStatHtml('AVG HOLD (OPEN)', s.avgHoldOpen == null ? '—' : Math.round(s.avgHoldOpen) + 'd'),
+    eqDashStatHtml('DEPLOYED CAPITAL', eqFmtRs(s.totalDeployed), null, `${s.openLive.length} positions`),
+    eqDashStatHtml('BEST OPEN', s.bestOpen ? eqFmtPct(s.bestOpen.plPct) : '—', 'var(--green)', s.bestOpen ? s.bestOpen.symbol : ''),
+    eqDashStatHtml('WORST OPEN', s.worstOpen ? eqFmtPct(s.worstOpen.plPct) : '—', 'var(--red)', s.worstOpen ? s.worstOpen.symbol : ''),
+  ].join('');
+}
+
+function eqDashRenderEdge(s){
+  document.getElementById('eqd-edge-row').innerHTML = [
+    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', 'target ≥70%'),
+    eqDashStatHtml('PROFIT FACTOR', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)', 'combined · target ≥2.0'),
+    eqDashStatHtml('STRIKE RATE', s.strikeRatePct == null ? '—' : s.strikeRatePct.toFixed(1) + '%', null, `${s.openWinning.length} open + ${s.wins.length} closed / ${s.openLive.length + s.closed.length}`),
+    eqDashStatHtml('AVG WIN', eqFmtPct(s.avgWinPct), 'var(--green)', eqFmtRs(s.avgWinRs)),
+    eqDashStatHtml('AVG LOSS', '-' + eqFmtPct(s.avgLossPct).replace('+', ''), 'var(--red)', eqFmtRs(-s.avgLossRs)),
+    eqDashStatHtml('WIN:LOSS ₹ RATIO', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
+    eqDashStatHtml('AVG HOLD (CLOSED)', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, `W: ${s.avgHoldClosedWinners == null ? '—' : Math.round(s.avgHoldClosedWinners) + 'd'} · L: ${s.avgHoldClosedLosers == null ? '—' : Math.round(s.avgHoldClosedLosers) + 'd'}`),
+    eqDashStatHtml('CLOSED TRADES', s.closed.length),
+  ].join('');
+}
+
+const EQD_LOSS_BUCKETS = [
+  {label: '0% to -1%', lo: -1, hi: 0},
+  {label: '-1% to -5%', lo: -5, hi: -1},
+  {label: '-5% to -10%', lo: -10, hi: -5},
+  {label: '-10% to -20%', lo: -20, hi: -10},
+  {label: '-20% to -50%', lo: -50, hi: -20},
+  {label: 'Below -50%', lo: -Infinity, hi: -50},
+];
+
+function eqDashRenderLossBuckets(s){
+  const losers = s.openLive.filter(p => p.plPct != null && p.plPct < 0);
+  const totalLossRs = Math.abs(losers.reduce((sum, p) => sum + (p.cmp - p.avgEntry) * p.qty, 0));
+  document.getElementById('eqd-lossbucket-meta').textContent = `${losers.length} positions in loss · ${eqFmtRs(totalLossRs)} total MTM`;
+
+  const rows = EQD_LOSS_BUCKETS.map(b => {
+    const inBucket = losers.filter(p => p.plPct > b.lo && p.plPct <= b.hi);
+    const bucketLossRs = Math.abs(inBucket.reduce((sum, p) => sum + (p.cmp - p.avgEntry) * p.qty, 0));
+    const avgDeployed = inBucket.length ? inBucket.reduce((sum, p) => sum + p.deployed, 0) / inBucket.length : 0;
+    const avgHold = inBucket.filter(p => p.age != null).length
+      ? inBucket.filter(p => p.age != null).reduce((sum, p) => sum + p.age, 0) / inBucket.filter(p => p.age != null).length : 0;
+    const pctOfTotal = totalLossRs > 0 ? (bucketLossRs / totalLossRs) * 100 : 0;
+    return `<div style="display:grid;grid-template-columns:140px 1fr 90px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);">
+      <div style="font-size:12px;font-weight:700;">${b.label}<div style="font-size:10px;color:var(--muted);font-weight:400;">${inBucket.length} positions · ${eqFmtRs(avgDeployed)} deployed · ${Math.round(avgHold)}d avg hold</div></div>
+      <div style="background:var(--border-soft);border-radius:4px;height:8px;overflow:hidden;"><div style="background:var(--red);height:100%;width:${Math.min(pctOfTotal, 100)}%;"></div></div>
+      <div style="text-align:right;font-size:12px;color:var(--red);font-weight:700;">${eqFmtRs(-bucketLossRs)}<div style="font-size:10px;color:var(--muted);font-weight:400;">${pctOfTotal.toFixed(0)}% of loss</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('eqd-lossbucket-body').innerHTML = rows || '<div style="color:var(--muted);padding:12px;">No open positions in loss.</div>';
+}
+
+function eqDashRenderEquityChart(s){
+  const points = s.curvePoints.slice();
+  if(points.length){
+    points.push({date: s.todayIso, value: points[points.length - 1].value + s.unrealizedMTM, today: true});
+  }
+  const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+  const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
+
+  if(eqDashEquityChart){ eqDashEquityChart.destroy(); eqDashEquityChart = null; }
+  eqDashEquityChart = new ApexCharts(document.getElementById('chart-eqdash-equity'), {
+    chart: {type: 'line', height: 300, background: 'transparent', toolbar: {show: true}},
+    theme: {mode: 'dark'},
+    series: [
+      {name: 'Portfolio (realized)', data: realizedSeries},
+      {name: 'With open positions', data: withOpenSeries},
+    ],
+    colors: ['#00d26a', '#ff9f1a'],
+    stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
+    xaxis: {type: 'datetime', labels: {style: {colors: '#8a8a93'}}},
+    yaxis: {labels: {style: {colors: '#8a8a93'}, formatter: v => eqFmtRs(v)}},
+    grid: {borderColor: '#1e1e23'},
+    legend: {labels: {colors: '#e9e9ec'}},
+  });
+  eqDashEquityChart.render();
+}
+
+function eqDashRenderStRedAlert(s){
+  const stRed = s.openLive.filter(p => p.st && p.st.color === 'red');
+  document.getElementById('eqd-stred-count').textContent = `${stRed.length} positions`;
+  document.getElementById('eqd-stred-card').style.display = stRed.length ? '' : 'none';
+}
+
+function eqDashRenderLongLossAlert(s){
+  const longLoss = s.openLive.filter(p => p.age != null && p.age > 90 && p.plPct != null && p.plPct < 0)
+    .sort((a, b) => b.age - a.age);
+  document.getElementById('eqd-longloss-count').textContent = `${longLoss.length} positions`;
+  document.getElementById('eqd-longloss-card').style.display = longLoss.length ? '' : 'none';
+  document.getElementById('eqd-longloss-body').innerHTML = longLoss.map(p =>
+    `<span style="display:inline-block;margin:3px 6px 3px 0;padding:4px 10px;border-radius:6px;background:var(--red-dim);font-size:11px;">
+      <b>${p.symbol}</b> <span style="color:var(--red)">${eqFmtPct(p.plPct)}</span> · ${p.age}d</span>`
+  ).join('');
+}
+
+function eqDashRenderMomentum(s){
+  const recentClosed = s.closed.slice().sort((a, b) => a.exitDate < b.exitDate ? -1 : 1).slice(-10);
+  const circles = recentClosed.map((t, i) => {
+    const isLast = i === recentClosed.length - 1;
+    const win = t.pl > 0;
+    return `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;
+      background:${win ? 'var(--green-dim)' : 'var(--red-dim)'};color:${win ? 'var(--green)' : 'var(--red)'};
+      font-weight:700;font-size:12px;margin-right:4px;${isLast ? 'box-shadow:0 0 0 2px var(--amber);' : ''}">${win ? 'W' : 'L'}</span>`;
+  }).join('') + (recentClosed.length ? ' <span style="color:var(--muted);font-size:11px;">← Latest</span>' : '');
+
+  let streak = 0, streakWin = null;
+  for(let i = recentClosed.length - 1; i >= 0; i--){
+    const win = recentClosed[i].pl > 0;
+    if(streakWin === null) streakWin = win;
+    if(win !== streakWin) break;
+    streak++;
+  }
+  const streakMsg = recentClosed.length
+    ? (streakWin
+        ? (streak >= 3 ? `🔥 ${streak} win streak — maintain position size, don't chase extended setups.` : `${streak} win streak.`)
+        : `🚨 ${streak} loss streak — review entry signals, not stop discipline (SST holds losses).`)
+    : 'No closed trades yet.';
+  document.getElementById('eqd-momentum-body').innerHTML =
+    `<div style="margin-bottom:10px;">${circles}</div>
+     <div style="font-size:11.5px;color:${streakWin ? 'var(--green)' : 'var(--amber)'};">${streakMsg}</div>`;
+}
+
+function eqDashRenderReentry(s){
+  const openSymbols = new Set(s.openLive.map(p => p.symbol));
+  const bySymbol = {};
+  s.closed.forEach(t => {
+    if(!bySymbol[t.symbol]) bySymbol[t.symbol] = [];
+    bySymbol[t.symbol].push(t);
+  });
+  const rows = [];
+  Object.keys(bySymbol).forEach(sym => {
+    if(openSymbols.has(sym)) return;
+    const trades = bySymbol[sym].slice().sort((a, b) => a.exitDate < b.exitDate ? -1 : 1);
+    const last = trades[trades.length - 1];
+    const daysSince = eqTradingDaysBetween(last.exitDate, s.todayIso);
+    if(daysSince < 6) return;
+    const w = trades.filter(t => t.pl > 0).length;
+    rows.push({symbol: sym, lastClosed: last.exitDate, daysSince, lastPlPct: last.plPct, timesTraded: trades.length, w, l: trades.length - w});
+  });
+  rows.sort((a, b) => a.daysSince - b.daysSince);
+  document.getElementById('eqd-reentry-meta').textContent = `${rows.length} stocks eligible for re-entry`;
+  document.getElementById('eqd-reentry-tbody').innerHTML = rows.map((r, i) => `<tr>
+    <td>${i + 1}</td><td>${r.symbol}</td><td>${r.lastClosed}</td><td>${r.daysSince} trading days</td>
+    <td style="color:${r.lastPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${eqFmtPct(r.lastPlPct)}</td>
+    <td>${r.timesTraded}</td><td>${r.w}W / ${r.l}L</td></tr>`).join('') ||
+    '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Nothing eligible right now.</td></tr>';
+}
+
+function eqDashRenderAddonCount(s){
+  const eligible = s.openLive.filter(p => {
+    if(p.plPct == null || p.plPct > EQ_LOSS_THRESHOLD_PCT) return false;
+    if(!p.st || p.st.color !== 'green') return false;
+    return !eqAddedWithinCooldown(p.fills);
+  });
+  document.getElementById('eqd-addon-count').textContent = `${eligible.length} positions`;
+  document.getElementById('eqd-addon-card').style.display = eligible.length ? '' : 'none';
+}
+
+function eqDashCalNav(dir){ eqDashCalOffset += dir; eqDashRenderCalendar(eqDashComputeStats()); }
+
+function eqDashRenderCalendar(s){
+  const base = new Date();
+  const target = new Date(base.getFullYear(), base.getMonth() + eqDashCalOffset, 1);
+  const y = target.getFullYear(), m = target.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('eqd-cal-label').textContent = `${monthNames[m]} ${y}`;
+
+  const byDay = {};
+  s.closed.forEach(t => {
+    const d = new Date(t.exitDate);
+    if(d.getFullYear() === y && d.getMonth() === m){
+      const day = d.getDate();
+      byDay[day] = (byDay[day] || 0) + t.pl;
+    }
+  });
+
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const cells = [];
+  for(let i = 0; i < firstDow; i++) cells.push('<div></div>');
+  for(let day = 1; day <= daysInMonth; day++){
+    const pl = byDay[day];
+    const has = pl !== undefined;
+    const bg = has ? (pl >= 0 ? 'rgba(0,210,106,.15)' : 'rgba(255,59,48,.15)') : 'var(--panel2)';
+    const color = has ? (pl >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--muted)';
+    cells.push(`<div style="background:${bg};border-radius:8px;padding:8px;min-height:50px;">
+      <div style="font-size:10px;color:var(--muted);">${day}</div>
+      ${has ? `<div style="font-size:13px;font-weight:700;color:${color};">${eqFmtRs(pl)}</div>` : ''}
+    </div>`);
+  }
+  document.getElementById('eqd-cal-body').innerHTML =
+    `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells.join('')}</div>`;
+}
+
+function eqDashRenderHeatmap(s){
+  document.getElementById('eqd-heatmap-meta').textContent = `${s.openWinning.length} up · ${s.openLosing.length} down`;
+  const sorted = s.openLive.slice().sort((a, b) => (b.plPct ?? -999) - (a.plPct ?? -999));
+  document.getElementById('eqd-heatmap-body').innerHTML = sorted.map(p => {
+    if(p.plPct == null) return `<div style="width:64px;height:40px;border-radius:4px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);">${p.symbol}</div>`;
+    const intensity = Math.min(Math.abs(p.plPct) / 20, 1);
+    const bg = p.plPct >= 0 ? `rgba(0,210,106,${0.15 + intensity * 0.5})` : `rgba(255,59,48,${0.15 + intensity * 0.5})`;
+    return `<div title="${p.symbol} ${eqFmtPct(p.plPct)}" style="width:64px;height:40px;border-radius:4px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div style="font-size:9px;color:var(--white);">${p.symbol.slice(0, 8)}</div>
+      <div style="font-size:9px;font-weight:700;color:var(--white);">${eqFmtPct(p.plPct)}</div></div>`;
+  }).join('') || '<div style="color:var(--muted);">No open positions.</div>';
+}
+
+function eqDashRenderTopStocks(s){
+  const bySymbol = {};
+  s.closed.forEach(t => { bySymbol[t.symbol] = (bySymbol[t.symbol] || 0) + t.pl; });
+  const top = Object.entries(bySymbol).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  document.getElementById('eqd-top-tbody').innerHTML = top.map(([sym, pl]) =>
+    `<tr><td>${sym}</td><td style="color:${pl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700;">${eqFmtRs(pl)}</td></tr>`
+  ).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:16px">No closed trades yet.</td></tr>';
+}
+
+function eqDashRenderLossSummary(s){
+  const losers = s.openLosing;
+  const capitalFrozen = losers.reduce((sum, p) => sum + p.deployed, 0);
+  const longest = losers.filter(p => p.age != null).sort((a, b) => b.age - a.age)[0] || null;
+  const pctOfDeployed = s.totalDeployed > 0 ? (capitalFrozen / s.totalDeployed) * 100 : null;
+  document.getElementById('eqd-lossummary-row').innerHTML = [
+    eqDashStatHtml('POSITIONS IN LOSS', losers.length, 'var(--red)', `of ${s.openLive.length} open`),
+    eqDashStatHtml('CAPITAL FROZEN', eqFmtRs(capitalFrozen), null, 'notional cost basis'),
+    eqDashStatHtml('LONGEST HELD', longest ? longest.age + 'd' : '—', null, longest ? longest.symbol : ''),
+    eqDashStatHtml('% OF DEPLOYED', pctOfDeployed == null ? '—' : pctOfDeployed.toFixed(1) + '%', pctOfDeployed > 60 ? 'var(--red)' : 'var(--amber)'),
+  ].join('');
+}
+
+function eqDashRenderConcentration(s){
+  const sorted = s.openLive.slice().sort((a, b) => b.deployed - a.deployed).slice(0, 10);
+  document.getElementById('eqd-conc-tbody').innerHTML = sorted.map(p => {
+    const pct = s.totalDeployed > 0 ? (p.deployed / s.totalDeployed) * 100 : 0;
+    return `<tr><td>${p.symbol}</td><td>${eqFmtRs(p.deployed)}</td><td>${pct.toFixed(1)}%</td></tr>`;
+  }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px">No open positions.</td></tr>';
+}
+
+function eqDashRenderPerfSummary(s){
+  const totalReturnPct = s.initialCapital > 0 ? ((s.combinedValue - s.initialCapital) / s.initialCapital) * 100 : null;
+  document.getElementById('eqd-perf-row').innerHTML = [
+    eqDashStatHtml('INITIAL CAPITAL', eqFmtRs(s.initialCapital), null, 'peak deployed, derived'),
+    eqDashStatHtml('CURRENT VALUE', eqFmtRs(s.combinedValue), null, 'realized + open MTM'),
+    eqDashStatHtml('TOTAL RETURN', totalReturnPct == null ? '—' : (totalReturnPct >= 0 ? '+' : '') + totalReturnPct.toFixed(2) + '%', totalReturnPct >= 0 ? 'var(--green)' : 'var(--red)'),
+    eqDashStatHtml('CAGR', s.cagrPct == null ? '—' : (s.cagrPct >= 0 ? '+' : '') + s.cagrPct.toFixed(1) + '%', s.cagrPct >= 0 ? 'var(--green)' : 'var(--red)'),
+    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('PROFIT FACTOR', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('AVG WIN', eqFmtPct(s.avgWinPct), 'var(--green)'),
+    eqDashStatHtml('AVG LOSS', '-' + eqFmtPct(s.avgLossPct).replace('+', '')),
+    eqDashStatHtml('WIN:LOSS ₹ RATIO', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
+    eqDashStatHtml('MAX DRAWDOWN', s.maxDDPct.toFixed(1) + '%', s.maxDDPct < 15 ? 'var(--green)' : 'var(--amber)', 'realized equity'),
+    eqDashStatHtml('CALMAR RATIO', s.calmar == null ? '—' : s.calmar.toFixed(2), s.calmar >= 0.5 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('AVG HOLD', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, 'closed trades'),
+  ].join('');
+  document.getElementById('eqd-perf-footer').textContent =
+    `${s.closed.length} closed trades · ${s.openLive.length} open positions · since ${s.firstTradeDate} (${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is an approximation (peak deployed), not a configured figure.`;
 }
 
 // ============================================================
