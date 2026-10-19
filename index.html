@@ -4819,7 +4819,15 @@ const EQ_DASHBOARD_START_DATE = '2026-10-01';
 
 function eqDashComputeStats(){
   const open = window._eqOpen || [];
-  const closed = (window._eqClosed || []).filter(t => t.exitDate >= EQ_DASHBOARD_START_DATE);
+  const closedAll = window._eqClosed || [];
+  // Trade-quality stats (win rate, P&L, profit factor, FY/quarter,
+  // momentum, equity curve...) are scoped to the clean Oct-1 window. But
+  // "account value" numbers (Combined P&L, Current Value, Total Return,
+  // CAGR) must reflect REAL money — mixing a windowed realized P&L with
+  // the full unrealized MTM of the entire (not windowed) 200+ position
+  // open book silently drops real pre-cutoff gains/losses, producing a
+  // wrong headline number. Those use closedAll instead.
+  const closed = closedAll.filter(t => t.exitDate >= EQ_DASHBOARD_START_DATE);
   const fills = window._eqFills || [];
   const stMap = window._eqSupertrend || {};
   const todayIso = eqTodayIso();
@@ -4838,9 +4846,9 @@ function eqDashComputeStats(){
 
   const initialCapital = eqComputePeakDeployedCapital(fills);
   const totalDeployed = openLive.reduce((s, p) => s + p.deployed, 0);
-  const realizedPL = closed.reduce((s, t) => s + t.pl, 0);
+  const realizedPLAllTime = closedAll.reduce((s, t) => s + t.pl, 0);
   const unrealizedMTM = openLive.reduce((s, p) => s + (p.cmp != null ? (p.cmp - p.avgEntry) * p.qty : 0), 0);
-  const currentValueRealized = initialCapital + realizedPL;
+  const currentValueRealized = initialCapital + realizedPLAllTime;
   const combinedValue = currentValueRealized + unrealizedMTM;
 
   const wins = closed.filter(t => t.pl > 0);
@@ -4872,14 +4880,22 @@ function eqDashComputeStats(){
   const curvePoints = eqDashRealizedCurve(closed, initialCapital);
   const maxDDPct = eqDashMaxDrawdownPct(curvePoints);
 
-  const firstTradeDate = EQ_DASHBOARD_START_DATE;
+  // CAGR/Total Return compare against combinedValue, which is now all-time
+  // (see realizedPLAllTime above) — its time base must also be all-time,
+  // not the Oct-1 cutoff, or it would annualize a years-long value change
+  // over a ~3-week window and produce a nonsense number.
+  const firstTradeDate = fills.length ? fills.reduce((min, f) => f.tradeDate < min ? f.tradeDate : min, fills[0].tradeDate) : todayIso;
   const yearsElapsed = Math.max(eqDaysBetween(firstTradeDate, todayIso) / 365, 1 / 365);
   const cagrPct = initialCapital > 0 && combinedValue > 0
     ? (Math.pow(combinedValue / initialCapital, 1 / yearsElapsed) - 1) * 100 : null;
+  // Max Drawdown/Calmar intentionally stay scoped to the clean Oct-1
+  // window (curvePoints above) — matching the Performance tab's existing
+  // documented convention of using a narrower "realized equity" lens for
+  // drawdown than CAGR uses for growth (see CLAUDE.md's MAR Ratio section).
   const calmar = (maxDDPct > 0 && cagrPct != null) ? (cagrPct / maxDDPct) : null;
 
   return {
-    openLive, closed, initialCapital, totalDeployed, realizedPL, unrealizedMTM,
+    openLive, closed, initialCapital, totalDeployed, realizedPLAllTime, unrealizedMTM,
     currentValueRealized, combinedValue, wins, losses, openWinning, openLosing, openAtTarget,
     winRatePct, avgWinRs, avgLossRs, avgWinPct, avgLossPct, winLossRsRatio, profitFactor,
     strikeRatePct, avgHoldOpen, avgHoldClosedWinners, avgHoldClosedLosers, avgHoldClosed,
@@ -4918,7 +4934,7 @@ function eqDashRenderFySummary(s){
   document.getElementById('eqd-fy-row').innerHTML = [
     eqDashStatHtml('STARTING CAPITAL (PEAK DEPLOYED)', eqFmtRs(s.initialCapital)),
     eqDashStatHtml('FY P&amp;L', eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
-    eqDashStatHtml('COMBINED P&amp;L', eqFmtRs(s.realizedPL + s.unrealizedMTM), (s.realizedPL + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', 'realized + open MTM'),
+    eqDashStatHtml('COMBINED P&amp;L', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', 'all-time realized + open MTM'),
     eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
   ].join('');
 
@@ -5194,7 +5210,7 @@ function eqDashRenderPerfSummary(s){
     eqDashStatHtml('AVG HOLD', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, 'closed trades'),
   ].join('');
   document.getElementById('eqd-perf-footer').textContent =
-    `${s.closed.length} closed trades · ${s.openLive.length} open positions · performance since ${s.firstTradeDate} (clean-start cutoff, ${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is peak deployed capital, all-time, not a configured figure.`;
+    `Win rate/P&L stats from ${s.closed.length} closed trades since ${EQ_DASHBOARD_START_DATE} (clean-start window) · ${s.openLive.length} open positions · Current Value/Total Return/CAGR are all-time, since ${s.firstTradeDate} (${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is peak deployed capital, all-time, not a configured figure.`;
 }
 
 // ============================================================
