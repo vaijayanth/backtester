@@ -3648,12 +3648,26 @@ async function eqUploadFile(){
   }
 }
 
+// Tradebook fills keep the symbol exactly as it was at trade time — a
+// renamed/resegmented stock shows up under its OLD ticker for fills
+// before the change and its NEW ticker after. Left unaliased, FIFO
+// grouping (by exact symbol string) would split one continuous position
+// into two unrelated ones, and CMP/Supertrend lookup against the current
+// universe would miss the old-ticker fills entirely. Map old -> current
+// so both problems are fixed at the single point every fill passes
+// through on the way in.
+const EQ_SYMBOL_ALIASES = {
+  'LTIM': 'LTM',        // LTIMindtree -> LTM Limited, NSE symbol change Feb 2026
+  'GSPL': 'GSPLTRANS',  // GSPL Transmission Ltd — GSPL was never this stock's live ticker
+};
+function eqCanonicalSymbol(sym){ return EQ_SYMBOL_ALIASES[sym] || sym; }
+
 async function eqFetchAllFills(){
   const res = await fetch(EQ_SHEET_URL);
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return data.rows || [];
+  return (data.rows || []).map(r => ({...r, symbol: eqCanonicalSymbol(r.symbol)}));
 }
 
 async function eqPostFills(fills){
