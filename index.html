@@ -3759,16 +3759,44 @@ function eqIsLongTermExcluded(sym){
 // record date 2026-10-06, NSE circular NSE/CML/76548). Fills dated on or
 // before the split's record date get qty × ratio, price ÷ ratio, so
 // every fill lands in today's terms before any FIFO matching happens.
-// Add an entry here whenever a held stock announces a split/bonus.
+//
+// Two adjustment shapes:
+//   { ratio }               — a plain stock split/bonus: qty × ratio,
+//                              price ÷ ratio (total cost unchanged).
+//   { ratio, costApportionPct } — a demerger/scheme conversion where the
+//                              new share count isn't proportional to the
+//                              old cost (tax rules apportion cost by fair
+//                              value, not 1:1): qty × ratio as usual, but
+//                              price × (costApportionPct / ratio) so the
+//                              new avg cost matches the real post-scheme
+//                              cost basis rather than a naive proportional
+//                              split.
+//
+// Add an entry here whenever a held stock announces a split/bonus/scheme.
 const EQ_SPLIT_ADJUSTMENTS = {
   'BLSE': [{ onOrBefore: '2026-10-05', ratio: 2 }], // 1:2 split, record date 2026-10-06
+  'TDPOWERSYS': [{ onOrBefore: '2026-08-23', ratio: 2 }], // 1:2 split, record date 2026-08-24
+  // GSPL -> Gujarat Energy Ltd (10 GEL sh. per 13 GSPL sh.) -> demerged into
+  // GSPL Transmission Ltd (1 GSPLTRANS sh. per 3 GEL sh., record date
+  // 2026-07-02). Combined share ratio 11/44 = 0.25 (verified exact match
+  // against Zerodha Holdings: 44 sh. -> 11 sh.). Cost basis is NOT simply
+  // price/ratio — demerger cost apportionment follows fair-value rules, not
+  // a flat split. costApportionPct (0.28327) is back-solved from Zerodha's
+  // reported post-scheme avg cost (₹338 on an original ₹298.30 fill) since
+  // the official apportionment circular wasn't available — if you have the
+  // actual company circular with a published %, update this to match it.
+  'GSPLTRANS': [{ onOrBefore: '2026-07-01', ratio: 0.25, costApportionPct: 0.28327 }],
 };
 function eqApplySplitAdjustment(fill){
   const adjustments = EQ_SPLIT_ADJUSTMENTS[fill.symbol];
   if(!adjustments) return fill;
   let quantity = fill.quantity, price = fill.price;
   adjustments.forEach(a => {
-    if(fill.tradeDate <= a.onOrBefore){ quantity *= a.ratio; price /= a.ratio; }
+    if(fill.tradeDate <= a.onOrBefore){
+      if(a.costApportionPct != null){ price = price * (a.costApportionPct / a.ratio); }
+      else { price = price / a.ratio; }
+      quantity = quantity * a.ratio;
+    }
   });
   return {...fill, quantity, price};
 }
