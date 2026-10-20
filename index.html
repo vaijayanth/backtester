@@ -6579,10 +6579,42 @@ function dh252RenderSignals(open){
   const entries = Object.values(week52)
     .filter(w => w.pct_from_high >= 0 && !heldSymbols.has(eqStripNs(w.symbol).toUpperCase()) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
     .sort((a, b) => b.pct_from_high - a.pct_from_high);
+
+  // Same "hot sector" tagging as Equity Alerts' Entry Signal panel — a
+  // sector hitting several fresh 52-week highs together, or several
+  // Supertrend turnarounds together, is a stronger signal than one stock
+  // in isolation.
+  const sectorTurn = {};
+  Object.values(stMap).forEach(e => {
+    if(e.recent_bullish_flip_days_ago == null) return;
+    const sector = eqSectorFor(eqStripNs(e.symbol));
+    if(sector === '—') return;
+    sectorTurn[sector] = (sectorTurn[sector] || 0) + 1;
+  });
+  const hotTurnSectors = new Set(Object.entries(sectorTurn).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]));
+  const entrySectorCount = {};
+  entries.forEach(w => {
+    const sector = eqSectorFor(eqStripNs(w.symbol));
+    if(sector === '—') return;
+    entrySectorCount[sector] = (entrySectorCount[sector] || 0) + 1;
+  });
+  const hotEntrySectors = new Set(Object.entries(entrySectorCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]));
+
   document.getElementById('dh252-entry-count').textContent = entries.length;
   document.getElementById('dh252-entry-tbody').innerHTML = entries.length ? entries.map(w => {
     const bare = eqStripNs(w.symbol);
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${eqSectorFor(bare)}</td></tr>`;
+    const sector = eqSectorFor(bare);
+    const whHot = sector !== '—' && hotEntrySectors.has(sector);
+    const turnHot = sector !== '—' && hotTurnSectors.has(sector);
+    let sectorLabel = sector;
+    if(whHot || turnHot){
+      const tags = [];
+      if(whHot) tags.push(`${entrySectorCount[sector]} at 52WH`);
+      if(turnHot) tags.push(`${sectorTurn[sector]} turned`);
+      sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
+    }
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td>
+      <td style="${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   }).join('') : '<tr><td colspan="4" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
 
   // Add-on and exit — evaluated against open positions only.
@@ -6624,13 +6656,18 @@ async function dh252Refresh(){
   }
   document.getElementById('dh252-cap-meta').innerHTML = '<span class="eq-spinner"></span> Loading…';
   try{
-    const [trades, stMap, week52] = await Promise.all([
+    const [trades, stMap, week52, sectors] = await Promise.all([
       dh252FetchTrades(),
       eqFetchSupertrend(),
       eqFetchWeek52(),
+      eqFetchSectors(),
     ]);
     window._dh252Supertrend = stMap || {};
     window._dh252Week52 = week52 || {};
+    // eqSectorFor() reads window._eqSectors globally (shared with Equity
+    // Alerts/Dashboard) — populate it here too, since this page can be
+    // opened standalone without visiting those first.
+    window._eqSectors = sectors || {};
     const state = dh252BuildPositions(trades);
     dh252RenderPositions(state);
     dh252RenderSignals(state.open);
