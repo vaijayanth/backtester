@@ -6465,17 +6465,18 @@ const DH252_POSITION_SIZE_RS = 1000;
 const DH252_ADD_TRIGGER_PCT = -6;
 const DH252_ADD_FRACTION = 0.10;
 const DH252_ADD_COOLDOWN_DAYS = 7;
-// Reference numbers from the full-universe 5yr backtest at the exact
+// Reference numbers from the full-universe 10yr backtest at the exact
 // params this live journal runs (252d window, Rs1,000/position, Rs5L
-// capital — see results_252dh.json from the 2026-10-20 session): 3,224
-// closed trades, 44.39% win rate, avg P&L% across ALL closed trades
-// (wins and losses combined) of 9.69%. Used only to show how far a small
-// live sample has drifted from the backtested average — not a target or
-// a guarantee, just a sanity check. Early on, with only a handful of
-// closed trades, a large deviation is expected noise, not a red flag.
-const DH252_BACKTEST_AVG_PLPCT = 9.69;
-const DH252_BACKTEST_WIN_RATE = 44.39;
-const DH252_BACKTEST_CLOSED_TRADES = 3224;
+// capital — see results_10yr_252d_1000.json from the 2026-10-20
+// session): 6,536 closed trades, 44.92% win rate, avg P&L% across ALL
+// closed trades (wins and losses combined) of 12.62%. Used only to show
+// how far a small live sample has drifted from the backtested average —
+// not a target or a guarantee, just a sanity check. Early on, with only
+// a handful of closed trades, a large deviation is expected noise, not
+// a red flag.
+const DH252_BACKTEST_AVG_PLPCT = 12.62;
+const DH252_BACKTEST_WIN_RATE = 44.92;
+const DH252_BACKTEST_CLOSED_TRADES = 6536;
 
 function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
@@ -6593,12 +6594,12 @@ function dh252RenderPositions(state){
 
   const vsBacktestEl = document.getElementById('dh252-vs-backtest');
   if(avgPlPct === null){
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 5yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L — no closed trades yet to compare.`;
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L — no closed trades yet to compare.`;
   } else {
     const plDeviation = avgPlPct - DH252_BACKTEST_AVG_PLPCT;
     const wrDeviation = winRate - DH252_BACKTEST_WIN_RATE;
     const sampleNote = state.closed.length < 20 ? ` — only ${state.closed.length} trade${state.closed.length === 1 ? '' : 's'} so far, this deviation is expected noise at this sample size, not a signal.` : '';
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 5yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate. ` +
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate. ` +
       `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp.${sampleNote}`;
   }
 
