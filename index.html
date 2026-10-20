@@ -239,6 +239,7 @@
     <button data-page="eqdash" id="nav-eqdash"><span class="nav-icon">◆</span>Equity Dashboard</button>
     <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
+    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>252DH Forward Journal</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1451,6 +1452,105 @@
 
 </div>
 
+<!-- ============ 252DH FORWARD JOURNAL PAGE ============ -->
+<div class="page" id="page-dh252">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">252DH FORWARD JOURNAL</div>
+      <div class="dash-meta">252-day-high breakout entry, no EMA filter, Rs1,000/position, full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
+    </div>
+    <div style="padding:0 18px 18px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
+      <input type="text" id="dh252-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;max-width:520px;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div></div>
+    <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
+      <div class="stat"><div class="stat-label">INITIAL CAPITAL</div><div class="stat-value">₹20,00,000</div></div>
+      <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
+      <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dh252-open-count">—</div></div>
+      <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
+      <div class="stat"><div class="stat-label">AAN AFFORD (AT ₹1,000)</div><div class="stat-value" id="dh252-afford">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 252-DAY HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-entry-table">
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>252D HIGH ₹</th><th>SECTOR</th></tr></thead>
+        <tbody id="dh252-entry-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Close at/above the trailing 252-session high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-add-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th></tr></thead>
+        <tbody id="dh252-add-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Close ≤6% below weighted-average cost, Supertrend green, ≥7 calendar days since the last fill on that position.</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--red);">
+    <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-exit-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
+        <tbody id="dh252-exit-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Supertrend flipped red — exit the whole position regardless of profit or loss. This is the rule you're building the habit of actually following.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div></div>
+    <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><input type="text" id="dh252-f-symbol" placeholder="RELIANCE" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:120px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
+        <select id="dh252-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
+          <option value="BUY">BUY (new)</option>
+          <option value="ADD">ADD (average down)</option>
+          <option value="SELL">SELL (exit)</option>
+        </select>
+      </div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Date</label><input type="date" id="dh252-f-date" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Qty</label><input type="number" id="dh252-f-qty" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:90px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Price ₹</label><input type="number" step="0.01" id="dh252-f-price" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:110px;"></div>
+      <button class="refresh-btn" id="dh252-log-btn" style="padding:9px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
+    </div>
+    <div id="dh252-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-pos-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>ENTRY DATE</th><th>ADDS</th><th>LAST FILL</th></tr></thead>
+        <tbody id="dh252-pos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dh252-closed-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-closed-table">
+        <thead><tr><th>STOCK</th><th>ENTRY DATE</th><th>EXIT DATE</th><th>QTY</th><th>WAC ₹</th><th>EXIT ₹</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>ADDS</th></tr></thead>
+        <tbody id="dh252-closed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -1476,6 +1576,7 @@ function switchPage(page){
   if(page === 'journal' && !eqInitialized) eqInit();
   if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
   if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
+  if(page === 'dh252' && !dh252Initialized) dh252Init();
 }
 
 function toggleEqUploadBox(){
@@ -1509,6 +1610,7 @@ document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades')
 document.getElementById('nav-journal').onclick = () => switchPage('journal');
 document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
 document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
+document.getElementById('nav-dh252').onclick = () => switchPage('dh252');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -6339,6 +6441,250 @@ document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e)
   otSaveSheetUrl(e.target.value);
   if(otInitialized) await otRenderFromDb();
 });
+
+// ============================================================
+// 252DH FORWARD JOURNAL PAGE
+// ============================================================
+// Real-money forward test of the variant tested in the backtest
+// comparison: 252-day-high breakout entry, no EMA filter, flat Rs1,000
+// per new position, WAC-based 6% average-down (10% qty, 7-calendar-day
+// cooldown), full exit the moment Supertrend turns red regardless of
+// P&L. Google Sheet is an append-only trade log (every real fill is its
+// own row, never replaced) — current state (open positions, WAC, cash)
+// is always derived by replaying that log, never stored directly.
+const DH252_SHEET_URL_KEY = 'dh252_sheet_url';
+const DH252_INITIAL_CAPITAL_RS = 2000000;
+const DH252_POSITION_SIZE_RS = 1000;
+const DH252_ADD_TRIGGER_PCT = -6;
+const DH252_ADD_FRACTION = 0.10;
+const DH252_ADD_COOLDOWN_DAYS = 7;
+
+function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || '').trim(); }
+function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
+
+async function dh252FetchTrades(){
+  const url = dh252GetSheetUrl();
+  if(!url) return [];
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return (data.rows || []).slice().sort((a, b) => new Date(a.Date) - new Date(b.Date) || new Date(a.LoggedAt) - new Date(b.LoggedAt));
+}
+
+async function dh252PostTrade(trade){
+  const url = dh252GetSheetUrl();
+  if(!url) throw new Error('No Google Sheet URL configured yet — paste it above.');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(trade),
+  });
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data;
+}
+
+// Replays the trade log chronologically into current state. Every BUY
+// opens a fresh position (error if one's already open for that symbol —
+// should never happen in normal use); every ADD recomputes the weighted-
+// average cost; every SELL closes the position at the logged price,
+// using whatever qty was actually logged (not necessarily the full open
+// qty, though a partial SELL isn't part of this strategy's own rules —
+// surfaced via unmatchedQty-style note if it doesn't match, rather than
+// silently assumed).
+function dh252BuildPositions(trades){
+  const open = {};
+  const closed = [];
+  const skipped = [];
+  let cash = DH252_INITIAL_CAPITAL_RS;
+
+  trades.forEach(t => {
+    const sym = String(t.Symbol || '').trim().toUpperCase();
+    const action = String(t.Action || '').trim().toUpperCase();
+    const qty = Number(t.Qty), price = Number(t.Price), date = t.Date;
+    if(!sym || !qty || !price || !date){ skipped.push({...t, reason: 'missing field'}); return; }
+
+    if(action === 'BUY'){
+      if(open[sym]){ skipped.push({...t, reason: `BUY logged but ${sym} already open — treated as ignored, fix the log`}); return; }
+      cash -= qty * price;
+      open[sym] = {symbol: sym, qty, wac: price, entryDate: date, lastFillDate: date, numAdds: 0};
+    } else if(action === 'ADD'){
+      const pos = open[sym];
+      if(!pos){ skipped.push({...t, reason: `ADD logged but ${sym} has no open position`}); return; }
+      cash -= qty * price;
+      const totalCost = pos.wac * pos.qty + qty * price;
+      pos.qty += qty;
+      pos.wac = totalCost / pos.qty;
+      pos.lastFillDate = date;
+      pos.numAdds += 1;
+    } else if(action === 'SELL'){
+      const pos = open[sym];
+      if(!pos){ skipped.push({...t, reason: `SELL logged but ${sym} has no open position`}); return; }
+      cash += qty * price;
+      const sellQty = Math.min(qty, pos.qty);
+      const plRs = (price - pos.wac) * sellQty;
+      closed.push({
+        symbol: sym, entryDate: pos.entryDate, exitDate: date,
+        qty: sellQty, wac: pos.wac, exitPrice: price,
+        plRs, plPct: (price - pos.wac) / pos.wac * 100, numAdds: pos.numAdds,
+        qtyMismatch: qty !== pos.qty ? `logged ${qty}, position had ${pos.qty}` : null,
+      });
+      delete open[sym];
+    } else {
+      skipped.push({...t, reason: `unknown action "${t.Action}"`});
+    }
+  });
+
+  return {open, closed, cash, skipped};
+}
+
+function dh252FmtRs(v){ return '₹' + Math.round(v).toLocaleString('en-IN'); }
+function dh252FmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+
+function dh252RenderPositions(state){
+  const openList = Object.values(state.open);
+  document.getElementById('dh252-cash').textContent = dh252FmtRs(state.cash);
+  document.getElementById('dh252-open-count').textContent = openList.length;
+  const realized = state.closed.reduce((s, t) => s + t.plRs, 0);
+  const realizedEl = document.getElementById('dh252-realized');
+  realizedEl.textContent = dh252FmtRs(realized);
+  realizedEl.style.color = realized >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('dh252-afford').textContent = Math.max(0, Math.floor(state.cash / DH252_POSITION_SIZE_RS));
+
+  document.getElementById('dh252-pos-count').textContent = openList.length;
+  document.getElementById('dh252-pos-tbody').innerHTML = openList.length ? openList.map(p => `<tr>
+    <td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td><td>${p.entryDate}</td><td>${p.numAdds}</td><td>${p.lastFillDate}</td>
+  </tr>`).join('') : '<tr><td colspan="6" class="loading">No open positions yet — log your first BUY above.</td></tr>';
+
+  document.getElementById('dh252-closed-count').textContent = state.closed.length;
+  document.getElementById('dh252-closed-tbody').innerHTML = state.closed.length ? state.closed.slice().reverse().map(t => `<tr>
+    <td>${t.symbol}</td><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.qty}</td><td>${dh252FmtRs(t.wac)}</td><td>${dh252FmtRs(t.exitPrice)}</td>
+    <td style="color:${t.plRs >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtRs(t.plRs)}</td>
+    <td style="color:${t.plRs >= 0 ? 'var(--green)' : 'var(--red)'}">${dh252FmtPct(t.plPct)}</td><td>${t.numAdds}</td>
+  </tr>`).join('') : '<tr><td colspan="9" class="loading">No closed trades yet.</td></tr>';
+}
+
+function dh252RenderSignals(open){
+  const heldSymbols = new Set(Object.keys(open));
+  const week52 = window._dh252Week52 || {};
+  const stMap = window._dh252Supertrend || {};
+
+  // Entry — universe-wide 252-day-high breakout (market_screens_full.json's
+  // 252-trading-day window IS the ~52-week high), excludes already-held.
+  const entries = Object.values(week52)
+    .filter(w => w.pct_from_high >= 0 && !heldSymbols.has(eqStripNs(w.symbol).toUpperCase()) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
+    .sort((a, b) => b.pct_from_high - a.pct_from_high);
+  document.getElementById('dh252-entry-count').textContent = entries.length;
+  document.getElementById('dh252-entry-tbody').innerHTML = entries.length ? entries.map(w => {
+    const bare = eqStripNs(w.symbol);
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${eqSectorFor(bare)}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="loading">No fresh 252-day-high breakouts today.</td></tr>';
+
+  // Add-on and exit — evaluated against open positions only.
+  const addRows = [], exitRows = [];
+  Object.values(open).forEach(pos => {
+    const w = week52[pos.symbol] || week52[pos.symbol + '.NS'];
+    const st = stMap[pos.symbol];
+    if(!w || !st || !st.color) return; // no price data today — can't signal
+    const cmp = w.close;
+    const plPct = (cmp - pos.wac) / pos.wac * 100;
+    if(st.color === 'red'){
+      exitRows.push({pos, cmp, plPct});
+      return; // exit takes priority over an add signal the same day
+    }
+    const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
+    if(plPct <= DH252_ADD_TRIGGER_PCT && st.color === 'green' && daysSinceFill >= DH252_ADD_COOLDOWN_DAYS){
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DH252_ADD_FRACTION)), daysSinceFill});
+    }
+  });
+
+  document.getElementById('dh252-add-count').textContent = addRows.length;
+  document.getElementById('dh252-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
+    <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
+    <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
+  </tr>`).join('') : '<tr><td colspan="7" class="loading">No add-on signals right now.</td></tr>';
+
+  document.getElementById('dh252-exit-count').textContent = exitRows.length;
+  document.getElementById('dh252-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => `<tr>
+    <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
+    <td style="color:${r.plPct >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtPct(r.plPct)}</td>
+  </tr>`).join('') : '<tr><td colspan="5" class="loading">No exit signals right now.</td></tr>';
+}
+
+async function dh252Refresh(){
+  const url = dh252GetSheetUrl();
+  if(!url){
+    document.getElementById('dh252-cap-meta').textContent = 'Paste your Apps Script URL above first.';
+    return;
+  }
+  document.getElementById('dh252-cap-meta').innerHTML = '<span class="eq-spinner"></span> Loading…';
+  try{
+    const [trades, stMap, week52] = await Promise.all([
+      dh252FetchTrades(),
+      eqFetchSupertrend(),
+      eqFetchWeek52(),
+    ]);
+    window._dh252Supertrend = stMap || {};
+    window._dh252Week52 = week52 || {};
+    const state = dh252BuildPositions(trades);
+    dh252RenderPositions(state);
+    dh252RenderSignals(state.open);
+    document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
+      (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
+    if(state.skipped.length) console.warn('252DH journal: skipped rows', state.skipped);
+  }catch(err){
+    document.getElementById('dh252-cap-meta').textContent = 'Could not load: ' + err.message;
+    console.error(err);
+  }
+}
+
+async function dh252LogTrade(){
+  const symbol = document.getElementById('dh252-f-symbol').value.trim().toUpperCase();
+  const action = document.getElementById('dh252-f-action').value;
+  const date = document.getElementById('dh252-f-date').value;
+  const qty = document.getElementById('dh252-f-qty').value;
+  const price = document.getElementById('dh252-f-price').value;
+  const statusEl = document.getElementById('dh252-log-status');
+  const show = (msg, isError) => {
+    statusEl.style.display = 'block';
+    statusEl.textContent = msg;
+    statusEl.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim, rgba(0,210,106,0.12))';
+    statusEl.style.color = isError ? 'var(--red)' : 'var(--green)';
+  };
+  if(!symbol || !date || !qty || !price){ show('Fill in symbol, date, qty and price.', true); return; }
+  if(!dh252GetSheetUrl()){ show('Paste your Google Sheet URL above first.', true); return; }
+
+  const btn = document.getElementById('dh252-log-btn');
+  btn.disabled = true; btn.textContent = 'LOGGING...';
+  try{
+    await dh252PostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}`, false);
+    document.getElementById('dh252-f-symbol').value = '';
+    document.getElementById('dh252-f-qty').value = '';
+    document.getElementById('dh252-f-price').value = '';
+    await dh252Refresh();
+  }catch(err){
+    show('Failed to log: ' + err.message, true);
+  }finally{
+    btn.disabled = false; btn.textContent = 'LOG TRADE';
+  }
+}
+
+let dh252Initialized = false;
+function dh252Init(){
+  dh252Initialized = true;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  document.getElementById('dh252-f-date').value = todayIso;
+  document.getElementById('dh252-sheet-url').value = dh252GetSheetUrl();
+  document.getElementById('dh252-sheet-url').addEventListener('change', async (e) => {
+    dh252SaveSheetUrl(e.target.value);
+    await dh252Refresh();
+  });
+  document.getElementById('dh252-log-btn').onclick = dh252LogTrade;
+  dh252Refresh();
+}
 </script>
 </body>
 </html>

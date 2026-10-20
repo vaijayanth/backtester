@@ -54,24 +54,24 @@ ST_MULTIPLIER = 3.0
 DEFAULT_INITIAL_CAPITAL_RS = 500000  # assumption, not stated in the spec — override with --capital
 
 
-def load_validated_symbols():
-    manifest = pd.read_csv(MANIFEST_CSV)
+def load_validated_symbols(manifest_csv=MANIFEST_CSV):
+    manifest = pd.read_csv(manifest_csv)
     return manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist()
 
 
-def load_universe_data(symbols=None):
-    validated = load_validated_symbols()
+def load_universe_data(symbols=None, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV, breakout_window_days=BREAKOUT_WINDOW_DAYS):
+    validated = load_validated_symbols(manifest_csv)
     if symbols:
         validated = [s for s in validated if s in symbols]
     data = {}
     for symbol in validated:
-        path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
+        path = raw_dir / f"{symbol.replace('.', '_')}.parquet"
         if not path.exists():
             continue
         df = pd.read_parquet(path)
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df = df.sort_index()
-        if len(df) < BREAKOUT_WINDOW_DAYS + ATR_PERIOD:
+        if len(df) < breakout_window_days + ATR_PERIOD:
             continue
         data[symbol] = df
     return data
@@ -124,8 +124,8 @@ def compute_supertrend(highs, lows, closes, period=ATR_PERIOD, multiplier=ST_MUL
     return direction
 
 
-def prep_symbol_df(df):
-    """Returns {date: (open, high, low, close, rolling_high_252, supertrend_dir)}
+def prep_symbol_df(df, breakout_window_days=BREAKOUT_WINDOW_DAYS):
+    """Returns {date: (open, high, low, close, rolling_high, supertrend_dir)}
     — plain dict, not a DataFrame, so the backtest's hot loop (all_dates x
     all_symbols) does O(1) dict lookups instead of pandas .loc, which is
     too slow at this scale (~1200 dates x ~1500 symbols)."""
@@ -133,7 +133,7 @@ def prep_symbol_df(df):
     highs = df["High"].tolist()
     lows = df["Low"].tolist()
     opens = df["Open"].tolist()
-    rolling_high = df["High"].rolling(BREAKOUT_WINDOW_DAYS).max().shift(1).tolist()
+    rolling_high = df["High"].rolling(breakout_window_days).max().shift(1).tolist()
     supertrend_dir = compute_supertrend(highs, lows, closes)
     return {
         date: (opens[i], highs[i], lows[i], closes[i], rolling_high[i], supertrend_dir[i])
@@ -141,12 +141,13 @@ def prep_symbol_df(df):
     }
 
 
-def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs=INITIAL_POSITION_RS, symbols=None):
-    raw_data = load_universe_data(symbols)
+def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs=INITIAL_POSITION_RS, symbols=None,
+                  breakout_window_days=BREAKOUT_WINDOW_DAYS, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV):
+    raw_data = load_universe_data(symbols, raw_dir=raw_dir, manifest_csv=manifest_csv, breakout_window_days=breakout_window_days)
     if not raw_data:
-        raise RuntimeError("No validated symbol data found in checkpoints/raw/ — run the backfill workflow first.")
+        raise RuntimeError(f"No validated symbol data found in {raw_dir} — run the backfill workflow first.")
 
-    data = {sym: prep_symbol_df(df) for sym, df in raw_data.items()}
+    data = {sym: prep_symbol_df(df, breakout_window_days) for sym, df in raw_data.items()}
     all_dates = sorted(set().union(*[set(d.keys()) for d in data.values()]))
 
     cash = float(initial_capital_rs)
@@ -246,7 +247,7 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
         })
 
     return build_results(
-        initial_capital_rs, position_size_rs, data, closed_trades, positions, equity_curve, cash,
+        initial_capital_rs, position_size_rs, breakout_window_days, data, closed_trades, positions, equity_curve, cash,
         missed_entries_no_cash, missed_entries_price_too_high, missed_adds_no_cash,
     )
 
@@ -268,7 +269,7 @@ def compute_max_drawdown(equity_curve, initial_capital_rs):
     return round(max_dd, 2)
 
 
-def build_results(initial_capital_rs, position_size_rs, data, closed_trades, open_positions, equity_curve, final_cash,
+def build_results(initial_capital_rs, position_size_rs, breakout_window_days, data, closed_trades, open_positions, equity_curve, final_cash,
                    missed_entries_no_cash, missed_entries_price_too_high, missed_adds_no_cash):
     wins = [t for t in closed_trades if t["pl_rs"] > 0]
     losses = [t for t in closed_trades if t["pl_rs"] <= 0]
@@ -297,7 +298,7 @@ def build_results(initial_capital_rs, position_size_rs, data, closed_trades, ope
     return {
         "strategy": "252-day-high breakout, Supertrend-red full exit, WAC-based average-down",
         "params": {
-            "breakout_window_days": BREAKOUT_WINDOW_DAYS,
+            "breakout_window_days": breakout_window_days,
             "initial_position_rs": position_size_rs,
             "add_on_trigger_pct": ADD_ON_TRIGGER_PCT,
             "add_on_size_fraction": ADD_ON_SIZE_FRACTION,
@@ -335,10 +336,16 @@ def main():
                          help=f"Initial capital in Rs (default {DEFAULT_INITIAL_CAPITAL_RS} — not stated in the strategy spec, override as needed)")
     parser.add_argument("--position-size", type=float, default=INITIAL_POSITION_RS,
                          help=f"Rs per new position (default {INITIAL_POSITION_RS})")
+    parser.add_argument("--breakout-window", type=int, default=BREAKOUT_WINDOW_DAYS,
+                         help=f"Breakout lookback in trading days (default {BREAKOUT_WINDOW_DAYS} = ~52-week high)")
+    parser.add_argument("--raw-dir", type=str, default=str(RAW_DIR), help="Directory of per-symbol parquet OHLC")
+    parser.add_argument("--manifest", type=str, default=str(MANIFEST_CSV), help="Manifest CSV listing VALIDATED symbols")
     parser.add_argument("--out", type=str, default="results_252dh.json")
     args = parser.parse_args()
 
-    results = run_backtest(initial_capital_rs=args.capital, position_size_rs=args.position_size)
+    results = run_backtest(initial_capital_rs=args.capital, position_size_rs=args.position_size,
+                            breakout_window_days=args.breakout_window,
+                            raw_dir=Path(args.raw_dir), manifest_csv=Path(args.manifest))
     Path(args.out).write_text(json.dumps(results, indent=2))
 
     m = results["metrics"]
