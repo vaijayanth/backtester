@@ -12,17 +12,27 @@ Two modes, chosen per symbol automatically:
    the existing parquet. Fast — a handful of rows per symbol instead of
    ~1,250.
 
-2. FULL REFRESH (one weekday "slice" of the universe per day, so every
-   symbol gets one roughly every 5 trading days): re-run the same full
-   5yr fetch backfill.py uses, overwriting the stored history outright.
-   This exists specifically to correct a real, silent problem with
-   incremental appends: yfinance's auto_adjust back-adjusts the ENTIRE
-   price history for splits/bonuses/dividends at fetch time. A new split
-   announced today changes the correct adjusted price for data from
+2. FULL REFRESH (one daily "slice" of the universe, so every symbol gets
+   one roughly every FULL_REFRESH_CYCLE_DAYS trading days): re-run the
+   same full 5yr fetch backfill.py uses, overwriting the stored history
+   outright. This exists specifically to correct a real, silent problem
+   with incremental appends: yfinance's auto_adjust back-adjusts the
+   ENTIRE price history for splits/bonuses/dividends at fetch time. A new
+   split announced today changes the correct adjusted price for data from
    years ago — an incremental append only ever touches rows at the tail,
    so it can never fix that retroactively. A periodic full refetch is
    the only way to self-heal that drift, so one runs on a rotation
    instead of trying to detect corporate actions directly.
+
+   Was a 5-trading-day (weekly) cycle originally; widened to
+   FULL_REFRESH_CYCLE_DAYS (2026-10-20) — corporate actions needing this
+   correction are rare, so a monthly correction pass is still more than
+   enough, and quartering the daily full-refresh slice directly cuts both
+   the run's typical length and its exposure to a transient data-source
+   outage (see the circuit breaker below — confirmed live, 2026-10-19: a
+   ~4.5hr run burned almost entirely on retry backoff for 304 symbols
+   that failed identically mid-run, strongly pointing to a provider-side
+   outage, not 304 individually bad tickers).
 
 Still-PENDING or still-retryable-FAILED symbols (from backfill.py's own
 manifest states) are also attempted here with a full fetch — this run
@@ -53,6 +63,7 @@ from backfill import (  # noqa: E402
     STATUS_FAILED,
     STATUS_PENDING,
     STATUS_VALIDATED,
+    fetch_one,
     fetch_with_retry,
     is_retryable,
     load_manifest,
@@ -61,16 +72,28 @@ from backfill import (  # noqa: E402
     validate_ohlc,
 )
 
-FULL_REFRESH_WEEKDAY_SLICES = 5  # Mon=0 .. Fri=4 — one slice of the universe per weekday
+FULL_REFRESH_CYCLE_DAYS = 20  # ~one trading month — every symbol gets a correcting full refetch roughly once per cycle, spread one daily slice at a time
+
+# A systemic, provider-side outage (confirmed live 2026-10-19: 303/304
+# full-refresh symbols failed with the IDENTICAL "null OHLC" error in one
+# run) burns the per-symbol retry backoff (up to RETRY_DELAYS' ~50s) on
+# every single failure — turning a few hours of real work into most of a
+# day. Once this many full-refresh symbols fail in a row, further retries
+# in the SAME run are very unlikely to succeed (an outage doesn't clear in
+# 50s), so later symbols in this run get exactly one attempt instead of
+# the full retry ladder. They're simply corrected on the NEXT rotation
+# pass instead — same self-healing guarantee, just not re-attempted
+# pointlessly within a run that's already in a bad window.
+OUTAGE_STREAK_THRESHOLD = 15
 
 
 def full_refresh_today(symbol: str) -> bool:
-    """Deterministic weekday bucket per symbol (stable across runs, not
-    random) — spreads the correcting full refetch evenly across the week
-    instead of clustering on one day."""
-    bucket = hash(symbol) % FULL_REFRESH_WEEKDAY_SLICES
-    today_weekday = datetime.now(timezone.utc).weekday()  # 0=Mon
-    return bucket == (today_weekday % FULL_REFRESH_WEEKDAY_SLICES)
+    """Deterministic daily bucket per symbol (stable across runs, not
+    random) — spreads the correcting full refetch evenly across the
+    FULL_REFRESH_CYCLE_DAYS-day cycle instead of clustering on one day."""
+    bucket = hash(symbol) % FULL_REFRESH_CYCLE_DAYS
+    day_index = datetime.now(timezone.utc).toordinal()  # ever-increasing day counter, not tied to weekday
+    return bucket == (day_index % FULL_REFRESH_CYCLE_DAYS)
 
 
 def incremental_update(symbol: str, last_date_str: str) -> dict:
@@ -113,17 +136,19 @@ def incremental_update(symbol: str, last_date_str: str) -> dict:
     merged = pd.concat([existing, new_df])
     merged = merged[~merged.index.duplicated(keep="last")].sort_index()
 
-    is_valid, err = validate_ohlc(merged)
+    is_valid, note, trimmed = validate_ohlc(merged)
     if not is_valid:
         row["status"] = STATUS_FAILED
-        row["error"] = f"post-merge validation failed: {err}"
+        row["error"] = f"post-merge validation failed: {note}"
         return row
+    merged = trimmed  # drop any leading/trailing null-OHLC edge rows before saving — see backfill.py's _trim_null_edges
 
     merged.to_parquet(path)
     row.update({
         "records": len(merged),
         "first_date": str(merged.index.min().date()),
         "last_date": str(merged.index.max().date()),
+        "error": note,
     })
     return row
 
@@ -187,14 +212,32 @@ def main():
             time.sleep(1)  # light pacing, same spirit as backfill.py's batching
 
     full_refreshed = full_refresh_failed = 0
+    consecutive_full_refresh_failures = 0
+    outage_mode = False
     for i, symbol in enumerate(full_refresh_targets):
         prior_attempts = int(manifest[symbol].get("attempts", 0))
-        print(f"[refresh {i + 1}/{len(full_refresh_targets)}] {symbol} (weekly correcting re-fetch)...")
-        row = fetch_with_retry(symbol, prior_attempts)
+        if outage_mode:
+            # See OUTAGE_STREAK_THRESHOLD — skip the retry ladder for the
+            # rest of this run's slice; a provider outage won't clear in
+            # the ~50s a full retry ladder would burn per symbol anyway.
+            print(f"[refresh {i + 1}/{len(full_refresh_targets)}] {symbol} (single attempt — outage suspected, skipping retry backoff)...")
+            row = fetch_one(symbol)
+            row["attempts"] = str(prior_attempts + 1)
+        else:
+            print(f"[refresh {i + 1}/{len(full_refresh_targets)}] {symbol} (correcting re-fetch)...")
+            row = fetch_with_retry(symbol, prior_attempts)
         if row["status"] != STATUS_VALIDATED:
             print(f"    full refresh failed ({row['error']}) — keeping prior data, will retry on next rotation")
             full_refresh_failed += 1
+            consecutive_full_refresh_failures += 1
+            if not outage_mode and consecutive_full_refresh_failures >= OUTAGE_STREAK_THRESHOLD:
+                outage_mode = True
+                print(f"    *** {consecutive_full_refresh_failures} consecutive full-refresh failures — "
+                      f"suspecting a provider-side outage, not individually bad tickers. "
+                      f"Switching remaining symbols in this run to single-attempt (no retry backoff). ***")
             continue
+        consecutive_full_refresh_failures = 0  # a success proves the provider is reachable again
+        outage_mode = False
         manifest[symbol] = row
         full_refreshed += 1
         print(f"    refreshed, last_date now {row['last_date']} ({row['records']} total rows)")

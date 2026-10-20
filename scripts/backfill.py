@@ -110,40 +110,71 @@ def is_retryable(row: dict) -> bool:
     return True
 
 
-def validate_ohlc_structure(df: pd.DataFrame) -> tuple[bool, str]:
+def _trim_null_edges(df: pd.DataFrame) -> pd.DataFrame:
+    """Drops leading/trailing rows with ANY null OHLC value. Confirmed live
+    (2026-10-19 run, 303 symbols) as a real, recurring Yahoo Finance glitch:
+    a transient outage window returns an otherwise-good multi-year series
+    with a few edge rows (most often the most recent, incomplete session)
+    null — not genuine data corruption. Does NOT touch nulls anywhere in
+    the interior of the trimmed series; those still fail hard below, since
+    an interior gap is a real integrity problem a boundary artifact is not."""
+    valid_mask = df[["Open", "High", "Low", "Close"]].notnull().all(axis=1)
+    if not valid_mask.any():
+        return df.iloc[0:0]
+    first_valid = valid_mask.idxmax()
+    last_valid = valid_mask[::-1].idxmax()
+    return df.loc[first_valid:last_valid]
+
+
+def validate_ohlc_structure(df: pd.DataFrame) -> tuple[bool, str, pd.DataFrame | None]:
     """Hard requirements only — data must be real and internally consistent,
     but this does NOT check row count. A stock can structurally pass this
-    with just 1-2 rows and still be worth keeping for its CMP."""
+    with just 1-2 rows and still be worth keeping for its CMP.
+
+    Returns (is_valid, message, usable_df). usable_df is df with any
+    leading/trailing null-OHLC rows trimmed off (see _trim_null_edges) —
+    callers must save THIS, not the original df, so a trimmed edge never
+    silently reintroduces nulls into the parquet. message carries a trim
+    note on success (empty string if nothing was trimmed) or the failure
+    reason."""
     if df is None or df.empty:
         # Ambiguous on purpose: yfinance can swallow a network failure
         # internally and return an empty dataframe without raising, so this
         # does NOT necessarily mean the symbol is delisted — confirmed via a
         # sandboxed test run where every failure was actually a blocked
         # network call, not a bad symbol. Don't over-interpret this message.
-        return False, "empty dataframe (symbol may be delisted/wrong, OR the fetch failed silently — check for network errors in the log above, not just this message)"
+        return False, "empty dataframe (symbol may be delisted/wrong, OR the fetch failed silently — check for network errors in the log above, not just this message)", None
     required = {"Open", "High", "Low", "Close", "Volume"}
     if not required.issubset(df.columns):
-        return False, f"missing columns: {required - set(df.columns)}"
-    if df[["Open", "High", "Low", "Close"]].isnull().any().any():
-        return False, "null OHLC values present"
-    if (df["High"] < df["Low"]).any():
-        return False, "High < Low on at least one row"
-    if (df["Close"] <= 0).any() or (df["Open"] <= 0).any():
-        return False, "non-positive price present"
-    return True, ""
+        return False, f"missing columns: {required - set(df.columns)}", None
+
+    trimmed = _trim_null_edges(df)
+    if trimmed.empty:
+        return False, "all OHLC rows null", None
+    if trimmed[["Open", "High", "Low", "Close"]].isnull().any().any():
+        return False, "null OHLC values present in the interior of the series (not just leading/trailing edge rows)", None
+    if (trimmed["High"] < trimmed["Low"]).any():
+        return False, "High < Low on at least one row", None
+    if (trimmed["Close"] <= 0).any() or (trimmed["Open"] <= 0).any():
+        return False, "non-positive price present", None
+
+    dropped = len(df) - len(trimmed)
+    note = f"trimmed {dropped} leading/trailing null-OHLC row(s)" if dropped else ""
+    return True, note, trimmed
 
 
-def validate_ohlc(df: pd.DataFrame) -> tuple[bool, str]:
+def validate_ohlc(df: pd.DataFrame) -> tuple[bool, str, pd.DataFrame | None]:
     """Full validation INCLUDING the MIN_ROWS floor — this is the bar for a
     trustworthy Supertrend/EMA read (STATUS_VALIDATED). A structurally-sound
     but shorter-history symbol fails this and becomes STATUS_PARTIAL instead
-    of STATUS_FAILED — see fetch_one()."""
-    is_valid, err = validate_ohlc_structure(df)
+    of STATUS_FAILED — see fetch_one(). Returns (is_valid, message, usable_df)
+    like validate_ohlc_structure."""
+    is_valid, note, trimmed = validate_ohlc_structure(df)
     if not is_valid:
-        return False, err
-    if len(df) < MIN_ROWS:
-        return False, f"only {len(df)} rows — below the {MIN_ROWS}-row floor for a usable Supertrend/EMA read"
-    return True, ""
+        return False, note, None
+    if len(trimmed) < MIN_ROWS:
+        return False, f"only {len(trimmed)} rows — below the {MIN_ROWS}-row floor for a usable Supertrend/EMA read", None
+    return True, note, trimmed
 
 
 def fetch_one(symbol: str) -> dict:
@@ -159,8 +190,10 @@ def fetch_one(symbol: str) -> dict:
         row["error"] = f"fetch exception: {type(e).__name__}: {e}"
         return row
 
-    is_valid, err = validate_ohlc(df)
+    is_valid, note, trimmed = validate_ohlc(df)
+    save_note = note  # trim note (if any) for whichever df we end up saving
     if not is_valid:
+        err = note
         # A handful of real, actively-traded NSE small/micro-caps come back
         # with only a few dozen rows under period="5y" — not delisted, not
         # a bad symbol, just a yfinance quirk for thinly-covered tickers
@@ -173,9 +206,11 @@ def fetch_one(symbol: str) -> dict:
         except Exception as e:
             row["error"] = f"{err}; max-period retry also failed: {type(e).__name__}: {e}"
             return row
-        is_valid_max, err_max = validate_ohlc(df_max)
+        is_valid_max, note_max, trimmed_max = validate_ohlc(df_max)
+        err_max = note_max
         if is_valid_max:
-            df = df_max
+            df = trimmed_max
+            save_note = note_max
         else:
             # Full validation (row-count floor) failed on both attempts —
             # before giving up entirely, check if the LONGER of the two
@@ -185,11 +220,21 @@ def fetch_one(symbol: str) -> dict:
             # there's too little of it for a Supertrend/EMA read. Prefer
             # whichever pull actually passes the structural check, and
             # between two structurally-sound candidates prefer the longer.
-            structural_candidates = [d for d in (df, df_max) if validate_ohlc_structure(d)[0]]
-            if not structural_candidates:
+            s_valid, s_err, s_trim = validate_ohlc_structure(df)
+            s_valid_max, s_err_max, s_trim_max = validate_ohlc_structure(df_max)
+            candidates = []
+            if s_valid:
+                candidates.append((s_trim, s_err))
+            else:
+                err = s_err
+            if s_valid_max:
+                candidates.append((s_trim_max, s_err_max))
+            else:
+                err_max = s_err_max
+            if not candidates:
                 row["error"] = f"{err} (period=5y); {err_max} (period=max)"
                 return row
-            df = max(structural_candidates, key=len)
+            df, save_note = max(candidates, key=lambda c: len(c[0]))
             RAW_DIR.mkdir(parents=True, exist_ok=True)
             out_path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
             df.to_parquet(out_path)
@@ -198,9 +243,11 @@ def fetch_one(symbol: str) -> dict:
                 "records": len(df),
                 "first_date": str(df.index.min().date()),
                 "last_date": str(df.index.max().date()),
-                "error": f"PARTIAL — {err_max}",
+                "error": f"PARTIAL — {err_max}" + (f" ({save_note})" if save_note else ""),
             })
             return row
+    else:
+        df = trimmed
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
@@ -211,7 +258,7 @@ def fetch_one(symbol: str) -> dict:
         "records": len(df),
         "first_date": str(df.index.min().date()),
         "last_date": str(df.index.max().date()),
-        "error": "",
+        "error": save_note,
     })
     return row
 
