@@ -1,0 +1,64 @@
+name: Fetch Equity Names
+
+# Fetches each universe symbol's company display name (yfinance longName)
+# so a broker transaction report that lists "Shriram Finance" instead of
+# the NSE ticker (SHRIRAMFIN) can be resolved back to a real symbol - used
+# by the 52-Week High Forward Journal's Dhan transaction-report import.
+# Incremental: only newly-validated symbols cost an API call on a re-run,
+# since a company's display name essentially never changes - monthly is
+# plenty. Also runnable on demand via "Run workflow".
+
+on:
+  schedule:
+    - cron: "15 3 1 * *"  # 1st of each month, 03:15 UTC (offset from Fetch Equity Sectors)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed to commit data/equity_names.json back to main
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (for manifest.csv - which symbols are VALIDATED)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: production-checkpoints
+
+      - name: Restore production manifest.csv into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp production-checkpoints/checkpoints/manifest.csv main/checkpoints/manifest.csv
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: main
+        run: pip install -r requirements.txt
+
+      - name: Fetch names
+        working-directory: main
+        run: python scripts/fetch_equity_names.py
+
+      - name: Commit name data
+        working-directory: main
+        run: |
+          git config user.name "names-bot"
+          git config user.email "actions@github.com"
+          git add data/equity_names.json
+          if git diff --cached --quiet; then
+            echo "No name changes to commit"
+          else
+            git commit -m "Equity names: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
