@@ -254,6 +254,7 @@
       <div class="dash-title">BACKTESTING &amp; MARKET INTELLIGENCE</div>
       <div class="dash-meta" id="dash-meta">Market Data: — &nbsp;|&nbsp; Updated: —</div>
       <div class="dash-meta" id="dash-pipeline-status">Daily update pipeline: —</div>
+      <div id="dash-pipeline-run-alert" style="display:none;"></div>
     </div>
   </div>
 
@@ -1510,6 +1511,48 @@ async function loadPipelineStatus(){
     (totalFailed > 0 ? `, <span style="color:var(--amber)">${totalFailed} failed</span>` : '') +
     (isStale ? ` &middot; <span style="color:var(--red)">stale — check Actions tab</span>` : '');
   el.style.color = isStale ? 'var(--amber)' : 'var(--muted)';
+
+  checkPipelineRunStatus();
+}
+
+// pipeline_status.json only reflects update_ohlc.py's own self-reported
+// health — it's written by the FIRST step of daily_update.yml and says
+// nothing about later steps (market_snapshot.py, market_screens.py,
+// strangle_screen.py, supertrend.py). If one of those crashes, the
+// workflow run itself goes red on GitHub Actions while pipeline_status.json
+// still looks perfectly healthy from the earlier step — a real gap, caught
+// live: run 39231926823 failed on 2026-10-19 and was invisible here until
+// this check was added. Queries the public Actions API directly (no auth
+// needed for a public repo) so a true run failure is never silently
+// missed, even one later fixed by a same-day retry.
+async function checkPipelineRunStatus(){
+  const alertEl = document.getElementById('dash-pipeline-run-alert');
+  if(!alertEl) return;
+  try{
+    const resp = await fetch('https://api.github.com/repos/vaijayanth/backtester/actions/workflows/daily_update.yml/runs?per_page=8');
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const runs = (data.workflow_runs || []).filter(r => r.status === 'completed');
+    if(!runs.length){ alertEl.style.display = 'none'; return; }
+
+    const latest = runs[0];
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const failedToday = runs.filter(r => r.conclusion === 'failure' && r.created_at.slice(0, 10) === todayUTC);
+
+    if(latest.conclusion === 'failure'){
+      alertEl.innerHTML = `🔴 <b>Latest daily update run FAILED</b> — ${new Date(latest.created_at).toLocaleString('en-IN')} · <a href="${latest.html_url}" target="_blank" style="color:inherit;text-decoration:underline;">view run on GitHub</a>`;
+      alertEl.style.cssText = 'display:block;margin-top:8px;padding:8px 12px;border-radius:6px;background:rgba(255,59,48,.12);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:600;';
+    } else if(failedToday.length){
+      alertEl.innerHTML = `⚠ <b>${failedToday.length} run${failedToday.length===1?'':'s'} failed earlier today</b> (latest run recovered) — <a href="${failedToday[0].html_url}" target="_blank" style="color:inherit;text-decoration:underline;">view failed run</a>`;
+      alertEl.style.cssText = 'display:block;margin-top:8px;padding:8px 12px;border-radius:6px;background:rgba(245,158,11,.1);border:1px solid var(--amber);color:var(--amber);font-size:12px;font-weight:600;';
+    } else {
+      alertEl.style.display = 'none';
+    }
+  }catch(err){
+    // GitHub API unreachable/rate-limited — degrade silently, the text
+    // status above still covers the common case.
+    alertEl.style.display = 'none';
+  }
 }
 
 async function loadEarningsCalendar(){
