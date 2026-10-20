@@ -1361,6 +1361,17 @@
     <div class="dash-footnote">In profit, Supertrend flipped red — trailing SL hit per your rule.</div>
   </div>
 
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-entry52wh-table">
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
+        <tbody id="eqa-entry52wh-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Entry rule: close is at/above the prior 52-week high, anywhere in the full universe (not just what you hold). Excludes stocks you already hold. This is the actual entry trigger — not the "near high" or Supertrend-flip panels, which are informational strength reads. 🔥 Sector = one of the top 3 sectors right now by either 52-week-high breakout count or Supertrend turnaround count (whichever applies) — several stocks in one sector moving together is a stronger signal than one in isolation.</div>
+  </div>
+
   <div class="panel">
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
     <div class="table-scroll">
@@ -1414,17 +1425,6 @@
       </table>
     </div>
     <div class="dash-footnote">Open positions within 5% of their 52-week high — breakout-strength tell, informational only (doesn't change exit/add-on action from the sections above). "🚀 New 52W High" = currently AT a fresh high, not just near one.</div>
-  </div>
-
-  <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="eqa-entry52wh-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
-        <tbody id="eqa-entry52wh-tbody"></tbody>
-      </table>
-    </div>
-    <div class="dash-footnote">Entry rule: close is at/above the prior 52-week high, anywhere in the full universe (not just what you hold). Excludes stocks you already hold. This is the actual entry trigger — not the "near high" or Supertrend-flip panels, which are informational strength reads.</div>
   </div>
 
   <div class="panel">
@@ -6255,6 +6255,22 @@ function eqAlertsRender(){
     </tr>`;
   });
 
+  // Same sector-turnaround ranking as the Equity Dashboard's "Recent
+  // Turnaround by Sector" chart — a stock whose whole sector is turning
+  // green together is a stronger signal than an isolated flip. Computed
+  // here (before both the Entry Signal and New Bullish Signals tables
+  // below) since both panels flag rows against it.
+  const sectorTurn = {};
+  Object.values(stMap).forEach(e => {
+    if(e.recent_bullish_flip_days_ago == null) return;
+    const sector = eqSectorFor(eqStripNs(e.symbol));
+    if(sector === '—') return;
+    sectorTurn[sector] = (sectorTurn[sector] || 0) + 1;
+  });
+  const hotTurnSectors = new Set(
+    Object.entries(sectorTurn).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
+  );
+
   // Entry signal — the user's actual stated entry rule: close at/above the
   // prior 52-week high. Universe-wide (not just open positions, unlike the
   // "Near 52-Week High" panel above), excludes already-held symbols since
@@ -6264,10 +6280,33 @@ function eqAlertsRender(){
     .filter(w => w.pct_from_high >= 0 && !heldForEntry.has(eqStripNs(w.symbol)) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
     .sort((a, b) => b.pct_from_high - a.pct_from_high);
 
+  // Sector tally for the 52WH breakout list itself (separate ranking from
+  // sectorTurn above, which counts Supertrend flips) — a sector hitting
+  // several fresh 52-week highs together is its own distinct "hot" signal.
+  const entry52whSectorCount = {};
+  entry52wh.forEach(w => {
+    const sector = eqSectorFor(eqStripNs(w.symbol));
+    if(sector === '—') return;
+    entry52whSectorCount[sector] = (entry52whSectorCount[sector] || 0) + 1;
+  });
+  const hot52whSectors = new Set(
+    Object.entries(entry52whSectorCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
+  );
+
   eqAlertsRenderTable('eqa-entry52wh-tbody', 'eqa-entry52wh-count', entry52wh, w => {
     const bare = eqStripNs(w.symbol);
     const sector = eqSectorFor(bare);
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${sector}</td></tr>`;
+    const whHot = sector !== '—' && hot52whSectors.has(sector);
+    const turnHot = sector !== '—' && hotTurnSectors.has(sector);
+    let sectorLabel = sector;
+    if(whHot || turnHot){
+      const tags = [];
+      if(whHot) tags.push(`${entry52whSectorCount[sector]} at 52WH`);
+      if(turnHot) tags.push(`${sectorTurn[sector]} turned`);
+      sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
+    }
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td>
+      <td style="${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   });
 
   // Universe-wide new bullish signals — independent of current holdings,
@@ -6277,22 +6316,7 @@ function eqAlertsRender(){
   const newSignals = Object.values(stMap)
     .filter(e => e.recent_bullish_flip_days_ago != null && !heldSymbols.has(eqStripNs(e.symbol)))
     .sort((a, b) => a.recent_bullish_flip_days_ago - b.recent_bullish_flip_days_ago);
-
-  // Same sector-turnaround ranking as the Equity Dashboard's "Recent
-  // Turnaround by Sector" chart — a stock whose whole sector is turning
-  // green together is a stronger signal than an isolated flip, so each
-  // row below gets flagged if it belongs to one of the top-3 sectors by
-  // flip count right now.
-  const sectorTurn = {};
-  Object.values(stMap).forEach(e => {
-    if(e.recent_bullish_flip_days_ago == null) return;
-    const sector = eqSectorFor(eqStripNs(e.symbol));
-    if(sector === '—') return;
-    sectorTurn[sector] = (sectorTurn[sector] || 0) + 1;
-  });
-  const hotSectors = new Set(
-    Object.entries(sectorTurn).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
-  );
+  const hotSectors = hotTurnSectors;
 
   eqAlertsRenderTable('eqa-newsig-tbody', 'eqa-newsig-count', newSignals, e => {
     const flipLabel = e.recent_bullish_flip_days_ago === 0 ? 'Today' : `${e.recent_bullish_flip_days_ago}d ago (${e.recent_bullish_flip_date})`;
