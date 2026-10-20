@@ -1348,11 +1348,11 @@
     <div class="panel-head"><div class="panel-title">🆕 NEW BULLISH SIGNALS — UNIVERSE <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-newsig-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>FLIPPED</th><th>ABOVE 50 EMA</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND FLIPPED TO GREEN</th><th>ABOVE 50 EMA</th><th>SECTOR</th></tr></thead>
         <tbody id="eqa-newsig-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Supertrend flipped green in the last 7 days, anywhere in the full universe (not just what you hold) — catches a flip even if you missed checking for a day or two. Excludes stocks you already hold.</div>
+    <div class="dash-footnote">Supertrend flipped green in the last 7 days, anywhere in the full universe (not just what you hold) — catches a flip even if you missed checking for a day or two. Excludes stocks you already hold. 🔥 Sector = one of the top 3 sectors by turnaround count right now (same ranking as the Equity Dashboard's sector-breadth charts) — several stocks in that sector turning green together is a stronger signal than one in isolation.</div>
   </div>
 
   <div class="panel">
@@ -5537,10 +5537,31 @@ function eqAlertsRender(){
     .filter(e => e.recent_bullish_flip_days_ago != null && !heldSymbols.has(eqStripNs(e.symbol)))
     .sort((a, b) => a.recent_bullish_flip_days_ago - b.recent_bullish_flip_days_ago);
 
+  // Same sector-turnaround ranking as the Equity Dashboard's "Recent
+  // Turnaround by Sector" chart — a stock whose whole sector is turning
+  // green together is a stronger signal than an isolated flip, so each
+  // row below gets flagged if it belongs to one of the top-3 sectors by
+  // flip count right now.
+  const sectorTurn = {};
+  Object.values(stMap).forEach(e => {
+    if(e.recent_bullish_flip_days_ago == null) return;
+    const sector = eqSectorFor(eqStripNs(e.symbol));
+    if(sector === '—') return;
+    sectorTurn[sector] = (sectorTurn[sector] || 0) + 1;
+  });
+  const hotSectors = new Set(
+    Object.entries(sectorTurn).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
+  );
+
   eqAlertsRenderTable('eqa-newsig-tbody', 'eqa-newsig-count', newSignals, e => {
     const flipLabel = e.recent_bullish_flip_days_ago === 0 ? 'Today' : `${e.recent_bullish_flip_days_ago}d ago (${e.recent_bullish_flip_date})`;
     const emaLabel = e.above_ema50 === true ? '✓ Above' : e.above_ema50 === false ? '✗ Below' : '—';
-    return `<tr><td>${eqStripNs(e.symbol)}</td><td>${eqFmtRs(e.close)}</td><td>${flipLabel}</td><td>${emaLabel}</td></tr>`;
+    const sector = eqSectorFor(eqStripNs(e.symbol));
+    const isHot = sector !== '—' && hotSectors.has(sector);
+    const sectorLabel = sector === '—' ? '—' :
+      (isHot ? `🔥 ${sector} (${sectorTurn[sector]})` : `${sector} (${sectorTurn[sector] || 0})`);
+    return `<tr><td>${eqStripNs(e.symbol)}</td><td>${eqFmtRs(e.close)}</td><td>${flipLabel}</td><td>${emaLabel}</td>
+      <td style="${isHot ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   });
 }
 
