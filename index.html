@@ -1479,6 +1479,7 @@
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
       <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dh252-avg-plpct">—</div></div>
       <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dh252-winrate">—</div></div>
+      <div class="stat"><div class="stat-label">CAGR (COMBINED)</div><div class="stat-value" id="dh252-cagr">—</div></div>
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
   </div>
@@ -6477,6 +6478,7 @@ const DH252_ADD_COOLDOWN_DAYS = 7;
 const DH252_BACKTEST_AVG_PLPCT = 12.62;
 const DH252_BACKTEST_WIN_RATE = 44.92;
 const DH252_BACKTEST_CLOSED_TRADES = 6536;
+const DH252_BACKTEST_CAGR = 9.91; // full 10yr equity curve: (final combined value / initial capital)^(1/years) - 1
 
 function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
@@ -6518,12 +6520,14 @@ function dh252BuildPositions(trades){
   const closed = [];
   const skipped = [];
   let cash = DH252_INITIAL_CAPITAL_RS;
+  let firstTradeDate = null;
 
   trades.forEach(t => {
     const sym = String(t.Symbol || '').trim().toUpperCase();
     const action = String(t.Action || '').trim().toUpperCase();
     const qty = Number(t.Qty), price = Number(t.Price), date = t.Date;
     if(!sym || !qty || !price || !date){ skipped.push({...t, reason: 'missing field'}); return; }
+    if(!firstTradeDate || date < firstTradeDate) firstTradeDate = date;
 
     if(action === 'BUY'){
       if(open[sym]){ skipped.push({...t, reason: `BUY logged but ${sym} already open — treated as ignored, fix the log`}); return; }
@@ -6556,7 +6560,7 @@ function dh252BuildPositions(trades){
     }
   });
 
-  return {open, closed, cash, skipped};
+  return {open, closed, cash, skipped, firstTradeDate};
 }
 
 function dh252FmtRs(v){ return '₹' + Math.round(v).toLocaleString('en-IN'); }
@@ -6571,6 +6575,30 @@ function dh252RenderPositions(state){
   realizedEl.textContent = dh252FmtRs(realized);
   realizedEl.style.color = realized >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('dh252-afford').textContent = Math.max(0, Math.floor(state.cash / DH252_POSITION_SIZE_RS));
+
+  // Live CAGR — mark open positions to market using the same week52 close
+  // already fetched for signals, so "combined" matches the backtest's own
+  // realized+open_mtm definition rather than understating return by
+  // ignoring unrealized P&L on what's still open.
+  const week52ForMtm = window._dh252Week52 || {};
+  const openMtm = openList.reduce((s, p) => {
+    const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
+    return w ? s + (w.close - p.wac) * p.qty : s;
+  }, 0);
+  const combinedValue = DH252_INITIAL_CAPITAL_RS + realized + openMtm;
+  const cagrEl = document.getElementById('dh252-cagr');
+  const daysElapsed = state.firstTradeDate ? (new Date() - new Date(state.firstTradeDate)) / 86400000 : 0;
+  let liveCagr = null; // percent, null until there's enough live history to annualize meaningfully
+  if(!state.firstTradeDate || daysElapsed < 7){
+    cagrEl.textContent = '—';
+    cagrEl.style.color = '';
+  } else {
+    const years = daysElapsed / 365.25;
+    liveCagr = (Math.pow(combinedValue / DH252_INITIAL_CAPITAL_RS, 1 / years) - 1) * 100;
+    cagrEl.textContent = liveCagr.toFixed(1) + '%';
+    cagrEl.style.color = liveCagr >= DH252_BACKTEST_CAGR ? 'var(--green)' : 'var(--amber)';
+    cagrEl.title = years < 0.5 ? 'Under 6 months of live history — this annualized number is highly noisy, treat it as illustrative only.' : '';
+  }
 
   document.getElementById('dh252-closed-stat').textContent = state.closed.length;
   const avgPlPct = state.closed.length ? state.closed.reduce((s, t) => s + t.plPct, 0) / state.closed.length : null;
@@ -6594,13 +6622,15 @@ function dh252RenderPositions(state){
 
   const vsBacktestEl = document.getElementById('dh252-vs-backtest');
   if(avgPlPct === null){
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L — no closed trades yet to compare.`;
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_CAGR}% CAGR — no closed trades yet to compare.`;
   } else {
     const plDeviation = avgPlPct - DH252_BACKTEST_AVG_PLPCT;
     const wrDeviation = winRate - DH252_BACKTEST_WIN_RATE;
+    const cagrDeviation = liveCagr === null ? null : liveCagr - DH252_BACKTEST_CAGR;
+    const cagrText = cagrDeviation === null ? '' : `, CAGR ${cagrDeviation >= 0 ? '+' : ''}${cagrDeviation.toFixed(1)}pp`;
     const sampleNote = state.closed.length < 20 ? ` — only ${state.closed.length} trade${state.closed.length === 1 ? '' : 's'} so far, this deviation is expected noise at this sample size, not a signal.` : '';
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate. ` +
-      `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp.${sampleNote}`;
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_CAGR}% CAGR. ` +
+      `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp${cagrText}.${sampleNote}`;
   }
 
   document.getElementById('dh252-pos-count').textContent = openList.length;
