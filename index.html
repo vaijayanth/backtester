@@ -4296,6 +4296,15 @@ async function eqUploadFile(){
 const EQ_SYMBOL_ALIASES = {
   'LTIM': 'LTM',        // LTIMindtree -> LTM Limited, NSE symbol change Feb 2026
   'GSPL': 'GSPLTRANS',  // GSPL Transmission Ltd — GSPL was never this stock's live ticker
+  'GVTD': 'GVT&D',       // GE Vernova T&D India — Zerodha's own Tradebook export spells this
+                         // symbol with and without the "&" across different exports, splitting
+                         // one stock's fill history into two FIFO symbols. Found 2026-10-20
+                         // while investigating unmatchedQty flags: GVT&D showed a 2-share gap
+                         // that was "fixed" with a manual off-market-transfer entry below — the
+                         // real cause was this spelling split all along, not a transfer. Merging
+                         // the two spellings resolves the gap exactly (2026-05-13's "GVTD" sell
+                         // of 2 matches 2026-04-21's "GVT&D" buy of 2 perfectly via FIFO), so the
+                         // manual transfer entry is now removed rather than double-correcting.
 };
 function eqCanonicalSymbol(sym){ return EQ_SYMBOL_ALIASES[sym] || sym; }
 
@@ -4317,14 +4326,12 @@ function eqIsLongTermExcluded(sym){
 // Add an entry here only after confirming with the user that FIFO's count
 // is wrong and Holdings' count is the real one (never guess this).
 const EQ_MANUAL_FILLS = [
-  // GE Vernova T&D India (GVT&D): FIFO showed 7 shares open (1 @ ₹4,249.50
-  // bought 2026-04-21, 1 @ ₹5,140 bought 2026-05-29, 5 @ ₹4,805.60 bought
-  // 2026-09-09) but Holdings showed only 5 — user confirmed 5 is correct.
-  // No public buyback/capital-reduction found for this stock in 2026, so
-  // the 2 oldest shares most likely left via an untracked transfer. Modeled
-  // as a sell of those 2 oldest lots at their own avg cost (₹4,694.75),
-  // dated just before the 2026-09-09 buy.
-  { symbol: 'GVT&D', isin: 'INE200A01026', tradeDate: '2026-09-08', exchange: 'NSE', segment: 'EQ', series: 'EQ', tradeType: 'sell', auction: false, quantity: 2, price: 4694.75, tradeId: 'MANUAL-GVTD-TRANSFER-1' },
+  // GE Vernova T&D India — REMOVED 2026-10-20 (was MANUAL-GVTD-TRANSFER-1).
+  // Root cause turned out to be the GVTD/GVT&D symbol-spelling split fixed
+  // by EQ_SYMBOL_ALIASES above, not a real off-market transfer — leaving
+  // this manual "sell" in would now double-correct a gap that no longer
+  // exists once the two spellings are merged. See the alias entry's
+  // comment for the full trace.
 
   // JB Chemicals & Pharmaceuticals merged into Torrent Pharmaceuticals
   // (NCLT Ahmedabad sanctioned 2026-07-06, record date 2026-07-17, swap
