@@ -34,6 +34,17 @@ jobs:
         with:
           path: main
 
+      - name: Checkout backfill-checkpoints branch (for manifest.csv — which symbols are VALIDATED)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: production-checkpoints
+
+      - name: Restore production manifest.csv into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp production-checkpoints/checkpoints/manifest.csv main/checkpoints/manifest.csv
+
       - name: Checkout scratch-10yr-checkpoints branch (if it already exists)
         id: checkout_scratch
         uses: actions/checkout@v4
