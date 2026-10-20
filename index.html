@@ -6452,6 +6452,7 @@ document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e)
 // P&L. Google Sheet is an append-only trade log (every real fill is its
 // own row, never replaced) — current state (open positions, WAC, cash)
 // is always derived by replaying that log, never stored directly.
+const DH252_SHEET_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwBJDaJKO5eg2Df2eKwLCN-opkDtNe1ZmCg6YvqZzU5b1-XHZ8L7iSL4zc-iUnwajp6/exec';
 const DH252_SHEET_URL_KEY = 'dh252_sheet_url';
 const DH252_INITIAL_CAPITAL_RS = 2000000;
 const DH252_POSITION_SIZE_RS = 1000;
@@ -6459,7 +6460,7 @@ const DH252_ADD_TRIGGER_PCT = -6;
 const DH252_ADD_FRACTION = 0.10;
 const DH252_ADD_COOLDOWN_DAYS = 7;
 
-function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || '').trim(); }
+function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
 
 async function dh252FetchTrades(){
