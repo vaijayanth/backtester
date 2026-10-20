@@ -1478,6 +1478,7 @@
       <div class="stat"><div class="stat-label">CAN AFFORD (AT ₹1,000)</div><div class="stat-value" id="dh252-afford">—</div></div>
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
       <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dh252-avg-plpct">—</div></div>
+      <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dh252-winrate">—</div></div>
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
   </div>
@@ -6580,14 +6581,25 @@ function dh252RenderPositions(state){
     avgPlPctEl.textContent = dh252FmtPct(avgPlPct);
     avgPlPctEl.style.color = avgPlPct >= 0 ? 'var(--green)' : 'var(--red)';
   }
+  const winRate = state.closed.length ? state.closed.filter(t => t.plPct > 0).length / state.closed.length * 100 : null;
+  const winRateEl = document.getElementById('dh252-winrate');
+  if(winRate === null){
+    winRateEl.textContent = '—';
+    winRateEl.style.color = '';
+  } else {
+    winRateEl.textContent = winRate.toFixed(1) + '%';
+    winRateEl.style.color = winRate >= DH252_BACKTEST_WIN_RATE ? 'var(--green)' : 'var(--amber)';
+  }
+
   const vsBacktestEl = document.getElementById('dh252-vs-backtest');
   if(avgPlPct === null){
     vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 5yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L — no closed trades yet to compare.`;
   } else {
-    const deviation = avgPlPct - DH252_BACKTEST_AVG_PLPCT;
+    const plDeviation = avgPlPct - DH252_BACKTEST_AVG_PLPCT;
+    const wrDeviation = winRate - DH252_BACKTEST_WIN_RATE;
     const sampleNote = state.closed.length < 20 ? ` — only ${state.closed.length} trade${state.closed.length === 1 ? '' : 's'} so far, this deviation is expected noise at this sample size, not a signal.` : '';
     vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 5yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate. ` +
-      `Live vs backtest avg P&L: ${deviation >= 0 ? '+' : ''}${deviation.toFixed(2)}pp.${sampleNote}`;
+      `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp.${sampleNote}`;
   }
 
   document.getElementById('dh252-pos-count').textContent = openList.length;
