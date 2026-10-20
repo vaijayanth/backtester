@@ -6112,12 +6112,13 @@ function eqAlertsRender(){
   // this is a watchlist for NEW entries, not a read on existing ones.
   const heldForEntry = new Set(open.map(p => p.symbol));
   const entry52wh = Object.values(window._eqWeek52 || {})
-    .filter(w => w.pct_from_high >= 0 && !heldForEntry.has(w.symbol))
+    .filter(w => w.pct_from_high >= 0 && !heldForEntry.has(eqStripNs(w.symbol)) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
     .sort((a, b) => b.pct_from_high - a.pct_from_high);
 
   eqAlertsRenderTable('eqa-entry52wh-tbody', 'eqa-entry52wh-count', entry52wh, w => {
-    const sector = eqSectorFor(w.symbol);
-    return `<tr><td>${w.symbol}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${sector}</td></tr>`;
+    const bare = eqStripNs(w.symbol);
+    const sector = eqSectorFor(bare);
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${sector}</td></tr>`;
   });
 
   // Universe-wide new bullish signals — independent of current holdings,
