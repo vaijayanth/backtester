@@ -14,7 +14,19 @@ JS to commit directly was explicitly rejected elsewhere in this project
 (docs/SPEC.md section 4b) as a bigger liability than a leaked app password.
 Same durable-Sheet-backend pattern as EQ_SHEET_URL/IVP_SHEET_URL.
 
-A newly-added symbol gets picked up as STATUS_PENDING by backfill.py's/
+Every pending symbol resolves to exactly one of three outcomes, written
+back to the sheet so the UI can show it instead of a request just silently
+vanishing from "pending":
+  - MERGED         genuinely new, has real price data on Yahoo, added.
+  - ALREADY_EXISTS requested symbol was already in the universe — no-op,
+                    not appended a second time.
+  - REJECTED       yfinance has no usable price history for it (typo, bad
+                    ticker, delisted) — never gets added to the universe at
+                    all, so a bad symbol can't sit around as a permanently
+                    FAILED backfill entry with no explanation. Note column
+                    carries why.
+
+A newly-MERGED symbol gets picked up as STATUS_PENDING by backfill.py's/
 update_ohlc.py's own manifest logic automatically the next time either
 runs (load_universe() just reads universe_clean.csv) — no extra backfill
 trigger needed here.
@@ -23,10 +35,13 @@ Usage:
   python scripts/merge_universe_additions.py
 """
 
+import csv
 import sys
+import time
 from pathlib import Path
 
 import requests
+import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).parent))
 import clean_universe  # noqa: E402
@@ -37,6 +52,11 @@ UNIVERSE_ADDITIONS_URL = "https://script.google.com/macros/s/AKfycbx0DhYyh9aQ74B
 
 
 def fetch_pending():
+    """Returns the RAW symbol text as the user typed it (e.g. "RELIANCE",
+    not normalized to "RELIANCE.NS") — this is what's stored in the sheet's
+    Symbol column, and what update_status() must match against to resolve
+    the right row. Normalization to a tradeable ticker happens separately,
+    per-row, in main()."""
     resp = requests.get(UNIVERSE_ADDITIONS_URL, timeout=30)
     resp.raise_for_status()
     data = resp.json()
@@ -55,53 +75,80 @@ def normalize_symbol(symbol):
     return symbol
 
 
-def mark_merged(symbols):
-    if not symbols:
-        return
+def symbol_has_real_data(symbol):
+    """Quick existence check — a bad/typo'd/delisted symbol returns an
+    empty dataframe from yfinance rather than raising, same signature
+    backfill.py's validate_ohlc_structure already relies on. Deliberately
+    lightweight (5 days, not 5 years) since this only needs to answer
+    "is this a real, currently-tradeable ticker", not fetch real history —
+    the actual backfill does that properly once the symbol is merged."""
+    try:
+        df = yf.Ticker(symbol).history(period="5d")
+        return df is not None and not df.empty
+    except Exception:
+        return False
+
+
+def update_status(updates):
+    """updates: [{symbol (RAW, as stored in the sheet), status, note}, ...]"""
+    if not updates:
+        return 0
     resp = requests.post(UNIVERSE_ADDITIONS_URL,
-                          json={"type": "mark_merged", "symbols": symbols},
+                          json={"type": "update_status", "updates": updates},
                           timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if not data.get("success"):
-        raise RuntimeError(data.get("error", "mark_merged failed"))
-    return data.get("marked", 0)
+        raise RuntimeError(data.get("error", "update_status failed"))
+    return data.get("updated", 0)
 
 
 def main():
-    pending = fetch_pending()
-    if not pending:
+    pending_raw = fetch_pending()
+    if not pending_raw:
         print("No pending universe additions.")
         return
 
     existing_manual = set(clean_universe.load_manual_additions())
     existing_clean = set()
     if clean_universe.OUT_CSV.exists():
-        import csv
         with clean_universe.OUT_CSV.open() as f:
             existing_clean = {row["symbol"].strip() for row in csv.DictReader(f) if row.get("symbol")}
 
-    normalized = [normalize_symbol(s) for s in pending]
-    truly_new = [s for s in normalized if s not in existing_manual and s not in existing_clean]
-    already_present = [s for s in normalized if s not in truly_new]
+    # raw -> normalized, in request order; a duplicate raw request in the
+    # same batch is deduped (processed once, same outcome applied to all
+    # matching rows via update_status's bulk match).
+    pairs = [(raw, normalize_symbol(raw)) for raw in pending_raw]
 
-    print(f"Pending: {len(pending)}  New: {len(truly_new)}  Already in universe: {len(already_present)}")
+    to_merge, already_present, rejected = [], [], []
+    for raw, norm in pairs:
+        if norm in existing_manual or norm in existing_clean:
+            already_present.append((raw, norm))
+        elif symbol_has_real_data(norm):
+            to_merge.append((raw, norm))
+        else:
+            rejected.append((raw, norm))
+        time.sleep(0.3)  # light pacing against the yfinance calls above
 
-    if truly_new:
+    print(f"Pending: {len(pending_raw)}  New & valid: {len(to_merge)}  "
+          f"Already in universe: {len(already_present)}  Rejected (no real data): {len(rejected)}")
+
+    if to_merge:
         with MANUAL_ADDITIONS_FILE.open("a", newline="") as f:
-            for symbol in truly_new:
-                f.write(symbol + "\n")
-        print(f"Appended {len(truly_new)} symbol(s) to {MANUAL_ADDITIONS_FILE}: {truly_new}")
-
+            for _, norm in to_merge:
+                f.write(norm + "\n")
+        print(f"Appended {len(to_merge)} symbol(s) to {MANUAL_ADDITIONS_FILE}: {[n for _, n in to_merge]}")
         clean_universe.main()
     else:
-        print("Nothing new to add to the universe file — all pending symbols already present.")
+        print("Nothing new and valid to add to the universe file.")
 
-    # Mark EVERY pending symbol processed this run as MERGED, including ones
-    # that turned out to already be in the universe — otherwise a duplicate
-    # add request would stay PENDING forever and keep showing up unresolved.
-    marked = mark_merged(normalized)
-    print(f"Marked {marked} sheet row(s) as MERGED.")
+    updates = (
+        [{"symbol": raw, "status": "MERGED", "note": f"added as {norm}"} for raw, norm in to_merge]
+        + [{"symbol": raw, "status": "ALREADY_EXISTS", "note": f"{norm} already in universe"} for raw, norm in already_present]
+        + [{"symbol": raw, "status": "REJECTED", "note": f"no price data found for {norm} on Yahoo — check spelling/exchange"} for raw, norm in rejected]
+    )
+    updated = update_status(updates)
+    print(f"Updated {updated} sheet row(s).")
 
 
 if __name__ == "__main__":

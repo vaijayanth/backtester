@@ -3,9 +3,11 @@ name: Merge Universe Additions
 # Picks up stocks queued via the Universe page's "ADD STOCK" UI (stored in
 # the "Backtester Universe Additions" Google Sheet) and merges them into
 # data/universe_clean.csv so they show up in the app and get backfilled
-# automatically. Hourly — frequent enough that an added stock shows up
-# same-day without needing to remember to trigger it by hand, but this is
-# also always runnable on demand via "Run workflow" for something more
+# automatically — each pending symbol first gets a lightweight yfinance
+# existence check (reuses requirements.txt, same dependency already pulled
+# in for backfill.py). Hourly — frequent enough that an added stock shows
+# up same-day without needing to remember to trigger it by hand, but this
+# is also always runnable on demand via "Run workflow" for something more
 # immediate.
 
 on:
@@ -29,7 +31,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install -r requirements.txt
 
       - name: Merge pending universe additions
         run: python scripts/merge_universe_additions.py

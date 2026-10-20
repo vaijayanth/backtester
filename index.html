@@ -444,12 +444,12 @@
         <button class="refresh-btn" id="univ-add-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">+ ADD</button>
       </div>
       <div id="univ-add-status" style="margin-top:10px;font-size:12px;"></div>
-      <div id="univ-pending-wrap" style="display:none;margin-top:14px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">PENDING — NOT YET MERGED</div>
-        <div id="univ-pending-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      <div id="univ-recent-wrap" style="display:none;margin-top:14px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">RECENT REQUESTS</div>
+        <div id="univ-recent-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        No exchange suffix defaults to NSE (.NS). Queued instantly here, then picked up by an hourly automated job that merges it into the universe and starts backfilling its price history — usually live within the hour. Added stocks persist permanently, even if the underlying stock list is ever refreshed from scratch.
+        No exchange suffix defaults to NSE (.NS). Queued instantly here, then picked up by an hourly automated job that checks it's a real, currently-tradeable ticker (rejects typos/delisted symbols instead of silently adding them) and merges it into the universe — usually live within the hour. Added stocks persist permanently, even if the underlying stock list is ever refreshed from scratch.
       </div>
     </div>
   </div>
@@ -1916,32 +1916,42 @@ async function initUniverse(){
     document.getElementById('view-grid').innerHTML = `<div class="loading">Failed to load universe data: ${err.message}</div>`;
   }
 
-  loadPendingUniverseAdditions();
+  loadRecentUniverseAdditions();
 }
 
 // "Add Stock to Universe" — queues a symbol in the Backtester Universe
 // Additions Google Sheet (UniverseAdditions_AppsScript.gs). An hourly
-// GitHub Action (merge_universe_additions.yml) picks up PENDING rows,
-// appends them to data/universe_manual_additions.csv (permanent — survives
-// any future from-scratch re-pull of the source StockList), regenerates
-// data/universe_clean.csv, and marks the row MERGED. From there the symbol
-// flows into backfill/Supertrend/screens automatically, no extra step.
+// GitHub Action (merge_universe_additions.yml) resolves each PENDING row to
+// one of three outcomes: MERGED (genuinely new, added — only after a
+// yfinance existence check passes), ALREADY_EXISTS (no-op, was already in
+// the universe), or REJECTED (no real price data found — typo/delisted,
+// never added). All three are shown here, not just pending, so a request
+// never just silently vanishes without saying what happened to it.
 const UNIVERSE_ADDITIONS_URL = 'https://script.google.com/macros/s/AKfycbx0DhYyh9aQ74Bi-p6rVUEs_l6ExQD-G7yIss9c2MUkAWpaGF5vqicQb9W-azuEI1pM/exec';
 
-async function loadPendingUniverseAdditions(){
-  const wrap = document.getElementById('univ-pending-wrap');
-  const list = document.getElementById('univ-pending-list');
+const UNIV_STATUS_STYLE = {
+  PENDING:         {color: 'var(--amber)', label: s => s},
+  MERGED:          {color: 'var(--green)', label: s => `✓ ${s}`},
+  ALREADY_EXISTS:  {color: 'var(--muted)', label: s => `= ${s}`},
+  REJECTED:        {color: 'var(--red)',   label: s => `✗ ${s}`},
+};
+
+async function loadRecentUniverseAdditions(){
+  const wrap = document.getElementById('univ-recent-wrap');
+  const list = document.getElementById('univ-recent-list');
   try{
     const resp = await fetch(UNIVERSE_ADDITIONS_URL + '?t=' + Date.now());
     if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if(!data.success) throw new Error(data.error || 'unknown error');
-    const pending = (data.rows || []).filter(r => r.status === 'PENDING');
-    if(!pending.length){ wrap.style.display = 'none'; return; }
+    const rows = (data.rows || []).slice(-20).reverse(); // most recent first
+    if(!rows.length){ wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
-    list.innerHTML = pending.map(r =>
-      `<span style="padding:4px 10px;background:var(--panel2);border:1px solid var(--amber);border-radius:12px;font-size:11px;color:var(--amber);">${r.symbol}</span>`
-    ).join('');
+    list.innerHTML = rows.map(r => {
+      const sty = UNIV_STATUS_STYLE[r.status] || {color: 'var(--muted)', label: s => s};
+      const title = r.note ? ` title="${r.note.replace(/"/g, '&quot;')}"` : '';
+      return `<span${title} style="padding:4px 10px;background:var(--panel2);border:1px solid ${sty.color};border-radius:12px;font-size:11px;color:${sty.color};cursor:${r.note ? 'help' : 'default'};">${sty.label(r.symbol)}</span>`;
+    }).join('');
   }catch(err){
     wrap.style.display = 'none'; // non-critical — don't block the rest of the page over this
   }
@@ -1972,7 +1982,7 @@ async function addUniverseStock(){
       ? `<span style="color:var(--amber);">${data.symbol} is already queued — will merge within the hour.</span>`
       : `<span style="color:var(--green);">✓ ${data.symbol} queued — will merge into the universe within the hour.</span>`;
     input.value = '';
-    loadPendingUniverseAdditions();
+    loadRecentUniverseAdditions();
   }catch(err){
     statusEl.innerHTML = `<span style="color:var(--red);">Failed: ${err.message}</span>`;
   }finally{
