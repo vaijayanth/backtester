@@ -1966,6 +1966,16 @@ async function addUniverseStock(){
     statusEl.innerHTML = '<span style="color:var(--red);">Enter a symbol first.</span>';
     return;
   }
+
+  // Instant check against the universe already loaded client-side (same
+  // list the GRID/TABLE views use) — no need to round-trip through the
+  // Sheet + hourly job just to find out it's already there.
+  const normalized = symbol.includes('.') ? symbol : `${symbol}.NS`;
+  if(cleanSymbols.includes(normalized)){
+    statusEl.innerHTML = `<span style="color:var(--muted);">= ${normalized} is already in the universe — nothing to add.</span>`;
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = 'ADDING...';
   statusEl.textContent = '';
