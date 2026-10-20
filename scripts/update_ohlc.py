@@ -214,6 +214,7 @@ def main():
     full_refreshed = full_refresh_failed = 0
     consecutive_full_refresh_failures = 0
     outage_mode = False
+    outage_trip_count = 0  # how many times the breaker engaged this run — surfaced in pipeline_status.json
     for i, symbol in enumerate(full_refresh_targets):
         prior_attempts = int(manifest[symbol].get("attempts", 0))
         if outage_mode:
@@ -232,6 +233,7 @@ def main():
             consecutive_full_refresh_failures += 1
             if not outage_mode and consecutive_full_refresh_failures >= OUTAGE_STREAK_THRESHOLD:
                 outage_mode = True
+                outage_trip_count += 1
                 print(f"    *** {consecutive_full_refresh_failures} consecutive full-refresh failures — "
                       f"suspecting a provider-side outage, not individually bad tickers. "
                       f"Switching remaining symbols in this run to single-attempt (no retry backoff). ***")
@@ -289,6 +291,8 @@ def main():
                 "attempted": len(full_refresh_targets),
                 "refreshed": full_refreshed,
                 "failed": full_refresh_failed,
+                "outage_breaker_tripped": outage_trip_count,
+                "ended_in_outage_mode": outage_mode,
             },
             "catchup": {
                 "attempted": len(catchup_targets),

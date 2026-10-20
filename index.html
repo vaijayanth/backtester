@@ -870,6 +870,11 @@
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPLOAD SENSIBULL DATA <span class="panel-meta">weekly IVP refresh — stored in Google Sheet, synced across devices</span></div></div>
     <div style="padding:18px;">
+      <div id="ivp-upload-stat" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;background:var(--panel2);border:1px solid var(--border);">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Last Uploaded</div>
+        <div id="ivp-upload-stat-value" style="font-size:16px;font-weight:700;color:var(--amber);margin-top:2px;">—</div>
+        <div id="ivp-upload-stat-sub" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+      </div>
       <div id="ivp-upload-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;">initializing...</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ivp-file-input" accept=".tsv,.txt,.csv,text/tab-separated-values,text/plain,text/csv" style="color:var(--muted);font-size:12px;">
@@ -1546,9 +1551,18 @@ async function loadPipelineStatus(){
   // enough to catch "the scheduled job stopped firing" within a day or two.
   const isStale = hoursAgo > 36;
 
+  // outage_breaker_tripped: how many times update_ohlc.py's circuit
+  // breaker engaged this run (see OUTAGE_STREAK_THRESHOLD) — a strong
+  // signal of a provider-side (Yahoo Finance) outage window, not
+  // individually bad tickers. Surfaced directly instead of requiring a
+  // manual job-log read, which is exactly how the 2026-10-19 304-failure
+  // run went unexplained until dug up by hand.
+  const breakerTripped = full.outage_breaker_tripped || 0;
+
   el.innerHTML = `Daily update pipeline: last ran ${whenTxt}, through ${status.latest_trading_date || '—'}` +
     ` &middot; ${totalUpdated} updated` +
     (totalFailed > 0 ? `, <span style="color:var(--amber)">${totalFailed} failed</span>` : '') +
+    (breakerTripped > 0 ? ` &middot; <span style="color:var(--red)">⚠ outage breaker tripped${breakerTripped>1?' '+breakerTripped+'x':''} — likely a Yahoo Finance outage window, not bad tickers</span>` : '') +
     (isStale ? ` &middot; <span style="color:var(--red)">stale — check Actions tab</span>` : '');
   el.style.color = isStale ? 'var(--amber)' : 'var(--muted)';
 
@@ -3062,10 +3076,30 @@ function ivpClearUploadError(){
 
 function ivpUpdateUploadMeta(){
   const el = document.getElementById('ivp-upload-meta');
-  if(!ivpData){ el.textContent = 'initializing...'; return; }
+  const statBox = document.getElementById('ivp-upload-stat');
+  const statValue = document.getElementById('ivp-upload-stat-value');
+  const statSub = document.getElementById('ivp-upload-stat-sub');
+  if(!ivpData){ el.textContent = 'initializing...'; statBox.style.display = 'none'; return; }
+
   if(ivpData.source === 'google_sheet' || ivpData.source === 'sensibull_browser_upload'){
-    el.innerHTML = `<span style="color:var(--amber);font-weight:700;">Last upload</span> — ${ivpData.universe_size} stocks, ${new Date(ivpData.generated_at).toLocaleString('en-IN')} · stored in Google Sheet, visible on every device.`;
+    const uploaded = new Date(ivpData.generated_at);
+    const ageDays = (Date.now() - uploaded.getTime()) / 86400000;
+    statBox.style.display = 'block';
+    statValue.textContent = uploaded.toLocaleString('en-IN', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    // Weekly refresh cadence (per the panel's own subtitle) — amber past 10 days, red past 21.
+    if(ageDays > 21){
+      statValue.style.color = 'var(--red)';
+      statSub.innerHTML = `${ivpData.universe_size} stocks · <span style="color:var(--red);font-weight:600;">⚠ ${Math.floor(ageDays)} days old — well overdue for a weekly refresh</span>`;
+    } else if(ageDays > 10){
+      statValue.style.color = 'var(--amber)';
+      statSub.innerHTML = `${ivpData.universe_size} stocks · <span style="color:var(--amber);">${Math.floor(ageDays)} days old — due for a refresh</span>`;
+    } else {
+      statValue.style.color = 'var(--green)';
+      statSub.textContent = `${ivpData.universe_size} stocks · ${Math.floor(ageDays)} day${Math.floor(ageDays)===1?'':'s'} old · stored in Google Sheet, visible on every device`;
+    }
+    el.innerHTML = `<span style="color:var(--amber);font-weight:700;">Last upload</span> — ${ivpData.universe_size} stocks, ${uploaded.toLocaleString('en-IN')} · stored in Google Sheet, visible on every device.`;
   } else {
+    statBox.style.display = 'none';
     el.textContent = 'Using the site’s own weekly snapshot — upload a fresh export any time to override it.';
   }
 }

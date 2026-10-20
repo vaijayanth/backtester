@@ -1,15 +1,18 @@
 name: Fetch Equity Sectors
 
-# Manually triggered via GitHub's own "Run workflow" button — sector
-# classification rarely changes, so this doesn't need a schedule. Fetches
-# GICS sector (via yfinance's assetProfile) for every symbol that has ever
-# appeared in the Equity Trading Journal's Tradebook fills, and writes
-# data/equity_sectors.json. Incremental: only newly-seen symbols cost an
-# API call on a re-run. Re-run this whenever you've traded a genuinely new
-# symbol and want its Sector column populated sooner than the next
-# scheduled catch-up.
+# Fetches GICS sector (via yfinance's assetProfile) for every symbol that
+# has ever appeared in the Equity Trading Journal's Tradebook fills, plus
+# the full Supertrend universe, and writes data/equity_sectors.json.
+# Incremental: only newly-seen symbols cost an API call on a re-run —
+# since sector classification itself rarely changes, this is really just
+# catching up new IPOs/new trades, not re-checking existing entries, so a
+# monthly cadence is plenty. Also runnable on demand via "Run workflow" if
+# you've traded a genuinely new symbol and want its Sector column
+# populated sooner than the next scheduled catch-up.
 
 on:
+  schedule:
+    - cron: "0 3 1 * *"  # 1st of each month, 03:00 UTC
   workflow_dispatch: {}
 
 permissions:
