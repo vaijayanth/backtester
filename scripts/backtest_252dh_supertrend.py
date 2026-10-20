@@ -157,7 +157,7 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
     equity_curve = []
     realized_pl = 0.0
     missed_entries_no_cash = 0
-    missed_entries_price_too_high = 0  # qty would be 0 even with unlimited cash (Rs1000 < 1 share)
+    forced_single_share_entries = 0  # informational only - qty floored to 1 despite price exceeding position_size_rs
     missed_adds_no_cash = 0
 
     for date in all_dates:
@@ -172,11 +172,17 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
             if order is not None:
                 open_price = open_price_today
                 if order["action"] == "buy_new":
-                    qty = int(position_size_rs // open_price)
+                    # Always at least 1 share, even if its price exceeds
+                    # position_size_rs — matches the live 52-Week High
+                    # Journal's own rule (never skip a signal for being
+                    # too expensive). forced_single_share_entries tracks
+                    # how often this floor actually kicks in, purely
+                    # informational — it no longer blocks the entry.
+                    qty = max(1, int(position_size_rs // open_price))
                     cost = qty * open_price
-                    if qty < 1:
-                        missed_entries_price_too_high += 1
-                    elif cash >= cost:
+                    if qty == 1 and open_price > position_size_rs:
+                        forced_single_share_entries += 1
+                    if cash >= cost:
                         cash -= cost
                         positions[sym] = {
                             "entry_date": date, "avg_entry_price": open_price,
@@ -248,7 +254,7 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
 
     return build_results(
         initial_capital_rs, position_size_rs, breakout_window_days, data, closed_trades, positions, equity_curve, cash,
-        missed_entries_no_cash, missed_entries_price_too_high, missed_adds_no_cash,
+        missed_entries_no_cash, forced_single_share_entries, missed_adds_no_cash,
     )
 
 
@@ -270,7 +276,7 @@ def compute_max_drawdown(equity_curve, initial_capital_rs):
 
 
 def build_results(initial_capital_rs, position_size_rs, breakout_window_days, data, closed_trades, open_positions, equity_curve, final_cash,
-                   missed_entries_no_cash, missed_entries_price_too_high, missed_adds_no_cash):
+                   missed_entries_no_cash, forced_single_share_entries, missed_adds_no_cash):
     wins = [t for t in closed_trades if t["pl_rs"] > 0]
     losses = [t for t in closed_trades if t["pl_rs"] <= 0]
     win_rate = round(len(wins) / len(closed_trades) * 100, 2) if closed_trades else None
@@ -321,7 +327,7 @@ def build_results(initial_capital_rs, position_size_rs, breakout_window_days, da
             "combined_pl_rs": round(equity_curve[-1]["combined"], 2) if equity_curve else 0,
             "final_cash_rs": round(final_cash, 2),
             "missed_entries_no_cash": missed_entries_no_cash,
-            "missed_entries_price_too_high": missed_entries_price_too_high,
+            "forced_single_share_entries": forced_single_share_entries,
             "missed_adds_no_cash": missed_adds_no_cash,
         },
         "equity_curve": equity_curve,
@@ -353,7 +359,7 @@ def main():
     print(f"Closed trades: {m['total_closed_trades']} | Win rate: {m['win_rate_pct']}% | Profit factor: {m['profit_factor']}")
     print(f"Open positions: {m['open_positions_count']} | Max drawdown: {m['max_drawdown_pct']}%")
     print(f"Realized P&L: Rs{m['realized_pl_rs']:,.0f} | Open MTM: Rs{m['open_mtm_rs']:,.0f} | Combined: Rs{m['combined_pl_rs']:,.0f}")
-    print(f"Final cash: Rs{m['final_cash_rs']:,.0f} | Missed entries (no cash): {m['missed_entries_no_cash']} | Missed entries (price > Rs{args.position_size:,.0f}/share): {m['missed_entries_price_too_high']} | Missed adds (no cash): {m['missed_adds_no_cash']}")
+    print(f"Final cash: Rs{m['final_cash_rs']:,.0f} | Missed entries (no cash): {m['missed_entries_no_cash']} | Forced to 1 share (price > Rs{args.position_size:,.0f}/share): {m['forced_single_share_entries']} | Missed adds (no cash): {m['missed_adds_no_cash']}")
     print(f"Avg adds/closed trade: {m['avg_adds_per_closed_trade']} | Avg hold winners: {m['avg_hold_days_winners']}d | losers: {m['avg_hold_days_losers']}d")
     print(f"Written to {args.out}")
 
