@@ -1,0 +1,99 @@
+name: SCRATCH - 10yr Backtest Data Fetch
+
+# ONE-OFF, manually triggered only — fetches 10yr OHLC for a backtest
+# sensitivity comparison (5yr vs 10yr history) the user asked for. Output
+# goes to a throwaway branch (scratch-10yr-checkpoints), never to
+# backfill-checkpoints or main — does not touch the production pipeline.
+# Safe to delete this workflow + scripts/scratch_fetch_10yr.py once the
+# comparison is done, if not wanted long-term.
+#
+# Resumable the cheap way: re-running this workflow re-checks out whatever
+# is already on scratch-10yr-checkpoints and only fetches what's missing
+# (scratch_fetch_10yr.py's own load_done_symbols()), same pattern as the
+# real backfill but without its full reliability engineering — this is a
+# test fetch, rerun by hand if a batch times out.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max symbols to process this run (omit for all remaining)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout scratch-10yr-checkpoints branch (if it already exists)
+        id: checkout_scratch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: scratch-10yr-checkpoints
+          path: scratch-branch
+
+      - name: Initialize scratch-10yr-checkpoints branch (first run only)
+        if: steps.checkout_scratch.outcome == 'failure'
+        run: |
+          rm -rf scratch-branch
+          mkdir -p scratch-branch
+          cd scratch-branch
+          git init -b scratch-10yr-checkpoints
+          git config user.name "scratch-10yr-bot"
+          git config user.email "actions@github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          mkdir -p checkpoints_10yr
+          echo "SCRATCH one-off 10yr backtest data — see scripts/scratch_fetch_10yr.py on main. Not part of the production pipeline, safe to delete this branch once the comparison is done." > checkpoints_10yr/README.md
+          git add checkpoints_10yr
+          git commit -m "Initialize scratch-10yr-checkpoints branch"
+          git push origin scratch-10yr-checkpoints
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore existing 10yr checkpoints into working copy
+        run: |
+          mkdir -p main/checkpoints_10yr
+          if [ -d scratch-branch/checkpoints_10yr ]; then
+            cp -r scratch-branch/checkpoints_10yr/. main/checkpoints_10yr/
+          fi
+
+      - name: Run 10yr fetch
+        working-directory: main
+        run: |
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            python scripts/scratch_fetch_10yr.py --limit "${{ github.event.inputs.limit }}"
+          else
+            python scripts/scratch_fetch_10yr.py
+          fi
+
+      - name: Commit checkpoint updates to scratch-10yr-checkpoints branch
+        run: |
+          rm -rf scratch-branch/checkpoints_10yr
+          mkdir -p scratch-branch/checkpoints_10yr
+          cp -r main/checkpoints_10yr/. scratch-branch/checkpoints_10yr/
+          cd scratch-branch
+          git config user.name "scratch-10yr-bot"
+          git config user.email "actions@github.com"
+          git add checkpoints_10yr
+          if git diff --cached --quiet; then
+            echo "No checkpoint changes to commit"
+          else
+            git commit -m "Scratch 10yr fetch: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push origin scratch-10yr-checkpoints
+          fi
