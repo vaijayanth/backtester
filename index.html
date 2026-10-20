@@ -868,6 +868,22 @@
   </div>
 
   <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD SENSIBULL DATA <span class="panel-meta">weekly IVP refresh — no git commit needed</span></div></div>
+    <div style="padding:18px;">
+      <div id="ivp-upload-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;">initializing...</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" id="ivp-file-input" accept=".tsv,.txt,.csv,text/tab-separated-values,text/plain,text/csv" style="color:var(--muted);font-size:12px;">
+        <button class="refresh-btn" id="ivp-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD</button>
+        <button class="refresh-btn" id="ivp-clear-upload-btn" style="padding:11px 18px;">↺ USE SITE SNAPSHOT</button>
+      </div>
+      <div id="ivp-upload-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
+      <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
+        Export the Sensibull options screener as a tab-separated dump (same columns as the site snapshot: Instrument, FuturePrice, ATMIV, IVPercentile, Event, PCR, MaxPain, etc.) and upload it here — parsed entirely in your browser, nothing leaves this device. Stored in this browser only (not committed to git, not synced across devices) and used immediately, overriding the site's own weekly snapshot until you clear it. Indices (NIFTY, BANKNIFTY, etc.) are excluded automatically.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="panel-head"><div class="panel-title">SCREEN CRITERIA</div></div>
     <div class="sd-controls">
       <div class="rc-group">
@@ -2928,17 +2944,148 @@ document.getElementById('ss-bt-range').addEventListener('change', () => { if(ssD
 // IVP SCREENER PAGE
 // ============================================================
 let ivpInitialized = false;
-let ivpData = null;     // options_snapshot.json
+let ivpData = null;     // options_snapshot.json (or a locally-uploaded override, see below)
 let ivpRsiBySymbol = {}; // symbol -> rsi14, joined from market_screens.json
 
-async function initIvpScreener(){
-  ivpInitialized = true;
+const IVP_LOCAL_KEY = 'bt_ivp_local_snapshot';
+
+// Instruments that aren't individual stocks — excluded from the parsed
+// snapshot, same set as scripts/parse_sensibull.py's NON_STOCK_INSTRUMENTS
+// (kept in sync by hand; both are short and rarely change).
+const IVP_NON_STOCK_INSTRUMENTS = new Set([
+  'NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'BANKEX',
+  'SENSEX', 'NIFTYNXT50', 'USDINR', 'FOCIT',
+]);
+
+function ivpToFloat(v){
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Parses a Sensibull screener TSV dump into the same shape as
+// options_snapshot.json's "entries" — a client-side port of
+// scripts/parse_sensibull.py's build_options_snapshot(), so an uploaded
+// file renders identically to the site's own weekly-generated snapshot.
+// Unlike the Python script, this does NOT cross-check against
+// data/fno_universe.csv (would need a second fetch for little benefit —
+// Sensibull's own screener dump is already F&O-stock-scoped); it only
+// excludes the known index/non-stock rows.
+function ivpParseSensibullTsv(text){
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length);
+  if(!lines.length) throw new Error('Empty file.');
+  const headers = lines[0].split('\t').map(h => h.trim());
+  const col = name => headers.indexOf(name);
+  const idx = {
+    instrument: col('Instrument'), futurePrice: col('FuturePrice'),
+    futurePctChange: col('FuturePercentChange'), atmIv: col('ATMIV'),
+    atmIvChange: col('ATMIVChange'), ivPercentile: col('IVPercentile'),
+    event: col('Event'), volumeMultiple: col('VolumeMultiple'),
+    futureOiPctChange: col('FutureOIPercentChange'), pcr: col('PCR'),
+    maxPain: col('MaxPain'),
+  };
+  if(idx.instrument === -1 || idx.ivPercentile === -1){
+    throw new Error('Could not find "Instrument"/"IVPercentile" columns — check this is the same tab-separated Sensibull export format as the site snapshot.');
+  }
+
+  const entries = [];
+  for(let i = 1; i < lines.length; i++){
+    const cells = lines[i].split('\t');
+    const instrument = (cells[idx.instrument] || '').trim();
+    if(!instrument || IVP_NON_STOCK_INSTRUMENTS.has(instrument)) continue;
+    const eventRaw = (idx.event >= 0 ? cells[idx.event] : '').trim();
+    let eventDate = null;
+    if(eventRaw && eventRaw !== '-'){
+      const m = eventRaw.match(/^(\d{2})-(\d{2})-(\d{4})$/); // dd-mm-yyyy
+      if(m) eventDate = `${m[3]}-${m[2]}-${m[1]}`;
+    }
+    entries.push({
+      symbol: `${instrument}.NS`,
+      future_price: ivpToFloat(cells[idx.futurePrice]),
+      future_pct_change: ivpToFloat(cells[idx.futurePctChange]),
+      atm_iv: ivpToFloat(cells[idx.atmIv]),
+      atm_iv_change: ivpToFloat(cells[idx.atmIvChange]),
+      iv_percentile: ivpToFloat(cells[idx.ivPercentile]),
+      event_date: eventDate,
+      volume_multiple: idx.volumeMultiple >= 0 ? ivpToFloat(cells[idx.volumeMultiple]) : null,
+      future_oi_pct_change: idx.futureOiPctChange >= 0 ? ivpToFloat(cells[idx.futureOiPctChange]) : null,
+      pcr: idx.pcr >= 0 ? ivpToFloat(cells[idx.pcr]) : null,
+      max_pain: idx.maxPain >= 0 ? ivpToFloat(cells[idx.maxPain]) : null,
+    });
+  }
+  if(!entries.length) throw new Error('No stock rows found in that file (after excluding indices).');
+  entries.sort((a, b) => (b.iv_percentile ?? -1) - (a.iv_percentile ?? -1));
+
+  return {
+    generated_at: new Date().toISOString(),
+    source: 'sensibull_browser_upload',
+    universe_size: entries.length,
+    entries,
+  };
+}
+
+function ivpShowUploadError(msg){
+  const el = document.getElementById('ivp-upload-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function ivpClearUploadError(){
+  document.getElementById('ivp-upload-error').style.display = 'none';
+}
+
+function ivpUpdateUploadMeta(){
+  const el = document.getElementById('ivp-upload-meta');
+  const raw = localStorage.getItem(IVP_LOCAL_KEY);
+  if(!raw){ el.textContent = 'Using the site’s own weekly snapshot — upload a fresh export any time to override it.'; return; }
+  try{
+    const saved = JSON.parse(raw);
+    el.innerHTML = `<span style="color:var(--amber);font-weight:700;">Using your upload</span> — ${saved.universe_size} stocks, uploaded ${new Date(saved.generated_at).toLocaleString('en-IN')}.`;
+  } catch(e){ el.textContent = 'Using the site’s own weekly snapshot.'; }
+}
+
+async function ivpUploadFile(){
+  ivpClearUploadError();
+  const fileInput = document.getElementById('ivp-file-input');
+  const file = fileInput.files && fileInput.files[0];
+  if(!file){ ivpShowUploadError('Choose a file first.'); return; }
+
+  const btn = document.getElementById('ivp-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'UPLOADING...';
+  try{
+    const text = await file.text();
+    const snapshot = ivpParseSensibullTsv(text);
+    localStorage.setItem(IVP_LOCAL_KEY, JSON.stringify(snapshot));
+    ivpData = snapshot;
+    ivpUpdateUploadMeta();
+    document.getElementById('ivp-meta').innerHTML =
+      `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">your upload, ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>`;
+    renderIvpScreener();
+    fileInput.value = '';
+  }catch(err){
+    ivpShowUploadError(err.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '⬆ UPLOAD';
+  }
+}
+
+async function ivpClearUpload(){
+  localStorage.removeItem(IVP_LOCAL_KEY);
+  ivpClearUploadError();
+  await initIvpScreenerFetch();
+  ivpUpdateUploadMeta();
+}
+
+// Fetches the site's own weekly-generated options_snapshot.json — split
+// out from initIvpScreener so "use site snapshot" can re-run just this
+// part without re-registering the one-time init guard.
+async function initIvpScreenerFetch(){
   try{
     const [optResp, screensResp] = await Promise.all([
       fetch('options_snapshot.json?t=' + Date.now()),
       fetch('market_screens.json?t=' + Date.now()),
     ]);
-    if(!optResp.ok) throw new Error('options_snapshot.json not found — paste a fresh Sensibull export to generate it');
+    if(!optResp.ok) throw new Error('options_snapshot.json not found — upload a Sensibull export above to generate one.');
     ivpData = await optResp.json();
 
     if(screensResp.ok){
@@ -2953,7 +3100,7 @@ async function initIvpScreener(){
   }catch(err){
     document.getElementById('ivp-body').innerHTML = `<tr><td colspan="10" class="loading">${err.message}</td></tr>`;
     document.getElementById('ivp-all-body').innerHTML = `<tr><td colspan="9" class="loading">${err.message}</td></tr>`;
-    return;
+    throw err;
   }
 
   document.getElementById('ivp-meta').innerHTML =
@@ -2961,6 +3108,39 @@ async function initIvpScreener(){
 
   try{ renderIvpScreener(); } catch(err){ console.error('IVP screener failed:', err); }
 }
+
+async function initIvpScreener(){
+  ivpInitialized = true;
+  ivpUpdateUploadMeta();
+
+  const localRaw = localStorage.getItem(IVP_LOCAL_KEY);
+  if(localRaw){
+    // A local upload exists — use it immediately, no network fetch needed
+    // for the snapshot itself. Still fetch market_screens.json for the
+    // RSI join, same as the non-upload path.
+    try{
+      ivpData = JSON.parse(localRaw);
+      try{
+        const screensResp = await fetch('market_screens.json?t=' + Date.now());
+        if(screensResp.ok){
+          const screens = await screensResp.json();
+          (screens.rsi_all || []).forEach(r => { ivpRsiBySymbol[r.symbol] = r.rsi14; });
+        }
+      } catch(e){}
+      document.getElementById('ivp-meta').innerHTML =
+        `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">your upload, ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>`;
+      renderIvpScreener();
+      return;
+    } catch(e){
+      localStorage.removeItem(IVP_LOCAL_KEY); // corrupted — fall through to the site snapshot
+    }
+  }
+
+  try{ await initIvpScreenerFetch(); } catch(e){}
+}
+
+document.getElementById('ivp-upload-btn').onclick = ivpUploadFile;
+document.getElementById('ivp-clear-upload-btn').onclick = ivpClearUpload;
 
 function ivpSymLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
 
