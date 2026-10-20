@@ -510,3 +510,24 @@ User asked for integrity checks "wherever I am uploading data" — audited all f
 - **Option Trade Analysis P&L (lowest risk — additive upsert-by-symbol, not full-replace)**: rows where every financial field parses to exactly zero are rejected rather than upserted, since that pattern means the column mapping grabbed a blank/subtotal row, not a genuine all-zero trade.
 
 All new logic verified with synthetic tests before push — date-sanity edge cases, the exact stale-upload scenario reproduced numerically, a 5-row batch covering all 4 Tradebook bad-row types in one pass, IVP sanity filtering — not just read-through.
+
+### Integrations reference — all Apps Script URLs & Google Sheets (2026-10-20 session)
+User asked to "remember all the app scripts, URLs of my google sheet databases" — consolidated here as the single lookup point (mirrored into `TradingJournal`'s `CLAUDE.md`). Every entry below is a Google Apps Script Web App deployed as "Anyone with the link" (never requires the user's own Google sign-in to call), bound to one Google Sheet.
+
+| Feature | Apps Script `/exec` URL | Google Sheet (name · id) | Tab(s) | Used by |
+|---|---|---|---|---|
+| SST swing journal + F&O watchlist | `https://script.google.com/macros/s/AKfycbwh85dD1AlNlMFRk4M4A8yCA5YAs5gvnCIMgq6ixQUhdxmes-CqU3OYOdxtzDRLRgLq/exec` | "2026 Master Trade Book_14JAN" · `18EpaIzhZI_FKopRES6JvlHSTX2MUNrnnymIrpteRdyc` | `TRADES`, `NSEFO` | `TradingJournal` only |
+| Equity Trading Journal (Tradebook FIFO + Holdings) | `EQ_SHEET_URL` = `https://script.google.com/macros/s/AKfycbyMNI8hj7lfWQLLEfcBYL3CgCFCdca7gJsOoaiR6KWC5vq_EiyyahYTyrRmrw0uAfk/exec` | "Equity Trade Analysis DB" · `1Zo1eXVX4yH2Wrv7r7f8Ugc6DL_234AWLxU5IlUtPn_c` | `FILLS`, `HOLDINGS` | Both `TradingJournal` and `backtester` (same sheet, same URL — kept in sync) |
+| Option Trade Analysis (P&L statement) | `OT_SHEET_URL_DEFAULT` = `https://script.google.com/macros/s/AKfycbzCzgNLWexbsdEH0jpuMn4-wNIVphjfwPdGbJPCfhJtpPAxqBnkYmbcvwFgDpPc0AwQ/exec` | "Option Trade Analysis DB" · `1urXGRi73YyAjTEvXg7yHoRKCtUKfN0DXfOFxvEOTKkc` | `TRADES` | `backtester` only |
+| IVP Screener (Sensibull snapshot) | `IVP_SHEET_URL` = `https://script.google.com/macros/s/AKfycbzJZOQ_o1-iK-DpqkvCky8tPSk4tuks1ZMefleZso_Uw4EilX_I9jUuvMxV3dGi_w2L/exec` | "IVP Screener DB" · `1K6SF4sPA_nS9W1AzYYh9uazSzBN26sa6ILi2xiWHxtc` | `IVP`, `IVP_META` | `backtester` only |
+| Universe Additions (UI "Add Stock") | `UNIVERSE_ADDITIONS_URL` = `https://script.google.com/macros/s/AKfycbx0DhYyh9aQ74Bi-p6rVUEs_l6ExQD-G7yIss9c2MUkAWpaGF5vqicQb9W-azuEI1pM/exec` | "Backtester Universe Additions" · `1E-1M6gQPdIgxFQhY0oJkQMIMgAAtKcGiqNybyvmAD4s` | `ADDITIONS` | `backtester` only |
+| Universe source list (manual, no Apps Script) | — | "STStocklist" · `1tDRsk2B9udGRhirzwxrryc3HvtHhg6rwN8UTjeJlwAc` | — | Hand-edited, then manually pulled into `scripts/raw_stocklist.txt` — see "Add Stock to Universe UI" entry above for the newer, non-manual path |
+
+Each Apps Script's own `.gs` source lives only in the bound Google Sheet's Extensions → Apps Script editor — none are committed to either repo (deliberate, since the deployed URL alone grants write access to real financial data; the source was written collaboratively in-session and the latest version of each is reproducible from this file's own session entries above if ever lost). Redeploying any of them requires Deploy → Manage deployments → **New version** — editing+saving alone does not update the live `/exec` URL (hit repeatedly across sessions, documented per-feature above).
+
+**What to download from Zerodha, per upload point:**
+- **Tradebook** (Equity Trading Journal, both repos): Console → Reports → Tradebook → Equity → Export as Excel (.xlsx), full account history from inception (not a date range) — each upload replaces the whole stored history.
+- **Holdings** (Equity Trading Journal, both repos): Kite → Portfolio → Holdings → Download (CSV) — a point-in-time snapshot, each upload replaces the stored snapshot.
+- **Option P&L statement** (`backtester` only): Console → Reports → P&L statement → Segment: F&O → Download as Excel (.xlsx) — current-FY or any period is fine, upserts by symbol so re-uploading is always safe.
+- **IVP Screener**: not a Zerodha download — a Sensibull screener export (tab/comma-separated), full replace each upload.
+- SST swing TRADES/NSEFO sheet: filled in directly by the user, no upload/export path — it's the primary data entry point, not a derived import.

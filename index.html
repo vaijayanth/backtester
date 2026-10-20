@@ -980,8 +980,11 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx) from Console &rarr; Reports</span></div></div>
+    <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx), Console &rarr; Reports &rarr; P&amp;L statement</span></div></div>
     <div style="padding:18px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">
+        Zerodha Console (console.zerodha.com) &rarr; Reports &rarr; P&amp;L statement &rarr; Segment: F&amp;O &rarr; pick your period (your usual current-FY pull is fine — this upload is additive, not a full replace) &rarr; Download as Excel. Upload the P&amp;L statement, not the Tradebook — this page reads per-contract Buy/Sell/Open values, which the Tradebook export doesn't carry. Each contract's row is upserted by symbol (replaced with the latest numbers), so re-uploading the same or a wider period is always safe — nothing gets duplicated.
+      </div>
       <div id="ot-db-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;word-break:break-word;">initializing...</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ot-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
