@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-19T23:16:25.010668+00:00",
+  "generated_at": "2026-10-20T07:59:57.555264+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1495,
   "params": {
@@ -21,11 +21,11 @@
     },
     {
       "symbol": "3MINDIA.NS",
-      "close": 30115.0,
+      "close": 30400.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -1441,11 +1441,11 @@
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
-      "close": 10287.0,
+      "close": 10405.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -1561,11 +1561,11 @@
     },
     {
       "symbol": "BALAMINES.NS",
-      "close": 1991.5,
+      "close": 2067.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -1591,11 +1591,11 @@
     },
     {
       "symbol": "BALRAMCHIN.NS",
-      "close": 701.85,
+      "close": 721.15,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -2051,12 +2051,12 @@
     },
     {
       "symbol": "BLKASHYAP.NS",
-      "close": 54.94,
+      "close": 58.54,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
-      "recent_bullish_flip_days_ago": 4,
+      "date": "2026-10-16",
+      "recent_bullish_flip_days_ago": 3,
       "recent_bullish_flip_date": "2026-10-13"
     },
     {
@@ -2401,11 +2401,11 @@
     },
     {
       "symbol": "CARERATING.NS",
-      "close": 1616.3,
+      "close": 1603.9,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -3491,11 +3491,11 @@
     },
     {
       "symbol": "DOLPHIN.NS",
-      "close": 630.55,
+      "close": 652.4,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -4591,11 +4591,11 @@
     },
     {
       "symbol": "GHCLTEXTIL.NS",
-      "close": 125.14,
+      "close": 131.61,
       "color": "red",
       "flipped_today": false,
-      "above_ema50": false,
-      "date": "2026-10-19",
+      "above_ema50": true,
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -4621,11 +4621,11 @@
     },
     {
       "symbol": "GIPCL.NS",
-      "close": 167.97,
+      "close": 169.36,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -4921,11 +4921,11 @@
     },
     {
       "symbol": "GPPL.NS",
-      "close": 166.08,
+      "close": 166.29,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -4961,11 +4961,11 @@
     },
     {
       "symbol": "GRAPHITE.NS",
-      "close": 745.5,
+      "close": 770.25,
       "color": "green",
       "flipped_today": false,
-      "above_ema50": false,
-      "date": "2026-10-19",
+      "above_ema50": true,
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -5411,11 +5411,11 @@
     },
     {
       "symbol": "HEG.NS",
-      "close": 224.72,
+      "close": 219.09,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-16",
+      "date": "2026-10-19",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -5751,11 +5751,11 @@
     },
     {
       "symbol": "HUHTAMAKI.NS",
-      "close": 237.38,
+      "close": 240.54,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -6471,11 +6471,11 @@
     },
     {
       "symbol": "IRBINVIT.NS",
-      "close": 63.68,
+      "close": 63.26,
       "color": "green",
       "flipped_today": false,
-      "above_ema50": true,
-      "date": "2026-10-16",
+      "above_ema50": false,
+      "date": "2026-10-19",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -6681,11 +6681,11 @@
     },
     {
       "symbol": "JARO.NS",
-      "close": 405.15,
+      "close": 408.5,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -7351,11 +7351,11 @@
     },
     {
       "symbol": "KIRLFER.NS",
-      "close": 452.05,
+      "close": 452.35,
       "color": "green",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -7491,13 +7491,13 @@
     },
     {
       "symbol": "KOTYARK.NS",
-      "close": 34.71,
-      "color": "green",
-      "flipped_today": true,
-      "above_ema50": true,
-      "date": "2026-10-19",
-      "recent_bullish_flip_days_ago": 0,
-      "recent_bullish_flip_date": "2026-10-19"
+      "close": 31.55,
+      "color": "red",
+      "flipped_today": false,
+      "above_ema50": false,
+      "date": "2026-10-16",
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null
     },
     {
       "symbol": "KOVAI.NS",
@@ -7961,11 +7961,11 @@
     },
     {
       "symbol": "LOTUSDEV.NS",
-      "close": 239.83,
+      "close": 246.25,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -8011,12 +8011,12 @@
     },
     {
       "symbol": "LTTS.NS",
-      "close": 3611.3,
+      "close": 3714.6,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
-      "recent_bullish_flip_days_ago": 4,
+      "date": "2026-10-16",
+      "recent_bullish_flip_days_ago": 3,
       "recent_bullish_flip_date": "2026-10-13"
     },
     {
@@ -8131,11 +8131,11 @@
     },
     {
       "symbol": "MAHLIFE.NS",
-      "close": 344.0,
+      "close": 350.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -8521,11 +8521,11 @@
     },
     {
       "symbol": "MEESHO.NS",
-      "close": 229.59,
+      "close": 227.2,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -8551,11 +8551,11 @@
     },
     {
       "symbol": "METROPOLIS.NS",
-      "close": 519.1,
+      "close": 530.35,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -8831,11 +8831,11 @@
     },
     {
       "symbol": "MSPL.NS",
-      "close": 31.44,
+      "close": 31.55,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -9511,11 +9511,11 @@
     },
     {
       "symbol": "NYKAA.NS",
-      "close": 336.65,
+      "close": 345.0,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -9761,11 +9761,11 @@
     },
     {
       "symbol": "PACEDIGITK.NS",
-      "close": 157.99,
+      "close": 162.52,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -10421,11 +10421,11 @@
     },
     {
       "symbol": "PRECOT.NS",
-      "close": 618.65,
+      "close": 624.3,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -11211,21 +11211,21 @@
     },
     {
       "symbol": "ROSSTECH.NS",
-      "close": 1474.3,
+      "close": 1523.5,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
     {
       "symbol": "ROTO.NS",
-      "close": 60.64,
+      "close": 61.16,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -11241,11 +11241,11 @@
     },
     {
       "symbol": "RPEL.NS",
-      "close": 1777.8,
+      "close": 1811.5,
       "color": "red",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -11361,11 +11361,11 @@
     },
     {
       "symbol": "RUSTOMJEE.NS",
-      "close": 344.3,
+      "close": 344.2,
       "color": "green",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -11711,11 +11711,11 @@
     },
     {
       "symbol": "SBFC.NS",
-      "close": 83.37,
+      "close": 85.2,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -11961,21 +11961,21 @@
     },
     {
       "symbol": "SHALBY.NS",
-      "close": 126.32,
+      "close": 128.95,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
     {
       "symbol": "SHALPAINTS.NS",
-      "close": 81.68,
+      "close": 80.87,
       "color": "red",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -12051,11 +12051,11 @@
     },
     {
       "symbol": "SHK.NS",
-      "close": 134.89,
+      "close": 138.76,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -12401,11 +12401,11 @@
     },
     {
       "symbol": "SOFTTECH.NS",
-      "close": 436.6,
+      "close": 453.95,
       "color": "red",
       "flipped_today": false,
-      "above_ema50": false,
-      "date": "2026-10-19",
+      "above_ema50": true,
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -12551,11 +12551,11 @@
     },
     {
       "symbol": "SPLPETRO.NS",
-      "close": 761.7,
+      "close": 767.25,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -12681,11 +12681,11 @@
     },
     {
       "symbol": "STERTOOLS.NS",
-      "close": 214.11,
+      "close": 219.02,
       "color": "green",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -13191,11 +13191,11 @@
     },
     {
       "symbol": "TASTYBITE.NS",
-      "close": 9199.0,
+      "close": 9329.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -13411,11 +13411,11 @@
     },
     {
       "symbol": "TEGA.NS",
-      "close": 1865.4,
+      "close": 1923.1,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -13931,11 +13931,11 @@
     },
     {
       "symbol": "UFLEX.NS",
-      "close": 608.45,
+      "close": 618.45,
       "color": "green",
       "flipped_today": false,
-      "above_ema50": false,
-      "date": "2026-10-19",
+      "above_ema50": true,
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -14211,11 +14211,11 @@
     },
     {
       "symbol": "VEEDOL.NS",
-      "close": 1347.4,
+      "close": 1362.2,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -14281,11 +14281,11 @@
     },
     {
       "symbol": "VESUVIUS.NS",
-      "close": 401.95,
+      "close": 411.85,
       "color": "green",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -14431,11 +14431,11 @@
     },
     {
       "symbol": "VISHNU.NS",
-      "close": 615.6,
+      "close": 641.35,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -14851,11 +14851,11 @@
     },
     {
       "symbol": "YUKEN.NS",
-      "close": 1130.6,
+      "close": 1152.6,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-19",
+      "date": "2026-10-16",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null
     },
@@ -15007,16 +15007,6 @@
       "color": "green",
       "flipped_today": true,
       "above_ema50": false,
-      "date": "2026-10-19",
-      "recent_bullish_flip_days_ago": 0,
-      "recent_bullish_flip_date": "2026-10-19"
-    },
-    {
-      "symbol": "KOTYARK.NS",
-      "close": 34.71,
-      "color": "green",
-      "flipped_today": true,
-      "above_ema50": true,
       "date": "2026-10-19",
       "recent_bullish_flip_days_ago": 0,
       "recent_bullish_flip_date": "2026-10-19"
