@@ -6474,20 +6474,20 @@ const DH252_ADD_TRIGGER_PCT = -6;
 const DH252_ADD_FRACTION = 0.10;
 const DH252_ADD_COOLDOWN_DAYS = 7;
 // Reference numbers from the full-universe 10yr backtest at the exact
-// params this live journal runs (252d window, Rs1,000/position, Rs5L
-// capital, qty floored to 1 share instead of skipping an expensive
-// signal — matches the live journal's own rule exactly, fixed in this
-// script on 2026-10-20 — see results_10yr_252d_1000_v2.json): 8,529
-// closed trades, 44.16% win rate, avg P&L% across ALL closed trades
-// (wins and losses combined) of 10.57%. Used only to show how far a
-// small live sample has drifted from the backtested average — not a
-// target or a guarantee, just a sanity check. Early on, with only a
-// handful of closed trades, a large deviation is expected noise, not
-// a red flag.
-const DH252_BACKTEST_AVG_PLPCT = 10.57;
-const DH252_BACKTEST_WIN_RATE = 44.16;
-const DH252_BACKTEST_CLOSED_TRADES = 8529;
-const DH252_BACKTEST_CAGR = 11.15; // full 10yr equity curve: (final combined value / initial capital)^(1/years) - 1
+// params this live journal runs (252d window, Rs1,000 base position size
+// tiering +Rs1,000 every 100 closed trades uncapped, Rs5L capital, qty
+// floored to 1 share instead of skipping an expensive signal — matches
+// dh252TierSize() exactly, added to this script on 2026-10-20 — see
+// results_10yr_252d_1000_tiered.json): 5,203 closed trades, 42.05% win
+// rate, avg P&L% across ALL closed trades (wins and losses combined) of
+// 8.45%. Used only to show how far a small live sample has drifted from
+// the backtested average — not a target or a guarantee, just a sanity
+// check. Early on, with only a handful of closed trades, a large
+// deviation is expected noise, not a red flag.
+const DH252_BACKTEST_AVG_PLPCT = 8.45;
+const DH252_BACKTEST_WIN_RATE = 42.05;
+const DH252_BACKTEST_CLOSED_TRADES = 5203;
+const DH252_BACKTEST_CAGR = 34.29; // full 10yr equity curve: (final combined value / initial capital)^(1/years) - 1
 
 function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
@@ -6633,14 +6633,14 @@ function dh252RenderPositions(state){
 
   const vsBacktestEl = document.getElementById('dh252-vs-backtest');
   if(avgPlPct === null){
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_CAGR}% CAGR — no closed trades yet to compare.`;
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000 base tiered, 10yr): ${DH252_BACKTEST_CLOSED_TRADES} closed trades, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_CAGR}% CAGR — no closed trades yet to compare.`;
   } else {
     const plDeviation = avgPlPct - DH252_BACKTEST_AVG_PLPCT;
     const wrDeviation = winRate - DH252_BACKTEST_WIN_RATE;
     const cagrDeviation = liveCagr === null ? null : liveCagr - DH252_BACKTEST_CAGR;
     const cagrText = cagrDeviation === null ? '' : `, CAGR ${cagrDeviation >= 0 ? '+' : ''}${cagrDeviation.toFixed(1)}pp`;
     const sampleNote = state.closed.length < 20 ? ` — only ${state.closed.length} trade${state.closed.length === 1 ? '' : 's'} so far, this deviation is expected noise at this sample size, not a signal.` : '';
-    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000/position, 10yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_CAGR}% CAGR. ` +
+    vsBacktestEl.textContent = `Backtest reference (252d, ₹1,000 base tiered, 10yr): ${DH252_BACKTEST_AVG_PLPCT}% avg P&L, ${DH252_BACKTEST_WIN_RATE}% win rate, ${DH252_BACKTEST_CAGR}% CAGR. ` +
       `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp${cagrText}.${sampleNote}`;
   }
 

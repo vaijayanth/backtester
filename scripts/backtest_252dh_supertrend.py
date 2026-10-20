@@ -16,8 +16,10 @@ Different from the main backtest_engine.py in every exit/add rule:
     Supertrend is green that close -> add 10% of current share qty at
     the next open. At least 7 CALENDAR days (not trading days) since the
     last fill on that position. Subject to available cash.
-  - Sizing: flat Rs1000 per new position, subject to available cash. No
-    cap on number of simultaneous positions (only cash limits it).
+  - Sizing: Rs1000 base per new position, tiering up +Rs1000 every 100
+    CLOSED trades (uncapped, per the user's instruction — unlike the main
+    SST engine's tiered-but-capped-at-Rs1L sizing), subject to available
+    cash. No cap on number of simultaneous positions (only cash limits it).
 
 All signals evaluate a completed day's Close; every fill (entry, add,
 exit) executes at the symbol's own next available bar's Open — tracked
@@ -46,6 +48,8 @@ MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
 
 BREAKOUT_WINDOW_DAYS = 252
 INITIAL_POSITION_RS = 1000
+POSITION_INCREMENT_RS = 1000
+POSITION_INCREMENT_TRADES = 100
 ADD_ON_TRIGGER_PCT = -6.0
 ADD_ON_SIZE_FRACTION = 0.10
 ADD_ON_COOLDOWN_DAYS = 7  # calendar days
@@ -141,6 +145,13 @@ def prep_symbol_df(df, breakout_window_days=BREAKOUT_WINDOW_DAYS):
     }
 
 
+def current_tier_size(closed_trades_count, base_position_rs):
+    """Matches the live journal's dh252TierSize() exactly: base size,
+    +POSITION_INCREMENT_RS every POSITION_INCREMENT_TRADES CLOSED trades,
+    uncapped (unlike the main SST engine's tiered-but-capped sizing)."""
+    return base_position_rs + (closed_trades_count // POSITION_INCREMENT_TRADES) * POSITION_INCREMENT_RS
+
+
 def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs=INITIAL_POSITION_RS, symbols=None,
                   breakout_window_days=BREAKOUT_WINDOW_DAYS, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV):
     raw_data = load_universe_data(symbols, raw_dir=raw_dir, manifest_csv=manifest_csv, breakout_window_days=breakout_window_days)
@@ -173,14 +184,15 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
                 open_price = open_price_today
                 if order["action"] == "buy_new":
                     # Always at least 1 share, even if its price exceeds
-                    # position_size_rs — matches the live 52-Week High
-                    # Journal's own rule (never skip a signal for being
-                    # too expensive). forced_single_share_entries tracks
-                    # how often this floor actually kicks in, purely
-                    # informational — it no longer blocks the entry.
-                    qty = max(1, int(position_size_rs // open_price))
+                    # the current tier size — matches the live 52-Week
+                    # High Journal's own rule (never skip a signal for
+                    # being too expensive). forced_single_share_entries
+                    # tracks how often this floor actually kicks in,
+                    # purely informational — it no longer blocks the entry.
+                    tier_size = current_tier_size(len(closed_trades), position_size_rs)
+                    qty = max(1, int(tier_size // open_price))
                     cost = qty * open_price
-                    if qty == 1 and open_price > position_size_rs:
+                    if qty == 1 and open_price > tier_size:
                         forced_single_share_entries += 1
                     if cash >= cost:
                         cash -= cost
