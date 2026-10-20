@@ -438,7 +438,7 @@
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">EQUITY UNIVERSE — <b id="panel-count">—</b> stocks</div>
-      <div class="panel-meta">source: StockList sheet → scripts/clean_universe.py → data/universe_clean.csv</div>
+      <div class="panel-meta">source: StockList sheet → scripts/clean_universe.py → data/universe_clean.csv · last fetched <span id="univ-last-fetch">—</span></div>
     </div>
     <div class="controls">
       <input class="search-box" id="search" placeholder="search symbol...">
@@ -490,7 +490,7 @@
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">MANIFEST — <b id="bf-panel-count">—</b> symbols</div>
-      <div class="panel-meta">source: backfill-checkpoints branch → checkpoints/manifest.csv</div>
+      <div class="panel-meta">source: backfill-checkpoints branch → checkpoints/manifest.csv · last fetched <span id="bf-last-fetch">—</span></div>
       <button class="refresh-btn" id="bf-refresh">↻ REFRESH</button>
     </div>
     <div class="controls">
@@ -693,7 +693,7 @@
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">BACKTEST RUNS — <b id="res-run-count">—</b></div>
-      <div class="panel-meta">select up to 4 runs to compare · click REFRESH after triggering a new run from the Actions tab</div>
+      <div class="panel-meta">select up to 4 runs to compare · click REFRESH after triggering a new run from the Actions tab · last fetched <span id="res-last-fetch">—</span></div>
       <button class="refresh-btn" id="res-refresh">↻ REFRESH</button>
     </div>
     <div class="table-scroll" style="max-height:320px;">
@@ -1794,6 +1794,7 @@ async function initUniverse(){
     dupeSection.split('\n').map(l=>l.trim()).filter(l=>l && (l.endsWith('.NS') || l.endsWith('.BO')))
       .forEach(sym => removedRows.push({symbol: sym, reason: 'duplicate'}));
 
+    document.getElementById('univ-last-fetch').textContent = eqFmtTime(Date.now());
     renderStats(raw, etfCount, dupeCount, cleanSymbols.length);
     switchView('grid');
   }catch(err){
@@ -1909,6 +1910,7 @@ async function loadBackfill(){
       header.forEach((h, i) => obj[h] = r[i] || '');
       return obj;
     });
+    document.getElementById('bf-last-fetch').textContent = eqFmtTime(Date.now());
     renderBfStats();
     renderBfTable();
   }catch(err){
@@ -2382,6 +2384,7 @@ async function loadRunIndex(){
   }catch(err){
     resRunIndex = [];
   }
+  document.getElementById('res-last-fetch').textContent = eqFmtTime(Date.now());
   resRunIndex.sort((a,b) => new Date(b.run_at) - new Date(a.run_at)); // newest first
   renderRunList();
 }
