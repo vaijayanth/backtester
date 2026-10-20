@@ -81,6 +81,7 @@ def build_screens(universe="fno"):
     target_symbols = load_fno_symbols() if universe == "fno" else sorted(validated)
 
     week52_high = []
+    week52_all = []
     five_year_high = []
     rsi_overbought = []
     rsi_oversold = []
@@ -111,12 +112,14 @@ def build_screens(universe="fno"):
         window = closes[-FIFTY_TWO_WEEK_DAYS:] if len(closes) >= FIFTY_TWO_WEEK_DAYS else closes
         high_52w = max(window)
         pct_from_52wh = (latest_close - high_52w) / high_52w * 100
+        week52_entry = {
+            "symbol": symbol, "close": round(latest_close, 2),
+            "high_52w": round(high_52w, 2), "pct_from_high": round(pct_from_52wh, 2),
+            "date": latest_date,
+        }
+        week52_all.append(week52_entry)
         if pct_from_52wh >= -NEAR_52WH_TOLERANCE_PCT:
-            week52_high.append({
-                "symbol": symbol, "close": round(latest_close, 2),
-                "high_52w": round(high_52w, 2), "pct_from_high": round(pct_from_52wh, 2),
-                "date": latest_date,
-            })
+            week52_high.append(week52_entry)
 
         # 5-year high (full available window — NOT a genuine all-time high)
         high_5y = max(closes)
@@ -148,6 +151,13 @@ def build_screens(universe="fno"):
         "universe_size": len(target_symbols),
         "skipped": skipped,
         "week52_high": week52_high,
+        # Full per-stock 52WH, every validated symbol regardless of how far
+        # from its high it currently sits — week52_high above only carries
+        # the subset already within NEAR_52WH_TOLERANCE_PCT. The Equity
+        # Dashboard/Alerts pages join THIS against the user's own open
+        # positions (which can be anywhere relative to their 52WH, not just
+        # near it), same join pattern as rsi_all below.
+        "week52_all": week52_all,
         "five_year_high": five_year_high,
         "rsi_overbought": rsi_overbought,
         "rsi_oversold": rsi_oversold,

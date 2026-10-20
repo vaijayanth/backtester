@@ -1304,6 +1304,18 @@
     </div>
   </div>
 
+  <!-- 52-Week High breadth -->
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🚀 OPEN BOOK — 52-WEEK HIGH BREADTH <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqd-52wh-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
+        <tbody id="eqd-52wh-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Open positions within 5% of their 52-week high, closest first — a portfolio-wide breakout-strength read. Informational only, doesn't drive exit/add-on signals (see the Alerts page for the same list with position sizing).</div>
+  </div>
+
   <!-- Heatmap -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS AT A GLANCE <span class="panel-meta" id="eqd-heatmap-meta">—</span></div></div>
@@ -1381,6 +1393,17 @@
       </table>
     </div>
     <div class="dash-footnote">Loss worse than −6%, Supertrend still red — no action, wait for structure to return.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🚀 NEAR 52-WEEK HIGH <span class="panel-meta" id="eqa-52wh-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-52wh-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
+        <tbody id="eqa-52wh-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Open positions within 5% of their 52-week high — breakout-strength tell, informational only (doesn't change exit/add-on action from the sections above). "🚀 New 52W High" = currently AT a fresh high, not just near one.</div>
   </div>
 
   <div class="panel">
@@ -4638,6 +4661,34 @@ function eqSectorFor(symbol){
   return (window._eqSectors && window._eqSectors[symbol]) || '—';
 }
 
+// Full per-symbol 52-week-high data (market_screens_full.json's week52_all
+// — every validated symbol in the whole universe, not just the ones
+// already near their high) so any open position can be looked up
+// regardless of where it currently sits relative to its 52WH.
+async function eqFetchWeek52(){
+  try{
+    const res = await fetch('market_screens_full.json?t=' + Date.now());
+    if(!res.ok) return {};
+    const data = await res.json();
+    const bySymbol = {};
+    (data.week52_all || []).forEach(r => { bySymbol[r.symbol.replace(/\.(NS|BO)$/, '')] = r; });
+    return bySymbol;
+  } catch(e){
+    return {};
+  }
+}
+function eqWeek52For(symbol){
+  return (window._eqWeek52 && window._eqWeek52[symbol]) || null;
+}
+// Strength tiers, used consistently across the Dashboard panel and the
+// Alerts bucket — SST reads a stock sitting at/near its 52-week high as a
+// breakout-strength signal (O'Neil/Minervini-style), distinct from the
+// Supertrend-driven exit/add-on signals: informational, not action-required.
+const EQ_NEAR_52WH_PCT = 5; // within this % of the high counts as "near"
+function eqIsNear52wh(w52){
+  return w52 && w52.pct_from_high >= -EQ_NEAR_52WH_PCT;
+}
+
 // "12-Sep-26" — DD-MMM-YY, matching the SST Journal's own date display.
 function eqFmtDate(iso){
   if(!iso) return '—';
@@ -4812,14 +4863,15 @@ async function eqRefresh(){
   eqSetSyncStatus('<span class="eq-spinner"></span> Fetching fills from sheet…');
   // allSettled, not all — a failed fetch of one source shouldn't discard a
   // successful fetch of another; each degrades on its own.
-  const [fillsResult, stResult, holdingsResult, sectorsResult] = await Promise.allSettled([
-    eqFetchAllFills(), eqFetchSupertrend(), eqFetchHoldings(), eqFetchSectors(),
+  const [fillsResult, stResult, holdingsResult, sectorsResult, week52Result] = await Promise.allSettled([
+    eqFetchAllFills(), eqFetchSupertrend(), eqFetchHoldings(), eqFetchSectors(), eqFetchWeek52(),
   ]);
   const stMap = stResult.status === 'fulfilled' ? stResult.value : null;
   window._eqSupertrend = stMap;
   const holdings = holdingsResult.status === 'fulfilled' ? holdingsResult.value : [];
   window._eqHoldings = holdings;
   window._eqSectors = sectorsResult.status === 'fulfilled' ? sectorsResult.value : {};
+  window._eqWeek52 = week52Result.status === 'fulfilled' ? week52Result.value : {};
   if(fillsResult.status !== 'fulfilled'){
     document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + fillsResult.reason.message;
     eqSetSyncStatus(`<span style="color:var(--red)">Failed to load fills</span>`);
@@ -5417,7 +5469,7 @@ function eqDashRenderAll(){
    eqDashRenderEquityChart, eqDashRenderMomentum,
    eqDashRenderSectorBreadth, eqDashRenderSectorTurnaround,
    eqDashRenderCalendar, eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
-   eqDashRenderConcentration, eqDashRenderPerfSummary,
+   eqDashRenderConcentration, eqDashRenderWeek52, eqDashRenderPerfSummary,
   ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
 }
 
@@ -5813,6 +5865,23 @@ function eqDashRenderLossSummary(s){
   ].join('');
 }
 
+function eqDashRenderWeek52(s){
+  const withW52 = s.openLive.map(p => ({...p, w52: eqWeek52For(p.symbol)}));
+  const near = withW52.filter(p => eqIsNear52wh(p.w52))
+    .sort((a, b) => b.w52.pct_from_high - a.w52.pct_from_high);
+  const total = withW52.filter(p => p.w52).length;
+
+  document.getElementById('eqd-52wh-summary').textContent =
+    total ? `${near.length} of ${total} open position${total===1?'':'s'}` : '—';
+
+  document.getElementById('eqd-52wh-tbody').innerHTML = near.map(p => {
+    const pct = p.w52.pct_from_high;
+    const atNewHigh = pct >= 0;
+    return `<tr><td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.w52.close)}</td><td>${eqFmtRs(p.w52.high_52w)}</td>
+      <td style="color:${atNewHigh ? 'var(--green)' : 'var(--amber)'};font-weight:700">${atNewHigh ? '🚀 New High' : eqFmtPct(pct)}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">No open positions within 5% of their 52-week high right now.</td></tr>';
+}
+
 function eqDashRenderConcentration(s){
   const sorted = s.openLive.slice().sort((a, b) => b.deployed - a.deployed).slice(0, 10);
   document.getElementById('eqd-conc-tbody').innerHTML = sorted.map(p => {
@@ -5953,6 +6022,27 @@ function eqAlertsRender(){
 
   eqAlertsRenderTable('eqa-nodata-tbody', 'eqa-nodata-count', noData, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td></tr>`);
+
+  // 52-Week High strength signal — informational, not action-required
+  // (distinct from the Supertrend-driven exit/add-on buckets above). SST
+  // reads a position sitting at/near its 52-week high as a breakout-
+  // strength tell; shown as a standalone watch list rather than mixed into
+  // the exit/add-on classification, since it doesn't change what to DO —
+  // a position can be "near 52WH" AND simultaneously an add-on/exit/hold.
+  const near52wh = open
+    .map(p => ({...p, w52: eqWeek52For(p.symbol)}))
+    .filter(p => eqIsNear52wh(p.w52))
+    .sort((a, b) => b.w52.pct_from_high - a.w52.pct_from_high); // closest to (or at) the high first
+
+  eqAlertsRenderTable('eqa-52wh-tbody', 'eqa-52wh-count', near52wh, p => {
+    const pct = p.w52.pct_from_high;
+    const atNewHigh = pct >= 0;
+    return `<tr>
+      <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.w52.close)}</td>
+      <td>${eqFmtRs(p.w52.high_52w)}</td>
+      <td style="color:${atNewHigh ? 'var(--green)' : 'var(--amber)'};font-weight:700">${atNewHigh ? '🚀 New 52W High' : eqFmtPct(pct)}</td>
+    </tr>`;
+  });
 
   // Universe-wide new bullish signals — independent of current holdings,
   // this is an entry-candidate watchlist, not a position alert. Excludes
