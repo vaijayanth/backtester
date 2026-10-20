@@ -3220,13 +3220,29 @@ function ivpParseSensibullTsv(text){
     });
   }
   if(!entries.length) throw new Error('No stock rows found in that file (after excluding indices).');
-  entries.sort((a, b) => (b.iv_percentile ?? -1) - (a.iv_percentile ?? -1));
+
+  // Row-level sanity — a garbled export (wrong columns picked up by a
+  // header mismatch, a cell shift) shows up as a non-positive price or an
+  // out-of-range percentile rather than a parse exception, so it would
+  // otherwise sail through silently. Reject and report rather than let bad
+  // numbers drive real entry decisions.
+  const validEntries = entries.filter(e =>
+    e.future_price > 0 && e.iv_percentile != null && e.iv_percentile >= 0 && e.iv_percentile <= 100
+  );
+  const rejectedCount = entries.length - validEntries.length;
+  if(!validEntries.length) throw new Error('Every row failed sanity checks (price > 0, IV percentile 0-100) — check this is a genuine Sensibull export.');
+  if(rejectedCount > entries.length * 0.2){
+    throw new Error(`${rejectedCount} of ${entries.length} rows failed sanity checks (price > 0, IV percentile 0-100) — that's too many to be a few bad rows. Check this is a genuine, unmodified Sensibull export.`);
+  }
+
+  validEntries.sort((a, b) => (b.iv_percentile ?? -1) - (a.iv_percentile ?? -1));
 
   return {
     generated_at: new Date().toISOString(),
     source: 'sensibull_browser_upload',
-    universe_size: entries.length,
-    entries,
+    universe_size: validEntries.length,
+    rejected_count: rejectedCount,
+    entries: validEntries,
   };
 }
 
@@ -3313,8 +3329,11 @@ async function ivpUploadFile(){
 
     ivpData = {...snapshot, generated_at: result.generatedAt || snapshot.generated_at, source: 'google_sheet'};
     ivpUpdateUploadMeta();
+    const rejectedNote = snapshot.rejected_count
+      ? ` · <span style="color:var(--amber);">${snapshot.rejected_count} row${snapshot.rejected_count===1?'':'s'} rejected (bad price/IV)</span>`
+      : '';
     document.getElementById('ivp-meta').innerHTML =
-      `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">uploaded ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>`;
+      `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">uploaded ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>${rejectedNote}`;
     renderIvpScreener();
     fileInput.value = '';
   }catch(err){
@@ -3859,10 +3878,22 @@ async function otUploadFile(){
     })).filter(r => r.symbol);
     if(!parsed.length){ otShowError('No usable rows found in that file.'); return; }
 
-    const result = await otPostRows(parsed.map(otRowToSheetRow));
+    // Row-level sanity — a row where every financial field came back 0
+    // (quantity, buy/sell value, open qty/value all zero) almost always
+    // means the column mapping grabbed the wrong cells for that row (a
+    // merged/blank cell, a subtotal line mistaken for a data row) rather
+    // than a genuine zero-everything trade. Reported, not silently upserted
+    // as if it were real — this is additive (upsert by symbol), so letting
+    // a garbage row through would overwrite a real existing entry with zeros.
+    const allZero = parsed.filter(r => r.quantity === 0 && r.buyValue === 0 && r.sellValue === 0 && r.openQuantity === 0 && r.openValue === 0);
+    const validParsed = parsed.filter(r => !allZero.includes(r));
+    if(!validParsed.length){ otShowError('Every row had zero quantity/value in every field — check this is a genuine P&L export, not a subtotal/summary sheet.'); return; }
+
+    const result = await otPostRows(validParsed.map(otRowToSheetRow));
     document.getElementById('ot-results').style.display = 'block';
     await otRenderFromDb();
-    otShowStatus(`Uploaded: ${result.inserted} new, ${result.updated} updated.`);
+    otShowStatus(`Uploaded: ${result.inserted} new, ${result.updated} updated.` +
+      (allZero.length ? ` (${allZero.length} all-zero row${allZero.length===1?'':'s'} skipped.)` : ''));
     fileInput.value = '';
   }catch(err){
     console.error('Upload failed:', err);
@@ -4397,6 +4428,49 @@ function eqShowStatus(msg, isError){
   el.style.color = isError ? 'var(--red)' : 'var(--green)';
 }
 
+// A trade date >6 months in the future is never a real fill — it's a
+// locale parse gone wrong (e.g. US "MM-DD-YYYY" misread as DD-MM) or a
+// garbled cell. A small forward allowance covers timezone edge cases
+// around "today" without being loose enough to miss a real parse bug.
+const EQ_FUTURE_DATE_SLACK_DAYS = 3;
+function eqDateLooksSane(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return false;
+  const d = new Date(iso);
+  if(isNaN(d)) return false;
+  const maxFuture = new Date(); maxFuture.setDate(maxFuture.getDate() + EQ_FUTURE_DATE_SLACK_DAYS);
+  return d <= maxFuture && d.getFullYear() >= 2000;
+}
+
+// Full-replace staleness/regression guard — a full-replace upload (Tradebook
+// fills, Holdings) wholesale overwrites the entire stored history with
+// whatever's in this file, so uploading the WRONG file (an old cached
+// download, a mis-scoped date range) is silently destructive: nothing in
+// the UI previously distinguished "fresh, complete export" from "stale,
+// partial one" before committing. Confirmed as a real incident, not a
+// hypothetical — a Tradebook export that silently stopped 8 days before
+// "today" was uploaded and accepted without any warning; only caught via
+// manual investigation of one stock's missing sell. This blocks the same
+// mistake from reaching the sheet: compares the new file's row count and
+// (optionally) latest date against what's CURRENTLY stored, and makes the
+// user explicitly confirm before a regression gets committed.
+function eqConfirmFullReplace(label, currentCount, newCount, currentMaxDate, newMaxDate){
+  const lines = [];
+  const countDropPct = currentCount > 0 ? ((currentCount - newCount) / currentCount) * 100 : 0;
+  if(currentCount > 0 && countDropPct >= 10){
+    lines.push(`This file has ${newCount} ${label} rows vs ${currentCount} currently stored (${countDropPct.toFixed(0)}% fewer).`);
+  }
+  if(currentMaxDate && newMaxDate && newMaxDate < currentMaxDate){
+    lines.push(`Its most recent date is ${newMaxDate}, older than what's already stored (${currentMaxDate}).`);
+  }
+  if(!lines.length) return true; // no regression signal — proceed silently, as before
+
+  const msg = `⚠ This looks like it might be a stale or partial export, not your full current ${label}:\n\n` +
+    lines.join('\n') + '\n\n' +
+    `Uploading replaces the ENTIRE stored ${label} with this file. If this file is actually older/smaller than what's already there, you'll lose real data.\n\n` +
+    `Continue with this upload anyway?`;
+  return confirm(msg);
+}
+
 async function eqUploadFile(){
   const fileInput = document.getElementById('eq-file-input');
   const file = fileInput.files && fileInput.files[0];
@@ -4424,7 +4498,7 @@ async function eqUploadFile(){
       }
     }
 
-    const fills = rawRows.map(r => ({
+    const rawFills = rawRows.map(r => ({
       symbol: mapping.symbol !== -1 ? r[mapping.symbol] : '',
       isin: mapping.isin !== -1 ? r[mapping.isin] : '',
       tradeDate: mapping.tradeDate !== -1 ? r[mapping.tradeDate] : '',
@@ -4436,7 +4510,21 @@ async function eqUploadFile(){
       quantity: mapping.quantity !== -1 ? parseFloat(r[mapping.quantity]) || 0 : 0,
       price: mapping.price !== -1 ? parseFloat(r[mapping.price]) || 0 : 0,
       tradeId: mapping.tradeId !== -1 ? r[mapping.tradeId] : '',
-    })).filter(f => f.symbol && f.quantity > 0);
+    }));
+
+    // Row-level sanity: a row with no symbol/qty was already dropped before
+    // this session; now also drop (and report, not silently discard) rows
+    // whose tradeType isn't exactly buy/sell (would otherwise vanish inside
+    // eqBuildPositions' FIFO loop with neither branch matching — silently
+    // excluded from both position math AND this count, previously), a
+    // non-positive price (free/negative fills aren't real), or a trade date
+    // that doesn't parse or sits implausibly in the future (locale/parse bug).
+    const basicFills = rawFills.filter(f => f.symbol && f.quantity > 0);
+    const badType = basicFills.filter(f => f.tradeType !== 'buy' && f.tradeType !== 'sell');
+    const badPrice = basicFills.filter(f => !(f.price > 0) && (f.tradeType === 'buy' || f.tradeType === 'sell'));
+    const badDate = basicFills.filter(f => !eqDateLooksSane(f.tradeDate) && (f.tradeType === 'buy' || f.tradeType === 'sell'));
+    const rejectedKeys = new Set([...badType, ...badPrice, ...badDate].map(eqRawFillKey));
+    const fills = basicFills.filter(f => !rejectedKeys.has(eqRawFillKey(f)));
 
     if(!fills.length){ eqShowStatus('No valid fill rows found after parsing.', true); return; }
 
@@ -4455,10 +4543,28 @@ async function eqUploadFile(){
     });
     const dupesInFile = fills.length - dedupedFills.length;
 
+    // Staleness/regression guard against what's CURRENTLY stored (see
+    // eqConfirmFullReplace) — fetch the current sheet state fresh right
+    // before committing, not any cached window._eqFills, so the comparison
+    // is against reality even if this is the first thing done this session.
+    let currentCount = 0, currentMaxDate = null;
+    try{
+      const current = await eqFetchAllFills();
+      currentCount = current.length;
+      currentMaxDate = current.reduce((max, f) => (f.tradeDate > max ? f.tradeDate : max), '');
+    }catch(e){ /* couldn't fetch current state — proceed without the comparison rather than block the upload */ }
+    const newMaxDate = dedupedFills.reduce((max, f) => (f.tradeDate > max ? f.tradeDate : max), '');
+    if(!eqConfirmFullReplace('Tradebook', currentCount, dedupedFills.length, currentMaxDate, newMaxDate)){
+      eqShowStatus('Upload cancelled.', false);
+      return;
+    }
+
     btn.textContent = 'SYNCING TO SHEET...';
     const result = await eqPostFills(dedupedFills);
+    const rejectedCount = rejectedKeys.size;
     eqShowStatus(`Synced: sheet now has ${result.replaced} fills from this upload` +
-      (dupesInFile ? ` (${dupesInFile} duplicate row${dupesInFile===1?'':'s'} within the file skipped).` : '.'), false);
+      (dupesInFile ? ` (${dupesInFile} duplicate row${dupesInFile===1?'':'s'} within the file skipped)` : '') +
+      (rejectedCount ? ` (${rejectedCount} row${rejectedCount===1?'':'s'} rejected — bad trade type/price/date)` : '') + '.', false);
     fileInput.value = '';
     await eqRefresh();
   } catch(e){
@@ -5077,6 +5183,21 @@ async function eqUploadHoldings(){
     const result = eqParseHoldingsCsv(text);
     if(!result || result.error){ eqShowHoldingsStatus(result ? result.error : 'Could not read this file.', true); return; }
     if(!result.holdings.length){ eqShowHoldingsStatus('No holdings rows found after parsing.', true); return; }
+
+    // Staleness/regression guard (see eqConfirmFullReplace) — Holdings is
+    // the FINAL REFERENCE that overrides FIFO's own numbers wherever it has
+    // a match (see CLAUDE.md's reconciliation rule), so a bad/partial
+    // Holdings upload doesn't just lose history like a bad Tradebook upload
+    // would — it actively corrupts the Open Positions numbers displayed for
+    // every matching symbol with wrong data. No date field to compare here
+    // (Holdings is a point-in-time snapshot, not dated rows), so this only
+    // compares row count.
+    let currentHoldingsCount = 0;
+    try{ currentHoldingsCount = (await eqFetchHoldings()).length; }catch(e){ /* proceed without the comparison rather than block */ }
+    if(!eqConfirmFullReplace('Holdings', currentHoldingsCount, result.holdings.length, null, null)){
+      eqShowHoldingsStatus('Upload cancelled.', false);
+      return;
+    }
 
     btn.textContent = 'SYNCING TO SHEET...';
     const res = await eqPostHoldings(result.holdings);
