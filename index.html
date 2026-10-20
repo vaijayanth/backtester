@@ -1494,7 +1494,7 @@
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>252D HIGH ₹</th><th>SECTOR</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>252D HIGH ₹</th><th>QTY TO BUY</th><th>SECTOR</th></tr></thead>
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
@@ -6613,9 +6613,14 @@ function dh252RenderSignals(open){
       if(turnHot) tags.push(`${sectorTurn[sector]} turned`);
       sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
     }
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td>
+    // Always buy at least 1 share, even if the price exceeds the
+    // Rs1,000 base size — the live journal never skips a signal for
+    // being too expensive, unlike the backtest's missed_entries_price_
+    // too_high bucket (which models the strategy exactly as sized there).
+    const qtyToBuy = Math.max(1, Math.floor(DH252_POSITION_SIZE_RS / w.close));
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${qtyToBuy}</td>
       <td style="${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
-  }).join('') : '<tr><td colspan="4" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
+  }).join('') : '<tr><td colspan="5" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
 
   // Add-on and exit — evaluated against open positions only.
   const addRows = [], exitRows = [];
