@@ -3907,12 +3907,22 @@ async function otUploadFile(){
 // ------------------------------------------------------------
 // Google Sheets storage layer. Server-side persistence via a small Apps
 // Script Web App (same pattern as the sibling TradingJournal project) —
-// GET returns everything stored, POST upserts by Symbol. The Web App URL
-// is pasted in once and kept in localStorage only — never committed to
-// git, since anyone holding that URL can read/write the sheet.
-// ------------------------------------------------------------
+// GET returns everything stored, POST upserts by Symbol.
+//
+// Hardcoded default (2026-10-20) — this was originally localStorage-only
+// ("pasted in once per browser, never committed to git"), but that meant
+// a genuinely-configured, data-populated sheet became invisible the moment
+// the user opened the page from a different browser/device, with nothing
+// in the UI distinguishing "never set up" from "just not on THIS browser".
+// Real incident: user had real trade data in the sheet the whole time, the
+// URL just wasn't in this browser's localStorage. Matches the EQ_SHEET_URL/
+// IVP_SHEET_URL convention — this is a single-user app, not multi-tenant,
+// so there's no actual security benefit to keeping it out of the page
+// source. The INTEGRATIONS field still works for overriding to a different
+// sheet if ever wanted; localStorage wins over this default when set.
+const OT_SHEET_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzCzgNLWexbsdEH0jpuMn4-wNIVphjfwPdGbJPCfhJtpPAxqBnkYmbcvwFgDpPc0AwQ/exec';
 const OT_SHEET_URL_KEY = 'ot_sheet_url';
-function otGetSheetUrl(){ return (localStorage.getItem(OT_SHEET_URL_KEY) || '').trim(); }
+function otGetSheetUrl(){ return (localStorage.getItem(OT_SHEET_URL_KEY) || OT_SHEET_URL_DEFAULT).trim(); }
 function otSaveSheetUrl(url){ localStorage.setItem(OT_SHEET_URL_KEY, url.trim()); }
 
 function otDateIso(d){ return d ? d.toISOString().slice(0,10) : null; }
