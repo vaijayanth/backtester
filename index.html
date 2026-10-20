@@ -1467,7 +1467,9 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div>
+      <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
+    </div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
       <div class="stat"><div class="stat-label">INITIAL CAPITAL</div><div class="stat-value">₹20,00,000</div></div>
       <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
@@ -6684,6 +6686,7 @@ function dh252Init(){
     await dh252Refresh();
   });
   document.getElementById('dh252-log-btn').onclick = dh252LogTrade;
+  document.getElementById('dh252-refresh-btn').onclick = dh252Refresh;
   dh252Refresh();
 }
 </script>
