@@ -1189,6 +1189,18 @@
     <div id="eqd-lossbucket-body"></div>
   </div>
 
+  <!-- Sector P&L — open positions -->
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">SECTOR P&amp;L — OPEN POSITIONS <span class="panel-meta" id="eqd-sectorpl-meta">—</span></div></div>
+      <div id="chart-eqd-sectorpl" style="min-height:280px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">CAPITAL ALLOCATION BY SECTOR</div></div>
+      <div id="chart-eqd-sectorcap" style="min-height:280px;"></div>
+    </div>
+  </div>
+
   <!-- Equity curve -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
@@ -1198,6 +1210,18 @@
   <div class="panel">
     <div class="panel-head"><div class="panel-title">⚡ SYSTEM MOMENTUM — LAST 10 EXITS</div></div>
     <div id="eqd-momentum-body"></div>
+  </div>
+
+  <!-- Sector breadth — universe signals -->
+  <div class="dash-split">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">SECTOR BREADTH — SUPERTREND SIGNALS <span class="panel-meta" id="eqd-sectorbreadth-meta">—</span></div></div>
+      <div id="chart-eqd-sectorbreadth" style="min-height:320px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">RECENT TURNAROUND BY SECTOR <span class="panel-meta">flipped green, last 7 trading days</span></div></div>
+      <div id="chart-eqd-sectorturn" style="min-height:320px;"></div>
+    </div>
   </div>
 
   <!-- P&L Calendar -->
@@ -4757,6 +4781,7 @@ function eqInit(){
 // ============================================================
 let eqDashInitialized = false;
 let eqDashEquityChart = null;
+let eqDashSectorPlChart = null, eqDashSectorCapChart = null, eqDashSectorBreadthChart = null, eqDashSectorTurnChart = null;
 let eqDashCalOffset = 0; // months from current month, for P&L Calendar nav
 
 function eqDashInit(){
@@ -4963,8 +4988,10 @@ function eqDashRenderAll(){
   // down every panel after it in this list (same reasoning as
   // initAnalysisCharts's own try-catch wrapping).
   [eqDashRenderFySummary, eqDashRenderOpenBook, eqDashRenderEdge, eqDashRenderLossBuckets,
-   eqDashRenderEquityChart, eqDashRenderMomentum, eqDashRenderCalendar,
-   eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
+   eqDashRenderSectorPL, eqDashRenderSectorCap,
+   eqDashRenderEquityChart, eqDashRenderMomentum,
+   eqDashRenderSectorBreadth, eqDashRenderSectorTurnaround,
+   eqDashRenderCalendar, eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
    eqDashRenderConcentration, eqDashRenderPerfSummary,
   ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
 }
@@ -5092,6 +5119,149 @@ function eqDashRenderLossBuckets(s){
     </div>`;
   }).join('');
   document.getElementById('eqd-lossbucket-body').innerHTML = rows || '<div style="color:var(--muted);padding:12px;">No open positions in loss.</div>';
+}
+
+const EQD_SECTOR_COLORS = ['#00d26a','#ff9f1a','#4da3ff','#ff3b30','#a78bfa','#2dd4bf','#f472b6','#facc15','#94a3b8','#38bdf8','#fb923c'];
+
+// Which sectors are bleeding vs profitable in the current open book — net
+// unrealised P&L ₹ summed per sector, one bar per sector, red/green by sign.
+function eqDashRenderSectorPL(s){
+  const bySector = {};
+  s.openLive.forEach(p => {
+    if(p.cmp == null) return;
+    const sector = eqSectorFor(p.symbol);
+    bySector[sector] = (bySector[sector] || 0) + (p.cmp - p.avgEntry) * p.qty;
+  });
+  const entries = Object.entries(bySector).sort((a, b) => a[1] - b[1]);
+  document.getElementById('eqd-sectorpl-meta').textContent = `${entries.length} sectors · unrealised MTM`;
+
+  if(eqDashSectorPlChart){ eqDashSectorPlChart.destroy(); eqDashSectorPlChart = null; }
+  if(!entries.length){
+    document.getElementById('chart-eqd-sectorpl').innerHTML = '<div class="loading">No open positions with price data.</div>';
+    return;
+  }
+  const categories = entries.map(e => e[0]);
+  const data = entries.map(e => Math.round(e[1]));
+  eqDashSectorPlChart = new ApexCharts(document.getElementById('chart-eqd-sectorpl'), {
+    chart: {type: 'bar', height: Math.max(280, categories.length * 34), background: 'transparent', toolbar: {show: false}},
+    theme: {mode: 'dark'},
+    series: [{name: 'Unrealised P&L', data}],
+    plotOptions: {bar: {horizontal: true, distributed: true, borderRadius: 3}},
+    colors: data.map(v => v >= 0 ? '#00d26a' : '#ff3b30'),
+    xaxis: {categories, labels: {style: {colors: '#8a8a93'}, formatter: v => eqFmtK(v)}},
+    yaxis: {labels: {style: {colors: '#e9e9ec', fontSize: '11px'}}},
+    grid: {borderColor: '#1e1e23'},
+    dataLabels: {enabled: true, formatter: v => eqFmtK(v), style: {colors: ['#e9e9ec']}},
+    legend: {show: false},
+    tooltip: {theme: 'dark', y: {formatter: v => eqFmtRs(v)}},
+  });
+  eqDashSectorPlChart.render();
+}
+
+// Capital concentration by sector, as a share of deployed capital — the
+// literal "nice pie chart" ask, pairs with the P&L bar above.
+function eqDashRenderSectorCap(s){
+  const bySector = {};
+  s.openLive.forEach(p => { bySector[eqSectorFor(p.symbol)] = (bySector[eqSectorFor(p.symbol)] || 0) + p.deployed; });
+  const entries = Object.entries(bySector).sort((a, b) => b[1] - a[1]);
+
+  if(eqDashSectorCapChart){ eqDashSectorCapChart.destroy(); eqDashSectorCapChart = null; }
+  if(!entries.length){
+    document.getElementById('chart-eqd-sectorcap').innerHTML = '<div class="loading">No open positions.</div>';
+    return;
+  }
+  eqDashSectorCapChart = new ApexCharts(document.getElementById('chart-eqd-sectorcap'), {
+    chart: {type: 'donut', height: 280, background: 'transparent'},
+    theme: {mode: 'dark'},
+    series: entries.map(e => Math.round(e[1])),
+    labels: entries.map(e => e[0]),
+    colors: EQD_SECTOR_COLORS,
+    legend: {position: 'bottom', labels: {colors: '#9a9aa4'}, fontSize: '11px'},
+    dataLabels: {enabled: true, formatter: val => val.toFixed(0) + '%'},
+    stroke: {colors: ['#111114']},
+    tooltip: {theme: 'dark', y: {formatter: v => eqFmtRs(v)}},
+  });
+  eqDashSectorCapChart.render();
+}
+
+// Across the FULL Supertrend universe (not just held positions) — which
+// sectors currently skew green (bullish) vs red (bearish). 100%-stacked so
+// sector dominance reads at a glance regardless of how many stocks a
+// sector has.
+function eqDashRenderSectorBreadth(s){
+  const stMap = window._eqSupertrend || {};
+  const bySector = {};
+  Object.values(stMap).forEach(e => {
+    const sector = eqSectorFor(e.symbol.replace(/\.(NS|BO)$/, ''));
+    if(sector === '—') return;
+    if(!bySector[sector]) bySector[sector] = {green: 0, red: 0};
+    if(e.color === 'green') bySector[sector].green++;
+    else if(e.color === 'red') bySector[sector].red++;
+  });
+  const entries = Object.entries(bySector)
+    .filter(([, v]) => v.green + v.red > 0)
+    .sort((a, b) => (b[1].green / (b[1].green + b[1].red)) - (a[1].green / (a[1].green + a[1].red)));
+  document.getElementById('eqd-sectorbreadth-meta').textContent = `${entries.length} sectors · ${Object.values(stMap).length} stocks tracked`;
+
+  if(eqDashSectorBreadthChart){ eqDashSectorBreadthChart.destroy(); eqDashSectorBreadthChart = null; }
+  if(!entries.length){
+    document.getElementById('chart-eqd-sectorbreadth').innerHTML = '<div class="loading">No sector data yet — the fetch_equity_sectors.yml workflow hasn\'t run far enough yet.</div>';
+    return;
+  }
+  const categories = entries.map(e => e[0]);
+  eqDashSectorBreadthChart = new ApexCharts(document.getElementById('chart-eqd-sectorbreadth'), {
+    chart: {type: 'bar', height: Math.max(320, categories.length * 30), stacked: true, stackType: '100%', background: 'transparent', toolbar: {show: false}},
+    theme: {mode: 'dark'},
+    series: [
+      {name: 'Green', data: entries.map(e => e[1].green)},
+      {name: 'Red', data: entries.map(e => e[1].red)},
+    ],
+    plotOptions: {bar: {horizontal: true, borderRadius: 2}},
+    colors: ['#00d26a', '#ff3b30'],
+    xaxis: {categories, labels: {style: {colors: '#8a8a93'}}},
+    yaxis: {labels: {style: {colors: '#e9e9ec', fontSize: '11px'}}},
+    grid: {borderColor: '#1e1e23'},
+    legend: {position: 'top', labels: {colors: '#9a9aa4'}},
+    dataLabels: {enabled: false},
+    tooltip: {theme: 'dark'},
+  });
+  eqDashSectorBreadthChart.render();
+}
+
+// Which sectors are seeing the most fresh bullish turnarounds right now
+// (Supertrend flipped green in the last 7 trading days, universe-wide) —
+// concentration of "New Bullish Signals" (see Equity Alerts) by sector.
+function eqDashRenderSectorTurnaround(s){
+  const stMap = window._eqSupertrend || {};
+  const bySector = {};
+  Object.values(stMap).forEach(e => {
+    if(e.recent_bullish_flip_days_ago == null) return;
+    const sector = eqSectorFor(e.symbol.replace(/\.(NS|BO)$/, ''));
+    if(sector === '—') return;
+    bySector[sector] = (bySector[sector] || 0) + 1;
+  });
+  const entries = Object.entries(bySector).sort((a, b) => b[1] - a[1]);
+
+  if(eqDashSectorTurnChart){ eqDashSectorTurnChart.destroy(); eqDashSectorTurnChart = null; }
+  if(!entries.length){
+    document.getElementById('chart-eqd-sectorturn').innerHTML = '<div class="loading">No recent bullish flips with sector data yet.</div>';
+    return;
+  }
+  const categories = entries.map(e => e[0]);
+  eqDashSectorTurnChart = new ApexCharts(document.getElementById('chart-eqd-sectorturn'), {
+    chart: {type: 'bar', height: Math.max(320, categories.length * 30), background: 'transparent', toolbar: {show: false}},
+    theme: {mode: 'dark'},
+    series: [{name: 'Recent bullish flips', data: entries.map(e => e[1])}],
+    plotOptions: {bar: {horizontal: true, borderRadius: 3, distributed: true}},
+    colors: categories.map(() => '#00d26a'),
+    xaxis: {categories, labels: {style: {colors: '#8a8a93'}}},
+    yaxis: {labels: {style: {colors: '#e9e9ec', fontSize: '11px'}}},
+    grid: {borderColor: '#1e1e23'},
+    dataLabels: {enabled: true, style: {colors: ['#0a0a0a']}},
+    legend: {show: false},
+    tooltip: {theme: 'dark'},
+  });
+  eqDashSectorTurnChart.render();
 }
 
 function eqDashRenderEquityChart(s){
