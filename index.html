@@ -239,7 +239,7 @@
     <button data-page="eqdash" id="nav-eqdash"><span class="nav-icon">◆</span>Equity Dashboard</button>
     <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
-    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>252DH Forward Journal</button>
+    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>52 Week High Forward Journal</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1452,13 +1452,13 @@
 
 </div>
 
-<!-- ============ 252DH FORWARD JOURNAL PAGE ============ -->
+<!-- ============ 52-WEEK HIGH FORWARD JOURNAL PAGE ============ -->
 <div class="page" id="page-dh252">
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">252DH FORWARD JOURNAL</div>
-      <div class="dash-meta">252-day-high breakout entry, no EMA filter, Rs1,000/position, full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
+      <div class="dash-title">52-WEEK HIGH FORWARD JOURNAL</div>
+      <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000/position, full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
     <div style="padding:0 18px 18px;">
       <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
@@ -1491,14 +1491,14 @@
   </div>
 
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 252-DAY HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
         <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>252D HIGH ₹</th><th>SECTOR</th></tr></thead>
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Close at/above the trailing 252-session high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one.</div>
+    <div class="dash-footnote">Close at/above the trailing 52-week high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one.</div>
   </div>
 
   <div class="panel">
@@ -6445,10 +6445,10 @@ document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e)
 });
 
 // ============================================================
-// 252DH FORWARD JOURNAL PAGE
+// 52-WEEK HIGH FORWARD JOURNAL PAGE
 // ============================================================
 // Real-money forward test of the variant tested in the backtest
-// comparison: 252-day-high breakout entry, no EMA filter, flat Rs1,000
+// comparison: 52-week-high breakout entry, no EMA filter, flat Rs1,000
 // per new position, WAC-based 6% average-down (10% qty, 7-calendar-day
 // cooldown), full exit the moment Supertrend turns red regardless of
 // P&L. Google Sheet is an append-only trade log (every real fill is its
@@ -6574,7 +6574,7 @@ function dh252RenderSignals(open){
   const week52 = window._dh252Week52 || {};
   const stMap = window._dh252Supertrend || {};
 
-  // Entry — universe-wide 252-day-high breakout (market_screens_full.json's
+  // Entry — universe-wide 52-week-high breakout (market_screens_full.json's
   // 252-trading-day window IS the ~52-week high), excludes already-held.
   const entries = Object.values(week52)
     .filter(w => w.pct_from_high >= 0 && !heldSymbols.has(eqStripNs(w.symbol).toUpperCase()) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
@@ -6583,7 +6583,7 @@ function dh252RenderSignals(open){
   document.getElementById('dh252-entry-tbody').innerHTML = entries.length ? entries.map(w => {
     const bare = eqStripNs(w.symbol);
     return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${eqSectorFor(bare)}</td></tr>`;
-  }).join('') : '<tr><td colspan="4" class="loading">No fresh 252-day-high breakouts today.</td></tr>';
+  }).join('') : '<tr><td colspan="4" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
 
   // Add-on and exit — evaluated against open positions only.
   const addRows = [], exitRows = [];
@@ -6636,7 +6636,7 @@ async function dh252Refresh(){
     dh252RenderSignals(state.open);
     document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
       (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
-    if(state.skipped.length) console.warn('252DH journal: skipped rows', state.skipped);
+    if(state.skipped.length) console.warn('52-week-high journal: skipped rows', state.skipped);
   }catch(err){
     document.getElementById('dh252-cap-meta').textContent = 'Could not load: ' + err.message;
     console.error(err);
