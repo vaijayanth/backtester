@@ -1110,7 +1110,7 @@
     <div class="table-scroll">
       <table class="list-table" id="eq-open-table">
         <thead><tr>
-          <th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>ENTRY DATE</th><th>DAYS HELD</th>
+          <th>ENTRY DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
           <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>SIGNAL</th>
         </tr></thead>
         <tbody id="eq-open-tbody"></tbody>
@@ -1124,8 +1124,8 @@
     <div class="table-scroll">
       <table class="list-table" id="eq-closed-table">
         <thead><tr>
-          <th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>AVG EXIT ₹</th><th>ENTRY DATE</th>
-          <th>EXIT DATE</th><th>DAYS HELD</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
+          <th>ENTRY DATE</th><th>EXIT DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
+          <th>AVG EXIT ₹</th><th>DAYS HELD</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
         </tr></thead>
         <tbody id="eq-closed-tbody"></tbody>
       </table>
@@ -4171,6 +4171,33 @@ async function eqFetchSupertrend(){
   }
 }
 
+// Built by scripts/fetch_equity_sectors.py (GitHub Actions, manually
+// triggered — sector rarely changes) from this journal's own Tradebook
+// symbols via yfinance's assetProfile. A symbol not yet in the file (just
+// traded for the first time, workflow hasn't run since) shows "—", not a
+// guess.
+async function eqFetchSectors(){
+  try{
+    const res = await fetch('data/equity_sectors.json');
+    if(!res.ok) return {};
+    return await res.json();
+  } catch(e){
+    return {};
+  }
+}
+function eqSectorFor(symbol){
+  return (window._eqSectors && window._eqSectors[symbol]) || '—';
+}
+
+// "12-Sep-26" — DD-MMM-YY, matching the SST Journal's own date display.
+function eqFmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d)) return iso;
+  const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2, '0')}-${MNAMES[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+}
+
 function eqDaysBetween(d1, d2){
   const a = (d1 instanceof Date) ? d1 : new Date(d1);
   const b = (d2 instanceof Date) ? d2 : new Date(d2);
@@ -4336,13 +4363,14 @@ async function eqRefresh(){
   eqSetSyncStatus('<span class="eq-spinner"></span> Fetching fills from sheet…');
   // allSettled, not all — a failed fetch of one source shouldn't discard a
   // successful fetch of another; each degrades on its own.
-  const [fillsResult, stResult, holdingsResult] = await Promise.allSettled([
-    eqFetchAllFills(), eqFetchSupertrend(), eqFetchHoldings(),
+  const [fillsResult, stResult, holdingsResult, sectorsResult] = await Promise.allSettled([
+    eqFetchAllFills(), eqFetchSupertrend(), eqFetchHoldings(), eqFetchSectors(),
   ]);
   const stMap = stResult.status === 'fulfilled' ? stResult.value : null;
   window._eqSupertrend = stMap;
   const holdings = holdingsResult.status === 'fulfilled' ? holdingsResult.value : [];
   window._eqHoldings = holdings;
+  window._eqSectors = sectorsResult.status === 'fulfilled' ? sectorsResult.value : {};
   if(fillsResult.status !== 'fulfilled'){
     document.getElementById('eq-open-count-text').textContent = 'Failed to load: ' + fillsResult.reason.message;
     eqSetSyncStatus(`<span style="color:var(--red)">Failed to load fills</span>`);
@@ -4394,17 +4422,16 @@ function eqRenderOpen(open, stMap){
     const plColor = p.plPct === null ? 'var(--muted)' : p.plPct >= 0 ? 'var(--green)' : 'var(--red)';
     const sigColor = sig.type === 'EXIT' ? 'var(--red)' : sig.type === 'ADDON' ? 'var(--green)' : 'var(--muted)';
     return `<tr>
+      <td>${eqFmtDate(p.entryDate)}</td>
       <td>${p.symbol}${p._holdingsOnly ? ' <span style="color:var(--muted);font-size:10px">(Holdings only)</span>' : ''}</td>
-      <td>${p.qty}</td>
+      <td>${eqSectorFor(p.symbol)}</td>
       <td>${eqFmtRs(p.avgEntry)}</td>
-      <td>${p.entryDate || '—'}</td>
-      <td>${p.entryDate ? eqDaysBetween(p.entryDate, eqTodayIso()) + 'd' : '—'}</td>
       <td>${p.cmp === null ? '—' : eqFmtRs(p.cmp)}</td>
       <td style="color:${plColor};font-weight:700">${p.plPct === null ? '— no data' : eqFmtPct(p.plPct)}</td>
       <td>${stLabel}</td>
       <td style="color:${sigColor};font-weight:700">${sig.label}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="9" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
 }
 
 function eqRenderClosed(closed){
@@ -4414,12 +4441,12 @@ function eqRenderClosed(closed){
     const plColor = t.pl >= 0 ? 'var(--green)' : 'var(--red)';
     const anomaly = t.unmatchedQty ? ` <span title="${t.unmatchedQty} of ${t.qty} sold shares have no matching buy in this Tradebook export — likely a bonus/split/demerger or off-market transfer not recorded as a buy. Cost basis unknown for those shares, so they're excluded from this P&L (not counted as profit). See CLAUDE.md EQ_SPLIT_ADJUSTMENTS/EQ_MANUAL_FILLS." style="color:var(--amber);cursor:help;">⚠</span>` : '';
     return `<tr>
+      <td>${eqFmtDate(t.entryDate)}</td>
+      <td>${eqFmtDate(t.exitDate)}</td>
       <td>${t.symbol}${anomaly}</td>
-      <td>${t.qty}</td>
+      <td>${eqSectorFor(t.symbol)}</td>
       <td>${eqFmtRs(t.avgEntry)}</td>
       <td>${eqFmtRs(t.avgExit)}</td>
-      <td>${t.entryDate}</td>
-      <td>${t.exitDate}</td>
       <td>${t.daysHeld}d</td>
       <td style="color:${plColor};font-weight:700">${eqFmtRs(t.pl)}</td>
       <td style="color:${plColor};font-weight:700">${eqFmtPct(t.plPct)}</td>

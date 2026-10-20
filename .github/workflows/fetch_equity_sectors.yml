@@ -1,0 +1,47 @@
+name: Fetch Equity Sectors
+
+# Manually triggered via GitHub's own "Run workflow" button — sector
+# classification rarely changes, so this doesn't need a schedule. Fetches
+# GICS sector (via yfinance's assetProfile) for every symbol that has ever
+# appeared in the Equity Trading Journal's Tradebook fills, and writes
+# data/equity_sectors.json. Incremental: only newly-seen symbols cost an
+# API call on a re-run. Re-run this whenever you've traded a genuinely new
+# symbol and want its Sector column populated sooner than the next
+# scheduled catch-up.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed to commit data/equity_sectors.json back to main
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch sectors
+        run: python scripts/fetch_equity_sectors.py
+
+      - name: Commit sector data
+        run: |
+          git config user.name "sector-bot"
+          git config user.email "actions@github.com"
+          git add data/equity_sectors.json
+          if git diff --cached --quiet; then
+            echo "No sector changes to commit"
+          else
+            git commit -m "Equity sectors: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
