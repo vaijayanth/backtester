@@ -11,7 +11,12 @@ name: Fetch Equity Names
 on:
   schedule:
     - cron: "15 3 1 * *"  # 1st of each month, 03:15 UTC (offset from Fetch Equity Sectors)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max symbols to process this run (omit for all remaining)"
+        required: false
+        default: ""
 
 permissions:
   contents: write   # needed to commit data/equity_names.json back to main
@@ -47,7 +52,12 @@ jobs:
 
       - name: Fetch names
         working-directory: main
-        run: python scripts/fetch_equity_names.py
+        run: |
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            python scripts/fetch_equity_names.py --limit "${{ github.event.inputs.limit }}"
+          else
+            python scripts/fetch_equity_names.py
+          fi
 
       - name: Commit name data
         working-directory: main

@@ -18,6 +18,7 @@ Usage:
   python scripts/fetch_equity_names.py
 """
 
+import argparse
 import json
 import time
 from pathlib import Path
@@ -48,6 +49,10 @@ def fetch_name(symbol):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--limit", type=int, default=None, help="max symbols to process this run (testing)")
+    args = parser.parse_args()
+
     symbols = load_validated_symbols()
     print(f"{len(symbols)} VALIDATED symbols in the universe")
 
@@ -56,6 +61,8 @@ def main():
         cache = json.loads(OUT_PATH.read_text())
 
     todo = [s for s in symbols if s not in cache]
+    if args.limit:
+        todo = todo[: args.limit]
     print(f"{len(todo)} symbols not yet cached — fetching")
 
     for i, sym in enumerate(todo):
