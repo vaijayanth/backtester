@@ -1,6 +1,6 @@
 {
-  "last_run_started_utc": "2026-10-20T07:53:19.718611+00:00",
-  "last_run_finished_utc": "2026-10-20T07:58:36.822605+00:00",
+  "last_run_started_utc": "2026-10-20T17:22:36.331294+00:00",
+  "last_run_finished_utc": "2026-10-20T17:29:47.294066+00:00",
   "latest_trading_date": "2026-10-19",
   "universe_size": 1537,
   "validated": 1491,
@@ -8,8 +8,8 @@
   "pending": 0,
   "incremental": {
     "attempted": 1422,
-    "updated": 2,
-    "unchanged": 1420,
+    "updated": 61,
+    "unchanged": 1361,
     "failed": 0
   },
   "full_refresh": {
