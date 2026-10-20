@@ -449,7 +449,7 @@
         <div id="univ-recent-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        No exchange suffix defaults to NSE (.NS). Queued instantly here, then picked up by an hourly automated job that checks it's a real, currently-tradeable ticker (rejects typos/delisted symbols instead of silently adding them) and merges it into the universe — usually live within the hour. Added stocks persist permanently, even if the underlying stock list is ever refreshed from scratch.
+        No exchange suffix defaults to NSE (.NS). Checks Yahoo Finance for real price data right here before queuing — a typo/delisted symbol is rejected on the spot when that check succeeds (if your browser can't reach Yahoo directly, it's still caught by the hourly backend job instead, just not instantly). A valid symbol is queued immediately, then picked up by that same hourly job and merged into the universe — usually live within the hour. Added stocks persist permanently, even if the underlying stock list is ever refreshed from scratch.
       </div>
     </div>
   </div>
@@ -1957,6 +1957,33 @@ async function loadRecentUniverseAdditions(){
   }
 }
 
+// Best-effort INSTANT existence check via Yahoo's own public chart API —
+// the same unofficial endpoint yfinance itself wraps server-side, called
+// directly from the browser. Not guaranteed to work everywhere: Yahoo's
+// CORS/rate-limit policy on this endpoint is their call, not ours, and
+// could change without notice. A failure here is explicitly NOT treated
+// as "symbol doesn't exist" — it just means this browser can't get an
+// instant answer, and the hourly backend job's own yfinance check (which
+// definitely works — same proven call, just server-side, same as every
+// other symbol already in the universe) is the real backstop either way.
+// Returns true (has data) / false (Yahoo clearly says no data) / null
+// (couldn't tell — blocked, timed out, errored).
+async function yahooSymbolLikelyExists(symbol){
+  try{
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 6000);
+    const resp = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5d&interval=1d`, {signal: ctrl.signal});
+    clearTimeout(timeout);
+    if(!resp.ok) return null;
+    const data = await resp.json();
+    const result = data && data.chart && data.chart.result;
+    if(result && result.length && result[0].timestamp && result[0].timestamp.length) return true;
+    return false;
+  }catch(e){
+    return null;
+  }
+}
+
 async function addUniverseStock(){
   const input = document.getElementById('univ-add-input');
   const btn = document.getElementById('univ-add-btn');
@@ -1977,8 +2004,18 @@ async function addUniverseStock(){
   }
 
   btn.disabled = true;
+  btn.textContent = 'CHECKING...';
+  statusEl.innerHTML = '<span style="color:var(--muted);">Checking Yahoo Finance for real price data...</span>';
+
+  const existsCheck = await yahooSymbolLikelyExists(normalized);
+  if(existsCheck === false){
+    statusEl.innerHTML = `<span style="color:var(--red);">✗ ${normalized} — no price data found on Yahoo Finance. Check the spelling/exchange before adding.</span>`;
+    btn.disabled = false;
+    btn.textContent = '+ ADD';
+    return;
+  }
+
   btn.textContent = 'ADDING...';
-  statusEl.textContent = '';
   try{
     const resp = await fetch(UNIVERSE_ADDITIONS_URL, {
       method: 'POST',
@@ -1988,9 +2025,10 @@ async function addUniverseStock(){
     if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const data = await resp.json();
     if(!data.success) throw new Error(data.error || 'unknown error');
+    const verifiedNote = existsCheck === true ? ' (verified on Yahoo Finance)' : '';
     statusEl.innerHTML = data.alreadyPending
       ? `<span style="color:var(--amber);">${data.symbol} is already queued — will merge within the hour.</span>`
-      : `<span style="color:var(--green);">✓ ${data.symbol} queued — will merge into the universe within the hour.</span>`;
+      : `<span style="color:var(--green);">✓ ${data.symbol} queued${verifiedNote} — will merge into the universe within the hour.</span>`;
     input.value = '';
     loadRecentUniverseAdditions();
   }catch(err){
