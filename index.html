@@ -1458,7 +1458,7 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">52-WEEK HIGH FORWARD JOURNAL</div>
-      <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000/position, full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
+      <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000 base position size (+Rs1,000 every 100 closed trades), full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
     <div style="padding:0 18px 18px;">
       <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
@@ -1475,7 +1475,8 @@
       <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
       <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dh252-open-count">—</div></div>
       <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
-      <div class="stat"><div class="stat-label">CAN AFFORD (AT ₹1,000)</div><div class="stat-value" id="dh252-afford">—</div></div>
+      <div class="stat"><div class="stat-label">POSITION SIZE (CURRENT)</div><div class="stat-value" id="dh252-tier-size">—</div></div>
+      <div class="stat"><div class="stat-label">CAN AFFORD</div><div class="stat-value" id="dh252-afford">—</div></div>
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
       <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dh252-avg-plpct">—</div></div>
       <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dh252-winrate">—</div></div>
@@ -6453,16 +6454,22 @@ document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e)
 // 52-WEEK HIGH FORWARD JOURNAL PAGE
 // ============================================================
 // Real-money forward test of the variant tested in the backtest
-// comparison: 52-week-high breakout entry, no EMA filter, flat Rs1,000
-// per new position, WAC-based 6% average-down (10% qty, 7-calendar-day
-// cooldown), full exit the moment Supertrend turns red regardless of
-// P&L. Google Sheet is an append-only trade log (every real fill is its
-// own row, never replaced) — current state (open positions, WAC, cash)
+// comparison: 52-week-high breakout entry, no EMA filter, Rs1,000 base
+// position size tiering up +Rs1,000 every 100 closed trades (dh252TierSize),
+// WAC-based 6% average-down (10% qty, 7-calendar-day cooldown), full exit
+// the moment Supertrend turns red regardless of P&L. Google Sheet is an
+// append-only trade log (every real fill is its own row, never replaced)
+// — current state (open positions, WAC, cash)
 // is always derived by replaying that log, never stored directly.
 const DH252_SHEET_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwBJDaJKO5eg2Df2eKwLCN-opkDtNe1ZmCg6YvqZzU5b1-XHZ8L7iSL4zc-iUnwajp6/exec';
 const DH252_SHEET_URL_KEY = 'dh252_sheet_url';
 const DH252_INITIAL_CAPITAL_RS = 2000000;
-const DH252_POSITION_SIZE_RS = 1000;
+const DH252_POSITION_SIZE_RS = 1000; // base size — tiers up via dh252TierSize(), never used directly for sizing a new entry
+const DH252_POSITION_INCREMENT_RS = 1000;
+const DH252_POSITION_INCREMENT_TRADES = 100;
+function dh252TierSize(closedCount){
+  return DH252_POSITION_SIZE_RS + Math.floor(closedCount / DH252_POSITION_INCREMENT_TRADES) * DH252_POSITION_INCREMENT_RS;
+}
 const DH252_ADD_TRIGGER_PCT = -6;
 const DH252_ADD_FRACTION = 0.10;
 const DH252_ADD_COOLDOWN_DAYS = 7;
@@ -6576,7 +6583,9 @@ function dh252RenderPositions(state){
   const realizedEl = document.getElementById('dh252-realized');
   realizedEl.textContent = dh252FmtRs(realized);
   realizedEl.style.color = realized >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('dh252-afford').textContent = Math.max(0, Math.floor(state.cash / DH252_POSITION_SIZE_RS));
+  const currentTierSize = dh252TierSize(state.closed.length);
+  document.getElementById('dh252-tier-size').textContent = dh252FmtRs(currentTierSize);
+  document.getElementById('dh252-afford').innerHTML = `${Math.max(0, Math.floor(state.cash / currentTierSize))} <span style="font-size:11px;color:var(--muted);">(at ${dh252FmtRs(currentTierSize)})</span>`;
 
   // Live CAGR — mark open positions to market using the same week52 close
   // already fetched for signals, so "combined" matches the backtest's own
@@ -6648,7 +6657,7 @@ function dh252RenderPositions(state){
   </tr>`).join('') : '<tr><td colspan="9" class="loading">No closed trades yet.</td></tr>';
 }
 
-function dh252RenderSignals(open){
+function dh252RenderSignals(open, closedCount){
   const heldSymbols = new Set(Object.keys(open));
   const week52 = window._dh252Week52 || {};
   const stMap = window._dh252Supertrend || {};
@@ -6696,7 +6705,7 @@ function dh252RenderSignals(open){
     // Rs1,000 base size — the live journal never skips a signal for
     // being too expensive, unlike the backtest's missed_entries_price_
     // too_high bucket (which models the strategy exactly as sized there).
-    const qtyToBuy = Math.max(1, Math.floor(DH252_POSITION_SIZE_RS / w.close));
+    const qtyToBuy = Math.max(1, Math.floor(dh252TierSize(closedCount) / w.close));
     return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td>
       <td style="max-width:160px;white-space:normal;${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   }).join('') : '<tr><td colspan="5" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
@@ -6754,7 +6763,7 @@ async function dh252Refresh(){
     window._eqSectors = sectors || {};
     const state = dh252BuildPositions(trades);
     dh252RenderPositions(state);
-    dh252RenderSignals(state.open);
+    dh252RenderSignals(state.open, state.closed.length);
     document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
       (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
     if(state.skipped.length) console.warn('52-week-high journal: skipped rows', state.skipped);
