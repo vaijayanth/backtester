@@ -1,15 +1,18 @@
 """
 Fetch GICS sector classification (via yfinance's assetProfile, same data
-source already trusted for OHLC in backfill.py) for every symbol that has
-ever appeared in the Equity Trading Journal's Tradebook fills. Written to
-data/equity_sectors.json as {symbol_without_suffix: sector}, which
-index.html's Journal/Closed-trades tables read directly for their Sector
-column.
+source already trusted for OHLC in backfill.py) for:
+  1. Every symbol that has ever appeared in the Equity Trading Journal's
+     Tradebook fills — powers the Journal's own Sector column.
+  2. Every symbol in the full Supertrend universe (supertrend_full.json)
+     — powers the Equity Dashboard's sector-breadth / turnaround-by-sector
+     views, which need sector for stocks beyond what's actually been
+     traded.
+Written to data/equity_sectors.json as {symbol_without_suffix: sector}.
 
 Incremental by construction: an existing entry (including a cached "—" for
 a symbol yfinance has no sector for, e.g. an ETF slipping past
 EQ_LONGTERM_EXCLUDE) is never re-fetched — only symbols newly appearing in
-the fills since the last run cost an API call. Safe to re-run any time.
+either source since the last run cost an API call. Safe to re-run any time.
 
 Usage:
   python scripts/fetch_equity_sectors.py
@@ -24,6 +27,7 @@ import yfinance as yf
 
 ROOT = Path(__file__).parent.parent
 OUT_PATH = ROOT / "data" / "equity_sectors.json"
+SUPERTREND_FULL_PATH = ROOT / "supertrend_full.json"
 EQ_SHEET_URL = "https://script.google.com/macros/s/AKfycbyMNI8hj7lfWQLLEfcBYL3CgCFCdca7gJsOoaiR6KWC5vq_EiyyahYTyrRmrw0uAfk/exec"
 
 # Mirrors EQ_LONGTERM_EXCLUDE in index.html — these are ETFs/liquid funds,
@@ -41,8 +45,15 @@ def fetch_distinct_symbols():
     data = resp.json()
     if not data.get("success"):
         raise RuntimeError(data.get("error", "sheet returned an error"))
-    symbols = {r["symbol"].strip() for r in data.get("rows", []) if r.get("symbol")}
-    return sorted(symbols - EQ_LONGTERM_EXCLUDE)
+    journal_symbols = {r["symbol"].strip() for r in data.get("rows", []) if r.get("symbol")}
+
+    universe_symbols = set()
+    if SUPERTREND_FULL_PATH.exists():
+        st = json.loads(SUPERTREND_FULL_PATH.read_text())
+        universe_symbols = {e["symbol"].replace(".NS", "").replace(".BO", "")
+                             for e in st.get("entries", []) if e.get("symbol")}
+
+    return sorted((journal_symbols | universe_symbols) - EQ_LONGTERM_EXCLUDE)
 
 
 def fetch_sector(symbol):
