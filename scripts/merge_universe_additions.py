@@ -33,7 +33,7 @@ import clean_universe  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 MANUAL_ADDITIONS_FILE = ROOT / "data" / "universe_manual_additions.csv"
-UNIVERSE_ADDITIONS_URL = "PLACEHOLDER_SET_AFTER_DEPLOYMENT"
+UNIVERSE_ADDITIONS_URL = "https://script.google.com/macros/s/AKfycbx0DhYyh9aQ74Bi-p6rVUEs_l6ExQD-G7yIss9c2MUkAWpaGF5vqicQb9W-azuEI1pM/exec"
 
 
 def fetch_pending():
