@@ -1222,6 +1222,13 @@
     <div class="dash-footnote" id="eqd-perf-footer">—</div>
   </div>
 
+  <!-- Position sizing & portfolio limits -->
+  <div class="panel" id="eqd-sizing-card">
+    <div class="panel-head"><div class="panel-title">POSITION SIZING &amp; LIMITS</div></div>
+    <div class="stat-row" id="eqd-sizing-row"></div>
+    <div id="eqd-maxpos-alert" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;background:rgba(255,59,48,.12);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:700;"></div>
+  </div>
+
   <!-- Loss buckets -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">LOSS BUCKETS <span class="panel-meta" id="eqd-lossbucket-meta">—</span></div></div>
@@ -1404,6 +1411,17 @@
       </table>
     </div>
     <div class="dash-footnote">Open positions within 5% of their 52-week high — breakout-strength tell, informational only (doesn't change exit/add-on action from the sections above). "🚀 New 52W High" = currently AT a fresh high, not just near one.</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eqa-entry52wh-table">
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
+        <tbody id="eqa-entry52wh-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Entry rule: close is at/above the prior 52-week high, anywhere in the full universe (not just what you hold). Excludes stocks you already hold. This is the actual entry trigger — not the "near high" or Supertrend-flip panels, which are informational strength reads.</div>
   </div>
 
   <div class="panel">
@@ -5458,6 +5476,50 @@ function eqDashStatHtml(label, value, color, sub){
     ${sub ? `<div class="dash-pulse-sub" style="font-size:10px;color:var(--muted);margin-top:4px;">${sub}</div>` : ''}</div>`;
 }
 
+// Portfolio sizing rules — user's stated strategy, independent of (but
+// numerically identical to) the SST Backtest engine's own configurable
+// defaults (base_position_rs/position_size_increment_rs/_trades/cap on the
+// Strategy tab). Hardcoded here since the Equity Journal tracks the user's
+// REAL Zerodha trades, not a backtest run, so there's no params object to
+// read from — these are fixed facts about how they size real positions.
+const EQ_BASE_POSITION_RS = 20000;
+const EQ_POSITION_INCREMENT_RS = 5000;
+const EQ_POSITION_INCREMENT_TRADES = 100;
+const EQ_POSITION_CAP_RS = 100000;
+const EQ_MAX_POSITIONS = 200;
+
+function eqSizeForTrades(n){
+  return Math.min(EQ_BASE_POSITION_RS + Math.floor(n / EQ_POSITION_INCREMENT_TRADES) * EQ_POSITION_INCREMENT_RS, EQ_POSITION_CAP_RS);
+}
+
+function eqDashRenderSizing(s){
+  const closedCount = s.closed.length;
+  const currentSize = eqSizeForTrades(closedCount);
+  const atCap = currentSize >= EQ_POSITION_CAP_RS;
+  const tradesIntoTier = closedCount % EQ_POSITION_INCREMENT_TRADES;
+  const tradesToNextTier = EQ_POSITION_INCREMENT_TRADES - tradesIntoTier;
+  const nextSize = Math.min(currentSize + EQ_POSITION_INCREMENT_RS, EQ_POSITION_CAP_RS);
+
+  document.getElementById('eqd-sizing-row').innerHTML = [
+    eqDashStatHtml('CURRENT POSITION SIZE', eqFmtRs(currentSize), atCap ? 'var(--amber)' : 'var(--green)', atCap ? 'at cap' : `based on ${closedCount} closed trades`),
+    eqDashStatHtml('NEXT TIER', atCap ? '— at cap' : eqFmtRs(nextSize), null, atCap ? '' : `in ${tradesToNextTier} more closed trade${tradesToNextTier===1?'':'s'}`),
+    eqDashStatHtml('OPEN POSITIONS', `${s.openLive.length} / ${EQ_MAX_POSITIONS}`, s.openLive.length >= EQ_MAX_POSITIONS ? 'var(--red)' : s.openLive.length >= EQ_MAX_POSITIONS * 0.9 ? 'var(--amber)' : 'var(--green)', 'portfolio cap'),
+    eqDashStatHtml('CLOSED TRADES', closedCount, null, `since ${EQ_DASHBOARD_START_DATE}`),
+  ].join('');
+
+  const alertEl = document.getElementById('eqd-maxpos-alert');
+  const baseStyle = 'margin-top:12px;padding:10px 14px;border-radius:6px;font-size:12px;font-weight:700;';
+  if(s.openLive.length >= EQ_MAX_POSITIONS){
+    alertEl.style.cssText = baseStyle + 'display:block;background:rgba(255,59,48,.12);border:1px solid var(--red);color:var(--red);';
+    alertEl.textContent = `⚠ At the ${EQ_MAX_POSITIONS}-position cap (${s.openLive.length} open) — no new entries until one closes.`;
+  } else if(s.openLive.length >= EQ_MAX_POSITIONS * 0.9){
+    alertEl.style.cssText = baseStyle + 'display:block;background:rgba(245,158,11,.1);border:1px solid var(--amber);color:var(--amber);';
+    alertEl.textContent = `${s.openLive.length} of ${EQ_MAX_POSITIONS} open positions — approaching the cap.`;
+  } else {
+    alertEl.style.display = 'none';
+  }
+}
+
 function eqDashRenderAll(){
   const s = eqDashComputeStats();
   // Each render wrapped individually — e.g. if ApexCharts hasn't loaded
@@ -5469,7 +5531,7 @@ function eqDashRenderAll(){
    eqDashRenderEquityChart, eqDashRenderMomentum,
    eqDashRenderSectorBreadth, eqDashRenderSectorTurnaround,
    eqDashRenderCalendar, eqDashRenderHeatmap, eqDashRenderTopStocks, eqDashRenderLossSummary,
-   eqDashRenderConcentration, eqDashRenderWeek52, eqDashRenderPerfSummary,
+   eqDashRenderConcentration, eqDashRenderWeek52, eqDashRenderPerfSummary, eqDashRenderSizing,
   ].forEach(fn => { try { fn(s); } catch(e) { console.error(fn.name, e); } });
 }
 
@@ -6042,6 +6104,20 @@ function eqAlertsRender(){
       <td>${eqFmtRs(p.w52.high_52w)}</td>
       <td style="color:${atNewHigh ? 'var(--green)' : 'var(--amber)'};font-weight:700">${atNewHigh ? '🚀 New 52W High' : eqFmtPct(pct)}</td>
     </tr>`;
+  });
+
+  // Entry signal — the user's actual stated entry rule: close at/above the
+  // prior 52-week high. Universe-wide (not just open positions, unlike the
+  // "Near 52-Week High" panel above), excludes already-held symbols since
+  // this is a watchlist for NEW entries, not a read on existing ones.
+  const heldForEntry = new Set(open.map(p => p.symbol));
+  const entry52wh = Object.values(window._eqWeek52 || {})
+    .filter(w => w.pct_from_high >= 0 && !heldForEntry.has(w.symbol))
+    .sort((a, b) => b.pct_from_high - a.pct_from_high);
+
+  eqAlertsRenderTable('eqa-entry52wh-tbody', 'eqa-entry52wh-count', entry52wh, w => {
+    const sector = eqSectorFor(w.symbol);
+    return `<tr><td>${w.symbol}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td>${sector}</td></tr>`;
   });
 
   // Universe-wide new bullish signals — independent of current holdings,
