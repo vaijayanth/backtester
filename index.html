@@ -3946,6 +3946,10 @@ async function otFetchAllRows(){
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  // lastUploadedAt is stamped server-side on every POST (Script Properties,
+  // not a sheet column) — undefined on an older, not-yet-redeployed Apps
+  // Script, so this stays null rather than throwing.
+  window._otLastUploadedAt = data.lastUploadedAt || null;
   return data.rows || [];
 }
 
@@ -3973,13 +3977,24 @@ function otFmtTime(ms){
   return `${h}:${m}${ap}`;
 }
 
+// "Last uploaded" (when a P&L file was last POSTed to the sheet) is the
+// meaningful freshness signal — "last fetched" (when this browser last
+// loaded the page) just reflects browsing, not data staleness. Shown
+// together since an older, not-yet-redeployed Apps Script won't return
+// lastUploadedAt at all (window._otLastUploadedAt stays undefined/null).
+function otLastUploadedLabel(){
+  if(window._otLastUploadedAt === undefined) return '';
+  if(!window._otLastUploadedAt) return ' · last uploaded: never';
+  return ` · last uploaded ${otFmtTime(new Date(window._otLastUploadedAt).getTime())} on ${new Date(window._otLastUploadedAt).toLocaleDateString()}`;
+}
+
 function otShowLastFetch(){
   const raw = localStorage.getItem('ot_last_fetch');
   if(!raw) return;
   try{
     const {ts, count} = JSON.parse(raw);
     document.getElementById('ot-db-meta').innerHTML =
-      `${count} position${count===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(ts)}`;
+      `${count} position${count===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(ts)}${otLastUploadedLabel()}`;
   } catch(e){}
 }
 
@@ -3995,7 +4010,7 @@ async function otUpdateDbMeta(){
     const now = Date.now();
     localStorage.setItem('ot_last_fetch', JSON.stringify({ts: now, count: rows.length}));
     document.getElementById('ot-db-meta').textContent =
-      `${rows.length} position${rows.length===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(now)}`;
+      `${rows.length} position${rows.length===1?'':'s'} stored in your Google Sheet · last fetched ${otFmtTime(now)}${otLastUploadedLabel()}`;
   }catch(err){
     document.getElementById('ot-db-meta').textContent = 'Could not reach the Sheet: ' + err.message;
   }
