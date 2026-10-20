@@ -1,0 +1,48 @@
+name: Merge Universe Additions
+
+# Picks up stocks queued via the Universe page's "ADD STOCK" UI (stored in
+# the "Backtester Universe Additions" Google Sheet) and merges them into
+# data/universe_clean.csv so they show up in the app and get backfilled
+# automatically. Hourly — frequent enough that an added stock shows up
+# same-day without needing to remember to trigger it by hand, but this is
+# also always runnable on demand via "Run workflow" for something more
+# immediate.
+
+on:
+  schedule:
+    - cron: "15 * * * *"  # hourly, 15 past
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Merge pending universe additions
+        run: python scripts/merge_universe_additions.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "universe-additions-bot"
+          git config user.email "actions@github.com"
+          git add data/universe_clean.csv data/universe_manual_additions.csv data/universe_report.txt
+          if git diff --cached --quiet; then
+            echo "No universe changes to commit"
+          else
+            git commit -m "Universe additions merged: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

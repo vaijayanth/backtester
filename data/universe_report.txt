@@ -1,9 +1,15 @@
 Universe cleanup report
 ========================
 Raw symbols in source:      1610
+Manual UI additions in:     2
+Manual additions kept:      2
 Removed as ETFs:            65
 Removed as duplicates:      10
-Clean equities (output):    1535
+Clean equities (output):    1537
+
+--- Manual additions kept (2) ---
+GSPLTRANS.NS
+LIQUIDCASE.NS
 
 --- ETFs removed (65) ---
 ALPHA.NS
