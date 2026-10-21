@@ -1600,7 +1600,7 @@
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-pos-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dh252-pos-tbody"></tbody>
       </table>
     </div>
@@ -6847,6 +6847,7 @@ function dh252RenderPositions(state){
       `Live vs backtest: avg P&L ${plDeviation >= 0 ? '+' : ''}${plDeviation.toFixed(2)}pp, win rate ${wrDeviation >= 0 ? '+' : ''}${wrDeviation.toFixed(1)}pp${cagrText}.${sampleNote}`;
   }
 
+  const stMapForPos = window._dh252Supertrend || {};
   document.getElementById('dh252-pos-count').textContent = openList.length;
   document.getElementById('dh252-pos-tbody').innerHTML = openList.length ? openList.map(p => {
     const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
@@ -6854,14 +6855,19 @@ function dh252RenderPositions(state){
     const notionalPl = cmp !== null ? (cmp - p.wac) * p.qty : null;
     const notionalPlPct = cmp !== null ? (cmp - p.wac) / p.wac * 100 : null;
     const ageDays = dh252AgeDays(p.entryDate);
+    const st = stMapForPos[p.symbol] || stMapForPos[p.symbol + '.NS'];
+    const stColor = st && st.color ? st.color : null;
+    const awayFromHigh = w && w.pct_from_high != null ? w.pct_from_high : null;
     return `<tr>
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td style="color:${awayFromHigh === null ? '' : awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${awayFromHigh === null ? '—' : dh252FmtPct(awayFromHigh)}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
       <td>${p.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="9" class="loading">No open positions yet — log your first BUY above.</td></tr>';
+  }).join('') : '<tr><td colspan="11" class="loading">No open positions yet — log your first BUY above.</td></tr>';
 
   document.getElementById('dh252-closed-count').textContent = state.closed.length;
   document.getElementById('dh252-closed-tbody').innerHTML = state.closed.length ? state.closed.slice().reverse().map(t => `<tr>
