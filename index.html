@@ -1600,7 +1600,7 @@
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-pos-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>ENTRY DATE</th><th>ADDS</th><th>LAST FILL</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dh252-pos-tbody"></tbody>
       </table>
     </div>
@@ -6739,6 +6739,13 @@ async function dh252LogDeleteRow(row){
 }
 
 function dh252FmtRs(v){ return '₹' + Math.round(v).toLocaleString('en-IN'); }
+function dh252FmtDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d)) return iso;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return String(d.getDate()).padStart(2, '0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+}
 function dh252FmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
 
 function dh252RenderPositions(state){
@@ -6811,9 +6818,20 @@ function dh252RenderPositions(state){
   }
 
   document.getElementById('dh252-pos-count').textContent = openList.length;
-  document.getElementById('dh252-pos-tbody').innerHTML = openList.length ? openList.map(p => `<tr>
-    <td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td><td>${p.entryDate}</td><td>${p.numAdds}</td><td>${p.lastFillDate}</td>
-  </tr>`).join('') : '<tr><td colspan="6" class="loading">No open positions yet — log your first BUY above.</td></tr>';
+  document.getElementById('dh252-pos-tbody').innerHTML = openList.length ? openList.map(p => {
+    const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
+    const cmp = w ? w.close : null;
+    const notionalPl = cmp !== null ? (cmp - p.wac) * p.qty : null;
+    const notionalPlPct = cmp !== null ? (cmp - p.wac) / p.wac * 100 : null;
+    const ageDays = Math.floor((new Date() - new Date(p.entryDate + 'T00:00:00')) / 86400000);
+    return `<tr>
+      <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
+      <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
+      <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
+      <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
+      <td>${p.numAdds}</td><td>${ageDays}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" class="loading">No open positions yet — log your first BUY above.</td></tr>';
 
   document.getElementById('dh252-closed-count').textContent = state.closed.length;
   document.getElementById('dh252-closed-tbody').innerHTML = state.closed.length ? state.closed.slice().reverse().map(t => `<tr>
