@@ -6551,6 +6551,22 @@ const DH252_BACKTEST_CAGR = 34.29; // full 10yr equity curve: (final combined va
 function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
 
+// A Date typed into the Log form is sent as a plain "yyyy-mm-dd" string,
+// but once it lands in a Sheets column Google auto-formats as a date
+// (common unless that column is forced to Plain Text), the cell comes
+// back from getValues() as a real JS Date object — and Apps Script's own
+// JSON.stringify() then serializes that as a full ISO timestamp like
+// "2026-10-21T00:00:00.000Z", not the plain date string sent in. Every
+// date calc in this page (age-in-days, sorting, dd-mmm-yyyy display)
+// assumed the latter and silently produced NaN against the former.
+// Normalize once, here, so everything downstream can trust "yyyy-mm-dd".
+function dh252NormalizeDate(v){
+  if(!v) return v;
+  const s = String(v);
+  const tIdx = s.indexOf('T');
+  return tIdx > 0 ? s.slice(0, tIdx) : s;
+}
+
 async function dh252FetchTrades(){
   const url = dh252GetSheetUrl();
   if(!url) return [];
@@ -6558,7 +6574,9 @@ async function dh252FetchTrades(){
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return (data.rows || []).slice().sort((a, b) => new Date(a.Date) - new Date(b.Date) || new Date(a.LoggedAt) - new Date(b.LoggedAt));
+  return (data.rows || [])
+    .map(r => ({...r, Date: dh252NormalizeDate(r.Date)}))
+    .sort((a, b) => new Date(a.Date) - new Date(b.Date) || new Date(a.LoggedAt) - new Date(b.LoggedAt));
 }
 
 // Generic POST to the Apps Script — op defaults to 'append' (the only op
@@ -6743,8 +6761,20 @@ function dh252FmtDate(iso){
   if(!iso) return '—';
   const d = new Date(iso + 'T00:00:00');
   if(isNaN(d)) return iso;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
   return String(d.getDate()).padStart(2, '0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+}
+// Age in whole calendar days since entryDate, today counting as 0. Dates
+// are compared at midnight on both sides so a same-day entry can never go
+// negative/NaN from leftover hours — only a malformed/missing entryDate
+// (which dh252NormalizeDate should prevent) falls through to the guard.
+function dh252AgeDays(entryDateIso){
+  if(!entryDateIso) return null;
+  const entry = new Date(entryDateIso + 'T00:00:00');
+  if(isNaN(entry)) return null;
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.max(0, Math.round((todayMidnight - entry) / 86400000));
 }
 function dh252FmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
 
@@ -6823,13 +6853,13 @@ function dh252RenderPositions(state){
     const cmp = w ? w.close : null;
     const notionalPl = cmp !== null ? (cmp - p.wac) * p.qty : null;
     const notionalPlPct = cmp !== null ? (cmp - p.wac) / p.wac * 100 : null;
-    const ageDays = Math.floor((new Date() - new Date(p.entryDate + 'T00:00:00')) / 86400000);
+    const ageDays = dh252AgeDays(p.entryDate);
     return `<tr>
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
-      <td>${p.numAdds}</td><td>${ageDays}</td>
+      <td>${p.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="9" class="loading">No open positions yet — log your first BUY above.</td></tr>';
 
