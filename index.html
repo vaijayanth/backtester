@@ -1521,22 +1521,62 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div></div>
-    <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><input type="text" id="dh252-f-symbol" placeholder="RELIANCE" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:120px;"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
-        <select id="dh252-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
-          <option value="BUY">BUY (new)</option>
-          <option value="ADD">ADD (average down)</option>
-          <option value="SELL">SELL (exit)</option>
-        </select>
+    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
+      <div style="display:flex;gap:6px;">
+        <button class="refresh-btn" id="dh252-tab-quick-btn">QUICK ENTRY</button>
+        <button class="refresh-btn" id="dh252-tab-bulk-btn">BULK ENTRY (15 ROWS)</button>
       </div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Date</label><input type="date" id="dh252-f-date" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Qty</label><input type="number" id="dh252-f-qty" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:90px;"></div>
-      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Price ₹</label><input type="number" step="0.01" id="dh252-f-price" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:110px;"></div>
-      <button class="refresh-btn" id="dh252-log-btn" style="padding:9px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
     </div>
-    <div id="dh252-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+
+    <div id="dh252-log-tab-quick">
+      <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><input type="text" id="dh252-f-symbol" placeholder="RELIANCE" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:120px;"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
+          <select id="dh252-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
+            <option value="BUY">BUY (new)</option>
+            <option value="ADD">ADD (average down)</option>
+            <option value="SELL">SELL (exit)</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Date</label><input type="date" id="dh252-f-date" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Qty</label><input type="number" id="dh252-f-qty" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:90px;"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Price ₹</label><input type="number" step="0.01" id="dh252-f-price" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:110px;"></div>
+        <button class="refresh-btn" id="dh252-log-btn" style="padding:9px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
+      </div>
+      <div id="dh252-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+    </div>
+
+    <div id="dh252-log-tab-bulk" style="display:none;">
+      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry. Set a different date per row to backfill past fills in one go.</div>
+      <div class="table-scroll">
+        <table class="list-table" id="dh252-bulk-table">
+          <thead><tr><th style="width:1%;">#</th><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE ₹</th><th>STATUS</th></tr></thead>
+          <tbody id="dh252-bulk-tbody"></tbody>
+        </table>
+      </div>
+      <div style="padding:10px 18px 18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="refresh-btn" id="dh252-bulk-addrows-btn">+ 15 MORE ROWS</button>
+        <button class="refresh-btn" id="dh252-bulk-clear-btn">CLEAR ALL</button>
+        <button class="refresh-btn" id="dh252-bulk-log-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;margin-left:auto;">LOG ALL FILLED ROWS</button>
+      </div>
+      <div id="dh252-bulk-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="border-color:var(--amber);">
+    <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
+    <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">From</label><input type="date" id="dh252-recon-from" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">To</label><input type="date" id="dh252-recon-to" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+      <button class="refresh-btn" id="dh252-recon-check-btn">CHECK WEEK</button>
+    </div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-recon-table">
+        <thead><tr><th>DATE</th><th>DAY</th><th>TRADES LOGGED</th><th></th></tr></thead>
+        <tbody id="dh252-recon-tbody"><tr><td colspan="4" class="loading">Pick a range and click Check Week.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Shows what's actually in the trade log for each weekday in range — it can't know what signals you had on a day you forgot to even check (signals aren't stored historically, only today's are ever computed). For a day flagged with no trades, cross-check your broker's contract note / trade book for that date, then click Backfill to jump to Bulk Entry with the date pre-filled.</div>
   </div>
 
   <div class="panel">
@@ -6757,6 +6797,7 @@ async function dh252Refresh(){
       eqFetchWeek52(),
       eqFetchSectors(),
     ]);
+    window._dh252Trades = trades; // cached for Weekly Reconciliation — avoids a second sheet round-trip
     window._dh252Supertrend = stMap || {};
     window._dh252Week52 = week52 || {};
     // eqSectorFor() reads window._eqSectors globally (shared with Equity
@@ -6773,6 +6814,162 @@ async function dh252Refresh(){
     document.getElementById('dh252-cap-meta').textContent = 'Could not load: ' + err.message;
     console.error(err);
   }
+}
+
+// --- Bulk Entry (15-row Excel-like grid) ---------------------------------
+// Each row is independent and posts as its own dh252PostTrade call, exactly
+// like Quick Entry — this is purely a faster way to fill the same log, not
+// a different data path. Rows post sequentially (not in parallel) so the
+// Apps Script append order matches input order and one slow/failed request
+// doesn't race another.
+let dh252BulkRowSeq = 0;
+function dh252BulkRowHtml(){
+  dh252BulkRowSeq++;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return `<tr>
+    <td style="color:var(--muted);">${dh252BulkRowSeq}</td>
+    <td><input type="text" class="dh252-bulk-symbol" placeholder="RELIANCE" style="width:110px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td><select class="dh252-bulk-action" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
+      <option value="BUY">BUY</option><option value="ADD">ADD</option><option value="SELL">SELL</option>
+    </select></td>
+    <td><input type="date" class="dh252-bulk-date" value="${todayIso}" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td><input type="number" class="dh252-bulk-qty" style="width:70px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td><input type="number" step="0.01" class="dh252-bulk-price" style="width:95px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td class="dh252-bulk-rowstatus" style="font-size:11px;color:var(--muted);">—</td>
+  </tr>`;
+}
+function dh252BulkAddRows(count){
+  const tbody = document.getElementById('dh252-bulk-tbody');
+  let html = '';
+  for(let i = 0; i < count; i++) html += dh252BulkRowHtml();
+  tbody.insertAdjacentHTML('beforeend', html);
+}
+function dh252BulkClear(){
+  dh252BulkRowSeq = 0;
+  document.getElementById('dh252-bulk-tbody').innerHTML = '';
+  dh252BulkAddRows(15);
+}
+
+async function dh252LogBulk(){
+  const statusEl = document.getElementById('dh252-bulk-status');
+  const show = (msg, isError) => {
+    statusEl.style.display = 'block';
+    statusEl.textContent = msg;
+    statusEl.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim, rgba(0,210,106,0.12))';
+    statusEl.style.color = isError ? 'var(--red)' : 'var(--green)';
+  };
+  if(!dh252GetSheetUrl()){ show('Paste your Google Sheet URL above first.', true); return; }
+
+  const btn = document.getElementById('dh252-bulk-log-btn');
+  btn.disabled = true; btn.textContent = 'LOGGING...';
+  let ok = 0, fail = 0, attempted = 0;
+  const rows = Array.from(document.querySelectorAll('#dh252-bulk-tbody tr'));
+  for(const row of rows){
+    const symbolEl = row.querySelector('.dh252-bulk-symbol');
+    const actionEl = row.querySelector('.dh252-bulk-action');
+    const dateEl = row.querySelector('.dh252-bulk-date');
+    const qtyEl = row.querySelector('.dh252-bulk-qty');
+    const priceEl = row.querySelector('.dh252-bulk-price');
+    const statusCell = row.querySelector('.dh252-bulk-rowstatus');
+    const symbol = symbolEl.value.trim().toUpperCase();
+    const qty = qtyEl.value, price = priceEl.value, date = dateEl.value;
+    if(!symbol && !qty && !price) continue; // fully blank row — skip silently, not an error
+    attempted++;
+    if(!symbol || !qty || !price || !date){
+      statusCell.textContent = '✗ incomplete row'; statusCell.style.color = 'var(--red)';
+      fail++; continue;
+    }
+    try{
+      await dh252PostTrade({Symbol: symbol, Action: actionEl.value, Date: date, Qty: Number(qty), Price: Number(price)});
+      statusCell.textContent = '✓ logged'; statusCell.style.color = 'var(--green)';
+      ok++;
+      symbolEl.value = ''; qtyEl.value = ''; priceEl.value = '';
+    }catch(err){
+      statusCell.textContent = '✗ ' + err.message; statusCell.style.color = 'var(--red)';
+      fail++;
+    }
+  }
+  if(attempted === 0){
+    show('No rows filled in — nothing to log.', true);
+  }else{
+    show(`Logged ${ok} of ${attempted} row${attempted === 1 ? '' : 's'}${fail ? `, ${fail} failed — see STATUS column` : ''}.`, fail > 0 && ok === 0);
+  }
+  btn.disabled = false; btn.textContent = 'LOG ALL FILLED ROWS';
+  if(ok > 0) await dh252Refresh();
+}
+
+function dh252SwitchLogTab(tab){
+  document.getElementById('dh252-log-tab-quick').style.display = tab === 'quick' ? '' : 'none';
+  document.getElementById('dh252-log-tab-bulk').style.display = tab === 'bulk' ? '' : 'none';
+  const quickBtn = document.getElementById('dh252-tab-quick-btn');
+  const bulkBtn = document.getElementById('dh252-tab-bulk-btn');
+  quickBtn.style.background = tab === 'quick' ? 'var(--amber)' : '';
+  quickBtn.style.color = tab === 'quick' ? '#000' : '';
+  bulkBtn.style.background = tab === 'bulk' ? 'var(--amber)' : '';
+  bulkBtn.style.color = tab === 'bulk' ? '#000' : '';
+}
+
+// --- Weekly Reconciliation -------------------------------------------------
+// Honest about its own limit: signals (entry/add/exit) are only ever
+// computed for "today", never stored per historical date, so this can only
+// show what IS in the trade log per weekday, not what SHOULD have been
+// logged on a day you forgot to open the app at all. That gap has to be
+// closed from the broker's own contract note / trade book, then backfilled
+// here via the Backfill button, which hands off to Bulk Entry with every
+// row's date pre-set.
+function dh252DefaultReconRange(){
+  const today = new Date();
+  const dow = today.getDay(); // 0 Sun ... 6 Sat
+  const diffToMonday = dow === 0 ? 6 : dow - 1;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - diffToMonday);
+  return {from: monday.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10)};
+}
+
+async function dh252ReconCheck(){
+  const fromEl = document.getElementById('dh252-recon-from');
+  const toEl = document.getElementById('dh252-recon-to');
+  if(!fromEl.value || !toEl.value){
+    const d = dh252DefaultReconRange();
+    fromEl.value = d.from; toEl.value = d.to;
+  }
+  let trades = window._dh252Trades;
+  if(!trades){
+    try{ trades = await dh252FetchTrades(); window._dh252Trades = trades; }
+    catch(err){ trades = []; }
+  }
+  const byDate = {};
+  trades.forEach(t => { (byDate[t.Date] = byDate[t.Date] || []).push(t); });
+
+  const from = fromEl.value, to = toEl.value;
+  const days = [];
+  const cur = new Date(from + 'T00:00:00');
+  const end = new Date(to + 'T00:00:00');
+  while(cur <= end){
+    const dow = cur.getDay();
+    if(dow !== 0 && dow !== 6) days.push(cur.toISOString().slice(0, 10)); // weekdays only — not real trading-holiday aware
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  const tbody = document.getElementById('dh252-recon-tbody');
+  tbody.innerHTML = days.length ? days.map(d => {
+    const rows = byDate[d] || [];
+    const dayName = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', {weekday: 'short'});
+    const list = rows.length
+      ? rows.map(r => `${r.Action} ${r.Qty} ${r.Symbol} @ ₹${r.Price}`).join('<br>')
+      : '<span style="color:var(--amber);">⚠ No trades logged</span>';
+    const btn = rows.length ? '' : `<button class="refresh-btn dh252-recon-backfill-btn" data-date="${d}">BACKFILL →</button>`;
+    return `<tr><td>${d}</td><td>${dayName}</td><td>${list}</td><td>${btn}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="loading">No weekdays in that range.</td></tr>';
+
+  tbody.querySelectorAll('.dh252-recon-backfill-btn').forEach(btn => {
+    btn.onclick = () => dh252BackfillDate(btn.dataset.date);
+  });
+}
+
+function dh252BackfillDate(date){
+  dh252SwitchLogTab('bulk');
+  document.querySelectorAll('#dh252-bulk-tbody .dh252-bulk-date').forEach(inp => { inp.value = date; });
 }
 
 async function dh252LogTrade(){
@@ -6815,10 +7012,25 @@ function dh252Init(){
   document.getElementById('dh252-sheet-url').value = dh252GetSheetUrl();
   document.getElementById('dh252-sheet-url').addEventListener('change', async (e) => {
     dh252SaveSheetUrl(e.target.value);
+    window._dh252Trades = null;
     await dh252Refresh();
   });
   document.getElementById('dh252-log-btn').onclick = dh252LogTrade;
   document.getElementById('dh252-refresh-btn').onclick = dh252Refresh;
+
+  dh252BulkAddRows(15);
+  document.getElementById('dh252-tab-quick-btn').onclick = () => dh252SwitchLogTab('quick');
+  document.getElementById('dh252-tab-bulk-btn').onclick = () => dh252SwitchLogTab('bulk');
+  dh252SwitchLogTab('quick');
+  document.getElementById('dh252-bulk-addrows-btn').onclick = () => dh252BulkAddRows(15);
+  document.getElementById('dh252-bulk-clear-btn').onclick = dh252BulkClear;
+  document.getElementById('dh252-bulk-log-btn').onclick = dh252LogBulk;
+
+  const reconDefault = dh252DefaultReconRange();
+  document.getElementById('dh252-recon-from').value = reconDefault.from;
+  document.getElementById('dh252-recon-to').value = reconDefault.to;
+  document.getElementById('dh252-recon-check-btn').onclick = dh252ReconCheck;
+
   dh252Refresh();
 }
 </script>
