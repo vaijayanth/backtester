@@ -1514,6 +1514,16 @@
   </div>
 
   <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-pos-table">
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <tbody id="dh252-pos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-add-table">
@@ -1584,25 +1594,21 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
-      <input type="text" id="dh252-log-filter" placeholder="Filter by symbol…" style="padding:6px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;width:160px;">
+    <div class="panel-head" id="dh252-log-table-header" style="cursor:pointer;user-select:none;">
+      <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
+      <span id="dh252-log-table-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
     </div>
-    <div class="table-scroll">
-      <table class="list-table" id="dh252-log-table">
-        <thead><tr><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE</th><th>LOGGED AT</th><th></th></tr></thead>
-        <tbody id="dh252-log-table-tbody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="dash-footnote" id="dh252-log-table-footnote">Every row ever logged, any date — not just today's. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (asks to confirm first). Both rewrite the Google Sheet directly, so refresh everything downstream (open/closed positions, reconciliation) once saved.</div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="dh252-pos-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
-        <tbody id="dh252-pos-tbody"></tbody>
-      </table>
+    <div id="dh252-log-table-body" style="display:none;">
+      <div style="padding:12px 18px 0;">
+        <input type="text" id="dh252-log-filter" placeholder="Filter by symbol…" style="padding:6px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;width:160px;">
+      </div>
+      <div class="table-scroll">
+        <table class="list-table" id="dh252-log-table">
+          <thead><tr><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE</th><th>LOGGED AT</th><th></th></tr></thead>
+          <tbody id="dh252-log-table-tbody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="dash-footnote" id="dh252-log-table-footnote">Every row ever logged, any date — not just today's. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (asks to confirm first). Both rewrite the Google Sheet directly, so refresh everything downstream (open/closed positions, reconciliation) once saved.</div>
     </div>
   </div>
 
@@ -7267,6 +7273,16 @@ function dh252Init(){
     dh252LogFilter = e.target.value.trim().toUpperCase();
     dh252RenderTradeLog();
   });
+  // Collapsed by default — the header's row count (dh252-log-table-meta)
+  // is always kept live regardless, so there's no need to expand just to
+  // know whether anything's in there.
+  document.getElementById('dh252-log-table-header').onclick = () => {
+    const body = document.getElementById('dh252-log-table-body');
+    const chevron = document.getElementById('dh252-log-table-chevron');
+    const collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? '' : 'none';
+    chevron.textContent = collapsed ? '▾' : '▸';
+  };
 
   dh252Refresh();
 }
