@@ -1481,6 +1481,7 @@
       <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
       <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dh252-open-count">—</div></div>
       <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
+      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dh252-notional">—</div></div>
       <div class="stat"><div class="stat-label">POSITION SIZE (CURRENT)</div><div class="stat-value" id="dh252-tier-size">—</div></div>
       <div class="stat"><div class="stat-label">CAN AFFORD</div><div class="stat-value" id="dh252-afford">—</div></div>
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
@@ -6801,10 +6802,21 @@ function dh252RenderPositions(state){
   // realized+open_mtm definition rather than understating return by
   // ignoring unrealized P&L on what's still open.
   const week52ForMtm = window._dh252Week52 || {};
+  let openMtmPriced = 0;
   const openMtm = openList.reduce((s, p) => {
     const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
-    return w ? s + (w.close - p.wac) * p.qty : s;
+    if(!w) return s;
+    openMtmPriced++;
+    return s + (w.close - p.wac) * p.qty;
   }, 0);
+  const notionalEl = document.getElementById('dh252-notional');
+  if(!openList.length){
+    notionalEl.textContent = '—';
+    notionalEl.style.color = '';
+  }else{
+    notionalEl.textContent = dh252FmtRs(openMtm) + (openMtmPriced < openList.length ? ` (${openMtmPriced}/${openList.length} priced)` : '');
+    notionalEl.style.color = openMtm >= 0 ? 'var(--green)' : 'var(--red)';
+  }
   const combinedValue = DH252_INITIAL_CAPITAL_RS + realized + openMtm;
   const cagrEl = document.getElementById('dh252-cagr');
   const daysElapsed = state.firstTradeDate ? (new Date() - new Date(state.firstTradeDate)) / 86400000 : 0;
