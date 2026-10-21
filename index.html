@@ -162,6 +162,10 @@
   .refresh-btn{background:var(--panel2);border:1px solid var(--border);color:var(--white);font-family:inherit;font-size:10px;padding:5px 10px;border-radius:3px;cursor:pointer;}
   .refresh-btn:hover{border-color:var(--amber-dim);color:var(--amber);}
 
+  .dh252-ac-dropdown{z-index:300;background:var(--panel2);border:1px solid var(--border);border-radius:6px;max-height:220px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,.45);}
+  .dh252-ac-item{padding:6px 10px;font-size:12px;cursor:pointer;color:var(--fg);}
+  .dh252-ac-item:hover,.dh252-ac-item.ac-active{background:var(--amber-glow);color:var(--amber);}
+
   .sd-controls{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border-soft);align-items:center;flex-wrap:wrap;}
   .sd-select{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;min-width:160px;}
   .sd-status{font-size:11px;color:var(--dim);}
@@ -6804,6 +6808,7 @@ async function dh252Refresh(){
     // Alerts/Dashboard) — populate it here too, since this page can be
     // opened standalone without visiting those first.
     window._eqSectors = sectors || {};
+    dh252BuildUniverse();
     const state = dh252BuildPositions(trades);
     dh252RenderPositions(state);
     dh252RenderSignals(state.open, state.closed.length);
@@ -6814,6 +6819,54 @@ async function dh252Refresh(){
     document.getElementById('dh252-cap-meta').textContent = 'Could not load: ' + err.message;
     console.error(err);
   }
+}
+
+// --- Symbol autocomplete ("REL" -> every universe symbol starting with it) -
+// Universe = union of whatever's actually been fetched for this page
+// (week52 close/high map, Supertrend map, sector map) — no separate fetch,
+// just whatever symbols currently have live data, which is effectively the
+// full validated universe.
+function dh252BuildUniverse(){
+  const set = new Set();
+  [window._dh252Week52 || {}, window._dh252Supertrend || {}, window._eqSectors || {}].forEach(obj => {
+    Object.keys(obj).forEach(k => set.add(eqStripNs(k).toUpperCase()));
+  });
+  window._dh252Universe = Array.from(set).sort();
+}
+
+let dh252AcDropdown = null;
+function dh252AcHide(){
+  if(dh252AcDropdown){ dh252AcDropdown.remove(); dh252AcDropdown = null; }
+}
+function dh252AttachAutocomplete(input){
+  input.addEventListener('input', () => {
+    dh252AcHide();
+    const q = input.value.trim().toUpperCase();
+    if(!q) return;
+    const matches = (window._dh252Universe || []).filter(s => s.startsWith(q)).slice(0, 12);
+    if(!matches.length) return;
+    const rect = input.getBoundingClientRect();
+    const dd = document.createElement('div');
+    dd.className = 'dh252-ac-dropdown';
+    dd.style.position = 'fixed';
+    dd.style.left = rect.left + 'px';
+    dd.style.top = (rect.bottom + 2) + 'px';
+    dd.style.width = Math.max(rect.width, 140) + 'px';
+    dd.innerHTML = matches.map(s => `<div class="dh252-ac-item" data-sym="${s}">${s}</div>`).join('');
+    document.body.appendChild(dd);
+    dh252AcDropdown = dd;
+    dd.querySelectorAll('.dh252-ac-item').forEach(item => {
+      // mousedown (not click) fires before the input's blur, so the value
+      // actually lands instead of the dropdown vanishing first.
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        input.value = item.dataset.sym;
+        dh252AcHide();
+      });
+    });
+  });
+  input.addEventListener('blur', () => setTimeout(dh252AcHide, 150));
+  input.addEventListener('keydown', (e) => { if(e.key === 'Escape' || e.key === 'Enter') dh252AcHide(); });
 }
 
 // --- Bulk Entry (15-row Excel-like grid) ---------------------------------
@@ -6843,6 +6896,9 @@ function dh252BulkAddRows(count){
   let html = '';
   for(let i = 0; i < count; i++) html += dh252BulkRowHtml();
   tbody.insertAdjacentHTML('beforeend', html);
+  tbody.querySelectorAll('.dh252-bulk-symbol').forEach(inp => {
+    if(!inp.dataset.acAttached){ dh252AttachAutocomplete(inp); inp.dataset.acAttached = '1'; }
+  });
 }
 function dh252BulkClear(){
   dh252BulkRowSeq = 0;
@@ -7017,6 +7073,7 @@ function dh252Init(){
   });
   document.getElementById('dh252-log-btn').onclick = dh252LogTrade;
   document.getElementById('dh252-refresh-btn').onclick = dh252Refresh;
+  dh252AttachAutocomplete(document.getElementById('dh252-f-symbol'));
 
   dh252BulkAddRows(15);
   document.getElementById('dh252-tab-quick-btn').onclick = () => dh252SwitchLogTab('quick');
