@@ -1584,6 +1584,19 @@
   </div>
 
   <div class="panel">
+    <div class="panel-head"><div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
+      <input type="text" id="dh252-log-filter" placeholder="Filter by symbol…" style="padding:6px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;width:160px;">
+    </div>
+    <div class="table-scroll">
+      <table class="list-table" id="dh252-log-table">
+        <thead><tr><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE</th><th>LOGGED AT</th><th></th></tr></thead>
+        <tbody id="dh252-log-table-tbody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote" id="dh252-log-table-footnote">Every row ever logged, any date — not just today's. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (asks to confirm first). Both rewrite the Google Sheet directly, so refresh everything downstream (open/closed positions, reconciliation) once saved.</div>
+  </div>
+
+  <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-pos-table">
@@ -6548,19 +6561,24 @@ async function dh252FetchTrades(){
   return (data.rows || []).slice().sort((a, b) => new Date(a.Date) - new Date(b.Date) || new Date(a.LoggedAt) - new Date(b.LoggedAt));
 }
 
-async function dh252PostTrade(trade){
+// Generic POST to the Apps Script — op defaults to 'append' (the only op
+// the original deployed script understands). 'update' and 'delete' need
+// the Apps Script redeployed with the newer doPost below — see the
+// FULL TRADE LOG panel's edit/delete handlers.
+async function dh252PostOp(payload){
   const url = dh252GetSheetUrl();
   if(!url) throw new Error('No Google Sheet URL configured yet — paste it above.');
   const res = await fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
-    body: JSON.stringify(trade),
+    body: JSON.stringify(payload),
   });
   if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
   const data = await res.json();
   if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
   return data;
 }
+async function dh252PostTrade(trade){ return dh252PostOp({op: 'append', ...trade}); }
 
 // Replays the trade log chronologically into current state. Every BUY
 // opens a fresh position (error if one's already open for that symbol —
@@ -6616,6 +6634,108 @@ function dh252BuildPositions(trades){
   });
 
   return {open, closed, cash, skipped, firstTradeDate};
+}
+
+// --- Full Trade Log: edit/delete any logged row, any date ----------------
+// Needs the Apps Script redeployed with 'update'/'delete' ops (doGet also
+// needs to return each row's actual sheet row number as _row) — see the
+// comment above dh252PostOp. Until that's done, Edit/Delete calls will
+// fail with a clear error from the old script rather than silently no-op.
+let dh252LogEditRow = null; // _row currently open for inline edit, or null
+let dh252LogFilter = '';
+
+function dh252RenderTradeLog(){
+  const trades = (window._dh252Trades || []).slice()
+    .sort((a, b) => new Date(b.Date) - new Date(a.Date) || new Date(b.LoggedAt) - new Date(a.LoggedAt));
+  const filtered = dh252LogFilter ? trades.filter(t => String(t.Symbol || '').toUpperCase().includes(dh252LogFilter)) : trades;
+  document.getElementById('dh252-log-table-meta').textContent = `${filtered.length} of ${trades.length} row${trades.length === 1 ? '' : 's'}`;
+  const tbody = document.getElementById('dh252-log-table-tbody');
+  const footnote = document.getElementById('dh252-log-table-footnote');
+
+  if(trades.length && trades[0]._row == null){
+    footnote.innerHTML = '⚠ Your Apps Script deployment doesn\'t return a row number yet, so Edit/Delete can\'t target a specific row. Redeploy with the updated doGet/doPost (ask for the script again) — Deploy → Manage deployments → <b>New version</b>, not just Save.';
+    footnote.style.color = 'var(--amber)';
+  } else {
+    footnote.textContent = "Every row ever logged, any date — not just today's. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (asks to confirm first). Both rewrite the Google Sheet directly, so everything downstream refreshes automatically once saved.";
+    footnote.style.color = '';
+  }
+
+  if(!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">No logged trades yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(t => {
+    const row = t._row;
+    if(dh252LogEditRow != null && row === dh252LogEditRow){
+      return `<tr data-row="${row}">
+        <td><input type="text" class="dh252-edit-symbol" value="${t.Symbol}" style="width:100px;padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td><select class="dh252-edit-action" style="padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
+          ${['BUY', 'ADD', 'SELL'].map(a => `<option value="${a}" ${a === t.Action ? 'selected' : ''}>${a}</option>`).join('')}
+        </select></td>
+        <td><input type="date" class="dh252-edit-date" value="${t.Date}" style="padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td><input type="number" class="dh252-edit-qty" value="${t.Qty}" style="width:70px;padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td><input type="number" step="0.01" class="dh252-edit-price" value="${t.Price}" style="width:90px;padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td style="font-size:11px;color:var(--muted);">${t.LoggedAt ? new Date(t.LoggedAt).toLocaleString('en-IN') : '—'}</td>
+        <td style="white-space:nowrap;">
+          <button class="refresh-btn dh252-log-save-btn" data-row="${row}" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">SAVE</button>
+          <button class="refresh-btn dh252-log-cancel-btn">CANCEL</button>
+        </td>
+      </tr>`;
+    }
+    return `<tr data-row="${row}">
+      <td>${t.Symbol}</td><td>${t.Action}</td><td>${t.Date}</td><td>${t.Qty}</td><td>${dh252FmtRs(Number(t.Price))}</td>
+      <td style="font-size:11px;color:var(--muted);">${t.LoggedAt ? new Date(t.LoggedAt).toLocaleString('en-IN') : '—'}</td>
+      <td style="white-space:nowrap;">
+        <button class="refresh-btn dh252-log-edit-btn" data-row="${row}">✎ EDIT</button>
+        <button class="refresh-btn dh252-log-delete-btn" data-row="${row}" style="border-color:var(--red);color:var(--red);">🗑 DELETE</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.dh252-log-edit-btn').forEach(btn => {
+    btn.onclick = () => { dh252LogEditRow = Number(btn.dataset.row); dh252RenderTradeLog(); };
+  });
+  tbody.querySelectorAll('.dh252-log-cancel-btn').forEach(btn => {
+    btn.onclick = () => { dh252LogEditRow = null; dh252RenderTradeLog(); };
+  });
+  tbody.querySelectorAll('.dh252-log-save-btn').forEach(btn => {
+    btn.onclick = () => dh252LogSaveEdit(Number(btn.dataset.row));
+  });
+  tbody.querySelectorAll('.dh252-log-delete-btn').forEach(btn => {
+    btn.onclick = () => dh252LogDeleteRow(Number(btn.dataset.row));
+  });
+}
+
+async function dh252LogSaveEdit(row){
+  const tr = document.querySelector(`#dh252-log-table-tbody tr[data-row="${row}"]`);
+  const symbol = tr.querySelector('.dh252-edit-symbol').value.trim().toUpperCase();
+  const action = tr.querySelector('.dh252-edit-action').value;
+  const date = tr.querySelector('.dh252-edit-date').value;
+  const qty = tr.querySelector('.dh252-edit-qty').value;
+  const price = tr.querySelector('.dh252-edit-price').value;
+  if(!symbol || !date || !qty || !price){ alert('Fill in symbol, date, qty and price.'); return; }
+  const btn = tr.querySelector('.dh252-log-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  try{
+    await dh252PostOp({op: 'update', rowIndex: row, Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+    dh252LogEditRow = null;
+    await dh252Refresh();
+  }catch(err){
+    alert('Failed to save: ' + err.message);
+    btn.disabled = false; btn.textContent = 'SAVE';
+  }
+}
+
+async function dh252LogDeleteRow(row){
+  const t = (window._dh252Trades || []).find(x => x._row === row);
+  const label = t ? `${t.Action} ${t.Qty} ${t.Symbol} @ ₹${t.Price} on ${t.Date}` : `row ${row}`;
+  if(!confirm(`Delete this logged trade?\n\n${label}\n\nThis can't be undone.`)) return;
+  try{
+    await dh252PostOp({op: 'delete', rowIndex: row});
+    await dh252Refresh();
+  }catch(err){
+    alert('Failed to delete: ' + err.message);
+  }
 }
 
 function dh252FmtRs(v){ return '₹' + Math.round(v).toLocaleString('en-IN'); }
@@ -6812,6 +6932,7 @@ async function dh252Refresh(){
     const state = dh252BuildPositions(trades);
     dh252RenderPositions(state);
     dh252RenderSignals(state.open, state.closed.length);
+    dh252RenderTradeLog();
     document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
       (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
     if(state.skipped.length) console.warn('52-week-high journal: skipped rows', state.skipped);
@@ -7087,6 +7208,11 @@ function dh252Init(){
   document.getElementById('dh252-recon-from').value = reconDefault.from;
   document.getElementById('dh252-recon-to').value = reconDefault.to;
   document.getElementById('dh252-recon-check-btn').onclick = dh252ReconCheck;
+
+  document.getElementById('dh252-log-filter').addEventListener('input', (e) => {
+    dh252LogFilter = e.target.value.trim().toUpperCase();
+    dh252RenderTradeLog();
+  });
 
   dh252Refresh();
 }
