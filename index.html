@@ -1498,7 +1498,7 @@
     <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-exit-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dh252-exit-tbody"></tbody>
       </table>
     </div>
@@ -6975,7 +6975,7 @@ function dh252RenderSignals(open, closedCount){
     const cmp = w.close;
     const plPct = (cmp - pos.wac) / pos.wac * 100;
     if(st.color === 'red'){
-      exitRows.push({pos, cmp, plPct});
+      exitRows.push({pos, cmp, plPct, awayFromHigh: w.pct_from_high});
       return; // exit takes priority over an add signal the same day
     }
     const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
@@ -6991,10 +6991,19 @@ function dh252RenderSignals(open, closedCount){
   </tr>`).join('') : '<tr><td colspan="7" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dh252-exit-count').textContent = exitRows.length;
-  document.getElementById('dh252-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => `<tr>
-    <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
-    <td style="color:${r.plPct >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtPct(r.plPct)}</td>
-  </tr>`).join('') : '<tr><td colspan="5" class="loading">No exit signals right now.</td></tr>';
+  document.getElementById('dh252-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
+    const notionalPl = (r.cmp - r.pos.wac) * r.pos.qty;
+    const ageDays = dh252AgeDays(r.pos.entryDate);
+    return `<tr>
+      <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
+      <td>${dh252FmtRs(r.cmp)}</td>
+      <td style="color:var(--red);font-weight:700">RED</td>
+      <td style="color:${r.awayFromHigh == null ? '' : r.awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${r.awayFromHigh == null ? '—' : dh252FmtPct(r.awayFromHigh)}</td>
+      <td style="color:${notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtRs(notionalPl)}</td>
+      <td style="color:${r.plPct >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtPct(r.plPct)}</td>
+      <td>${r.pos.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="11" class="loading">No exit signals right now.</td></tr>';
 }
 
 // market_screens_full.json / supertrend_full.json are built once a day by
