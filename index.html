@@ -1513,7 +1513,7 @@
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Close at/above the trailing 52-week high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one.</div>
+    <div class="dash-footnote">Close at/above the trailing 52-week high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span></div>
   </div>
 
   <div class="panel">
@@ -7015,19 +7015,30 @@ function dh252FmtDataAsOf(iso){
 }
 
 function dh252RenderDataAsOf(){
-  const el = document.getElementById('dh252-data-asof');
-  if(!el) return;
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
-  if(!fmt){
-    el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
-    el.style.color = 'var(--amber)';
-    return;
+
+  const el = document.getElementById('dh252-data-asof');
+  if(el){
+    if(!fmt){
+      el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
+      el.style.color = 'var(--amber)';
+    }else{
+      // Daily job runs once a day — comfortably under ~30h old is normal
+      // (pre-market the next day); past that the pipeline likely didn't run.
+      el.textContent = `📊 CMP / Supertrend / 52W High data as of: ${fmt.text}`;
+      el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+    }
   }
-  // Daily job runs once a day — comfortably under ~30h old is normal
-  // (pre-market the next day); past that the pipeline likely didn't run.
-  el.textContent = `📊 CMP / Supertrend / 52W High data as of: ${fmt.text}`;
-  el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+
+  // Same note repeated right on the Entry Signal panel — the page-top line
+  // is easy to scroll past, and this is exactly where the "is this fresh
+  // enough to act on?" question actually gets asked.
+  const entryEl = document.getElementById('dh252-entry-asof');
+  if(entryEl){
+    entryEl.textContent = fmt ? `Data as of ${fmt.text}.` : '';
+    entryEl.style.color = fmt && fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+  }
 }
 
 async function dh252Refresh(){
