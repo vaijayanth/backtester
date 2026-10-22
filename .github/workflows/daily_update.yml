@@ -4,26 +4,26 @@ name: Daily OHLC Update
 # today's EOD close, and regenerates every JSON the Dashboard/Strangle
 # Screen/IVP Screener pages read from it, with no manual trigger needed.
 #
-# Cron is UTC. Two runs per weekday, both IST:
+# Cron is UTC. Four runs per weekday, ~6h apart, IST equivalents:
 #
-#   - 02:30 UTC (08:00 IST) — morning safety-net re-run, before NSE opens
-#     at 09:15 IST. The prior evening's run can fail partway (e.g. a
-#     checkpoint-branch push race if another workflow writes to
-#     backfill-checkpoints around the same time — observed and fixed for
-#     one specific case, but the underlying race is structural and can
-#     recur for any two concurrent writers) or a symbol can have a
-#     transient fetch failure. This run gets another shot at landing a
-#     complete, current dataset before the trading day starts. It's NOT
-#     expected to find new OHLC rows (market hasn't opened yet) — its job
-#     is to retry anything the evening run didn't finish, and to
-#     regenerate Supertrend/screens from whatever IS on disk so a late
-#     evening failure doesn't leave the site stale all morning.
+#   - 02:30 UTC (08:00 IST) — before NSE opens (09:15 IST)
+#   - 05:30 UTC (11:00 IST) — mid-morning session
+#   - 10:30 UTC (16:00 IST) — just after NSE closes (15:30 IST)
+#   - 14:30 UTC (20:00 IST) — evening, well clear of close
 #
-#   - 12:30 UTC (18:00 IST) — primary EOD run. NSE closes 15:30 IST
-#     (10:00 UTC); this gives a 2.5hr buffer for Yahoo Finance's own EOD
-#     data to actually post — running right at the close has previously
-#     returned incomplete/stale same-day rows in ad-hoc testing for other
-#     tickers, this is deliberate slack, not a guess.
+# Safe to run at ANY of these regardless of market state, including
+# mid-session: scripts/backfill.py's drop_intraday_today_row() strips any
+# row dated today from a fresh fetch whenever NSE is still open, so a run
+# landing during trading hours can never store a live/partial price as if
+# it were a settled close — it just finds nothing new for today and
+# regenerates Supertrend/screens from whatever's already on disk, same
+# outcome as a deliberate no-op. This guard is also why four runs/day is
+# strictly safer than two, not just more frequent: it exists specifically
+# because GitHub Actions' schedule trigger has been observed to fire
+# 5-5.5h late, consistently (checked via the Actions API) — with four
+# spread-out attempts instead of two, any single one landing late still
+# leaves another nearby to pick up the real close sooner after it posts,
+# without depending on GitHub honoring the cron time.
 #
 # Mon-Fri only (NSE doesn't trade weekends — a weekend run would just
 # find zero new rows for every symbol and do nothing productive).
@@ -37,7 +37,9 @@ name: Daily OHLC Update
 on:
   schedule:
     - cron: "30 2 * * 1-5"
-    - cron: "30 12 * * 1-5"
+    - cron: "30 5 * * 1-5"
+    - cron: "30 10 * * 1-5"
+    - cron: "30 14 * * 1-5"
   workflow_dispatch: {}
 
 permissions:
