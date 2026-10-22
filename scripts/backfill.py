@@ -30,7 +30,7 @@ Usage:
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -177,6 +177,51 @@ def validate_ohlc(df: pd.DataFrame) -> tuple[bool, str, pd.DataFrame | None]:
     return True, note, trimmed
 
 
+# GitHub Actions' schedule trigger has been observed, repeatedly, to fire
+# a run 5-5.5 hours later than its cron time (checked via the Actions API
+# across the last several runs — not a one-off blip). That turns the
+# "08:00 IST, market hasn't opened yet" safety-net run into one that
+# actually executes mid-session (~13:30 IST), and the "18:00 IST, after
+# close" run into one landing even later in the evening (still safely
+# after close, so harmless there). yfinance's daily-interval history()
+# queried WHILE NSE is open returns today's row as a live/partial
+# snapshot, not a settled close - and once merged into the parquet it is
+# indistinguishable from a real EOD bar, silently corrupting every signal
+# that assumes "today's row = today's close" (252-day-high breakout,
+# Supertrend, etc). Trimming it here, at the single choke point every
+# fetch path shares, makes the pipeline correct regardless of when
+# GitHub Actions actually decides to run it - a run that lands mid-
+# session simply finds nothing new to do for today, same as the
+# workflow's own comments already assumed.
+IST_OFFSET = timedelta(hours=5, minutes=30)  # NSE has no DST — fixed offset is safe
+NSE_OPEN_HHMM = (9, 15)
+NSE_CLOSE_HHMM = (15, 30)
+
+
+def nse_session_open_now() -> bool:
+    now_ist = datetime.now(timezone.utc) + IST_OFFSET
+    if now_ist.weekday() >= 5:  # Sat/Sun — NSE doesn't trade
+        return False
+    open_t = now_ist.replace(hour=NSE_OPEN_HHMM[0], minute=NSE_OPEN_HHMM[1], second=0, microsecond=0)
+    close_t = now_ist.replace(hour=NSE_CLOSE_HHMM[0], minute=NSE_CLOSE_HHMM[1], second=0, microsecond=0)
+    return open_t <= now_ist <= close_t
+
+
+def drop_intraday_today_row(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
+    """If NSE is open right now, drop any row dated today (IST) from a
+    freshly-fetched df - it can only be a partial/live snapshot, never a
+    settled close. Returns (df, was_trimmed). A no-op (and cheap) outside
+    market hours, which is the overwhelming majority of runs."""
+    if df is None or df.empty or not nse_session_open_now():
+        return df, False
+    idx = pd.to_datetime(df.index).tz_localize(None)
+    today_ist = (datetime.now(timezone.utc) + IST_OFFSET).date()
+    keep = idx.date != today_ist
+    if keep.all():
+        return df, False
+    return df.loc[keep].copy(), True
+
+
 def fetch_one(symbol: str) -> dict:
     now = datetime.now(timezone.utc).isoformat()
     row = {
@@ -189,6 +234,7 @@ def fetch_one(symbol: str) -> dict:
     except Exception as e:
         row["error"] = f"fetch exception: {type(e).__name__}: {e}"
         return row
+    df, _ = drop_intraday_today_row(df)
 
     is_valid, note, trimmed = validate_ohlc(df)
     save_note = note  # trim note (if any) for whichever df we end up saving
@@ -206,6 +252,7 @@ def fetch_one(symbol: str) -> dict:
         except Exception as e:
             row["error"] = f"{err}; max-period retry also failed: {type(e).__name__}: {e}"
             return row
+        df_max, _ = drop_intraday_today_row(df_max)
         is_valid_max, note_max, trimmed_max = validate_ohlc(df_max)
         err_max = note_max
         if is_valid_max:

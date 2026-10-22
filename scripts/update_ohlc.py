@@ -63,6 +63,7 @@ from backfill import (  # noqa: E402
     STATUS_FAILED,
     STATUS_PENDING,
     STATUS_VALIDATED,
+    drop_intraday_today_row,
     fetch_one,
     fetch_with_retry,
     is_retryable,
@@ -120,6 +121,7 @@ def incremental_update(symbol: str, last_date_str: str) -> dict:
         row["status"] = STATUS_FAILED
         row["error"] = f"incremental fetch exception: {type(e).__name__}: {e}"
         return row
+    new_df, _ = drop_intraday_today_row(new_df)
 
     if new_df is None or new_df.empty:
         # No new trading days since last_date (weekend/holiday run, or
