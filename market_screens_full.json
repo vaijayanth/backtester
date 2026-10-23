@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-23T10:32:06.771694+00:00",
+  "generated_at": "2026-10-23T15:30:14.296494+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1491,
   "skipped": [],
@@ -120,9 +120,9 @@
     },
     {
       "symbol": "AARTIDRUGS.NS",
-      "close": 375.0,
+      "close": 374.9,
       "high_52w": 521.8,
-      "pct_from_high": -28.13,
+      "pct_from_high": -28.15,
       "date": "2026-10-23"
     },
     {
@@ -2892,9 +2892,9 @@
     },
     {
       "symbol": "ETHOSLTD.NS",
-      "close": 2410.1,
+      "close": 2411.4,
       "high_52w": 3196.4,
-      "pct_from_high": -24.6,
+      "pct_from_high": -24.56,
       "date": "2026-10-23"
     },
     {
@@ -6490,9 +6490,9 @@
     },
     {
       "symbol": "NFL.NS",
-      "close": 57.17,
+      "close": 57.12,
       "high_52w": 94.62,
-      "pct_from_high": -39.58,
+      "pct_from_high": -39.63,
       "date": "2026-10-23"
     },
     {
@@ -8464,9 +8464,9 @@
     },
     {
       "symbol": "SHILCTECH.NS",
-      "close": 3515.0,
+      "close": 3532.4,
       "high_52w": 5296.82,
-      "pct_from_high": -33.64,
+      "pct_from_high": -33.31,
       "date": "2026-10-23"
     },
     {
@@ -8492,9 +8492,9 @@
     },
     {
       "symbol": "SHREDIGCEM.NS",
-      "close": 55.0,
+      "close": 56.16,
       "high_52w": 90.94,
-      "pct_from_high": -39.52,
+      "pct_from_high": -38.24,
       "date": "2026-10-23"
     },
     {
@@ -11150,12 +11150,6 @@
       "date": "2026-10-23"
     },
     {
-      "symbol": "SHREDIGCEM.NS",
-      "close": 55.0,
-      "rsi14": 21.1,
-      "date": "2026-10-23"
-    },
-    {
       "symbol": "SRM.NS",
       "close": 348.75,
       "rsi14": 21.1,
@@ -11384,6 +11378,12 @@
       "date": "2026-10-23"
     },
     {
+      "symbol": "NFL.NS",
+      "close": 57.12,
+      "rsi14": 22.2,
+      "date": "2026-10-23"
+    },
+    {
       "symbol": "SUDARSCHEM.NS",
       "close": 1019.6,
       "rsi14": 22.2,
@@ -11398,12 +11398,6 @@
     {
       "symbol": "MUTHOOTFIN.NS",
       "close": 2373.0,
-      "rsi14": 22.3,
-      "date": "2026-10-23"
-    },
-    {
-      "symbol": "NFL.NS",
-      "close": 57.17,
       "rsi14": 22.3,
       "date": "2026-10-23"
     },
@@ -11482,6 +11476,12 @@
     {
       "symbol": "RKSWAMY.NS",
       "close": 75.96,
+      "rsi14": 22.5,
+      "date": "2026-10-23"
+    },
+    {
+      "symbol": "SHREDIGCEM.NS",
+      "close": 56.16,
       "rsi14": 22.5,
       "date": "2026-10-23"
     },
@@ -12477,7 +12477,7 @@
     },
     {
       "symbol": "AARTIDRUGS.NS",
-      "close": 375.0,
+      "close": 374.9,
       "rsi14": 26.7,
       "date": "2026-10-23"
     },
@@ -13154,12 +13154,6 @@
       "date": "2026-10-23"
     },
     {
-      "symbol": "SHILCTECH.NS",
-      "close": 3515.0,
-      "rsi14": 28.6,
-      "date": "2026-10-23"
-    },
-    {
       "symbol": "AETHER.NS",
       "close": 1412.7,
       "rsi14": 28.7,
@@ -13330,6 +13324,12 @@
     {
       "symbol": "PARADEEP.NS",
       "close": 133.57,
+      "rsi14": 29.1,
+      "date": "2026-10-23"
+    },
+    {
+      "symbol": "SHILCTECH.NS",
+      "close": 3532.4,
       "rsi14": 29.1,
       "date": "2026-10-23"
     },
@@ -13697,7 +13697,7 @@
     },
     {
       "symbol": "AARTIDRUGS.NS",
-      "close": 375.0,
+      "close": 374.9,
       "rsi14": 26.7,
       "date": "2026-10-23"
     },
@@ -16073,8 +16073,8 @@
     },
     {
       "symbol": "ETHOSLTD.NS",
-      "close": 2410.1,
-      "rsi14": 32.0,
+      "close": 2411.4,
+      "rsi14": 32.1,
       "date": "2026-10-23"
     },
     {
@@ -19157,8 +19157,8 @@
     },
     {
       "symbol": "NFL.NS",
-      "close": 57.17,
-      "rsi14": 22.3,
+      "close": 57.12,
+      "rsi14": 22.2,
       "date": "2026-10-23"
     },
     {
@@ -20849,8 +20849,8 @@
     },
     {
       "symbol": "SHILCTECH.NS",
-      "close": 3515.0,
-      "rsi14": 28.6,
+      "close": 3532.4,
+      "rsi14": 29.1,
       "date": "2026-10-23"
     },
     {
@@ -20873,8 +20873,8 @@
     },
     {
       "symbol": "SHREDIGCEM.NS",
-      "close": 55.0,
-      "rsi14": 21.1,
+      "close": 56.16,
+      "rsi14": 22.5,
       "date": "2026-10-23"
     },
     {
