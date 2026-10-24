@@ -1374,7 +1374,7 @@
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-entry52wh-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th style="width:1%;">QTY TO BUY</th><th>SECTOR</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
         <tbody id="eqa-entry52wh-tbody"></tbody>
       </table>
     </div>
@@ -1511,7 +1511,7 @@
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>252D HIGH ₹</th><th style="width:1%;">QTY TO BUY</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>252D HIGH ₹</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
@@ -1818,7 +1818,7 @@
     </div>
     <div class="table-scroll">
       <table class="list-table" id="div-entry-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th><th style="width:1%;">QTY</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th></tr></thead>
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
@@ -6721,7 +6721,7 @@ function eqAlertsRender(){
       sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
     }
     const qtyToBuy = Math.max(1, Math.floor(entryQtyTierSize / w.close));
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td>
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td><td>${eqFmtRs(w.high_52w)}</td>
       <td style="${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   });
 
@@ -7198,7 +7198,7 @@ function dh252RenderSignals(open, closedCount){
     // being too expensive, unlike the backtest's missed_entries_price_
     // too_high bucket (which models the strategy exactly as sized there).
     const qtyToBuy = Math.max(1, Math.floor(dh252TierSize(closedCount) / w.close));
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td>
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td><td>${eqFmtRs(w.high_52w)}</td>
       <td style="max-width:160px;white-space:normal;${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   }).join('') : '<tr><td colspan="5" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
 
@@ -8297,9 +8297,9 @@ function divRenderSignals(){
     const stColor = st && st.color ? st.color : null;
     const rsi = rsiMap[sym];
     const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
-    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td>${rsi.toFixed(1)}</td>
+    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td><td>${rsi.toFixed(1)}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td></tr>`;
+      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
   }).join('') : '<tr><td colspan="6" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
 
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
