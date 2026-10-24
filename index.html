@@ -7260,6 +7260,22 @@ function dh252FmtDataAsOf(iso){
   return {text: `${dateStr}, ${timeStr} IST (${agoStr})`, hoursAgo};
 }
 
+// Shared by both the 52-Week Journal and Dhan Covered Call's "CAPITAL &
+// POSITIONS" header — the most recent LoggedAt (server-stamped entry time,
+// not the trade's own Date) across whatever trades array is passed in.
+function dh252LastLoggedText(trades){
+  if(!trades || !trades.length) return '';
+  let latest = null;
+  trades.forEach(t => {
+    if(!t.LoggedAt) return;
+    const d = new Date(t.LoggedAt);
+    if(!isNaN(d) && (latest === null || d > latest)) latest = d;
+  });
+  if(!latest) return '';
+  const fmt = dh252FmtDataAsOf(latest.toISOString());
+  return fmt ? ` · last logged ${fmt.text}` : '';
+}
+
 function dh252RenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
@@ -7315,6 +7331,7 @@ async function dh252Refresh(){
     dh252RenderSignals(state.open, state.closed.length);
     dh252RenderTradeLog();
     document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
+      dh252LastLoggedText(trades) +
       (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
     if(state.skipped.length) console.warn('52-week-high journal: skipped rows', state.skipped);
   }catch(err){
@@ -7917,6 +7934,7 @@ async function dhccRefresh(){
     dhccRenderSignals(state.open);
     dhccRenderTradeLog();
     document.getElementById('dhcc-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
+      dh252LastLoggedText(trades) +
       (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
     if(state.skipped.length) console.warn('Dhan Covered Call journal: skipped rows', state.skipped);
   }catch(err){
