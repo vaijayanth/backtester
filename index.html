@@ -246,6 +246,7 @@
     <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
     <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>52 Week High Forward Journal</button>
+    <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1627,6 +1628,179 @@
 
 </div>
 
+<div class="page" id="page-dhcc">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">DHAN OPTIONS &amp; COVERED CALL</div>
+      <div class="dash-meta">Fixed 10-stock universe. Equity leg: enter on Supertrend(10,3) daily green, exit on Supertrend red only if in profit, add 10% on Supertrend green while in loss (max once/week). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding — this app only signals, it doesn't size or track option trades. Stoploss (3&times; premium) is handled by your own GTT in the broker, outside this app.</div>
+    </div>
+    <div style="padding:0 18px 18px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
+      <input type="text" id="dhcc-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;max-width:520px;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
+      <button class="refresh-btn" id="dhcc-refresh-btn" title="Refresh from sheet">↻</button>
+    </div>
+    <div id="dhcc-data-asof" style="padding:0 18px 14px;font-size:11.5px;color:var(--muted);">—</div>
+    <div class="stat-row" id="dhcc-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
+      <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dhcc-open-count">—</div></div>
+      <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dhcc-realized">—</div></div>
+      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dhcc-notional">—</div></div>
+      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L% (OPEN)</div><div class="stat-value" id="dhcc-notional-pct">—</div></div>
+      <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dhcc-closed-stat">—</div></div>
+      <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dhcc-avg-plpct">—</div></div>
+      <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="border-color:var(--red);">
+    <div class="panel-head"><div class="panel-title">🔴 EQUITY EXIT SIGNAL <span class="panel-meta" id="dhcc-exit-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-exit-table">
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <tbody id="dhcc-exit-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Supertrend red AND the position is in profit — exit the whole position. If Supertrend is red but the position is still in loss, hold — this rule doesn't fire until profit shows up.</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 EQUITY ENTRY SIGNAL <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-entry-table">
+        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
+        <tbody id="dhcc-entry-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Supertrend(10,3) daily is green and you don't already hold it. Log a BUY below if you take one. <span id="dhcc-entry-asof" style="color:var(--muted);"></span></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-add-table">
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th></tr></thead>
+        <tbody id="dhcc-add-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Supertrend green, position in loss, ≥7 calendar days since the last fill on that position (max one add per week). Add qty = 10% of current qty, rounded up.</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--amber);">
+    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-opt-table">
+        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <tbody id="dhcc-opt-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Whole 10-stock universe, regardless of whether you hold the equity. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Informational only — strike/expiry/qty and the 3&times; premium stoploss are yours to execute via GTT; nothing here is logged or tracked.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
+      <div style="display:flex;gap:6px;">
+        <button class="refresh-btn" id="dhcc-tab-quick-btn">QUICK ENTRY</button>
+        <button class="refresh-btn" id="dhcc-tab-bulk-btn">BULK ENTRY (15 ROWS)</button>
+      </div>
+    </div>
+
+    <div id="dhcc-log-tab-quick">
+      <div style="padding:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><select id="dhcc-f-symbol" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:220px;"></select></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
+          <select id="dhcc-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
+            <option value="BUY">BUY (new)</option>
+            <option value="ADD">ADD (average down)</option>
+            <option value="SELL">SELL (exit)</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Date</label><input type="date" id="dhcc-f-date" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Qty</label><input type="number" id="dhcc-f-qty" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:90px;"></div>
+        <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Price ₹</label><input type="number" step="0.01" id="dhcc-f-price" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:110px;"></div>
+        <button class="refresh-btn" id="dhcc-log-btn" style="padding:9px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
+      </div>
+      <div id="dhcc-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+    </div>
+
+    <div id="dhcc-log-tab-bulk" style="display:none;">
+      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry.</div>
+      <div class="table-scroll">
+        <table class="list-table" id="dhcc-bulk-table">
+          <thead><tr><th style="width:1%;">#</th><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE ₹</th><th>STATUS</th></tr></thead>
+          <tbody id="dhcc-bulk-tbody"></tbody>
+        </table>
+      </div>
+      <div style="padding:10px 18px 18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="refresh-btn" id="dhcc-bulk-addrows-btn">+ 15 MORE ROWS</button>
+        <button class="refresh-btn" id="dhcc-bulk-clear-btn">CLEAR ALL</button>
+        <button class="refresh-btn" id="dhcc-bulk-log-btn" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;margin-left:auto;">LOG ALL FILLED ROWS</button>
+      </div>
+      <div id="dhcc-bulk-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="border-color:var(--amber);">
+    <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
+    <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">From</label><input type="date" id="dhcc-recon-from" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">To</label><input type="date" id="dhcc-recon-to" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
+      <button class="refresh-btn" id="dhcc-recon-check-btn">CHECK WEEK</button>
+    </div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-recon-table">
+        <thead><tr><th>DATE</th><th>DAY</th><th>TRADES LOGGED</th><th></th></tr></thead>
+        <tbody id="dhcc-recon-tbody"><tr><td colspan="4" class="loading">Pick a range and click Check Week.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Shows what's actually in the trade log for each weekday in range — can't know what signals existed on a day you forgot to check. For a flagged day, cross-check your broker's contract note, then click Backfill to jump to Bulk Entry with the date pre-filled.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head" id="dhcc-log-table-header" style="cursor:pointer;user-select:none;">
+      <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dhcc-log-table-meta">—</span></div>
+      <span id="dhcc-log-table-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
+    </div>
+    <div id="dhcc-log-table-body" style="display:none;">
+      <div style="padding:12px 18px 0;">
+        <input type="text" id="dhcc-log-filter" placeholder="Filter by symbol…" style="padding:6px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;width:160px;">
+      </div>
+      <div class="table-scroll">
+        <table class="list-table" id="dhcc-log-table">
+          <thead><tr><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE</th><th>LOGGED AT</th><th></th></tr></thead>
+          <tbody id="dhcc-log-table-tbody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="dash-footnote" id="dhcc-log-table-footnote">Every row ever logged, any date. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (confirms first).</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dhcc-pos-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-pos-table">
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <tbody id="dhcc-pos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dhcc-closed-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="dhcc-closed-table">
+        <thead><tr><th>STOCK</th><th>ENTRY DATE</th><th>EXIT DATE</th><th>QTY</th><th>WAC ₹</th><th>EXIT ₹</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>ADDS</th></tr></thead>
+        <tbody id="dhcc-closed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -1653,6 +1827,7 @@ function switchPage(page){
   if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
   if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
   if(page === 'dh252' && !dh252Initialized) dh252Init();
+  if(page === 'dhcc' && !dhccInitialized) dhccInit();
 }
 
 function toggleEqUploadBox(){
@@ -1687,6 +1862,7 @@ document.getElementById('nav-journal').onclick = () => switchPage('journal');
 document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
 document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
 document.getElementById('nav-dh252').onclick = () => switchPage('dh252');
+document.getElementById('nav-dhcc').onclick = () => switchPage('dhcc');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -5002,6 +5178,12 @@ async function eqFetchWeek52(){
     if(!res.ok) return {};
     const data = await res.json();
     window._eqWeek52GeneratedAt = data.generated_at || null;
+    // Same response also carries rsi_all (RSI14 per symbol) - stashed here
+    // as a side effect rather than a second fetch of the same file, used
+    // by the Dhan Options & Covered Call page's Call/Put sell signal.
+    const rsiMap = {};
+    (data.rsi_all || []).forEach(r => { rsiMap[r.symbol.replace(/\.(NS|BO)$/, '')] = r.rsi14; });
+    window._eqRsiMap = rsiMap;
     const bySymbol = {};
     (data.week52_all || []).forEach(r => { bySymbol[r.symbol.replace(/\.(NS|BO)$/, '')] = r; });
     return bySymbol;
@@ -7369,6 +7551,616 @@ function dh252Init(){
   };
 
   dh252Refresh();
+}
+
+// ============================================================
+// DHAN OPTIONS & COVERED CALL — fixed 10-stock universe.
+// Equity leg: enter on Supertrend(10,3) daily green, exit on Supertrend
+// red ONLY if in profit (red + loss = hold), add 10% of qty on Supertrend
+// green while in loss (max once/week, same cooldown as the 52-Week
+// Journal). Options leg: sell Call when Supertrend red OR RSI14>70, sell
+// Put when Supertrend green OR RSI14<30 — evaluated across the WHOLE
+// universe regardless of holding (explicit user choice, not a covered-
+// call-only read). No position sizing, no capital tracking, no option
+// trade logging — the user sizes trades themselves and handles the 3x-
+// premium stoploss via their own broker GTT, entirely outside this app.
+// Reuses dh252FmtRs/dh252FmtPct/dh252FmtDate/dh252AgeDays (pure helpers,
+// nothing dh252-specific in them) rather than duplicating them.
+const DHCC_SHEET_URL_KEY = 'dhcc_sheet_url';
+const DHCC_UNIVERSE = ['CGPOWER', 'MCX', 'BSE', 'SHRIRAMFIN', 'DIXON', 'CUMMINSIND', 'HCLTECH', 'INFY', 'BANKINDIA', 'BPCL'];
+const DHCC_COMPANY_NAMES = {
+  CGPOWER: 'CG Power & Industrial Solutions', MCX: 'MCX', BSE: 'BSE',
+  SHRIRAMFIN: 'Shriram Finance', DIXON: 'Dixon Technologies', CUMMINSIND: 'Cummins',
+  HCLTECH: 'HCL Technologies', INFY: 'Infosys', BANKINDIA: 'Bank of India', BPCL: 'Bharat Petroleum',
+};
+const DHCC_ADD_FRACTION = 0.10;
+const DHCC_ADD_COOLDOWN_DAYS = 7;
+const DHCC_RSI_OVERBOUGHT = 70;
+const DHCC_RSI_OVERSOLD = 30;
+
+function dhccGetSheetUrl(){ return (localStorage.getItem(DHCC_SHEET_URL_KEY) || '').trim(); }
+function dhccSaveSheetUrl(url){ localStorage.setItem(DHCC_SHEET_URL_KEY, url.trim()); }
+
+async function dhccFetchTrades(){
+  const url = dhccGetSheetUrl();
+  if(!url) return [];
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return (data.rows || [])
+    .map(r => ({...r, Date: dh252NormalizeDate(r.Date)}))
+    .sort((a, b) => new Date(a.Date) - new Date(b.Date) || new Date(a.LoggedAt) - new Date(b.LoggedAt));
+}
+
+async function dhccPostOp(payload){
+  const url = dhccGetSheetUrl();
+  if(!url) throw new Error('No Google Sheet URL configured yet — paste it above.');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload),
+  });
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data;
+}
+async function dhccPostTrade(trade){ return dhccPostOp({op: 'append', ...trade}); }
+
+// Same replay logic as dh252BuildPositions, minus cash/capital tracking
+// (this page never simulates position sizing — "I'll give you my trade
+// details, you just give me the signals").
+function dhccBuildPositions(trades){
+  const open = {};
+  const closed = [];
+  const skipped = [];
+
+  trades.forEach(t => {
+    const sym = String(t.Symbol || '').trim().toUpperCase();
+    const action = String(t.Action || '').trim().toUpperCase();
+    const qty = Number(t.Qty), price = Number(t.Price), date = t.Date;
+    if(!sym || !qty || !price || !date){ skipped.push({...t, reason: 'missing field'}); return; }
+
+    if(action === 'BUY'){
+      if(open[sym]){ skipped.push({...t, reason: `BUY logged but ${sym} already open — treated as ignored, fix the log`}); return; }
+      open[sym] = {symbol: sym, qty, wac: price, entryDate: date, lastFillDate: date, numAdds: 0};
+    } else if(action === 'ADD'){
+      const pos = open[sym];
+      if(!pos){ skipped.push({...t, reason: `ADD logged but ${sym} has no open position`}); return; }
+      const totalCost = pos.wac * pos.qty + qty * price;
+      pos.qty += qty;
+      pos.wac = totalCost / pos.qty;
+      pos.lastFillDate = date;
+      pos.numAdds += 1;
+    } else if(action === 'SELL'){
+      const pos = open[sym];
+      if(!pos){ skipped.push({...t, reason: `SELL logged but ${sym} has no open position`}); return; }
+      const sellQty = Math.min(qty, pos.qty);
+      const plRs = (price - pos.wac) * sellQty;
+      closed.push({
+        symbol: sym, entryDate: pos.entryDate, exitDate: date,
+        qty: sellQty, wac: pos.wac, exitPrice: price,
+        plRs, plPct: (price - pos.wac) / pos.wac * 100, numAdds: pos.numAdds,
+        qtyMismatch: qty !== pos.qty ? `logged ${qty}, position had ${pos.qty}` : null,
+      });
+      delete open[sym];
+    } else {
+      skipped.push({...t, reason: `unknown action "${t.Action}"`});
+    }
+  });
+
+  return {open, closed, skipped};
+}
+
+function dhccRenderPositions(state){
+  const openList = Object.values(state.open);
+  document.getElementById('dhcc-open-count').textContent = openList.length;
+  const realized = state.closed.reduce((s, t) => s + t.plRs, 0);
+  const realizedEl = document.getElementById('dhcc-realized');
+  realizedEl.textContent = dh252FmtRs(realized);
+  realizedEl.style.color = realized >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const week52ForMtm = window._eqWeek52 || {};
+  let openMtmPriced = 0;
+  let openInvestedPriced = 0;
+  const openMtm = openList.reduce((s, p) => {
+    const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
+    if(!w) return s;
+    openMtmPriced++;
+    openInvestedPriced += p.wac * p.qty;
+    return s + (w.close - p.wac) * p.qty;
+  }, 0);
+  const notionalEl = document.getElementById('dhcc-notional');
+  const notionalPctEl = document.getElementById('dhcc-notional-pct');
+  if(!openList.length){
+    notionalEl.textContent = '—'; notionalEl.style.color = '';
+    notionalPctEl.textContent = '—'; notionalPctEl.style.color = '';
+  }else{
+    const pricedNote = openMtmPriced < openList.length ? ` (${openMtmPriced}/${openList.length} priced)` : '';
+    notionalEl.textContent = dh252FmtRs(openMtm) + pricedNote;
+    notionalEl.style.color = openMtm >= 0 ? 'var(--green)' : 'var(--red)';
+    if(openInvestedPriced > 0){
+      const notionalPct = openMtm / openInvestedPriced * 100;
+      notionalPctEl.textContent = dh252FmtPct(notionalPct) + pricedNote;
+      notionalPctEl.style.color = notionalPct >= 0 ? 'var(--green)' : 'var(--red)';
+    }else{
+      notionalPctEl.textContent = '—'; notionalPctEl.style.color = '';
+    }
+  }
+
+  document.getElementById('dhcc-closed-stat').textContent = state.closed.length;
+  const avgPlPct = state.closed.length ? state.closed.reduce((s, t) => s + t.plPct, 0) / state.closed.length : null;
+  const avgPlPctEl = document.getElementById('dhcc-avg-plpct');
+  if(avgPlPct === null){ avgPlPctEl.textContent = '—'; avgPlPctEl.style.color = ''; }
+  else { avgPlPctEl.textContent = dh252FmtPct(avgPlPct); avgPlPctEl.style.color = avgPlPct >= 0 ? 'var(--green)' : 'var(--red)'; }
+  const winRate = state.closed.length ? state.closed.filter(t => t.plPct > 0).length / state.closed.length * 100 : null;
+  const winRateEl = document.getElementById('dhcc-winrate');
+  if(winRate === null){ winRateEl.textContent = '—'; winRateEl.style.color = ''; }
+  else { winRateEl.textContent = winRate.toFixed(1) + '%'; winRateEl.style.color = winRate >= 50 ? 'var(--green)' : 'var(--amber)'; }
+
+  const stMap = window._eqSupertrend || {};
+  document.getElementById('dhcc-pos-count').textContent = openList.length;
+  document.getElementById('dhcc-pos-tbody').innerHTML = openList.length ? openList.map(p => {
+    const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
+    const cmp = w ? w.close : null;
+    const notionalPl = cmp !== null ? (cmp - p.wac) * p.qty : null;
+    const notionalPlPct = cmp !== null ? (cmp - p.wac) / p.wac * 100 : null;
+    const ageDays = dh252AgeDays(p.entryDate);
+    const st = stMap[p.symbol] || stMap[p.symbol + '.NS'];
+    const stColor = st && st.color ? st.color : null;
+    return `<tr>
+      <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
+      <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
+      <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
+      <td>${p.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="10" class="loading">No open positions yet — log your first BUY above.</td></tr>';
+
+  document.getElementById('dhcc-closed-count').textContent = state.closed.length;
+  document.getElementById('dhcc-closed-tbody').innerHTML = state.closed.length ? state.closed.slice().reverse().map(t => `<tr>
+    <td>${t.symbol}</td><td>${t.entryDate}</td><td>${t.exitDate}</td><td>${t.qty}</td><td>${dh252FmtRs(t.wac)}</td><td>${dh252FmtRs(t.exitPrice)}</td>
+    <td style="color:${t.plRs >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtRs(t.plRs)}</td>
+    <td style="color:${t.plRs >= 0 ? 'var(--green)' : 'var(--red)'}">${dh252FmtPct(t.plPct)}</td><td>${t.numAdds}</td>
+  </tr>`).join('') : '<tr><td colspan="9" class="loading">No closed trades yet.</td></tr>';
+}
+
+function dhccRenderDataAsOf(){
+  const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
+  const fmt = dh252FmtDataAsOf(iso);
+  const el = document.getElementById('dhcc-data-asof');
+  if(el){
+    if(!fmt){
+      el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
+      el.style.color = 'var(--amber)';
+    }else{
+      el.textContent = `📊 CMP / Supertrend / RSI14 data as of: ${fmt.text}`;
+      el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+    }
+  }
+  const entryEl = document.getElementById('dhcc-entry-asof');
+  if(entryEl){
+    entryEl.textContent = fmt ? `Data as of ${fmt.text}.` : '';
+    entryEl.style.color = fmt && fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+  }
+}
+
+function dhccRenderSignals(open){
+  const heldSymbols = new Set(Object.keys(open));
+  const week52 = window._eqWeek52 || {};
+  const stMap = window._eqSupertrend || {};
+  const rsiMap = window._eqRsiMap || {};
+
+  // Equity Entry — fixed universe, Supertrend green, not already held.
+  const entries = DHCC_UNIVERSE.filter(sym => {
+    const st = stMap[sym] || stMap[sym + '.NS'];
+    return st && st.color === 'green' && !heldSymbols.has(sym);
+  });
+  document.getElementById('dhcc-entry-count').textContent = entries.length;
+  document.getElementById('dhcc-entry-tbody').innerHTML = entries.length ? entries.map(sym => {
+    const w = week52[sym] || week52[sym + '.NS'];
+    const rsi = rsiMap[sym];
+    return `<tr><td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
+      <td style="color:var(--green);font-weight:700">GREEN</td><td>${rsi != null ? rsi.toFixed(1) : '—'}</td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="loading">No Supertrend-green entries right now.</td></tr>';
+
+  // Equity Exit / Add-on — evaluated against open positions only.
+  const addRows = [], exitRows = [];
+  Object.values(open).forEach(pos => {
+    const w = week52[pos.symbol] || week52[pos.symbol + '.NS'];
+    const st = stMap[pos.symbol] || stMap[pos.symbol + '.NS'];
+    if(!w || !st || !st.color) return; // no price/Supertrend data today — can't signal
+    const cmp = w.close;
+    const plPct = (cmp - pos.wac) / pos.wac * 100;
+    if(st.color === 'red' && plPct > 0){
+      exitRows.push({pos, cmp, plPct});
+      return; // exit takes priority over an add signal the same day
+    }
+    const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
+    if(st.color === 'green' && plPct < 0 && daysSinceFill >= DHCC_ADD_COOLDOWN_DAYS){
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DHCC_ADD_FRACTION)), daysSinceFill});
+    }
+    // st.color === 'red' && plPct <= 0 (red while still in loss), or
+    // st.color === 'green' && plPct >= 0 (green while in profit): neither
+    // rule covers this — intentionally no signal, just hold.
+  });
+
+  document.getElementById('dhcc-add-count').textContent = addRows.length;
+  document.getElementById('dhcc-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
+    <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
+    <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
+  </tr>`).join('') : '<tr><td colspan="7" class="loading">No add-on signals right now.</td></tr>';
+
+  document.getElementById('dhcc-exit-count').textContent = exitRows.length;
+  document.getElementById('dhcc-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
+    const notionalPl = (r.cmp - r.pos.wac) * r.pos.qty;
+    const ageDays = dh252AgeDays(r.pos.entryDate);
+    return `<tr>
+      <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
+      <td>${dh252FmtRs(r.cmp)}</td><td style="color:var(--red);font-weight:700">RED</td>
+      <td style="color:var(--green);font-weight:700">${dh252FmtRs(notionalPl)}</td>
+      <td style="color:var(--green);font-weight:700">${dh252FmtPct(r.plPct)}</td>
+      <td>${r.pos.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="10" class="loading">No exit signals right now.</td></tr>';
+
+  // Options Signal — whole universe, regardless of holding.
+  document.getElementById('dhcc-opt-count').textContent = DHCC_UNIVERSE.length;
+  document.getElementById('dhcc-opt-tbody').innerHTML = DHCC_UNIVERSE.map(sym => {
+    const w = week52[sym] || week52[sym + '.NS'];
+    const st = stMap[sym] || stMap[sym + '.NS'];
+    const rsi = rsiMap[sym];
+    const stColor = st && st.color ? st.color : null;
+    const sellCall = stColor === 'red' || (rsi != null && rsi > DHCC_RSI_OVERBOUGHT);
+    const sellPut = stColor === 'green' || (rsi != null && rsi < DHCC_RSI_OVERSOLD);
+    return `<tr>
+      <td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
+      <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function dhccRefresh(){
+  const url = dhccGetSheetUrl();
+  if(!url){
+    document.getElementById('dhcc-cap-meta').textContent = 'Paste your Apps Script URL above first.';
+    return;
+  }
+  document.getElementById('dhcc-cap-meta').innerHTML = '<span class="eq-spinner"></span> Loading…';
+  try{
+    const [trades, stMap, week52, sectors] = await Promise.all([
+      dhccFetchTrades(),
+      eqFetchSupertrend(),
+      eqFetchWeek52(),
+      eqFetchSectors(),
+    ]);
+    window._dhccTrades = trades;
+    window._eqSupertrend = stMap || {};
+    window._eqWeek52 = week52 || {};
+    window._eqSectors = sectors || {};
+    dhccRenderDataAsOf();
+    const state = dhccBuildPositions(trades);
+    dhccRenderPositions(state);
+    dhccRenderSignals(state.open);
+    dhccRenderTradeLog();
+    document.getElementById('dhcc-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
+      (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
+    if(state.skipped.length) console.warn('Dhan Covered Call journal: skipped rows', state.skipped);
+  }catch(err){
+    document.getElementById('dhcc-cap-meta').textContent = 'Could not load: ' + err.message;
+    console.error(err);
+  }
+}
+
+async function dhccLogTrade(){
+  const symbol = document.getElementById('dhcc-f-symbol').value;
+  const action = document.getElementById('dhcc-f-action').value;
+  const date = document.getElementById('dhcc-f-date').value;
+  const qty = document.getElementById('dhcc-f-qty').value;
+  const price = document.getElementById('dhcc-f-price').value;
+  const statusEl = document.getElementById('dhcc-log-status');
+  const show = (msg, isError) => {
+    statusEl.style.display = 'block';
+    statusEl.textContent = msg;
+    statusEl.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim, rgba(0,210,106,0.12))';
+    statusEl.style.color = isError ? 'var(--red)' : 'var(--green)';
+  };
+  if(!symbol || !date || !qty || !price){ show('Fill in symbol, date, qty and price.', true); return; }
+  if(!dhccGetSheetUrl()){ show('Paste your Google Sheet URL above first.', true); return; }
+
+  const btn = document.getElementById('dhcc-log-btn');
+  btn.disabled = true; btn.textContent = 'LOGGING...';
+  try{
+    await dhccPostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}`, false);
+    document.getElementById('dhcc-f-qty').value = '';
+    document.getElementById('dhcc-f-price').value = '';
+    await dhccRefresh();
+  }catch(err){
+    show('Failed to log: ' + err.message, true);
+  }finally{
+    btn.disabled = false; btn.textContent = 'LOG TRADE';
+  }
+}
+
+// --- Bulk Entry (15-row grid) ----------------------------------------------
+let dhccBulkRowSeq = 0;
+function dhccSymbolOptionsHtml(){
+  return DHCC_UNIVERSE.map(sym => `<option value="${sym}">${sym} — ${DHCC_COMPANY_NAMES[sym]}</option>`).join('');
+}
+function dhccBulkRowHtml(){
+  dhccBulkRowSeq++;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  return `<tr>
+    <td style="color:var(--muted);">${dhccBulkRowSeq}</td>
+    <td><select class="dhcc-bulk-symbol" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"><option value="">—</option>${dhccSymbolOptionsHtml()}</select></td>
+    <td><select class="dhcc-bulk-action" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
+      <option value="BUY">BUY</option><option value="ADD">ADD</option><option value="SELL">SELL</option>
+    </select></td>
+    <td><input type="date" class="dhcc-bulk-date" value="${todayIso}" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td><input type="number" class="dhcc-bulk-qty" style="width:70px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td><input type="number" step="0.01" class="dhcc-bulk-price" style="width:95px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+    <td class="dhcc-bulk-rowstatus" style="font-size:11px;color:var(--muted);">—</td>
+  </tr>`;
+}
+function dhccBulkAddRows(count){
+  const tbody = document.getElementById('dhcc-bulk-tbody');
+  let html = '';
+  for(let i = 0; i < count; i++) html += dhccBulkRowHtml();
+  tbody.insertAdjacentHTML('beforeend', html);
+}
+function dhccBulkClear(){
+  dhccBulkRowSeq = 0;
+  document.getElementById('dhcc-bulk-tbody').innerHTML = '';
+  dhccBulkAddRows(15);
+}
+
+async function dhccLogBulk(){
+  const statusEl = document.getElementById('dhcc-bulk-status');
+  const show = (msg, isError) => {
+    statusEl.style.display = 'block';
+    statusEl.textContent = msg;
+    statusEl.style.background = isError ? 'var(--red-dim)' : 'var(--green-dim, rgba(0,210,106,0.12))';
+    statusEl.style.color = isError ? 'var(--red)' : 'var(--green)';
+  };
+  if(!dhccGetSheetUrl()){ show('Paste your Google Sheet URL above first.', true); return; }
+
+  const btn = document.getElementById('dhcc-bulk-log-btn');
+  btn.disabled = true; btn.textContent = 'LOGGING...';
+  let ok = 0, fail = 0, attempted = 0;
+  const rows = Array.from(document.querySelectorAll('#dhcc-bulk-tbody tr'));
+  for(const row of rows){
+    const symbolEl = row.querySelector('.dhcc-bulk-symbol');
+    const actionEl = row.querySelector('.dhcc-bulk-action');
+    const dateEl = row.querySelector('.dhcc-bulk-date');
+    const qtyEl = row.querySelector('.dhcc-bulk-qty');
+    const priceEl = row.querySelector('.dhcc-bulk-price');
+    const statusCell = row.querySelector('.dhcc-bulk-rowstatus');
+    const symbol = symbolEl.value;
+    const qty = qtyEl.value, price = priceEl.value, date = dateEl.value;
+    if(!symbol && !qty && !price) continue;
+    attempted++;
+    if(!symbol || !qty || !price || !date){
+      statusCell.textContent = '✗ incomplete row'; statusCell.style.color = 'var(--red)';
+      fail++; continue;
+    }
+    try{
+      await dhccPostTrade({Symbol: symbol, Action: actionEl.value, Date: date, Qty: Number(qty), Price: Number(price)});
+      statusCell.textContent = '✓ logged'; statusCell.style.color = 'var(--green)';
+      ok++;
+      symbolEl.value = ''; qtyEl.value = ''; priceEl.value = '';
+    }catch(err){
+      statusCell.textContent = '✗ ' + err.message; statusCell.style.color = 'var(--red)';
+      fail++;
+    }
+  }
+  if(attempted === 0){ show('No rows filled in — nothing to log.', true); }
+  else{ show(`Logged ${ok} of ${attempted} row${attempted === 1 ? '' : 's'}${fail ? `, ${fail} failed — see STATUS column` : ''}.`, fail > 0 && ok === 0); }
+  btn.disabled = false; btn.textContent = 'LOG ALL FILLED ROWS';
+  if(ok > 0) await dhccRefresh();
+}
+
+function dhccSwitchLogTab(tab){
+  document.getElementById('dhcc-log-tab-quick').style.display = tab === 'quick' ? '' : 'none';
+  document.getElementById('dhcc-log-tab-bulk').style.display = tab === 'bulk' ? '' : 'none';
+  const quickBtn = document.getElementById('dhcc-tab-quick-btn');
+  const bulkBtn = document.getElementById('dhcc-tab-bulk-btn');
+  quickBtn.style.background = tab === 'quick' ? 'var(--amber)' : '';
+  quickBtn.style.color = tab === 'quick' ? '#000' : '';
+  bulkBtn.style.background = tab === 'bulk' ? 'var(--amber)' : '';
+  bulkBtn.style.color = tab === 'bulk' ? '#000' : '';
+}
+
+// --- Weekly Reconciliation --------------------------------------------------
+async function dhccReconCheck(){
+  const fromEl = document.getElementById('dhcc-recon-from');
+  const toEl = document.getElementById('dhcc-recon-to');
+  if(!fromEl.value || !toEl.value){
+    const d = dh252DefaultReconRange();
+    fromEl.value = d.from; toEl.value = d.to;
+  }
+  let trades = window._dhccTrades;
+  if(!trades){
+    try{ trades = await dhccFetchTrades(); window._dhccTrades = trades; }
+    catch(err){ trades = []; }
+  }
+  const byDate = {};
+  trades.forEach(t => { (byDate[t.Date] = byDate[t.Date] || []).push(t); });
+
+  const from = fromEl.value, to = toEl.value;
+  const days = [];
+  const cur = new Date(from + 'T00:00:00');
+  const end = new Date(to + 'T00:00:00');
+  while(cur <= end){
+    const dow = cur.getDay();
+    if(dow !== 0 && dow !== 6) days.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  const tbody = document.getElementById('dhcc-recon-tbody');
+  tbody.innerHTML = days.length ? days.map(d => {
+    const rows = byDate[d] || [];
+    const dayName = new Date(d + 'T00:00:00').toLocaleDateString('en-IN', {weekday: 'short'});
+    const list = rows.length
+      ? rows.map(r => `${r.Action} ${r.Qty} ${r.Symbol} @ ₹${r.Price}`).join('<br>')
+      : '<span style="color:var(--amber);">⚠ No trades logged</span>';
+    const btn = rows.length ? '' : `<button class="refresh-btn dhcc-recon-backfill-btn" data-date="${d}">BACKFILL →</button>`;
+    return `<tr><td>${d}</td><td>${dayName}</td><td>${list}</td><td>${btn}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="loading">No weekdays in that range.</td></tr>';
+
+  tbody.querySelectorAll('.dhcc-recon-backfill-btn').forEach(btn => {
+    btn.onclick = () => dhccBackfillDate(btn.dataset.date);
+  });
+}
+function dhccBackfillDate(date){
+  dhccSwitchLogTab('bulk');
+  document.querySelectorAll('#dhcc-bulk-tbody .dhcc-bulk-date').forEach(inp => { inp.value = date; });
+}
+
+// --- Full Trade Log: edit/delete any logged row, any date ------------------
+let dhccLogEditRow = null;
+let dhccLogFilter = '';
+
+function dhccRenderTradeLog(){
+  const trades = (window._dhccTrades || []).slice()
+    .sort((a, b) => new Date(b.Date) - new Date(a.Date) || new Date(b.LoggedAt) - new Date(a.LoggedAt));
+  const filtered = dhccLogFilter ? trades.filter(t => String(t.Symbol || '').toUpperCase().includes(dhccLogFilter)) : trades;
+  document.getElementById('dhcc-log-table-meta').textContent = `${filtered.length} of ${trades.length} row${trades.length === 1 ? '' : 's'}`;
+  const tbody = document.getElementById('dhcc-log-table-tbody');
+  const footnote = document.getElementById('dhcc-log-table-footnote');
+
+  if(trades.length && trades[0]._row == null){
+    footnote.innerHTML = '⚠ Your Apps Script deployment doesn\'t return a row number yet, so Edit/Delete can\'t target a specific row. Use the v3 doGet/doPost script (same one built for the 52-Week Journal) — Deploy → Manage deployments → <b>New version</b>, not just Save.';
+    footnote.style.color = 'var(--amber)';
+  } else {
+    footnote.textContent = 'Every row ever logged, any date. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (confirms first).';
+    footnote.style.color = '';
+  }
+
+  if(!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">No logged trades yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(t => {
+    const row = t._row;
+    if(dhccLogEditRow != null && row === dhccLogEditRow){
+      return `<tr data-row="${row}">
+        <td><select class="dhcc-edit-symbol" style="padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">${DHCC_UNIVERSE.map(s => `<option value="${s}" ${s === t.Symbol ? 'selected' : ''}>${s}</option>`).join('')}</select></td>
+        <td><select class="dhcc-edit-action" style="padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
+          ${['BUY', 'ADD', 'SELL'].map(a => `<option value="${a}" ${a === t.Action ? 'selected' : ''}>${a}</option>`).join('')}
+        </select></td>
+        <td><input type="date" class="dhcc-edit-date" value="${t.Date}" style="padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td><input type="number" class="dhcc-edit-qty" value="${t.Qty}" style="width:70px;padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td><input type="number" step="0.01" class="dhcc-edit-price" value="${t.Price}" style="width:90px;padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
+        <td style="font-size:11px;color:var(--muted);">${t.LoggedAt ? new Date(t.LoggedAt).toLocaleString('en-IN') : '—'}</td>
+        <td style="white-space:nowrap;">
+          <button class="refresh-btn dhcc-log-save-btn" data-row="${row}" style="background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">SAVE</button>
+          <button class="refresh-btn dhcc-log-cancel-btn">CANCEL</button>
+        </td>
+      </tr>`;
+    }
+    return `<tr data-row="${row}">
+      <td>${t.Symbol}</td><td>${t.Action}</td><td>${t.Date}</td><td>${t.Qty}</td><td>${dh252FmtRs(Number(t.Price))}</td>
+      <td style="font-size:11px;color:var(--muted);">${t.LoggedAt ? new Date(t.LoggedAt).toLocaleString('en-IN') : '—'}</td>
+      <td style="white-space:nowrap;">
+        <button class="refresh-btn dhcc-log-edit-btn" data-row="${row}">✎ EDIT</button>
+        <button class="refresh-btn dhcc-log-delete-btn" data-row="${row}" style="border-color:var(--red);color:var(--red);">🗑 DELETE</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.dhcc-log-edit-btn').forEach(btn => {
+    btn.onclick = () => { dhccLogEditRow = Number(btn.dataset.row); dhccRenderTradeLog(); };
+  });
+  tbody.querySelectorAll('.dhcc-log-cancel-btn').forEach(btn => {
+    btn.onclick = () => { dhccLogEditRow = null; dhccRenderTradeLog(); };
+  });
+  tbody.querySelectorAll('.dhcc-log-save-btn').forEach(btn => {
+    btn.onclick = () => dhccLogSaveEdit(Number(btn.dataset.row));
+  });
+  tbody.querySelectorAll('.dhcc-log-delete-btn').forEach(btn => {
+    btn.onclick = () => dhccLogDeleteRow(Number(btn.dataset.row));
+  });
+}
+
+async function dhccLogSaveEdit(row){
+  const tr = document.querySelector(`#dhcc-log-table-tbody tr[data-row="${row}"]`);
+  const symbol = tr.querySelector('.dhcc-edit-symbol').value;
+  const action = tr.querySelector('.dhcc-edit-action').value;
+  const date = tr.querySelector('.dhcc-edit-date').value;
+  const qty = tr.querySelector('.dhcc-edit-qty').value;
+  const price = tr.querySelector('.dhcc-edit-price').value;
+  if(!symbol || !date || !qty || !price){ alert('Fill in symbol, date, qty and price.'); return; }
+  const btn = tr.querySelector('.dhcc-log-save-btn');
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  try{
+    await dhccPostOp({op: 'update', rowIndex: row, Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+    dhccLogEditRow = null;
+    await dhccRefresh();
+  }catch(err){
+    alert('Failed to save: ' + err.message);
+    btn.disabled = false; btn.textContent = 'SAVE';
+  }
+}
+
+async function dhccLogDeleteRow(row){
+  const t = (window._dhccTrades || []).find(x => x._row === row);
+  const label = t ? `${t.Action} ${t.Qty} ${t.Symbol} @ ₹${t.Price} on ${t.Date}` : `row ${row}`;
+  if(!confirm(`Delete this logged trade?\n\n${label}\n\nThis can't be undone.`)) return;
+  try{
+    await dhccPostOp({op: 'delete', rowIndex: row});
+    await dhccRefresh();
+  }catch(err){
+    alert('Failed to delete: ' + err.message);
+  }
+}
+
+let dhccInitialized = false;
+function dhccInit(){
+  dhccInitialized = true;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  document.getElementById('dhcc-f-date').value = todayIso;
+  document.getElementById('dhcc-f-symbol').innerHTML = dhccSymbolOptionsHtml();
+  document.getElementById('dhcc-sheet-url').value = dhccGetSheetUrl();
+  document.getElementById('dhcc-sheet-url').addEventListener('change', async (e) => {
+    dhccSaveSheetUrl(e.target.value);
+    window._dhccTrades = null;
+    await dhccRefresh();
+  });
+  document.getElementById('dhcc-log-btn').onclick = dhccLogTrade;
+  document.getElementById('dhcc-refresh-btn').onclick = dhccRefresh;
+
+  dhccBulkAddRows(15);
+  document.getElementById('dhcc-tab-quick-btn').onclick = () => dhccSwitchLogTab('quick');
+  document.getElementById('dhcc-tab-bulk-btn').onclick = () => dhccSwitchLogTab('bulk');
+  dhccSwitchLogTab('quick');
+  document.getElementById('dhcc-bulk-addrows-btn').onclick = () => dhccBulkAddRows(15);
+  document.getElementById('dhcc-bulk-clear-btn').onclick = dhccBulkClear;
+  document.getElementById('dhcc-bulk-log-btn').onclick = dhccLogBulk;
+
+  const reconDefault = dh252DefaultReconRange();
+  document.getElementById('dhcc-recon-from').value = reconDefault.from;
+  document.getElementById('dhcc-recon-to').value = reconDefault.to;
+  document.getElementById('dhcc-recon-check-btn').onclick = dhccReconCheck;
+
+  document.getElementById('dhcc-log-filter').addEventListener('input', (e) => {
+    dhccLogFilter = e.target.value.trim().toUpperCase();
+    dhccRenderTradeLog();
+  });
+  document.getElementById('dhcc-log-table-header').onclick = () => {
+    const body = document.getElementById('dhcc-log-table-body');
+    const chevron = document.getElementById('dhcc-log-table-chevron');
+    const collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? '' : 'none';
+    chevron.textContent = collapsed ? '▾' : '▸';
+  };
+
+  dhccRefresh();
 }
 </script>
 </body>
