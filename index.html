@@ -247,6 +247,7 @@
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
     <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>52 Week High Forward Journal</button>
     <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
+    <button data-page="dividend" id="nav-dividend"><span class="nav-icon">◉</span>ICICI Dividend Longterm</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1801,6 +1802,42 @@
 
 </div>
 
+<div class="page" id="page-dividend">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">ICICI DIVIDEND LONGTERM</div>
+      <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 30, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
+    </div>
+    <div id="div-data-asof" style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);">—</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — RSI14 &lt; 30 <span class="panel-meta" id="div-entry-count">—</span></div>
+      <button class="refresh-btn" id="div-refresh-btn" title="Refresh">↻</button>
+    </div>
+    <div class="table-scroll">
+      <table class="list-table" id="div-entry-table">
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th></tr></thead>
+        <tbody id="div-entry-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">RSI14 below 30. ₹20,000 suggested add, max once per week per stock — this page doesn't log trades, so tracking that cadence is on you. Supertrend shown for context only, it doesn't gate this signal.</div>
+  </div>
+
+  <div class="panel" style="border-color:var(--amber);">
+    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="div-opt-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="div-opt-table">
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <tbody id="div-opt-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Whole universe, regardless of holding. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+  </div>
+
+</div>
+
 </div><!-- /.main -->
 
 <script>
@@ -1828,6 +1865,7 @@ function switchPage(page){
   if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
   if(page === 'dh252' && !dh252Initialized) dh252Init();
   if(page === 'dhcc' && !dhccInitialized) dhccInit();
+  if(page === 'dividend' && !divInitialized) divInit();
 }
 
 function toggleEqUploadBox(){
@@ -1863,6 +1901,7 @@ document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
 document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
 document.getElementById('nav-dh252').onclick = () => switchPage('dh252');
 document.getElementById('nav-dhcc').onclick = () => switchPage('dhcc');
+document.getElementById('nav-dividend').onclick = () => switchPage('dividend');
 
 // ============================================================
 // DASHBOARD PAGE
@@ -8178,6 +8217,97 @@ function dhccInit(){
   };
 
   dhccRefresh();
+}
+
+// ============================================================
+// ICICI DIVIDEND LONGTERM — fixed 29-stock universe. Entry signal only
+// (RSI14 < 30, suggested add ₹20,000, max once/week — tracked by the
+// user, not this page), no trade logging, no position tracking, no
+// Google Sheet at all. Options leg identical to the Dhan Covered Call
+// page's: sell Call when Supertrend red OR RSI14>70, sell Put when
+// Supertrend green OR RSI14<30, whole universe regardless of holding.
+// Reuses eqFetchSupertrend/eqFetchWeek52 (which also populates
+// window._eqRsiMap) and dh252FmtRs/FmtPct/FmtDataAsOf — nothing new to
+// fetch or duplicate.
+const DIV_UNIVERSE = [
+  'BANKBARODA', 'BPCL', 'CDSL', 'COALINDIA', 'CAMS', 'GAIL', 'GOLDBEES', 'HDFCAMC', 'HAL',
+  'HINDZINC', 'ICICIBANK', 'NIFTYIETF', 'INDHOTEL', 'IOC', 'IRCON', 'ITC', 'LICI', 'MCX',
+  'NATIONALUM', 'NMDC', 'NSDL', 'ONGC', 'PETRONET', 'PFC', 'PTC', 'RECLTD', 'SBIN', 'TATAINVEST', 'TCS',
+];
+const DIV_RSI_OVERSOLD = 30;
+const DIV_RSI_OVERBOUGHT = 70;
+const DIV_ADD_AMOUNT_RS = 20000;
+
+function divRenderDataAsOf(){
+  const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
+  const fmt = dh252FmtDataAsOf(iso);
+  const el = document.getElementById('div-data-asof');
+  if(!fmt){
+    el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
+    el.style.color = 'var(--amber)';
+  }else{
+    el.textContent = `📊 CMP / Supertrend / RSI14 data as of: ${fmt.text}`;
+    el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
+  }
+}
+
+function divRenderSignals(){
+  const week52 = window._eqWeek52 || {};
+  const stMap = window._eqSupertrend || {};
+  const rsiMap = window._eqRsiMap || {};
+
+  const entries = DIV_UNIVERSE.filter(sym => {
+    const rsi = rsiMap[sym];
+    return rsi != null && rsi < DIV_RSI_OVERSOLD;
+  });
+  document.getElementById('div-entry-count').textContent = entries.length;
+  document.getElementById('div-entry-tbody').innerHTML = entries.length ? entries.map(sym => {
+    const w = week52[sym];
+    const st = stMap[sym];
+    const stColor = st && st.color ? st.color : null;
+    const rsi = rsiMap[sym];
+    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td>${rsi.toFixed(1)}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
+
+  document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
+  document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
+    const w = week52[sym];
+    const st = stMap[sym];
+    const stColor = st && st.color ? st.color : null;
+    const rsi = rsiMap[sym];
+    const sellCall = stColor === 'red' || (rsi != null && rsi > DIV_RSI_OVERBOUGHT);
+    const sellPut = stColor === 'green' || (rsi != null && rsi < DIV_RSI_OVERSOLD);
+    return `<tr>
+      <td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
+      <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function divRefresh(){
+  try{
+    const [stMap, week52] = await Promise.all([eqFetchSupertrend(), eqFetchWeek52()]);
+    window._eqSupertrend = stMap || {};
+    window._eqWeek52 = week52 || {};
+    divRenderDataAsOf();
+    divRenderSignals();
+  }catch(err){
+    document.getElementById('div-data-asof').textContent = 'Could not load: ' + err.message;
+    document.getElementById('div-data-asof').style.color = 'var(--amber)';
+    console.error(err);
+  }
+}
+
+let divInitialized = false;
+function divInit(){
+  divInitialized = true;
+  document.getElementById('div-refresh-btn').onclick = divRefresh;
+  divRefresh();
 }
 </script>
 </body>
