@@ -5140,10 +5140,15 @@ async function eqFetchSupertrend(){
     const data = await res.json();
     window._eqSupertrendGeneratedAt = data.generated_at || null;
     const bySymbol = {};
-    // This feed is Yahoo Finance tickers ("THYROCARE.NS"); Zerodha
-    // Tradebook fills are plain NSE symbols ("THYROCARE") — strip the
-    // suffix so the two line up.
-    (data.entries || []).forEach(e => { bySymbol[e.symbol.replace(/\.NS$/, '')] = e; });
+    // This feed is Yahoo Finance tickers ("THYROCARE.NS", or ".BO" for a
+    // handful of BSE-only listings like NSDL); Zerodha Tradebook fills
+    // and this app's own stock lists use plain NSE symbols ("THYROCARE",
+    // "NSDL") — strip whichever suffix is present so they line up. Was
+    // .NS-only, which silently orphaned every .BO entry under a key
+    // nothing ever looked up (e.g. stMap['NSDL'] missed stMap['NSDL.BO']
+    // entirely) — matches eqFetchWeek52's stripping, which already
+    // handled both.
+    (data.entries || []).forEach(e => { bySymbol[e.symbol.replace(/\.(NS|BO)$/, '')] = e; });
     return bySymbol;
   } catch(e){
     return null; // signals degrade to "—" rather than block the page
