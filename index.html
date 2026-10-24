@@ -1385,7 +1385,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-addon-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
         <tbody id="eqa-addon-tbody"></tbody>
       </table>
     </div>
@@ -1532,7 +1532,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-add-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
         <tbody id="dh252-add-tbody"></tbody>
       </table>
     </div>
@@ -1684,7 +1684,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-add-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
         <tbody id="dhcc-add-tbody"></tbody>
       </table>
     </div>
@@ -6621,9 +6621,14 @@ function eqAlertsRender(){
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
     ${plCell(p)}<td>${stLabel(p.st)}</td></tr>`);
 
+  const rsiMapForAlerts = window._eqRsiMap || {};
+  const rsiCell = p => {
+    const rsi = rsiMapForAlerts[p.symbol];
+    return `<td>${rsi != null ? rsi.toFixed(1) : '—'}</td>`;
+  };
   eqAlertsRenderTable('eqa-addon-tbody', 'eqa-addon-count', addOnEligible, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td></tr>`);
+    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td><td>${stLabel(p.st)}</td>${rsiCell(p)}</tr>`);
 
   eqAlertsRenderTable('eqa-cooldown-tbody', 'eqa-cooldown-count', addOnCooldown, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
@@ -7206,7 +7211,7 @@ function dh252RenderSignals(open, closedCount){
     }
     const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
     if(plPct <= DH252_ADD_TRIGGER_PCT && st.color === 'green' && daysSinceFill >= DH252_ADD_COOLDOWN_DAYS){
-      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DH252_ADD_FRACTION)), daysSinceFill});
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DH252_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: (window._eqRsiMap || {})[pos.symbol]});
     }
   });
 
@@ -7214,7 +7219,8 @@ function dh252RenderSignals(open, closedCount){
   document.getElementById('dh252-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-  </tr>`).join('') : '<tr><td colspan="7" class="loading">No add-on signals right now.</td></tr>';
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="9" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dh252-exit-count').textContent = exitRows.length;
   document.getElementById('dh252-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
@@ -7836,7 +7842,7 @@ function dhccRenderSignals(open){
     }
     const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
     if(st.color === 'green' && plPct < 0 && daysSinceFill >= DHCC_ADD_COOLDOWN_DAYS){
-      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DHCC_ADD_FRACTION)), daysSinceFill});
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DHCC_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: rsiMap[pos.symbol]});
     }
     // st.color === 'red' && plPct <= 0 (red while still in loss), or
     // st.color === 'green' && plPct >= 0 (green while in profit): neither
@@ -7847,7 +7853,8 @@ function dhccRenderSignals(open){
   document.getElementById('dhcc-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-  </tr>`).join('') : '<tr><td colspan="7" class="loading">No add-on signals right now.</td></tr>';
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="9" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dhcc-exit-count').textContent = exitRows.length;
   document.getElementById('dhcc-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
