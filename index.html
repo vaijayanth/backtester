@@ -2083,17 +2083,46 @@ async function checkPipelineRunStatus(){
   }
 }
 
+// Same two-path pattern as the IVP Screener (initIvpScreener): try the
+// Google Sheet an upload from the IVP Screener's "Upload Sensibull Data"
+// button writes to first (IVP_SHEET_URL, defined earlier in the IVP
+// section — safe to reference here since this only runs on user
+// navigation to the Dashboard, well after that const has executed), fall
+// back to the site's own committed weekly snapshot (earnings_calendar.
+// json) if the Sheet has no rows yet or is unreachable. Previously this
+// only ever read the static file, so an IVP Screener upload silently
+// never reached this panel - confirmed via git history (sensibull_latest.
+// tsv / earnings_calendar.json both last committed days before a real
+// upload via the Sheet path).
 async function loadEarningsCalendar(){
   const body = document.getElementById('dash-results-body');
   const empty = document.getElementById('dash-results-empty');
   let cal;
   try{
-    const resp = await fetch('earnings_calendar.json?t=' + Date.now());
-    if(!resp.ok) throw new Error('earnings_calendar.json not found');
-    cal = await resp.json();
-  }catch(err){
-    body.innerHTML = `<tr><td colspan="3" class="loading">${err.message}</td></tr>`;
-    return;
+    const sheetResp = await fetch(IVP_SHEET_URL + '?type=ivp&t=' + Date.now());
+    if(sheetResp.ok){
+      const sheet = await sheetResp.json();
+      if(sheet.success && Array.isArray(sheet.rows) && sheet.rows.length){
+        const entries = sheet.rows
+          .map(ivpSheetRowToEntry)
+          .filter(e => e.event_date)
+          .map(e => ({symbol: e.symbol, date: e.event_date}));
+        if(entries.length){
+          cal = {entries, generated_at: sheet.generatedAt || new Date().toISOString(), source: 'google_sheet'};
+        }
+      }
+    }
+  }catch(e){ console.error('Dashboard earnings calendar: Sheet fetch failed, falling back to site snapshot', e); }
+
+  if(!cal){
+    try{
+      const resp = await fetch('earnings_calendar.json?t=' + Date.now());
+      if(!resp.ok) throw new Error('earnings_calendar.json not found');
+      cal = await resp.json();
+    }catch(err){
+      body.innerHTML = `<tr><td colspan="3" class="loading">${err.message}</td></tr>`;
+      return;
+    }
   }
 
   const today = new Date(); today.setHours(0,0,0,0);
@@ -2102,8 +2131,9 @@ async function loadEarningsCalendar(){
     .filter(e => e.days >= 0)
     .sort((a,b) => a.days - b.days);
 
-  document.getElementById('dash-results-meta').textContent =
-    `F&O universe · snapshot ${new Date(cal.generated_at).toLocaleDateString('en-IN')}`;
+  document.getElementById('dash-results-meta').innerHTML =
+    `F&amp;O universe · snapshot ${new Date(cal.generated_at).toLocaleDateString('en-IN')}` +
+    (cal.source === 'google_sheet' ? ' <span style="color:var(--amber);">(from your latest IVP Screener upload)</span>' : '');
 
   if(!upcoming.length){
     body.innerHTML = '';
