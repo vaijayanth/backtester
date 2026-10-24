@@ -178,6 +178,10 @@
   .op-pnl-pos{color:var(--green);}
   .op-pnl-neg{color:var(--red);}
   .op-group-pnl-cell{text-align:right;}
+  .op-broker-tag-border{border-left:3px solid var(--border);}
+  .op-broker-tag-border.zerodha{border-left-color:#4a8df6;}
+  .op-broker-tag-border.dhan{border-left-color:var(--amber);}
+  .op-broker-tag-border.icici{border-left-color:#e06a4a;}
 
   .footer-note{padding:12px 18px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);}
   .row-count{padding:8px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);}
@@ -1165,32 +1169,11 @@
       <div class="stat-row" id="op-summary-row"></div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta">grouped by stock &amp; expiry — click a row to expand</span></div></div>
-      <div class="controls">
-        <input type="text" class="search-box" id="op-search" placeholder="filter by stock..." oninput="opRenderTable()">
-        <select class="search-box" id="op-broker-filter" style="max-width:160px;" onchange="opRenderTable()">
-          <option value="">All brokers</option>
-          <option value="zerodha">Zerodha</option>
-          <option value="dhan">Dhan</option>
-          <option value="icici">Icici</option>
-        </select>
-      </div>
-      <div class="table-scroll" style="max-height:720px;">
-        <table class="op-table">
-          <thead><tr>
-            <th style="text-align:left;padding:10px 14px;">Instrument</th>
-            <th style="text-align:right;padding:10px 14px;">Qty</th>
-            <th style="text-align:right;padding:10px 14px;">Avg</th>
-            <th style="text-align:right;padding:10px 14px;">LTP</th>
-            <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
-            <th style="text-align:right;padding:10px 14px;">Chg%</th>
-          </tr></thead>
-          <tbody id="op-table-body"></tbody>
-        </table>
-      </div>
-      <div class="row-count" id="op-row-count"></div>
+    <div class="controls" style="padding:14px 18px 0;">
+      <input type="text" class="search-box" id="op-search" placeholder="filter by stock..." oninput="opRenderTable()">
     </div>
+
+    <div id="op-broker-boxes"></div>
 
   </div>
 
@@ -7913,39 +7896,15 @@ function opGroupRows(rows){
   return Object.values(groups).sort((a,b) => a.symbol.localeCompare(b.symbol) || a.expiry.localeCompare(b.expiry));
 }
 
-function opRenderTable(){
-  const search = (document.getElementById('op-search').value || '').trim().toUpperCase();
-  const brokerFilter = document.getElementById('op-broker-filter').value;
-
-  let rows = opAllRows;
-  if(brokerFilter) rows = rows.filter(r => r.broker === brokerFilter);
-  if(search) rows = rows.filter(r => r.symbol.toUpperCase().includes(search));
-
-  const totalMtm = rows.reduce((s,r) => s + (r.pnl||0), 0);
-  const byBroker = {};
-  rows.forEach(r => { byBroker[r.broker] = (byBroker[r.broker]||0) + (r.pnl||0); });
-  const groups = opGroupRows(rows);
-
-  document.getElementById('op-summary-row').innerHTML = `
-    <div class="stat"><div class="stat-label">TOTAL MTM</div><div class="stat-value ${totalMtm>=0?'green':'red'}">₹${totalMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">ZERODHA</div><div class="stat-value ${(byBroker.zerodha||0)>=0?'green':'red'}">₹${(byBroker.zerodha||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">DHAN</div><div class="stat-value ${(byBroker.dhan||0)>=0?'green':'red'}">₹${(byBroker.dhan||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">ICICI</div><div class="stat-value ${(byBroker.icici||0)>=0?'green':'red'}">₹${(byBroker.icici||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">STOCKS &times; EXPIRY</div><div class="stat-value">${groups.length}</div></div>
-  `;
-
-  const body = document.getElementById('op-table-body');
-  if(groups.length === 0){
-    body.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--muted);">No open positions match.</td></tr>';
-    document.getElementById('op-row-count').textContent = '';
-    return;
-  }
-
+// Builds the <tbody> rows (group header + leg rows) for one broker's
+// table. gidPrefix namespaces the group/leg element ids so three broker
+// boxes on the same page never collide (e.g. "op-zerodha-g0").
+function opBuildGroupRowsHtml(groups, gidPrefix){
   let html = '';
   groups.forEach((g, gi) => {
     const groupPnl = g.legs.reduce((s,l) => s + (l.pnl||0), 0);
     const monthLabel = opMonthLabel(g.expiry);
-    const gid = 'op-g' + gi;
+    const gid = gidPrefix + '-g' + gi;
     html += `<tr class="op-group-row" id="${gid}-header" onclick="opToggleGroup('${gid}')">
       <td><span class="op-chevron">▾</span>${g.symbol} - ${monthLabel} <span class="op-group-count">(${g.legs.length})</span></td>
       <td></td><td></td><td></td>
@@ -7959,7 +7918,6 @@ function opRenderTable(){
       const chgClass = l.chgPct >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
       html += `<tr class="op-leg-row ${gid}-leg">
         <td>
-          <span class="op-broker-tag ${l.broker}">${l.broker.toUpperCase()}</span>
           <span class="op-product-tag">NRML</span>
           ${g.symbol} ${monthLabel.toUpperCase()} ${l.strike} ${typeAbbr}
           <span class="op-instrument-exch">NFO</span>
@@ -7972,8 +7930,65 @@ function opRenderTable(){
       </tr>`;
     });
   });
-  body.innerHTML = html;
-  document.getElementById('op-row-count').textContent = `${groups.length} group${groups.length===1?'':'s'} · ${rows.length} leg${rows.length===1?'':'s'}`;
+  return html;
+}
+
+const OP_BROKER_ORDER = ['zerodha', 'dhan', 'icici'];
+const OP_BROKER_LABEL = { zerodha: 'ZERODHA', dhan: 'DHAN', icici: 'ICICI' };
+
+function opRenderTable(){
+  const search = (document.getElementById('op-search').value || '').trim().toUpperCase();
+
+  let rows = opAllRows;
+  if(search) rows = rows.filter(r => r.symbol.toUpperCase().includes(search));
+
+  const totalMtm = rows.reduce((s,r) => s + (r.pnl||0), 0);
+  const byBroker = {};
+  rows.forEach(r => { byBroker[r.broker] = (byBroker[r.broker]||0) + (r.pnl||0); });
+  const allGroups = opGroupRows(rows);
+
+  document.getElementById('op-summary-row').innerHTML = `
+    <div class="stat"><div class="stat-label">TOTAL MTM</div><div class="stat-value ${totalMtm>=0?'green':'red'}">₹${totalMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">ZERODHA</div><div class="stat-value ${(byBroker.zerodha||0)>=0?'green':'red'}">₹${(byBroker.zerodha||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">DHAN</div><div class="stat-value ${(byBroker.dhan||0)>=0?'green':'red'}">₹${(byBroker.dhan||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">ICICI</div><div class="stat-value ${(byBroker.icici||0)>=0?'green':'red'}">₹${(byBroker.icici||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">STOCKS &times; EXPIRY</div><div class="stat-value">${allGroups.length}</div></div>
+  `;
+
+  const boxesEl = document.getElementById('op-broker-boxes');
+  boxesEl.innerHTML = OP_BROKER_ORDER.map(broker => {
+    const brokerRows = rows.filter(r => r.broker === broker);
+    const groups = opGroupRows(brokerRows);
+    const brokerMtm = brokerRows.reduce((s,r) => s + (r.pnl||0), 0);
+    const gidPrefix = 'op-' + broker;
+    const bodyHtml = groups.length
+      ? opBuildGroupRowsHtml(groups, gidPrefix)
+      : `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">No open ${OP_BROKER_LABEL[broker]} positions${search ? ' match' : ''}.</td></tr>`;
+    return `
+      <div class="panel op-broker-tag-border ${broker}">
+        <div class="panel-head">
+          <div class="panel-title">
+            <span class="op-broker-tag ${broker}">${OP_BROKER_LABEL[broker]}</span>
+            <span class="panel-meta">${groups.length} group${groups.length===1?'':'s'} · ${brokerRows.length} leg${brokerRows.length===1?'':'s'}</span>
+          </div>
+          <div class="${brokerMtm>=0?'op-pnl-pos':'op-pnl-neg'}" style="font-weight:700;font-size:14px;">${brokerMtm>=0?'+':''}&#8377;${brokerMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div class="table-scroll" style="max-height:480px;">
+          <table class="op-table">
+            <thead><tr>
+              <th style="text-align:left;padding:10px 14px;">Instrument</th>
+              <th style="text-align:right;padding:10px 14px;">Qty</th>
+              <th style="text-align:right;padding:10px 14px;">Avg</th>
+              <th style="text-align:right;padding:10px 14px;">LTP</th>
+              <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
+              <th style="text-align:right;padding:10px 14px;">Chg%</th>
+            </tr></thead>
+            <tbody>${bodyHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function opToggleGroup(gid){
