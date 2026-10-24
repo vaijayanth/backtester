@@ -156,6 +156,29 @@
   .status-tag.exhausted{background:var(--red-dim);color:var(--red);border:1px solid var(--red);}
   .err-text{color:var(--dim);font-size:10px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+  /* OPEN POSITIONS — Kite-style grouped positions table */
+  .op-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .op-table td{padding:10px 14px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  .op-group-row{cursor:pointer;background:var(--panel2);}
+  .op-group-row:hover{background:var(--amber-glow);}
+  .op-group-row td{font-weight:700;color:var(--fg);}
+  .op-group-count{color:var(--muted);font-weight:400;margin-left:4px;}
+  .op-chevron{display:inline-block;transition:transform .15s;color:var(--muted);margin-right:8px;font-size:10px;}
+  .op-group-row.open .op-chevron{transform:rotate(180deg);}
+  .op-leg-row{display:none;}
+  .op-leg-row.visible{display:table-row;}
+  .op-broker-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.3px;font-weight:700;margin-right:6px;}
+  .op-broker-tag.zerodha{background:rgba(41,97,197,.15);color:#4a8df6;}
+  .op-broker-tag.dhan{background:var(--amber-glow);color:var(--amber);}
+  .op-broker-tag.icici{background:var(--red-dim);color:#e06a4a;}
+  .op-product-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.3px;background:rgba(138,138,147,.12);color:var(--muted);margin-right:8px;}
+  .op-instrument-exch{font-size:9px;color:var(--muted);margin-left:6px;}
+  .op-qty-long{color:#4a8df6;}
+  .op-qty-short{color:var(--amber);}
+  .op-pnl-pos{color:var(--green);}
+  .op-pnl-neg{color:var(--red);}
+  .op-group-pnl-cell{text-align:right;}
+
   .footer-note{padding:12px 18px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);}
   .row-count{padding:8px 18px;font-size:10px;color:var(--muted);border-top:1px solid var(--border-soft);}
   .loading{padding:40px;text-align:center;color:var(--dim);}
@@ -242,6 +265,7 @@
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
     <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
+    <button data-page="openpos" id="nav-openpos"><span class="nav-icon">⊟</span>Open Positions</button>
     <button data-page="eqdash" id="nav-eqdash"><span class="nav-icon">◆</span>Equity Dashboard</button>
     <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
     <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
@@ -1114,6 +1138,64 @@
 
 </div>
 
+<!-- ============ OPEN POSITIONS PAGE ============ -->
+<!-- Live open option positions across all 3 brokers (Dhan / Zerodha / Icici),
+     read from their own "Open Options for X" tabs in the Option Trade
+     Analysis DB sheet (same spreadsheet, same Apps Script URL as the
+     ZERODHA OPTION TRADE ANALYSIS page above — opFetchBroker just passes
+     ?sheet=<tab name>, read-only, no upload here). Grouped by Symbol +
+     Expiry, matching Kite's own positions-page grouping. -->
+<div class="page" id="page-openpos">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">OPEN POSITIONS</div>
+      <div class="dash-meta" id="op-meta">Consolidated across Dhan, Zerodha and Icici — refreshed from each broker's "Open Options for X" sheet tab. Update the sheet (or re-run your position dump) and hit refresh.</div>
+    </div>
+    <div style="padding:0 18px 18px;display:flex;gap:10px;align-items:center;">
+      <button class="refresh-btn" id="op-refresh-btn" onclick="opRenderFromDb()">⟳ REFRESH</button>
+      <span id="op-db-meta" style="font-size:11px;color:var(--muted);">initializing...</span>
+    </div>
+  </div>
+
+  <div id="op-results" style="display:none;">
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">SUMMARY</div></div>
+      <div class="stat-row" id="op-summary-row"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta">grouped by stock &amp; expiry — click a row to expand</span></div></div>
+      <div class="controls">
+        <input type="text" class="search-box" id="op-search" placeholder="filter by stock..." oninput="opRenderTable()">
+        <select class="search-box" id="op-broker-filter" style="max-width:160px;" onchange="opRenderTable()">
+          <option value="">All brokers</option>
+          <option value="zerodha">Zerodha</option>
+          <option value="dhan">Dhan</option>
+          <option value="icici">Icici</option>
+        </select>
+      </div>
+      <div class="table-scroll" style="max-height:720px;">
+        <table class="op-table">
+          <thead><tr>
+            <th style="text-align:left;padding:10px 14px;">Instrument</th>
+            <th style="text-align:right;padding:10px 14px;">Qty</th>
+            <th style="text-align:right;padding:10px 14px;">Avg</th>
+            <th style="text-align:right;padding:10px 14px;">LTP</th>
+            <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
+            <th style="text-align:right;padding:10px 14px;">Chg%</th>
+          </tr></thead>
+          <tbody id="op-table-body"></tbody>
+        </table>
+      </div>
+      <div class="row-count" id="op-row-count"></div>
+    </div>
+
+  </div>
+
+</div>
+
 <!-- ============ EQUITY TRADING JOURNAL PAGE ============ -->
 <!-- Ported from TradingJournal's Journal tab, hosted here instead so it can
      read supertrend_full.json same-origin — no cross-repo fetch, no .NS
@@ -1879,6 +1961,7 @@ function switchPage(page){
   if(page === 'strangle' && !ssInitialized) initStrangleScreen();
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
   if(page === 'opttrades' && !otInitialized) otInit();
+  if(page === 'openpos' && !opInitialized) opInit();
   if(page === 'journal' && !eqInitialized) eqInit();
   if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
   if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
@@ -1915,6 +1998,7 @@ document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
+document.getElementById('nav-openpos').onclick = () => switchPage('openpos');
 document.getElementById('nav-journal').onclick = () => switchPage('journal');
 document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
 document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
@@ -7747,6 +7831,160 @@ function dh252Init(){
   };
 
   dh252Refresh();
+}
+
+// ============================================================
+// OPEN POSITIONS — live positions across all 3 brokers, read from their
+// own "Open Options for X" tabs in the same Option Trade Analysis DB
+// sheet/Apps Script as the opttrades page above (reuses otGetSheetUrl()).
+// Grouped by Symbol+Expiry, Kite-style, with a broker tag per leg since a
+// single strangle is often split across platforms (CLAUDE.md's A4 —
+// Second Platform Hedge adjustment).
+let opInitialized = false;
+let opAllRows = []; // flat legs: {broker, symbol, expiry, strike, type, bs, qty, avg, ltp, pnl, chgPct}
+
+const OP_BROKER_SHEETS = {
+  zerodha: 'Open Options for Zerodha',
+  dhan: 'Open Options for Dhan',
+  icici: 'Open Options for Icici',
+};
+
+async function opFetchBrokerSheet(sheetName){
+  const url = otGetSheetUrl();
+  if(!url) throw new Error('No Google Sheet URL configured yet — set it on the Strategy Builder page (INTEGRATIONS panel).');
+  const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'sheet=' + encodeURIComponent(sheetName));
+  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
+  const data = await res.json();
+  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
+  return data.rows || [];
+}
+
+function opMonthLabel(isoDate){
+  if(!isoDate) return '';
+  const d = new Date(isoDate + 'T00:00:00');
+  if(isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString('en-US', { month: 'short' });
+}
+
+async function opRenderFromDb(){
+  const metaEl = document.getElementById('op-db-meta');
+  metaEl.innerHTML = '<span class="eq-spinner"></span> Fetching from sheet…';
+  try{
+    const [zerodha, dhan, icici] = await Promise.all([
+      opFetchBrokerSheet(OP_BROKER_SHEETS.zerodha).catch(() => []),
+      opFetchBrokerSheet(OP_BROKER_SHEETS.dhan).catch(() => []),
+      opFetchBrokerSheet(OP_BROKER_SHEETS.icici).catch(() => []),
+    ]);
+    const rows = [];
+    [['zerodha', zerodha], ['dhan', dhan], ['icici', icici]].forEach(([broker, brokerRows]) => {
+      brokerRows.forEach(r => {
+        rows.push({
+          broker,
+          symbol: r.Symbol,
+          expiry: r.Expiry,
+          strike: Number(r.Strike),
+          type: r.Type, // 'CALL' | 'PUT'
+          bs: r['B/S'],
+          qty: Number(r.Qty),
+          avg: Number(r['Avg Price']),
+          ltp: Number(r.LTP),
+          pnl: Number(r['P&L Rs']),
+          chgPct: Number(r['% Change']),
+        });
+      });
+    });
+    opAllRows = rows;
+    const now = Date.now();
+    metaEl.textContent = `${rows.length} open leg${rows.length===1?'':'s'} across 3 brokers · last fetched ${otFmtTime(now)}`;
+    document.getElementById('op-results').style.display = rows.length ? 'block' : 'none';
+    opRenderTable();
+  }catch(err){
+    metaEl.textContent = 'Could not reach the Sheet: ' + err.message;
+  }
+}
+
+function opGroupRows(rows){
+  const groups = {};
+  rows.forEach(r => {
+    const key = r.symbol + '|' + r.expiry;
+    if(!groups[key]) groups[key] = { symbol: r.symbol, expiry: r.expiry, legs: [] };
+    groups[key].legs.push(r);
+  });
+  return Object.values(groups).sort((a,b) => a.symbol.localeCompare(b.symbol) || a.expiry.localeCompare(b.expiry));
+}
+
+function opRenderTable(){
+  const search = (document.getElementById('op-search').value || '').trim().toUpperCase();
+  const brokerFilter = document.getElementById('op-broker-filter').value;
+
+  let rows = opAllRows;
+  if(brokerFilter) rows = rows.filter(r => r.broker === brokerFilter);
+  if(search) rows = rows.filter(r => r.symbol.toUpperCase().includes(search));
+
+  const totalMtm = rows.reduce((s,r) => s + (r.pnl||0), 0);
+  const byBroker = {};
+  rows.forEach(r => { byBroker[r.broker] = (byBroker[r.broker]||0) + (r.pnl||0); });
+  const groups = opGroupRows(rows);
+
+  document.getElementById('op-summary-row').innerHTML = `
+    <div class="stat"><div class="stat-label">TOTAL MTM</div><div class="stat-value ${totalMtm>=0?'green':'red'}">₹${totalMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">ZERODHA</div><div class="stat-value ${(byBroker.zerodha||0)>=0?'green':'red'}">₹${(byBroker.zerodha||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">DHAN</div><div class="stat-value ${(byBroker.dhan||0)>=0?'green':'red'}">₹${(byBroker.dhan||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">ICICI</div><div class="stat-value ${(byBroker.icici||0)>=0?'green':'red'}">₹${(byBroker.icici||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">STOCKS &times; EXPIRY</div><div class="stat-value">${groups.length}</div></div>
+  `;
+
+  const body = document.getElementById('op-table-body');
+  if(groups.length === 0){
+    body.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--muted);">No open positions match.</td></tr>';
+    document.getElementById('op-row-count').textContent = '';
+    return;
+  }
+
+  let html = '';
+  groups.forEach((g, gi) => {
+    const groupPnl = g.legs.reduce((s,l) => s + (l.pnl||0), 0);
+    const monthLabel = opMonthLabel(g.expiry);
+    const gid = 'op-g' + gi;
+    html += `<tr class="op-group-row" id="${gid}-header" onclick="opToggleGroup('${gid}')">
+      <td><span class="op-chevron">▾</span>${g.symbol} - ${monthLabel} <span class="op-group-count">(${g.legs.length})</span></td>
+      <td></td><td></td><td></td>
+      <td class="op-group-pnl-cell ${groupPnl>=0?'op-pnl-pos':'op-pnl-neg'}">${groupPnl>=0?'+':''}${groupPnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+      <td></td>
+    </tr>`;
+    g.legs.forEach(l => {
+      const typeAbbr = l.type === 'CALL' ? 'CE' : l.type === 'PUT' ? 'PE' : l.type;
+      const qtyClass = l.qty >= 0 ? 'op-qty-long' : 'op-qty-short';
+      const pnlClass = l.pnl >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
+      const chgClass = l.chgPct >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
+      html += `<tr class="op-leg-row ${gid}-leg">
+        <td>
+          <span class="op-broker-tag ${l.broker}">${l.broker.toUpperCase()}</span>
+          <span class="op-product-tag">NRML</span>
+          ${g.symbol} ${monthLabel.toUpperCase()} ${l.strike} ${typeAbbr}
+          <span class="op-instrument-exch">NFO</span>
+        </td>
+        <td style="text-align:right;" class="${qtyClass}">${l.qty}</td>
+        <td style="text-align:right;">${l.avg.toFixed(2)}</td>
+        <td style="text-align:right;">${l.ltp.toFixed(2)}</td>
+        <td style="text-align:right;" class="${pnlClass}">${l.pnl>=0?'+':''}${l.pnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+        <td style="text-align:right;" class="${chgClass}">${l.chgPct>=0?'+':''}${l.chgPct.toFixed(2)}%</td>
+      </tr>`;
+    });
+  });
+  body.innerHTML = html;
+  document.getElementById('op-row-count').textContent = `${groups.length} group${groups.length===1?'':'s'} · ${rows.length} leg${rows.length===1?'':'s'}`;
+}
+
+function opToggleGroup(gid){
+  const header = document.getElementById(gid + '-header');
+  const isOpen = header.classList.toggle('open');
+  document.querySelectorAll('.' + gid + '-leg').forEach(row => row.classList.toggle('visible', isOpen));
+}
+
+function opInit(){
+  opInitialized = true;
+  opRenderFromDb();
 }
 
 // ============================================================
