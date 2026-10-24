@@ -916,27 +916,32 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">SCREEN CRITERIA</div></div>
-    <div class="sd-controls">
-      <div class="rc-group">
-        <label class="rc-label">MIN IVP</label>
-        <input type="number" id="ivp-min" value="70" min="0" max="100" step="1"
-          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
-      </div>
-      <div class="rc-group">
-        <label class="rc-label">EXCLUDE EARNINGS WITHIN (DAYS)</label>
-        <input type="number" id="ivp-earnings-buffer" value="5" min="0" max="30" step="1"
-          style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
-      </div>
-      <div class="rc-group">
-        <label class="rc-label"><input type="checkbox" id="ivp-expiry-week" style="margin-right:6px;">IS EXPIRY WEEK (no new entries)</label>
-      </div>
-      <div class="rc-group" style="flex:1;min-width:200px;">
-        <label class="rc-label">SEARCH</label>
-        <input class="search-box" id="ivp-search" placeholder="filter symbol...">
-      </div>
+    <div class="panel-head" id="ivp-criteria-header" style="cursor:pointer;user-select:none;">
+      <div class="panel-title">SCREEN CRITERIA</div>
+      <span id="ivp-criteria-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
     </div>
-    <div class="dash-footnote">RSI modifier reminder (your own rule): RSI&gt;70 → increase CE lots, sell further OTM · RSI&lt;30 → widen PE side, move toward equal ratio · RSI 40-60 → standard strangle, CE-heavy default. RSI14 here is as of the last backfilled close, joined from market_screens.json.</div>
+    <div id="ivp-criteria-body" style="display:none;">
+      <div class="sd-controls">
+        <div class="rc-group">
+          <label class="rc-label">MIN IVP</label>
+          <input type="number" id="ivp-min" value="70" min="0" max="100" step="1"
+            style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+        </div>
+        <div class="rc-group">
+          <label class="rc-label">EXCLUDE EARNINGS WITHIN (DAYS)</label>
+          <input type="number" id="ivp-earnings-buffer" value="5" min="0" max="30" step="1"
+            style="background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:8px 12px;color:var(--white);font-family:inherit;font-size:12px;width:90px;">
+        </div>
+        <div class="rc-group">
+          <label class="rc-label"><input type="checkbox" id="ivp-expiry-week" style="margin-right:6px;">IS EXPIRY WEEK (no new entries)</label>
+        </div>
+        <div class="rc-group" style="flex:1;min-width:200px;">
+          <label class="rc-label">SEARCH</label>
+          <input class="search-box" id="ivp-search" placeholder="filter symbol...">
+        </div>
+      </div>
+      <div class="dash-footnote">RSI modifier reminder (your own rule): RSI&gt;70 → increase CE lots, sell further OTM · RSI&lt;30 → widen PE side, move toward equal ratio · RSI 40-60 → standard strangle, CE-heavy default. RSI14 here is as of the last backfilled close, joined from market_screens.json.</div>
+    </div>
   </div>
 
   <div class="panel">
@@ -979,8 +984,8 @@
     </div>
     <div class="table-scroll" style="max-height:560px;">
       <table class="list-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
-        <tbody id="ivp-opt-body"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>IVP</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <tbody id="ivp-opt-body"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
     <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
@@ -3894,20 +3899,29 @@ function ivpRenderOptionsSignal(){
   const term = (document.getElementById('ivp-opt-search').value || '').trim().toUpperCase();
   const universe = term ? ivpOptUniverse.filter(sym => sym.includes(term)) : ivpOptUniverse;
   document.getElementById('ivp-opt-count').textContent = universe.length ? `${universe.length} stocks` : '—';
+  // ivpData.entries is the same options_snapshot.json data the main
+  // screener tables use — keyed by full suffixed symbol, same convention
+  // as ivpRsiBySymbol. Built fresh each render rather than kept in sync
+  // separately, since ivpData itself can be swapped (site snapshot vs
+  // uploaded Google Sheet data).
+  const ivpPctBySymbol = {};
+  ((ivpData && ivpData.entries) || []).forEach(e => { ivpPctBySymbol[e.symbol] = e.iv_percentile; });
   tbody.innerHTML = universe.length ? universe.map(sym => {
     const st = ivpStBySymbol[sym];
     const stColor = st && st.color ? st.color : null;
     const rsi = ivpRsiBySymbol[sym];
+    const ivp = ivpPctBySymbol[sym];
     const sellCall = stColor === 'red' || (rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT);
     const sellPut = stColor === 'green' || (rsi != null && rsi < IVP_OPT_RSI_OVERSOLD);
     return `<tr>
       <td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      <td>${ivp != null ? ivp.toFixed(0) + '%' : '—'}</td>
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="6" class="loading">No matching stocks.</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="loading">No matching stocks.</td></tr>';
 }
 
 function ivpDaysToEarnings(eventDate){
@@ -3989,6 +4003,13 @@ document.getElementById('ivp-earnings-buffer').addEventListener('change', () => 
 document.getElementById('ivp-expiry-week').addEventListener('change', () => { if(ivpData) renderIvpScreener(); });
 document.getElementById('ivp-search').addEventListener('input', () => { if(ivpData) renderIvpScreener(); });
 document.getElementById('ivp-opt-search').addEventListener('input', () => { if(ivpOptUniverse.length) ivpRenderOptionsSignal(); });
+document.getElementById('ivp-criteria-header').onclick = () => {
+  const body = document.getElementById('ivp-criteria-body');
+  const chevron = document.getElementById('ivp-criteria-chevron');
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  chevron.textContent = collapsed ? '▾' : '▸';
+};
 
 // IVP Screener is the default landing page — initialize it eagerly, same
 // pattern Dashboard used before IVP Screener took over that slot.
