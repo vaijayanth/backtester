@@ -972,6 +972,20 @@
     </div>
   </div>
 
+  <div class="panel" style="border-color:var(--amber);">
+    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="ivp-opt-count">—</span></div></div>
+    <div style="padding:14px 18px;">
+      <input class="search-box" id="ivp-opt-search" placeholder="filter symbol..." style="max-width:260px;">
+    </div>
+    <div class="table-scroll" style="max-height:560px;">
+      <table class="list-table">
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <tbody id="ivp-opt-body"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+  </div>
+
   <div class="footer-note">
     Source: manual Sensibull (Zerodha) export, weekly refresh — see Dashboard's Upcoming Results footnote for why this isn't automated.
     <b style="color:var(--amber);">Scoped as a weekly ENTRY screen only.</b> This is NOT suitable for monitoring already-open strangle positions — a stock can move 5-8% toward your breakeven in 2-3 days, and weekly data would show that well after the fact. Position monitoring (live breakeven health, breach alerts) needs near-real-time option-chain data, a separate deferred build (Dhan API path).
@@ -3540,6 +3554,14 @@ document.getElementById('ss-bt-range').addEventListener('change', () => { if(ssD
 let ivpInitialized = false;
 let ivpData = null;     // options_snapshot.json (or a locally-uploaded override, see below)
 let ivpRsiBySymbol = {}; // symbol -> rsi14, joined from market_screens.json
+let ivpStBySymbol = {}; // symbol -> {close, color}, joined from supertrend.json (F&O-scoped)
+let ivpOptUniverse = []; // bare symbols, from supertrend.json's own entries — the Options Signal panel's universe
+// Local copies rather than reusing DHCC_RSI_OVERBOUGHT/OVERSOLD (defined
+// much later in the file, in the Dhan Covered Call section) — this page's
+// init runs at script-parse time, before those consts further down have
+// executed, so referencing them here would hit the temporal dead zone.
+const IVP_OPT_RSI_OVERBOUGHT = 70;
+const IVP_OPT_RSI_OVERSOLD = 30;
 
 // Google Sheet DB for uploaded IVP snapshots (IvpSnapshot_AppsScript.gs) —
 // full-replace on every upload, same pattern as EQ_SHEET_URL below. Lets an
@@ -3763,9 +3785,10 @@ async function ivpClearUpload(){
 // "clear" to fall back to it explicitly.
 async function initIvpScreenerFetch(){
   try{
-    const [optResp, screensResp] = await Promise.all([
+    const [optResp, screensResp, stResp] = await Promise.all([
       fetch('options_snapshot.json?t=' + Date.now()),
       fetch('market_screens.json?t=' + Date.now()),
+      fetch('supertrend.json?t=' + Date.now()),
     ]);
     if(!optResp.ok) throw new Error('options_snapshot.json not found — upload a Sensibull export above to generate one.');
     ivpData = await optResp.json();
@@ -3779,6 +3802,7 @@ async function initIvpScreenerFetch(){
         ivpRsiBySymbol[r.symbol] = r.rsi14;
       });
     }
+    if(stResp.ok) ivpLoadSupertrend(await stResp.json());
   }catch(err){
     document.getElementById('ivp-body').innerHTML = `<tr><td colspan="10" class="loading">${err.message}</td></tr>`;
     document.getElementById('ivp-all-body').innerHTML = `<tr><td colspan="9" class="loading">${err.message}</td></tr>`;
@@ -3789,6 +3813,25 @@ async function initIvpScreenerFetch(){
     `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · snapshot ${new Date(ivpData.generated_at).toLocaleString('en-IN')}`;
 
   try{ renderIvpScreener(); } catch(err){ console.error('IVP screener failed:', err); }
+  try{ ivpRenderOptionsSignal(); } catch(err){ console.error('IVP options signal failed:', err); }
+}
+
+// Populates ivpStBySymbol/ivpOptUniverse from supertrend.json (F&O-scoped,
+// same (10,3) params as every other Supertrend consumer in the app) —
+// shared by both initIvpScreenerFetch and initIvpScreener so the Options
+// Signal panel works regardless of which path loaded the page's main data.
+// Keeps the full suffixed symbol ("RELIANCE.NS") as the key throughout,
+// matching ivpRsiBySymbol's own convention (joined from market_screens.
+// json, also suffixed) and options_snapshot.json's entries — stripping to
+// bare here would silently break every RSI lookup against it.
+function ivpLoadSupertrend(st){
+  ivpStBySymbol = {};
+  ivpOptUniverse = [];
+  (st.entries || []).forEach(e => {
+    ivpStBySymbol[e.symbol] = e;
+    ivpOptUniverse.push(e.symbol);
+  });
+  ivpOptUniverse.sort();
 }
 
 // Tries the Google Sheet DB first (an upload from any device shows up
@@ -3799,15 +3842,18 @@ async function initIvpScreener(){
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
-    const [ivpResp, screensResp] = await Promise.allSettled([
+    const [ivpResp, screensResp, stResp] = await Promise.allSettled([
       fetch(IVP_SHEET_URL + '?type=ivp&t=' + Date.now()),
       fetch('market_screens.json?t=' + Date.now()),
+      fetch('supertrend.json?t=' + Date.now()),
     ]);
 
     if(screensResp.status === 'fulfilled' && screensResp.value.ok){
       const screens = await screensResp.value.json();
       (screens.rsi_all || []).forEach(r => { ivpRsiBySymbol[r.symbol] = r.rsi14; });
     }
+    if(stResp.status === 'fulfilled' && stResp.value.ok) ivpLoadSupertrend(await stResp.value.json());
+    try{ ivpRenderOptionsSignal(); } catch(err){ console.error('IVP options signal failed:', err); }
 
     if(ivpResp.status === 'fulfilled' && ivpResp.value.ok){
       const sheet = await ivpResp.value.json();
@@ -3837,6 +3883,32 @@ document.getElementById('ivp-upload-btn').onclick = ivpUploadFile;
 document.getElementById('ivp-clear-upload-btn').onclick = ivpClearUpload;
 
 function ivpSymLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
+
+// SELL CALL when Supertrend red OR RSI14>70; SELL PUT when Supertrend
+// green OR RSI14<30 — same independent-OR rule as the Dhan Covered Call
+// and ICICI Dividend Longterm pages, applied here to the full F&O
+// universe (213 stocks) rather than a fixed short list.
+function ivpRenderOptionsSignal(){
+  const tbody = document.getElementById('ivp-opt-body');
+  if(!tbody) return;
+  const term = (document.getElementById('ivp-opt-search').value || '').trim().toUpperCase();
+  const universe = term ? ivpOptUniverse.filter(sym => sym.includes(term)) : ivpOptUniverse;
+  document.getElementById('ivp-opt-count').textContent = universe.length ? `${universe.length} stocks` : '—';
+  tbody.innerHTML = universe.length ? universe.map(sym => {
+    const st = ivpStBySymbol[sym];
+    const stColor = st && st.color ? st.color : null;
+    const rsi = ivpRsiBySymbol[sym];
+    const sellCall = stColor === 'red' || (rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT);
+    const sellPut = stColor === 'green' || (rsi != null && rsi < IVP_OPT_RSI_OVERSOLD);
+    return `<tr>
+      <td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
+      <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="loading">No matching stocks.</td></tr>';
+}
 
 function ivpDaysToEarnings(eventDate){
   if(!eventDate) return null;
@@ -3916,6 +3988,7 @@ document.getElementById('ivp-min').addEventListener('change', () => { if(ivpData
 document.getElementById('ivp-earnings-buffer').addEventListener('change', () => { if(ivpData) renderIvpScreener(); });
 document.getElementById('ivp-expiry-week').addEventListener('change', () => { if(ivpData) renderIvpScreener(); });
 document.getElementById('ivp-search').addEventListener('input', () => { if(ivpData) renderIvpScreener(); });
+document.getElementById('ivp-opt-search').addEventListener('input', () => { if(ivpOptUniverse.length) ivpRenderOptionsSignal(); });
 
 // IVP Screener is the default landing page — initialize it eagerly, same
 // pattern Dashboard used before IVP Screener took over that slot.
