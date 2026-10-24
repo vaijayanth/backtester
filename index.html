@@ -1374,7 +1374,7 @@
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-entry52wh-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th>52W HIGH ₹</th><th style="width:1%;">QTY TO BUY</th><th>SECTOR</th></tr></thead>
         <tbody id="eqa-entry52wh-tbody"></tbody>
       </table>
     </div>
@@ -1818,7 +1818,7 @@
     </div>
     <div class="table-scroll">
       <table class="list-table" id="div-entry-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th><th style="width:1%;">QTY</th></tr></thead>
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
@@ -6704,6 +6704,10 @@ function eqAlertsRender(){
     Object.entries(entry52whSectorCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0])
   );
 
+  // Same tiered position size the real portfolio actually uses
+  // (eqSizeForTrades, Position Sizing & Limits panel) — always at least 1
+  // share, never skip a signal for being too expensive.
+  const entryQtyTierSize = eqSizeForTrades((window._eqClosed || []).length);
   eqAlertsRenderTable('eqa-entry52wh-tbody', 'eqa-entry52wh-count', entry52wh, w => {
     const bare = eqStripNs(w.symbol);
     const sector = eqSectorFor(bare);
@@ -6716,7 +6720,8 @@ function eqAlertsRender(){
       if(turnHot) tags.push(`${sectorTurn[sector]} turned`);
       sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
     }
-    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td>
+    const qtyToBuy = Math.max(1, Math.floor(entryQtyTierSize / w.close));
+    return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td>${eqFmtRs(w.high_52w)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td>
       <td style="${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
   });
 
@@ -8273,10 +8278,11 @@ function divRenderSignals(){
     const st = stMap[sym];
     const stColor = st && st.color ? st.color : null;
     const rsi = rsiMap[sym];
+    const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
     return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td>${rsi.toFixed(1)}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
+      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
 
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
   document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
