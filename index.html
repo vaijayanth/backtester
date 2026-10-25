@@ -235,6 +235,8 @@
   .subnav button.active{color:#fff;background:var(--subnav-active);}
   .subtab-panel{display:none;}
   .subtab-panel.active{display:block;}
+  .toptab-panel{display:none;}
+  .toptab-panel.active{display:block;}
   .dash-pulse-value{font-size:26px;font-weight:700;color:var(--white);}
   .dash-pulse-value.green{color:var(--green);}
   .dash-pulse-value.red{color:var(--red);}
@@ -276,18 +278,15 @@
     <button data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>F&amp;O Stock Dashboard</button>
     <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
     <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Stock Threshold Analysis</button>
+    <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
+    <button data-page="zswing" id="nav-zswing"><span class="nav-icon">▥</span>Zerodha Swing</button>
+    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>Dhan ST 52wk High Swing</button>
+    <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
+    <button data-page="dividend" id="nav-dividend"><span class="nav-icon">◉</span>ICICI Dividend Longterm</button>
     <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
     <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
     <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
-    <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
-    <button data-page="openpos" id="nav-openpos"><span class="nav-icon">⊟</span>Open Positions</button>
-    <button data-page="eqdash" id="nav-eqdash"><span class="nav-icon">◆</span>Equity Dashboard</button>
-    <button data-page="eqalerts" id="nav-eqalerts"><span class="nav-icon">⚠</span>Equity Alerts</button>
-    <button data-page="journal" id="nav-journal"><span class="nav-icon">▥</span>Equity Trading Journal</button>
-    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>52 Week High Forward Journal</button>
-    <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
-    <button data-page="dividend" id="nav-dividend"><span class="nav-icon">◉</span>ICICI Dividend Longterm</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -1225,170 +1224,31 @@
 
 </div>
 
-<!-- ============ OPEN POSITIONS PAGE ============ -->
-<!-- Live open option positions across all 3 brokers (Dhan / Zerodha / Icici),
-     read from their own "Open Options for X" tabs in the Option Trade
-     Analysis DB sheet (same spreadsheet, same Apps Script URL as the
-     ZERODHA OPTION TRADE ANALYSIS page above — opFetchBroker just passes
-     ?sheet=<tab name>, read-only, no upload here). Grouped by Symbol +
-     Expiry, matching Kite's own positions-page grouping. -->
-<div class="page" id="page-openpos">
+<!-- ============ ZERODHA SWING PAGE ============ -->
+<!-- Merges three formerly-standalone pages (Equity Dashboard, Equity
+     Alerts, Equity Trading Journal) into one page with top-level tabs.
+     Each inner container keeps its own id (#page-eqdash/#page-eqalerts/
+     #page-journal) and its own init function completely unchanged
+     (Equity Dashboard also keeps its own inner sub-nav, #subnav-eqdash,
+     nested inside the "dashboard" tab here). See topTabInit/topTabSwitch
+     (near subTabInit) for why the outer tabs use .toptab-panel instead
+     of .subtab-panel — that nesting is exactly why. -->
+<div class="page" id="page-zswing">
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">OPEN POSITIONS</div>
-      <div class="dash-meta" id="op-meta">Consolidated across Dhan, Zerodha and Icici — refreshed from each broker's "Open Options for X" sheet tab. Update the sheet (or re-run your position dump) and hit refresh.</div>
-    </div>
-    <div style="padding:0 18px 18px;display:flex;gap:10px;align-items:center;">
-      <button class="refresh-btn" id="op-refresh-btn" onclick="opRenderFromDb()">⟳ REFRESH</button>
-      <span id="op-db-meta" style="font-size:11px;color:var(--muted);">initializing...</span>
+      <div class="dash-title">ZERODHA SWING</div>
     </div>
   </div>
 
-  <div id="op-results" style="display:none;">
-
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">SUMMARY</div></div>
-      <div class="stat-row" id="op-summary-row"></div>
-    </div>
-
-    <div class="panel" style="border-color:var(--amber);">
-      <div class="panel-head">
-        <div class="panel-title">⚠ EXIT SIGNAL <span class="panel-meta" id="op-exit-count">—</span></div>
-      </div>
-      <div style="padding:0 18px 12px;font-size:11px;color:var(--muted);">
-        Short legs where the entry thesis no longer holds — SOLD CALL needs Supertrend(10,3) red or RSI14&gt;70; SOLD PUT needs Supertrend green or RSI14&lt;30 (same rule as every other Options Signal panel in this app). This is a trend/RSI early-warning only — it does NOT replace your own 60-70% profit-target exit or the breakeven-triggered A1-A4 adjustment strategies (CLAUDE.md). Long/hedge legs are excluded — no directional rule applies to those.
-      </div>
-      <div class="table-scroll" style="max-height:420px;">
-        <table class="op-table">
-          <thead><tr>
-            <th style="text-align:left;padding:10px 14px;">Broker</th>
-            <th style="text-align:left;padding:10px 14px;">Instrument</th>
-            <th style="text-align:right;padding:10px 14px;">Qty</th>
-            <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
-            <th style="text-align:center;padding:10px 14px;">Supertrend</th>
-            <th style="text-align:left;padding:10px 14px;">Flip</th>
-            <th style="text-align:right;padding:10px 14px;">RSI14</th>
-            <th style="text-align:left;padding:10px 14px;">Thesis broken</th>
-          </tr></thead>
-          <tbody id="op-exit-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="controls" style="padding:14px 18px 0;">
-      <input type="text" class="search-box" id="op-search" placeholder="filter by stock..." oninput="opRenderTable()">
-    </div>
-
-    <div id="op-broker-boxes"></div>
-
+  <div class="subnav" id="subnav-zswing">
+    <button data-subtab="dashboard">DASHBOARD</button>
+    <button data-subtab="alerts">ALERTS</button>
+    <button data-subtab="journal">JOURNAL</button>
   </div>
 
-</div>
-
-<!-- ============ EQUITY TRADING JOURNAL PAGE ============ -->
-<!-- Ported from TradingJournal's Journal tab, hosted here instead so it can
-     read supertrend_full.json same-origin — no cross-repo fetch, no .NS
-     suffix surprise living two repos away from where it's generated. -->
-<div class="page" id="page-journal">
-
-  <div class="panel">
-    <div class="dash-header">
-      <div class="dash-title">EQUITY TRADING JOURNAL</div>
-      <div class="dash-meta" id="eq-meta">Zerodha Tradebook (Console &rarr; Reports &rarr; Tradebook &rarr; Equity, Excel export) &rarr; FIFO positions &rarr; Supertrend(10,3) exit/add-on signals</div>
-      <div class="dash-meta" id="eq-sync-status"></div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head" style="cursor:pointer;" onclick="toggleEqUploadBox()">
-      <div class="panel-title">UPLOAD &amp; RECONCILE <span class="panel-meta" id="eq-recon-count-text-collapsed">upload Holdings to compare against your Tradebook positions</span></div>
-      <span id="eq-upload-chevron" style="font-size:12px;color:var(--muted);">&#9660;</span>
-    </div>
-    <div id="eq-upload-body" style="display:none;">
-
-      <div style="padding:18px;border-bottom:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD TRADEBOOK <span style="font-weight:400;color:var(--muted);">— Excel (.xlsx), fill-by-fill, not the P&amp;L statement</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Export covering your FULL trade history from account inception (not a partial date range) — each upload REPLACES the entire stored history with this file's content, same as Holdings below. Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't.</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
-          <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
-          <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
-          <button id="eq-force-clear-btn" onclick="eqForceClearFills()" style="padding:10px 14px;font-size:11px;font-weight:700;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;">⚠ FORCE CLEAR FILLS</button>
-        </div>
-        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">Wipes ALL stored fills (not Holdings) without uploading anything new. Rarely needed now — every Tradebook upload already replaces the full history on its own.</div>
-        <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
-      </div>
-
-      <div style="padding:18px;border-bottom:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD HOLDINGS <span style="font-weight:400;color:var(--muted);">— CSV, Kite &rarr; Portfolio &rarr; Holdings &rarr; Download</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">A point-in-time snapshot of what you actually hold — used to reconcile against the FIFO positions computed from your Tradebook fills below. Catches stock splits, bonus issues, and symbol mismatches (e.g. a stock moving to the trade-for-trade "-BE" series) that the raw fill history alone can't reveal. Each upload REPLACES the stored snapshot — it's not accumulated like fills.</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <input type="file" id="eq-holdings-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
-          <button class="refresh-btn" id="eq-holdings-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD HOLDINGS</button>
-        </div>
-        <div id="eq-holdings-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
-      </div>
-
-      <div style="padding:18px;">
-        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">RECONCILIATION <span style="font-weight:400;color:var(--muted);" id="eq-recon-count-text">upload Holdings to compare against your Tradebook positions</span></div>
-        <div class="table-scroll">
-          <table class="list-table" id="eq-recon-table">
-            <thead><tr>
-              <th>STOCK</th><th>FIFO QTY</th><th>FIFO AVG ₹</th><th>HOLDINGS QTY</th><th>HOLDINGS AVG ₹</th>
-              <th>QTY RATIO</th><th>STATUS</th>
-            </tr></thead>
-            <tbody id="eq-recon-tbody"></tbody>
-          </table>
-        </div>
-        <div class="dash-footnote">Informational only — Open Positions above already shows Holdings' own qty/avg cost wherever a match exists, so a MISMATCH row here doesn't need any action to fix what's displayed. It's here so you can still spot a surprising corporate action (clean ratios like 2.00&times;, 0.50&times;, 3.00&times; usually mean an unadjusted split/bonus/demerger) if you want to understand it. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="eq-open-table">
-        <thead><tr>
-          <th>ENTRY DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
-          <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th><th>SIGNAL</th>
-        </tr></thead>
-        <tbody id="eq-open-tbody"></tbody>
-      </table>
-    </div>
-    <div class="dash-footnote">🔴 EXIT — in profit, Supertrend red (trailing SL hit) &middot; 🟢 ADD-ON — loss worse than &minus;6%, Supertrend green, average in 1/10 qty (max once/week/stock) &middot; ⏸ HOLD — loss worse than &minus;6%, Supertrend red, wait for structure &middot; ⏳ HOLD — loss within 0% to &minus;6%</div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="eq-closed-count-text">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="eq-closed-table">
-        <thead><tr>
-          <th>ENTRY DATE</th><th>EXIT DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
-          <th>AVG EXIT ₹</th><th>DAYS HELD</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
-        </tr></thead>
-        <tbody id="eq-closed-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-</div>
-
-<!-- ============ EQUITY DASHBOARD PAGE ============ -->
-<!-- Mirrors the SST Trading Journal's Dashboard tab (same sections, same
-     visual language), computed from the Equity Journal's own open/closed
-     positions instead of the SST sheet. No "initial capital" exists for
-     this journal the way SST has a configured ₹50L, so Total Return/CAGR
-     use PEAK DEPLOYED CAPITAL (the highest total invested value ever
-     simultaneously held, reconstructed from full fill history) as the
-     baseline — an approximation, not a real number, per explicit user
-     choice (2026-10-19). No GTT/200-SMA concept exists here either —
-     the "hold only" alert below uses Supertrend Red instead (also an
-     explicit user choice), and there's no GTT Price Calculator section
-     (nothing to calculate: no stop-loss column in this journal's model). -->
-<div class="page" id="page-eqdash">
+  <div class="toptab-panel" data-subtab="dashboard">
+<div id="page-eqdash">
 
   <div class="panel">
     <div class="dash-header">
@@ -1581,14 +1441,10 @@
 
 
 </div>
+  </div><!-- /toptab-panel -->
 
-<!-- ============ EQUITY ALERTS PAGE ============ -->
-<!-- Reuses the Equity Trading Journal's already-fetched state (window._eqOpen,
-     window._eqSupertrend) — never re-fetches on its own. Surfaces the same
-     EXIT/ADDON/HOLD signal logic already in eqComputeSignal as a prioritized
-     action list instead of a flat table, plus a universe-wide "new bullish
-     signals" watchlist independent of current holdings. -->
-<div class="page" id="page-eqalerts">
+  <div class="toptab-panel" data-subtab="alerts">
+<div id="page-eqalerts">
 
   <div class="panel">
     <div class="dash-header">
@@ -1698,13 +1554,105 @@
   </div>
 
 </div>
+  </div><!-- /toptab-panel -->
+
+  <div class="toptab-panel" data-subtab="journal">
+<div id="page-journal">
+
+  <div class="panel">
+    <div class="dash-header">
+      <div class="dash-title">EQUITY TRADING JOURNAL</div>
+      <div class="dash-meta" id="eq-meta">Zerodha Tradebook (Console &rarr; Reports &rarr; Tradebook &rarr; Equity, Excel export) &rarr; FIFO positions &rarr; Supertrend(10,3) exit/add-on signals</div>
+      <div class="dash-meta" id="eq-sync-status"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head" style="cursor:pointer;" onclick="toggleEqUploadBox()">
+      <div class="panel-title">UPLOAD &amp; RECONCILE <span class="panel-meta" id="eq-recon-count-text-collapsed">upload Holdings to compare against your Tradebook positions</span></div>
+      <span id="eq-upload-chevron" style="font-size:12px;color:var(--muted);">&#9660;</span>
+    </div>
+    <div id="eq-upload-body" style="display:none;">
+
+      <div style="padding:18px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD TRADEBOOK <span style="font-weight:400;color:var(--muted);">— Excel (.xlsx), fill-by-fill, not the P&amp;L statement</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Export covering your FULL trade history from account inception (not a partial date range) — each upload REPLACES the entire stored history with this file's content, same as Holdings below. Upload the raw fill-by-fill export, not the P&amp;L statement — fills carry entry/exit dates, the P&amp;L statement doesn't.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="file" id="eq-file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="color:var(--muted);font-size:12px;">
+          <button class="refresh-btn" id="eq-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; SYNC</button>
+          <button class="refresh-btn" id="eq-refresh-btn" title="Refresh from sheet">↻</button>
+          <button id="eq-force-clear-btn" onclick="eqForceClearFills()" style="padding:10px 14px;font-size:11px;font-weight:700;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;">⚠ FORCE CLEAR FILLS</button>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">Wipes ALL stored fills (not Holdings) without uploading anything new. Rarely needed now — every Tradebook upload already replaces the full history on its own.</div>
+        <div id="eq-parse-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+      </div>
+
+      <div style="padding:18px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">UPLOAD HOLDINGS <span style="font-weight:400;color:var(--muted);">— CSV, Kite &rarr; Portfolio &rarr; Holdings &rarr; Download</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">A point-in-time snapshot of what you actually hold — used to reconcile against the FIFO positions computed from your Tradebook fills below. Catches stock splits, bonus issues, and symbol mismatches (e.g. a stock moving to the trade-for-trade "-BE" series) that the raw fill history alone can't reveal. Each upload REPLACES the stored snapshot — it's not accumulated like fills.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input type="file" id="eq-holdings-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
+          <button class="refresh-btn" id="eq-holdings-upload-btn" style="padding:11px 18px;background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;">⬆ UPLOAD HOLDINGS</button>
+        </div>
+        <div id="eq-holdings-status" style="display:none;margin-top:12px;padding:10px 12px;border-radius:4px;font-size:12px;"></div>
+      </div>
+
+      <div style="padding:18px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">RECONCILIATION <span style="font-weight:400;color:var(--muted);" id="eq-recon-count-text">upload Holdings to compare against your Tradebook positions</span></div>
+        <div class="table-scroll">
+          <table class="list-table" id="eq-recon-table">
+            <thead><tr>
+              <th>STOCK</th><th>FIFO QTY</th><th>FIFO AVG ₹</th><th>HOLDINGS QTY</th><th>HOLDINGS AVG ₹</th>
+              <th>QTY RATIO</th><th>STATUS</th>
+            </tr></thead>
+            <tbody id="eq-recon-tbody"></tbody>
+          </table>
+        </div>
+        <div class="dash-footnote">Informational only — Open Positions above already shows Holdings' own qty/avg cost wherever a match exists, so a MISMATCH row here doesn't need any action to fix what's displayed. It's here so you can still spot a surprising corporate action (clean ratios like 2.00&times;, 0.50&times;, 3.00&times; usually mean an unadjusted split/bonus/demerger) if you want to understand it. "Series-suffix match" means the Holdings symbol has a suffix (e.g. &minus;BE) not present in your Tradebook fills.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eq-open-table">
+        <thead><tr>
+          <th>ENTRY DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
+          <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th><th>SIGNAL</th>
+        </tr></thead>
+        <tbody id="eq-open-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">🔴 EXIT — in profit, Supertrend red (trailing SL hit) &middot; 🟢 ADD-ON — loss worse than &minus;6%, Supertrend green, average in 1/10 qty (max once/week/stock) &middot; ⏸ HOLD — loss worse than &minus;6%, Supertrend red, wait for structure &middot; ⏳ HOLD — loss within 0% to &minus;6%</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="eq-closed-count-text">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="eq-closed-table">
+        <thead><tr>
+          <th>ENTRY DATE</th><th>EXIT DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
+          <th>AVG EXIT ₹</th><th>DAYS HELD</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
+        </tr></thead>
+        <tbody id="eq-closed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+  </div><!-- /toptab-panel -->
+
+</div>
+
 
 <!-- ============ 52-WEEK HIGH FORWARD JOURNAL PAGE ============ -->
 <div class="page" id="page-dh252">
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">52-WEEK HIGH FORWARD JOURNAL</div>
+      <div class="dash-title">DHAN ST 52WK HIGH SWING</div>
       <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000 base position size (+Rs1,000 every 100 closed trades), full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
     <div style="padding:0 18px 18px;">
@@ -2192,6 +2140,41 @@ function subTabSwitch(pageId, activeId, tabIds){
   setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
 }
 
+// Separate top-level tab mechanism for a page that merges several
+// formerly-standalone pages into one (e.g. Zerodha Swing = Equity
+// Dashboard + Equity Alerts + Equity Trading Journal). Deliberately NOT
+// built on subTabInit/subTabSwitch/.subtab-panel: Equity Dashboard keeps
+// its own inner subnav (#subnav-eqdash, .subtab-panel) nested inside one
+// of these top-level tabs, and subTabSwitch's `.subtab-panel` query
+// descends into nested containers regardless of depth — reusing it here
+// would make the outer tab switch also stomp on the inner one's panels.
+// .toptab-panel is a distinct class so the two mechanisms never collide.
+const TOPTAB_KEY_PREFIX = 'tradeiq_toptab_';
+function topTabInit(pageId, tabIds){
+  const nav = document.getElementById('subnav-' + pageId);
+  if(!nav) return;
+  const saved = localStorage.getItem(TOPTAB_KEY_PREFIX + pageId);
+  const initial = tabIds.includes(saved) ? saved : tabIds[0];
+  topTabSwitch(pageId, initial, tabIds);
+  nav.querySelectorAll('button[data-subtab]').forEach(btn => {
+    btn.onclick = () => topTabSwitch(pageId, btn.dataset.subtab, tabIds);
+  });
+}
+
+function topTabSwitch(pageId, activeId, tabIds){
+  const page = document.getElementById('page-' + pageId);
+  if(!page) return;
+  const nav = document.getElementById('subnav-' + pageId);
+  if(nav) nav.querySelectorAll('button[data-subtab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === activeId);
+  });
+  page.querySelectorAll(':scope > .toptab-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.subtab === activeId);
+  });
+  localStorage.setItem(TOPTAB_KEY_PREFIX + pageId, activeId);
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+}
+
 // ============================================================
 // NAV
 // ============================================================
@@ -2211,10 +2194,7 @@ function switchPage(page){
   if(page === 'strangle' && !ssInitialized) initStrangleScreen();
   if(page === 'ivp' && !ivpInitialized) initIvpScreener();
   if(page === 'opttrades' && !otInitialized) otInit();
-  if(page === 'openpos' && !opInitialized) opInit();
-  if(page === 'journal' && !eqInitialized) eqInit();
-  if(page === 'eqalerts' && !eqAlertsInitialized) eqAlertsInit();
-  if(page === 'eqdash' && !eqDashInitialized) eqDashInit();
+  if(page === 'zswing' && !zswingInitialized) zswingInit();
   if(page === 'dh252' && !dh252Initialized) dh252Init();
   if(page === 'dhcc' && !dhccInitialized) dhccInit();
   if(page === 'dividend' && !divInitialized) divInit();
@@ -2248,10 +2228,7 @@ document.getElementById('nav-universe').onclick = () => switchPage('universe');
 document.getElementById('nav-backfill').onclick = () => switchPage('backfill');
 document.getElementById('nav-strategy').onclick = () => switchPage('strategy');
 document.getElementById('nav-opttrades').onclick = () => switchPage('opttrades');
-document.getElementById('nav-openpos').onclick = () => switchPage('openpos');
-document.getElementById('nav-journal').onclick = () => switchPage('journal');
-document.getElementById('nav-eqalerts').onclick = () => switchPage('eqalerts');
-document.getElementById('nav-eqdash').onclick = () => switchPage('eqdash');
+document.getElementById('nav-zswing').onclick = () => switchPage('zswing');
 document.getElementById('nav-dh252').onclick = () => switchPage('dh252');
 document.getElementById('nav-dhcc').onclick = () => switchPage('dhcc');
 document.getElementById('nav-dividend').onclick = () => switchPage('dividend');
@@ -6329,6 +6306,22 @@ function eqDashInit(){
   eqDashRefresh();
 }
 
+// Zerodha Swing page merges Equity Dashboard + Equity Alerts + Equity
+// Trading Journal under one set of top-level tabs (topTabInit, not
+// subTabInit — see its definition for why). All three inner pages keep
+// their own init functions and guards unchanged; this just fires all
+// three up front, same as every other sub-tabbed page in this app
+// already does (data fetches happen regardless of which tab is active —
+// only CSS visibility is gated by the tab).
+let zswingInitialized = false;
+function zswingInit(){
+  zswingInitialized = true;
+  topTabInit('zswing', ['dashboard', 'alerts', 'journal']);
+  if(!eqDashInitialized) eqDashInit();
+  if(!eqAlertsInitialized) eqAlertsInit();
+  if(!eqInitialized) eqInit();
+}
+
 async function eqDashRefresh(){
   document.getElementById('eqd-sync-status').innerHTML = '<span class="eq-spinner"></span> Loading…';
   if(!window._eqOpen || !window._eqClosed || !window._eqSupertrend){
@@ -8116,278 +8109,6 @@ function dh252Init(){
   };
 
   dh252Refresh();
-}
-
-// ============================================================
-// OPEN POSITIONS — live positions across all 3 brokers, read from their
-// own "Open Options for X" tabs in the same Option Trade Analysis DB
-// sheet/Apps Script as the opttrades page above (reuses otGetSheetUrl()).
-// Grouped by Symbol+Expiry, Kite-style, with a broker tag per leg since a
-// single strangle is often split across platforms (CLAUDE.md's A4 —
-// Second Platform Hedge adjustment).
-let opInitialized = false;
-let opAllRows = []; // flat legs: {broker, symbol, expiry, strike, type, bs, qty, avg, ltp, pnl, chgPct}
-
-const OP_BROKER_SHEETS = {
-  zerodha: 'Open Options for Zerodha',
-  dhan: 'Open Options for Dhan',
-  icici: 'Open Options for Icici',
-};
-
-async function opFetchBrokerSheet(sheetName){
-  const url = otGetSheetUrl();
-  if(!url) throw new Error('No Google Sheet URL configured yet — set it on the Strategy Builder page (INTEGRATIONS panel).');
-  const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'sheet=' + encodeURIComponent(sheetName));
-  if(!res.ok) throw new Error(`Sheet request failed (HTTP ${res.status}).`);
-  const data = await res.json();
-  if(!data.success) throw new Error(data.error || 'Sheet returned an error.');
-  return data.rows || [];
-}
-
-function opMonthLabel(isoDate){
-  if(!isoDate) return '';
-  const d = new Date(isoDate + 'T00:00:00');
-  if(isNaN(d.getTime())) return isoDate;
-  return d.toLocaleDateString('en-US', { month: 'short' });
-}
-
-// Exit-signal data: same supertrend.json / market_screens.json files and
-// same independent-OR rule as ivpRenderOptionsSignal/dhccRenderSignals/
-// divRenderSignals — SELL CALL thesis needs Supertrend red OR RSI14>70,
-// SELL PUT thesis needs Supertrend green OR RSI14<30. Here it's run in
-// reverse: flag an already-open SHORT leg once NEITHER condition for its
-// side holds any more (the thesis that justified selling it has broken).
-let opStBySymbol = {};  // 'RELIANCE.NS' -> {close, color}
-let opRsiBySymbol = {}; // 'RELIANCE.NS' -> rsi14
-const OP_RSI_OVERBOUGHT = 70;
-const OP_RSI_OVERSOLD = 30;
-
-async function opLoadSignalData(){
-  try{
-    const [stResp, screensResp] = await Promise.all([
-      fetch('supertrend.json?t=' + Date.now()),
-      fetch('market_screens.json?t=' + Date.now()),
-    ]);
-    opStBySymbol = {};
-    if(stResp.ok){
-      const st = await stResp.json();
-      (st.entries || []).forEach(e => { opStBySymbol[e.symbol] = e; });
-    }
-    opRsiBySymbol = {};
-    if(screensResp.ok){
-      const screens = await screensResp.json();
-      (screens.rsi_all || []).forEach(r => { opRsiBySymbol[r.symbol] = r.rsi14; });
-    }
-  }catch(err){
-    console.error('Open Positions exit-signal data failed:', err);
-  }
-}
-
-// Only SHORT legs (bs === 'S') carry a directional thesis under this
-// rule — a bought/hedge leg has none, so it's excluded rather than
-// guessed at.
-function opComputeExitSignals(rows){
-  return rows.filter(r => r.bs === 'S').map(r => {
-    const key = r.symbol.toUpperCase() + '.NS';
-    const st = opStBySymbol[key];
-    const stColor = st && st.color ? st.color : null;
-    const rsi = opRsiBySymbol[key];
-    const haveData = stColor != null || rsi != null;
-    let broken = false, reason = '';
-    if(haveData){
-      if(r.type === 'CALL'){
-        const thesisHolds = stColor === 'red' || (rsi != null && rsi > OP_RSI_OVERBOUGHT);
-        if(!thesisHolds){ broken = true; reason = 'Sold CALL, but trend turned bullish (not red/overbought)'; }
-      }else if(r.type === 'PUT'){
-        const thesisHolds = stColor === 'green' || (rsi != null && rsi < OP_RSI_OVERSOLD);
-        if(!thesisHolds){ broken = true; reason = 'Sold PUT, but trend turned bearish (not green/oversold)'; }
-      }
-    }
-    return { ...r, st, stColor, rsi, broken, reason, haveData };
-  }).filter(r => r.broken);
-}
-
-async function opRenderFromDb(){
-  const metaEl = document.getElementById('op-db-meta');
-  metaEl.innerHTML = '<span class="eq-spinner"></span> Fetching from sheet…';
-  try{
-    const [zerodha, dhan, icici] = await Promise.all([
-      opFetchBrokerSheet(OP_BROKER_SHEETS.zerodha).catch(() => []),
-      opFetchBrokerSheet(OP_BROKER_SHEETS.dhan).catch(() => []),
-      opFetchBrokerSheet(OP_BROKER_SHEETS.icici).catch(() => []),
-      opLoadSignalData(),
-    ]);
-    const rows = [];
-    [['zerodha', zerodha], ['dhan', dhan], ['icici', icici]].forEach(([broker, brokerRows]) => {
-      brokerRows.forEach(r => {
-        rows.push({
-          broker,
-          symbol: r.Symbol,
-          expiry: r.Expiry,
-          strike: Number(r.Strike),
-          type: r.Type, // 'CALL' | 'PUT'
-          bs: r['B/S'],
-          qty: Number(r.Qty),
-          avg: Number(r['Avg Price']),
-          ltp: Number(r.LTP),
-          pnl: Number(r['P&L Rs']),
-          chgPct: Number(r['% Change']),
-        });
-      });
-    });
-    opAllRows = rows;
-    const now = Date.now();
-    metaEl.textContent = `${rows.length} open leg${rows.length===1?'':'s'} across 3 brokers · last fetched ${otFmtTime(now)}`;
-    document.getElementById('op-results').style.display = rows.length ? 'block' : 'none';
-    opRenderExitSignals();
-    opRenderTable();
-  }catch(err){
-    metaEl.textContent = 'Could not reach the Sheet: ' + err.message;
-  }
-}
-
-function opRenderExitSignals(){
-  const signals = opComputeExitSignals(opAllRows);
-  document.getElementById('op-exit-count').textContent =
-    signals.length ? `${signals.length} position${signals.length===1?'':'s'}` : 'none';
-  const body = document.getElementById('op-exit-body');
-  if(!signals.length){
-    body.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted);">No short leg currently breaks its Supertrend/RSI thesis.</td></tr>';
-    return;
-  }
-  body.innerHTML = signals.map(s => {
-    const monthLabel = opMonthLabel(s.expiry);
-    const typeAbbr = s.type === 'CALL' ? 'CE' : s.type === 'PUT' ? 'PE' : s.type;
-    const pnlClass = s.pnl >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
-    const stText = s.stColor ? s.stColor.toUpperCase() : '—';
-    const stColorCss = s.stColor === 'green' ? 'var(--green)' : s.stColor === 'red' ? 'var(--red)' : 'var(--muted)';
-    return `<tr>
-      <td><span class="op-broker-tag ${s.broker}">${s.broker.toUpperCase()}</span></td>
-      <td>${s.symbol} ${monthLabel.toUpperCase()} ${s.strike} ${typeAbbr}</td>
-      <td style="text-align:right;" class="op-qty-short">${s.qty}</td>
-      <td style="text-align:right;" class="${pnlClass}">${s.pnl>=0?'+':''}${s.pnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
-      <td style="text-align:center;color:${stColorCss};font-weight:700;">${stText}</td>
-      <td>${stFlipLabel(s.st)}</td>
-      <td style="text-align:right;">${s.rsi != null ? s.rsi.toFixed(1) : '—'}</td>
-      <td style="color:var(--amber);">${s.reason}</td>
-    </tr>`;
-  }).join('');
-}
-
-function opGroupRows(rows){
-  const groups = {};
-  rows.forEach(r => {
-    const key = r.symbol + '|' + r.expiry;
-    if(!groups[key]) groups[key] = { symbol: r.symbol, expiry: r.expiry, legs: [] };
-    groups[key].legs.push(r);
-  });
-  return Object.values(groups).sort((a,b) => a.symbol.localeCompare(b.symbol) || a.expiry.localeCompare(b.expiry));
-}
-
-// Builds the <tbody> rows (group header + leg rows) for one broker's
-// table. gidPrefix namespaces the group/leg element ids so three broker
-// boxes on the same page never collide (e.g. "op-zerodha-g0").
-function opBuildGroupRowsHtml(groups, gidPrefix){
-  let html = '';
-  groups.forEach((g, gi) => {
-    const groupPnl = g.legs.reduce((s,l) => s + (l.pnl||0), 0);
-    const monthLabel = opMonthLabel(g.expiry);
-    const gid = gidPrefix + '-g' + gi;
-    html += `<tr class="op-group-row" id="${gid}-header" onclick="opToggleGroup('${gid}')">
-      <td><span class="op-chevron">▾</span>${g.symbol} - ${monthLabel} <span class="op-group-count">(${g.legs.length})</span></td>
-      <td></td><td></td><td></td>
-      <td class="op-group-pnl-cell ${groupPnl>=0?'op-pnl-pos':'op-pnl-neg'}">${groupPnl>=0?'+':''}${groupPnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
-      <td></td>
-    </tr>`;
-    g.legs.forEach(l => {
-      const typeAbbr = l.type === 'CALL' ? 'CE' : l.type === 'PUT' ? 'PE' : l.type;
-      const qtyClass = l.qty >= 0 ? 'op-qty-long' : 'op-qty-short';
-      const pnlClass = l.pnl >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
-      const chgClass = l.chgPct >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
-      html += `<tr class="op-leg-row ${gid}-leg">
-        <td>
-          <span class="op-product-tag">NRML</span>
-          ${g.symbol} ${monthLabel.toUpperCase()} ${l.strike} ${typeAbbr}
-          <span class="op-instrument-exch">NFO</span>
-        </td>
-        <td style="text-align:right;" class="${qtyClass}">${l.qty}</td>
-        <td style="text-align:right;">${l.avg.toFixed(2)}</td>
-        <td style="text-align:right;">${l.ltp.toFixed(2)}</td>
-        <td style="text-align:right;" class="${pnlClass}">${l.pnl>=0?'+':''}${l.pnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
-        <td style="text-align:right;" class="${chgClass}">${l.chgPct>=0?'+':''}${l.chgPct.toFixed(2)}%</td>
-      </tr>`;
-    });
-  });
-  return html;
-}
-
-const OP_BROKER_ORDER = ['zerodha', 'dhan', 'icici'];
-const OP_BROKER_LABEL = { zerodha: 'ZERODHA', dhan: 'DHAN', icici: 'ICICI' };
-
-function opRenderTable(){
-  const search = (document.getElementById('op-search').value || '').trim().toUpperCase();
-
-  let rows = opAllRows;
-  if(search) rows = rows.filter(r => r.symbol.toUpperCase().includes(search));
-
-  const totalMtm = rows.reduce((s,r) => s + (r.pnl||0), 0);
-  const byBroker = {};
-  rows.forEach(r => { byBroker[r.broker] = (byBroker[r.broker]||0) + (r.pnl||0); });
-  const allGroups = opGroupRows(rows);
-
-  document.getElementById('op-summary-row').innerHTML = `
-    <div class="stat"><div class="stat-label">TOTAL MTM</div><div class="stat-value ${totalMtm>=0?'green':'red'}">₹${totalMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">ZERODHA</div><div class="stat-value ${(byBroker.zerodha||0)>=0?'green':'red'}">₹${(byBroker.zerodha||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">DHAN</div><div class="stat-value ${(byBroker.dhan||0)>=0?'green':'red'}">₹${(byBroker.dhan||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">ICICI</div><div class="stat-value ${(byBroker.icici||0)>=0?'green':'red'}">₹${(byBroker.icici||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">STOCKS &times; EXPIRY</div><div class="stat-value">${allGroups.length}</div></div>
-  `;
-
-  const boxesEl = document.getElementById('op-broker-boxes');
-  boxesEl.innerHTML = OP_BROKER_ORDER.map(broker => {
-    const brokerRows = rows.filter(r => r.broker === broker);
-    const groups = opGroupRows(brokerRows);
-    const brokerMtm = brokerRows.reduce((s,r) => s + (r.pnl||0), 0);
-    const gidPrefix = 'op-' + broker;
-    const bodyHtml = groups.length
-      ? opBuildGroupRowsHtml(groups, gidPrefix)
-      : `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">No open ${OP_BROKER_LABEL[broker]} positions${search ? ' match' : ''}.</td></tr>`;
-    return `
-      <div class="panel op-broker-tag-border ${broker}">
-        <div class="panel-head">
-          <div class="panel-title">
-            <span class="op-broker-tag ${broker}">${OP_BROKER_LABEL[broker]}</span>
-            <span class="panel-meta">${groups.length} group${groups.length===1?'':'s'} · ${brokerRows.length} leg${brokerRows.length===1?'':'s'}</span>
-          </div>
-          <div class="${brokerMtm>=0?'op-pnl-pos':'op-pnl-neg'}" style="font-weight:700;font-size:14px;">${brokerMtm>=0?'+':''}&#8377;${brokerMtm.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
-        </div>
-        <div class="table-scroll" style="max-height:480px;">
-          <table class="op-table">
-            <thead><tr>
-              <th style="text-align:left;padding:10px 14px;">Instrument</th>
-              <th style="text-align:right;padding:10px 14px;">Qty</th>
-              <th style="text-align:right;padding:10px 14px;">Avg</th>
-              <th style="text-align:right;padding:10px 14px;">LTP</th>
-              <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
-              <th style="text-align:right;padding:10px 14px;">Chg%</th>
-            </tr></thead>
-            <tbody>${bodyHtml}</tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function opToggleGroup(gid){
-  const header = document.getElementById(gid + '-header');
-  const isOpen = header.classList.toggle('open');
-  document.querySelectorAll('.' + gid + '-leg').forEach(row => row.classList.toggle('visible', isOpen));
-}
-
-function opInit(){
-  opInitialized = true;
-  opRenderFromDb();
 }
 
 // ============================================================
