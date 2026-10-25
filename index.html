@@ -41,6 +41,8 @@
   .nav button .nav-icon{font-size:13px;width:16px;text-align:center;}
   .nav button:hover{color:var(--white);background:var(--panel2);}
   .nav button.active{color:#fff;background:var(--amber);}
+  .nav-section-label{font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--muted);padding:14px 12px 6px;text-transform:uppercase;}
+  .nav-section-label:first-child{padding-top:2px;}
   .sidebar-status{padding:14px 20px;border-top:1px solid var(--border-soft);font-size:10px;color:var(--dim);}
   .sidebar-status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;}
   .sidebar-status .status-sub{color:var(--muted);margin-top:3px;}
@@ -274,14 +276,19 @@
     <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
   </div>
   <div class="nav">
+    <div class="nav-section-label">F&amp;O</div>
     <button class="active" data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
     <button data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>F&amp;O Stock Dashboard</button>
     <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
     <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
+
+    <div class="nav-section-label">Swing / Equity</div>
     <button data-page="zswing" id="nav-zswing"><span class="nav-icon">▥</span>Zerodha Swing</button>
     <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>Dhan ST 52wk High Swing</button>
     <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
     <button data-page="dividend" id="nav-dividend"><span class="nav-icon">◉</span>ICICI Dividend Longterm</button>
+
+    <div class="nav-section-label">Setup</div>
     <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
     <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
     <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
