@@ -1012,8 +1012,8 @@
     </div>
     <div class="table-scroll" style="max-height:560px;">
       <table class="list-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>IVP</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
-        <tbody id="ivp-opt-body"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <tbody id="ivp-opt-body"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
     <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
@@ -1184,6 +1184,7 @@
             <th style="text-align:right;padding:10px 14px;">Qty</th>
             <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
             <th style="text-align:center;padding:10px 14px;">Supertrend</th>
+            <th style="text-align:left;padding:10px 14px;">Flip</th>
             <th style="text-align:right;padding:10px 14px;">RSI14</th>
             <th style="text-align:left;padding:10px 14px;">Thesis broken</th>
           </tr></thead>
@@ -1269,7 +1270,7 @@
       <table class="list-table" id="eq-open-table">
         <thead><tr>
           <th>ENTRY DATE</th><th>STOCK</th><th>SECTOR</th><th>AVG ENTRY ₹</th>
-          <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>SIGNAL</th>
+          <th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th><th>SIGNAL</th>
         </tr></thead>
         <tbody id="eq-open-tbody"></tbody>
       </table>
@@ -1470,7 +1471,7 @@
     <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="eqa-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-exit-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th></tr></thead>
         <tbody id="eqa-exit-tbody"></tbody>
       </table>
     </div>
@@ -1492,7 +1493,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-addon-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
         <tbody id="eqa-addon-tbody"></tbody>
       </table>
     </div>
@@ -1514,7 +1515,7 @@
     <div class="panel-head"><div class="panel-title">⚠ APPROACHING ADD-ON THRESHOLD <span class="panel-meta" id="eqa-approach-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-approach-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th></tr></thead>
         <tbody id="eqa-approach-tbody"></tbody>
       </table>
     </div>
@@ -1607,7 +1608,7 @@
     <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-exit-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dh252-exit-tbody"></tbody>
       </table>
     </div>
@@ -1629,7 +1630,7 @@
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-pos-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dh252-pos-tbody"></tbody>
       </table>
     </div>
@@ -1639,7 +1640,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-add-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
         <tbody id="dh252-add-tbody"></tbody>
       </table>
     </div>
@@ -1769,7 +1770,7 @@
     <div class="panel-head"><div class="panel-title">🔴 EQUITY EXIT SIGNAL <span class="panel-meta" id="dhcc-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-exit-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dhcc-exit-tbody"></tbody>
       </table>
     </div>
@@ -1780,7 +1781,7 @@
     <div class="panel-head"><div class="panel-title">🎯 EQUITY ENTRY SIGNAL <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-entry-table">
-        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
         <tbody id="dhcc-entry-tbody"></tbody>
       </table>
     </div>
@@ -1791,7 +1792,7 @@
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-add-table">
-        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>RSI14</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
         <tbody id="dhcc-add-tbody"></tbody>
       </table>
     </div>
@@ -1802,7 +1803,7 @@
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-opt-table">
-        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
         <tbody id="dhcc-opt-tbody"></tbody>
       </table>
     </div>
@@ -1891,7 +1892,7 @@
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dhcc-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-pos-table">
-        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
+        <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
         <tbody id="dhcc-pos-tbody"></tbody>
       </table>
     </div>
@@ -1925,7 +1926,7 @@
     </div>
     <div class="table-scroll">
       <table class="list-table" id="div-entry-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>RSI14</th><th>SUPERTREND</th><th>SUGGESTED ADD ₹</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>RSI14</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
@@ -1936,7 +1937,7 @@
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="div-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="div-opt-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
         <tbody id="div-opt-tbody"></tbody>
       </table>
     </div>
@@ -2263,6 +2264,21 @@ async function loadMarketSnapshot(){
 }
 
 function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
+
+// Shared "FLIP" column formatter — every table that shows a SUPERTREND
+// column also shows this, sourced from supertrend.json's
+// recent_flip_days_ago/recent_flip_date/recent_flip_direction (either
+// direction, last 7 trading days; separate from the bullish-only
+// recent_bullish_flip_* fields the Equity Alerts re-entry signal uses).
+// `entry` is one supertrend.json entries[] row (or null/undefined).
+function stFlipLabel(entry){
+  if(!entry || entry.recent_flip_days_ago == null) return '<span style="color:var(--muted);">—</span>';
+  const days = entry.recent_flip_days_ago;
+  const dirLabel = entry.recent_flip_direction === 'up' ? 'GREEN' : 'RED';
+  const dirColor = entry.recent_flip_direction === 'up' ? 'var(--green)' : 'var(--red)';
+  const daysLabel = days === 0 ? '0' : String(days);
+  return `<span style="color:${dirColor};font-weight:600;">Flipped to ${dirLabel} (${daysLabel})</span>`;
+}
 
 async function loadMarketScreens(){
   const bodies = ['dash-52wh-body','dash-5yh-body','dash-rsi-ob-body','dash-rsi-os-body'];
@@ -4036,12 +4052,13 @@ function ivpRenderOptionsSignal(){
     return `<tr>
       <td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       <td>${ivp != null ? ivp.toFixed(0) + '%' : '—'}</td>
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="7" class="loading">No matching stocks.</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="loading">No matching stocks.</td></tr>';
 }
 
 function ivpDaysToEarnings(eventDate){
@@ -5702,9 +5719,10 @@ function eqRenderOpen(open, stMap){
       <td>${p.cmp === null ? '—' : eqFmtRs(p.cmp)}</td>
       <td style="color:${plColor};font-weight:700">${p.plPct === null ? '— no data' : eqFmtPct(p.plPct)}</td>
       <td>${stLabel}</td>
+      <td>${stFlipLabel(st)}</td>
       <td style="color:${sigColor};font-weight:700">${sig.label}</td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
+  }).join('') || '<tr><td colspan="9" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
 }
 
 function eqRenderClosed(closed){
@@ -6833,7 +6851,7 @@ function eqAlertsRender(){
 
   eqAlertsRenderTable('eqa-exit-tbody', 'eqa-exit-count', exitNow, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${stLabel(p.st)}</td></tr>`);
+    ${plCell(p)}<td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td></tr>`);
 
   const rsiMapForAlerts = window._eqRsiMap || {};
   const rsiCell = p => {
@@ -6842,7 +6860,7 @@ function eqAlertsRender(){
   };
   eqAlertsRenderTable('eqa-addon-tbody', 'eqa-addon-count', addOnEligible, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td><td>${stLabel(p.st)}</td>${rsiCell(p)}</tr>`);
+    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td><td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td>${rsiCell(p)}</tr>`);
 
   eqAlertsRenderTable('eqa-cooldown-tbody', 'eqa-cooldown-count', addOnCooldown, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
@@ -6850,7 +6868,7 @@ function eqAlertsRender(){
 
   eqAlertsRenderTable('eqa-approach-tbody', 'eqa-approach-count', approaching, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${stLabel(p.st)}</td></tr>`);
+    ${plCell(p)}<td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td></tr>`);
 
   eqAlertsRenderTable('eqa-hold-tbody', 'eqa-hold-count', holdWait, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
@@ -7348,6 +7366,7 @@ function dh252RenderPositions(state){
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td style="color:${awayFromHigh === null ? '' : awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${awayFromHigh === null ? '—' : dh252FmtPct(awayFromHigh)}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
@@ -7425,12 +7444,12 @@ function dh252RenderSignals(open, closedCount){
     const cmp = w.close;
     const plPct = (cmp - pos.wac) / pos.wac * 100;
     if(st.color === 'red'){
-      exitRows.push({pos, cmp, plPct, awayFromHigh: w.pct_from_high});
+      exitRows.push({pos, cmp, plPct, awayFromHigh: w.pct_from_high, st});
       return; // exit takes priority over an add signal the same day
     }
     const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
     if(plPct <= DH252_ADD_TRIGGER_PCT && st.color === 'green' && daysSinceFill >= DH252_ADD_COOLDOWN_DAYS){
-      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DH252_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: (window._eqRsiMap || {})[pos.symbol]});
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DH252_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: (window._eqRsiMap || {})[pos.symbol], st});
     }
   });
 
@@ -7438,8 +7457,8 @@ function dh252RenderSignals(open, closedCount){
   document.getElementById('dh252-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
-  </tr>`).join('') : '<tr><td colspan="9" class="loading">No add-on signals right now.</td></tr>';
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="10" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dh252-exit-count').textContent = exitRows.length;
   document.getElementById('dh252-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
@@ -7449,12 +7468,13 @@ function dh252RenderSignals(open, closedCount){
       <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
       <td>${dh252FmtRs(r.cmp)}</td>
       <td style="color:var(--red);font-weight:700">RED</td>
+      <td>${stFlipLabel(r.st)}</td>
       <td style="color:${r.awayFromHigh == null ? '' : r.awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${r.awayFromHigh == null ? '—' : dh252FmtPct(r.awayFromHigh)}</td>
       <td style="color:${notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtRs(notionalPl)}</td>
       <td style="color:${r.plPct >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtPct(r.plPct)}</td>
       <td>${r.pos.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="11" class="loading">No exit signals right now.</td></tr>';
+  }).join('') : '<tr><td colspan="12" class="loading">No exit signals right now.</td></tr>';
 }
 
 // market_screens_full.json / supertrend_full.json are built once a day by
@@ -7924,7 +7944,7 @@ function opComputeExitSignals(rows){
         if(!thesisHolds){ broken = true; reason = 'Sold PUT, but trend turned bearish (not green/oversold)'; }
       }
     }
-    return { ...r, stColor, rsi, broken, reason, haveData };
+    return { ...r, st, stColor, rsi, broken, reason, haveData };
   }).filter(r => r.broken);
 }
 
@@ -7973,7 +7993,7 @@ function opRenderExitSignals(){
     signals.length ? `${signals.length} position${signals.length===1?'':'s'}` : 'none';
   const body = document.getElementById('op-exit-body');
   if(!signals.length){
-    body.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted);">No short leg currently breaks its Supertrend/RSI thesis.</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted);">No short leg currently breaks its Supertrend/RSI thesis.</td></tr>';
     return;
   }
   body.innerHTML = signals.map(s => {
@@ -7988,6 +8008,7 @@ function opRenderExitSignals(){
       <td style="text-align:right;" class="op-qty-short">${s.qty}</td>
       <td style="text-align:right;" class="${pnlClass}">${s.pnl>=0?'+':''}${s.pnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
       <td style="text-align:center;color:${stColorCss};font-weight:700;">${stText}</td>
+      <td>${stFlipLabel(s.st)}</td>
       <td style="text-align:right;">${s.rsi != null ? s.rsi.toFixed(1) : '—'}</td>
       <td style="color:var(--amber);">${s.reason}</td>
     </tr>`;
@@ -8282,11 +8303,12 @@ function dhccRenderPositions(state){
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
       <td>${p.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="10" class="loading">No open positions yet — log your first BUY above.</td></tr>';
+  }).join('') : '<tr><td colspan="11" class="loading">No open positions yet — log your first BUY above.</td></tr>';
 
   document.getElementById('dhcc-closed-count').textContent = state.closed.length;
   document.getElementById('dhcc-closed-tbody').innerHTML = state.closed.length ? state.closed.slice().reverse().map(t => `<tr>
@@ -8331,9 +8353,10 @@ function dhccRenderSignals(open){
   document.getElementById('dhcc-entry-tbody').innerHTML = entries.length ? entries.map(sym => {
     const w = week52[sym] || week52[sym + '.NS'];
     const rsi = rsiMap[sym];
+    const st = stMap[sym] || stMap[sym + '.NS'];
     return `<tr><td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
-      <td style="color:var(--green);font-weight:700">GREEN</td><td>${rsi != null ? rsi.toFixed(1) : '—'}</td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="loading">No Supertrend-green entries right now.</td></tr>';
+      <td style="color:var(--green);font-weight:700">GREEN</td><td>${stFlipLabel(st)}</td><td>${rsi != null ? rsi.toFixed(1) : '—'}</td></tr>`;
+  }).join('') : '<tr><td colspan="6" class="loading">No Supertrend-green entries right now.</td></tr>';
 
   // Equity Exit / Add-on — evaluated against open positions only.
   const addRows = [], exitRows = [];
@@ -8344,12 +8367,12 @@ function dhccRenderSignals(open){
     const cmp = w.close;
     const plPct = (cmp - pos.wac) / pos.wac * 100;
     if(st.color === 'red' && plPct > 0){
-      exitRows.push({pos, cmp, plPct});
+      exitRows.push({pos, cmp, plPct, st});
       return; // exit takes priority over an add signal the same day
     }
     const daysSinceFill = Math.floor((new Date() - new Date(pos.lastFillDate)) / 86400000);
     if(st.color === 'green' && plPct < 0 && daysSinceFill >= DHCC_ADD_COOLDOWN_DAYS){
-      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DHCC_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: rsiMap[pos.symbol]});
+      addRows.push({pos, cmp, plPct, addQty: Math.max(1, Math.round(pos.qty * DHCC_ADD_FRACTION)), daysSinceFill, stColor: st.color, rsi: rsiMap[pos.symbol], st});
     }
     // st.color === 'red' && plPct <= 0 (red while still in loss), or
     // st.color === 'green' && plPct >= 0 (green while in profit): neither
@@ -8360,8 +8383,8 @@ function dhccRenderSignals(open){
   document.getElementById('dhcc-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
-  </tr>`).join('') : '<tr><td colspan="9" class="loading">No add-on signals right now.</td></tr>';
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+  </tr>`).join('') : '<tr><td colspan="10" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dhcc-exit-count').textContent = exitRows.length;
   document.getElementById('dhcc-exit-tbody').innerHTML = exitRows.length ? exitRows.map(r => {
@@ -8370,11 +8393,12 @@ function dhccRenderSignals(open){
     return `<tr>
       <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
       <td>${dh252FmtRs(r.cmp)}</td><td style="color:var(--red);font-weight:700">RED</td>
+      <td>${stFlipLabel(r.st)}</td>
       <td style="color:var(--green);font-weight:700">${dh252FmtRs(notionalPl)}</td>
       <td style="color:var(--green);font-weight:700">${dh252FmtPct(r.plPct)}</td>
       <td>${r.pos.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
     </tr>`;
-  }).join('') : '<tr><td colspan="10" class="loading">No exit signals right now.</td></tr>';
+  }).join('') : '<tr><td colspan="11" class="loading">No exit signals right now.</td></tr>';
 
   // Options Signal — whole universe, regardless of holding.
   document.getElementById('dhcc-opt-count').textContent = DHCC_UNIVERSE.length;
@@ -8388,6 +8412,7 @@ function dhccRenderSignals(open){
     return `<tr>
       <td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
@@ -8784,8 +8809,9 @@ function divRenderSignals(){
     const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
     return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td><td>${rsi.toFixed(1)}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : '<tr><td colspan="6" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
 
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
   document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
@@ -8798,6 +8824,7 @@ function divRenderSignals(){
     return `<tr>
       <td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>

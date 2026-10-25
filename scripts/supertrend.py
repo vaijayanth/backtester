@@ -164,6 +164,27 @@ def _recent_bullish_flip(direction, dates):
     return None, None
 
 
+def _recent_flip(direction, dates):
+    """Same lookback as _recent_bullish_flip, but either direction — a
+    red->green OR a green->red flip in the last RECENT_FLIP_LOOKBACK_DAYS
+    trading days. Used for the generic "Flipped to GREEN/RED (Nd)" column
+    shown wherever a Supertrend column appears, as distinct from the
+    bullish-only re-entry signal _recent_bullish_flip feeds (that one
+    stays untouched — this is additive, not a replacement). Returns
+    (days_ago, date_str, direction_flipped_to) or (None, None, None)."""
+    n = len(direction)
+    lookback = min(RECENT_FLIP_LOOKBACK_DAYS, n - 1)
+    for days_ago in range(lookback):
+        idx = n - 1 - days_ago
+        prev_idx = idx - 1
+        if prev_idx < 0:
+            break
+        cur, prev = direction[idx], direction[prev_idx]
+        if cur is not None and prev is not None and cur != prev:
+            return days_ago, str(dates[idx].date()), cur
+    return None, None, None
+
+
 def _cmp_only_entry(symbol, latest_close, latest_date):
     """Not enough history for a trustworthy Supertrend/EMA read, but still
     enough for a CMP — surface it rather than dropping the symbol entirely.
@@ -175,6 +196,7 @@ def _cmp_only_entry(symbol, latest_close, latest_date):
         "symbol": symbol, "close": round(latest_close, 2),
         "color": None, "flipped_today": False, "above_ema50": None, "date": latest_date,
         "recent_bullish_flip_days_ago": None, "recent_bullish_flip_date": None,
+        "recent_flip_days_ago": None, "recent_flip_date": None, "recent_flip_direction": None,
     }
 
 
@@ -221,6 +243,7 @@ def build_supertrend(universe="fno"):
 
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
         recent_flip_days_ago, recent_flip_date = _recent_bullish_flip(direction, df.index)
+        any_flip_days_ago, any_flip_date, any_flip_dir = _recent_flip(direction, df.index)
 
         ema50 = compute_ema(closes, EMA_FAST)
         # None (not False) when there isn't enough history for a real 50
@@ -236,6 +259,9 @@ def build_supertrend(universe="fno"):
             "flipped_today": flipped, "above_ema50": above_ema50, "date": latest_date,
             "recent_bullish_flip_days_ago": recent_flip_days_ago,
             "recent_bullish_flip_date": recent_flip_date,
+            "recent_flip_days_ago": any_flip_days_ago,
+            "recent_flip_date": any_flip_date,
+            "recent_flip_direction": any_flip_dir,
         }
         entries.append(entry)
         if flipped:
