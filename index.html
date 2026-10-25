@@ -14,6 +14,7 @@
     --bg:#08080a; --panel:#111114; --panel2:#17171b;
     --border:#2a2a30; --border-soft:#1e1e23;
     --amber:#ff9f1a; --amber-dim:#8a5a12; --amber-glow:rgba(255,159,26,0.12);
+    --subnav-active:#0068ff; --subnav-active-dim:#003e99;
     --white:#e9e9ec; --dim:#c8c8d0; --muted:#9a9aa4;
     --green:#00d26a; --green-dim:rgba(0,210,106,.1);
     --red:#ff3b30; --red-dim:rgba(255,59,48,.1);
@@ -231,7 +232,7 @@
   .subnav{display:flex;gap:4px;padding:10px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;position:sticky;top:0;background:var(--bg);z-index:5;}
   .subnav button{background:transparent;border:1px solid transparent;color:var(--dim);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.3px;padding:8px 14px;border-radius:6px;cursor:pointer;}
   .subnav button:hover{color:var(--white);background:var(--panel2);}
-  .subnav button.active{color:#000;background:var(--amber);}
+  .subnav button.active{color:#fff;background:var(--subnav-active);}
   .subtab-panel{display:none;}
   .subtab-panel.active{display:block;}
   .dash-pulse-value{font-size:26px;font-weight:700;color:var(--white);}
@@ -961,8 +962,8 @@
 
   <div class="subnav" id="subnav-ivp">
     <button data-subtab="signals">SIGNALS</button>
-    <button data-subtab="screen">SCREEN</button>
     <button data-subtab="results">RESULTS</button>
+    <button data-subtab="screen">SCREEN</button>
   </div>
 
   <div class="subtab-panel" data-subtab="screen">
