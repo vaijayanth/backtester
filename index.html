@@ -1020,7 +1020,7 @@
   <div class="subtab-panel" data-subtab="results">
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">PASSING SCREEN <span class="panel-meta" id="ivp-pass-count">—</span></div>
+      <div class="panel-title">STOCKS MATCHING SCREEN CRITERIA <span class="panel-meta" id="ivp-pass-count">—</span></div>
     </div>
     <div class="table-scroll" style="max-height:560px;">
       <table class="list-table">
@@ -1033,7 +1033,7 @@
         <tbody id="ivp-body"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
       </table>
     </div>
-    <div class="row-count" id="ivp-empty" style="display:none;">No F&amp;O stocks currently pass this screen.</div>
+    <div class="row-count" id="ivp-empty" style="display:none;">No F&amp;O stocks currently match these criteria.</div>
   </div>
 
   <div class="panel">
@@ -4376,7 +4376,7 @@ function renderIvpScreener(){
   if(!passing.length){
     document.getElementById('ivp-body').innerHTML = '';
     document.getElementById('ivp-empty').style.display = 'block';
-    document.getElementById('ivp-empty').textContent = 'No F&O stocks currently pass this screen.';
+    document.getElementById('ivp-empty').textContent = 'No F&O stocks currently match these criteria.';
     return;
   }
   document.getElementById('ivp-empty').style.display = 'none';
