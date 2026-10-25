@@ -7,6 +7,7 @@ Single-file `index.html` frontend hosted on GitHub Pages, GitHub Actions as the 
 
 **Read before touching the relevant area:**
 - [`PLATFORM.md`](PLATFORM.md) — always, first
+- [`docs/STRATEGY_SST.md`](docs/STRATEGY_SST.md) / [`docs/STRATEGY_OPTIONS.md`](docs/STRATEGY_OPTIONS.md) / [`docs/STRATEGY_DIVIDEND.md`](docs/STRATEGY_DIVIDEND.md) — any trading rule question (entry/exit/sizing/adjustment logic). Each strategy's live variants are kept explicitly distinct in these files — don't assume "equity swing" or "options selling" means one single rule set, check which page/variant you're actually touching.
 - [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — any data source, schema, or precedence question (Holdings-vs-FIFO, Supertrend/RSI feed, expiry-date logic, broker position formats)
 - [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) — any Apps Script URL, Sheet ID, or external connector
 - [`docs/SPEC.md`](docs/SPEC.md) — any non-trivial engineering change. Full architecture and every design decision, including reversed ones, is recorded here. Nothing in this repo should contradict it; if a change requires deviating from it, the spec gets updated as part of that change, not left stale.

@@ -22,7 +22,10 @@
 Full detail on each data source's schema and trust rules: [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
 Full detail on every external URL/Sheet ID/credential surface: [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md).
 Engineering architecture and the full decision history: [`docs/SPEC.md`](docs/SPEC.md).
-Strategy rules (entry/exit/sizing/adjustment logic) per strategy: `docs/STRATEGY_*.md` — **not yet extracted from prose; planned next pass, not done as of this file's creation.** Until then, the authoritative strategy text lives in `vaijayanth/TradingJournal`'s `CLAUDE.md` (SST + Options sections) — read it there, don't assume it's been duplicated here yet.
+Strategy rules (entry/exit/sizing/adjustment logic), one file per strategy family:
+- [`docs/STRATEGY_SST.md`](docs/STRATEGY_SST.md) — equity swing, all 3 live variants (original SST, 52-Week High Forward Journal, Dhan Covered Call equity leg) kept explicitly distinct, not conflated
+- [`docs/STRATEGY_OPTIONS.md`](docs/STRATEGY_OPTIONS.md) — the real options-selling strategy (bidirectional strangles, A1-A4 adjustments, full watchlist) vs. the simpler SELL CALL/PUT screening heuristic shown on 3 other pages — also kept explicitly distinct
+- [`docs/STRATEGY_DIVIDEND.md`](docs/STRATEGY_DIVIDEND.md) — dividend/longterm accumulation signal
 
 ## Doc layering rule (why these files exist, not just what)
 
