@@ -959,6 +959,13 @@
     </div>
   </div>
 
+  <div class="subnav" id="subnav-ivp">
+    <button data-subtab="screen">SCREEN</button>
+    <button data-subtab="results">RESULTS</button>
+    <button data-subtab="signals">SIGNALS</button>
+  </div>
+
+  <div class="subtab-panel" data-subtab="screen">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPLOAD SENSIBULL DATA <span class="panel-meta">weekly IVP refresh — stored in Google Sheet, synced across devices</span></div></div>
     <div style="padding:18px;">
@@ -1008,7 +1015,9 @@
       <div class="dash-footnote">RSI modifier reminder (your own rule): RSI&gt;70 → increase CE lots, sell further OTM · RSI&lt;30 → widen PE side, move toward equal ratio · RSI 40-60 → standard strangle, CE-heavy default. RSI14 here is as of the last backfilled close, joined from market_screens.json.</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+  <div class="subtab-panel" data-subtab="results">
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">PASSING SCREEN <span class="panel-meta" id="ivp-pass-count">—</span></div>
@@ -1041,7 +1050,9 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--amber);">
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="ivp-opt-count">—</span></div></div>
     <div style="padding:14px 18px;">
@@ -1055,6 +1066,7 @@
     </div>
     <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
   <div class="footer-note">
     Source: manual Sensibull (Zerodha) export, weekly refresh — see Dashboard's Upcoming Results footnote for why this isn't automated.
@@ -4222,6 +4234,7 @@ function ivpLoadSupertrend(st){
 // has no rows yet or is unreachable.
 async function initIvpScreener(){
   ivpInitialized = true;
+  subTabInit('ivp', ['screen', 'results', 'signals']);
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
