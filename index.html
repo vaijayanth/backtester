@@ -1055,10 +1055,11 @@
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--amber);">
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="ivp-opt-count">—</span></div></div>
-    <div style="padding:14px 18px;">
+    <div class="stat-row" id="ivp-opt-summary" style="padding:0 18px 14px;"></div>
+    <div style="padding:0 18px 14px;">
       <input class="search-box" id="ivp-opt-search" placeholder="filter symbol..." style="max-width:260px;">
     </div>
-    <div class="table-scroll" style="max-height:560px;">
+    <div class="table-scroll" style="max-height:none;overflow-y:visible;">
       <table class="list-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
         <tbody id="ivp-opt-body"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
@@ -4275,6 +4276,7 @@ function ivpRenderOptionsSignal(){
   // uploaded Google Sheet data).
   const ivpPctBySymbol = {};
   ((ivpData && ivpData.entries) || []).forEach(e => { ivpPctBySymbol[e.symbol] = e.iv_percentile; });
+  let sellCallCount = 0, sellPutCount = 0;
   tbody.innerHTML = universe.length ? universe.map(sym => {
     const st = ivpStBySymbol[sym];
     const stColor = st && st.color ? st.color : null;
@@ -4282,6 +4284,8 @@ function ivpRenderOptionsSignal(){
     const ivp = ivpPctBySymbol[sym];
     const sellCall = stColor === 'red' || (rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT);
     const sellPut = stColor === 'green' || (rsi != null && rsi < IVP_OPT_RSI_OVERSOLD);
+    if(sellCall) sellCallCount++;
+    if(sellPut) sellPutCount++;
     return `<tr>
       <td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
@@ -4292,6 +4296,17 @@ function ivpRenderOptionsSignal(){
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" class="loading">No matching stocks.</td></tr>';
+
+  const summaryEl = document.getElementById('ivp-opt-summary');
+  if(summaryEl){
+    const neitherCount = universe.length - sellCallCount - sellPutCount;
+    summaryEl.innerHTML = `
+      <div class="stat"><div class="stat-label">SELL CALL</div><div class="stat-value" style="color:var(--red);">${sellCallCount}</div></div>
+      <div class="stat"><div class="stat-label">SELL PUT</div><div class="stat-value" style="color:var(--green);">${sellPutCount}</div></div>
+      <div class="stat"><div class="stat-label">NO SIGNAL</div><div class="stat-value" style="color:var(--muted);">${neitherCount}</div></div>
+      <div class="stat"><div class="stat-label">UNIVERSE</div><div class="stat-value">${universe.length}</div></div>
+    `;
+  }
 }
 
 function ivpDaysToEarnings(eventDate){
