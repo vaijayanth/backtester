@@ -2114,13 +2114,13 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">ICICI DIVIDEND LONGTERM</div>
-      <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 30, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
+      <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 20, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
     </div>
     <div id="div-data-asof" style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);">—</div>
   </div>
 
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — RSI14 &lt; 30 <span class="panel-meta" id="div-entry-count">—</span></div>
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — RSI14 &lt; 20 <span class="panel-meta" id="div-entry-count">—</span></div>
       <button class="refresh-btn" id="div-refresh-btn" title="Refresh">↻</button>
     </div>
     <div class="table-scroll">
@@ -2129,7 +2129,7 @@
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">RSI14 below 30. ₹20,000 suggested add, max once per week per stock — this page doesn't log trades, so tracking that cadence is on you. Supertrend shown for context only, it doesn't gate this signal.</div>
+    <div class="dash-footnote">RSI14 below 20. ₹20,000 suggested add, max once per week per stock — this page doesn't log trades, so tracking that cadence is on you. Supertrend shown for context only, it doesn't gate this signal.</div>
   </div>
 
   <div class="panel" style="border-color:var(--amber);">
@@ -9020,11 +9020,13 @@ function dhccInit(){
 
 // ============================================================
 // ICICI DIVIDEND LONGTERM — fixed 29-stock universe. Entry signal only
-// (RSI14 < 30, suggested add ₹20,000, max once/week — tracked by the
+// (RSI14 < 20, suggested add ₹20,000, max once/week — tracked by the
 // user, not this page), no trade logging, no position tracking, no
 // Google Sheet at all. Options leg identical to the Dhan Covered Call
 // page's: sell Call when Supertrend red OR RSI14>70, sell Put when
-// Supertrend green OR RSI14<30, whole universe regardless of holding.
+// Supertrend green OR RSI14<30, whole universe regardless of holding
+// (deliberately still 30 — see DIV_ENTRY_RSI_THRESHOLD below, which is
+// the separate, tighter threshold used only by the equity entry signal).
 // Reuses eqFetchSupertrend/eqFetchWeek52 (which also populates
 // window._eqRsiMap) and dh252FmtRs/FmtPct/FmtDataAsOf — nothing new to
 // fetch or duplicate.
@@ -9035,6 +9037,7 @@ const DIV_UNIVERSE = [
 ];
 const DIV_RSI_OVERSOLD = 30;
 const DIV_RSI_OVERBOUGHT = 70;
+const DIV_ENTRY_RSI_THRESHOLD = 20; // equity add-on entry signal only — distinct from DIV_RSI_OVERSOLD (options sell-put thesis, still 30)
 const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
@@ -9057,7 +9060,7 @@ function divRenderSignals(){
 
   const entries = DIV_UNIVERSE.filter(sym => {
     const rsi = rsiMap[sym];
-    return rsi != null && rsi < DIV_RSI_OVERSOLD;
+    return rsi != null && rsi < DIV_ENTRY_RSI_THRESHOLD;
   });
   document.getElementById('div-entry-count').textContent = entries.length;
   document.getElementById('div-entry-tbody').innerHTML = entries.length ? entries.map(sym => {
@@ -9070,7 +9073,7 @@ function divRenderSignals(){
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${stFlipLabel(st)}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;30 signals right now.</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;20 signals right now.</td></tr>';
 
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
   document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
