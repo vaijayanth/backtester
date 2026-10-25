@@ -1022,6 +1022,7 @@
     <div class="panel-head">
       <div class="panel-title">STOCKS MATCHING SCREEN CRITERIA <span class="panel-meta" id="ivp-pass-count">—</span></div>
     </div>
+    <div id="ivp-pass-criteria" style="padding:0 18px 12px;font-size:11px;color:var(--muted);">—</div>
     <div class="table-scroll" style="max-height:560px;">
       <table class="list-table">
         <thead>
@@ -4276,7 +4277,7 @@ function ivpRenderOptionsSignal(){
   // uploaded Google Sheet data).
   const ivpPctBySymbol = {};
   ((ivpData && ivpData.entries) || []).forEach(e => { ivpPctBySymbol[e.symbol] = e.iv_percentile; });
-  let sellCallCount = 0, sellPutCount = 0;
+  let sellCallCount = 0, sellPutCount = 0, rsiOverboughtCount = 0, rsiOversoldCount = 0;
   tbody.innerHTML = universe.length ? universe.map(sym => {
     const st = ivpStBySymbol[sym];
     const stColor = st && st.color ? st.color : null;
@@ -4286,6 +4287,8 @@ function ivpRenderOptionsSignal(){
     const sellPut = stColor === 'green' || (rsi != null && rsi < IVP_OPT_RSI_OVERSOLD);
     if(sellCall) sellCallCount++;
     if(sellPut) sellPutCount++;
+    if(rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT) rsiOverboughtCount++;
+    if(rsi != null && rsi < IVP_OPT_RSI_OVERSOLD) rsiOversoldCount++;
     return `<tr>
       <td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
@@ -4299,11 +4302,11 @@ function ivpRenderOptionsSignal(){
 
   const summaryEl = document.getElementById('ivp-opt-summary');
   if(summaryEl){
-    const neitherCount = universe.length - sellCallCount - sellPutCount;
     summaryEl.innerHTML = `
       <div class="stat"><div class="stat-label">SELL CALL</div><div class="stat-value" style="color:var(--red);">${sellCallCount}</div></div>
       <div class="stat"><div class="stat-label">SELL PUT</div><div class="stat-value" style="color:var(--green);">${sellPutCount}</div></div>
-      <div class="stat"><div class="stat-label">NO SIGNAL</div><div class="stat-value" style="color:var(--muted);">${neitherCount}</div></div>
+      <div class="stat"><div class="stat-label">RSI &gt; 70</div><div class="stat-value" style="color:var(--red);">${rsiOverboughtCount}</div></div>
+      <div class="stat"><div class="stat-label">RSI &lt; 30</div><div class="stat-value" style="color:var(--green);">${rsiOversoldCount}</div></div>
       <div class="stat"><div class="stat-label">UNIVERSE</div><div class="stat-value">${universe.length}</div></div>
     `;
   }
@@ -4347,6 +4350,11 @@ function renderIvpScreener(){
   const minIvp = parseFloat(document.getElementById('ivp-min').value) || 0;
   const earningsBuffer = parseInt(document.getElementById('ivp-earnings-buffer').value) || 0;
   const isExpiryWeek = document.getElementById('ivp-expiry-week').checked;
+
+  const criteriaEl = document.getElementById('ivp-pass-criteria');
+  if(criteriaEl){
+    criteriaEl.textContent = `IVP ≥ ${minIvp}% · Excluding earnings within ${earningsBuffer} day${earningsBuffer===1?'':'s'}${term ? ` · Symbol contains "${term}"` : ''}`;
+  }
 
   let entries = ivpData.entries;
   if(term) entries = entries.filter(e => ivpSymLabel(e.symbol).toUpperCase().includes(term));
