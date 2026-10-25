@@ -223,6 +223,17 @@
   .dash-meta{font-size:11px;color:var(--muted);margin-top:6px;}
   .dash-split{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
   @media (max-width:860px){.dash-split{grid-template-columns:1fr;}}
+
+  /* In-page sub-tabs — breaks a long single-scroll page into grouped
+     sections, same idea as the main sidebar nav but scoped to one page.
+     Content panels for the inactive sub-tab are display:none, not
+     removed, so chart instances inside them survive a tab switch. */
+  .subnav{display:flex;gap:4px;padding:10px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;position:sticky;top:0;background:var(--bg);z-index:5;}
+  .subnav button{background:transparent;border:1px solid transparent;color:var(--dim);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.3px;padding:8px 14px;border-radius:6px;cursor:pointer;}
+  .subnav button:hover{color:var(--white);background:var(--panel2);}
+  .subnav button.active{color:#000;background:var(--amber);}
+  .subtab-panel{display:none;}
+  .subtab-panel.active{display:block;}
   .dash-pulse-value{font-size:26px;font-weight:700;color:var(--white);}
   .dash-pulse-value.green{color:var(--green);}
   .dash-pulse-value.red{color:var(--red);}
@@ -295,6 +306,12 @@
     </div>
   </div>
 
+  <div class="subnav" id="subnav-dashboard">
+    <button data-subtab="fno">F&amp;O SCREENS</button>
+    <button data-subtab="universe">FULL UNIVERSE &amp; RESULTS</button>
+  </div>
+
+  <div class="subtab-panel" data-subtab="fno">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">MARKET PULSE</div></div>
     <div class="stat-row" id="dash-pulse-row">
@@ -320,7 +337,10 @@
       </div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="fno">
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
@@ -348,7 +368,10 @@
       <div class="dash-footnote">Highest close within this repo's 5-year backfill window only — not a verified lifetime all-time-high for stocks that have traded longer.</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="fno">
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
@@ -375,7 +398,10 @@
       <div class="row-count" id="dash-rsi-os-empty" style="display:none;">No F&amp;O stocks currently oversold (RSI14 ≤ 30).</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="fno">
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
@@ -402,7 +428,10 @@
       <div class="row-count" id="dash-st-bear-empty" style="display:none;">No F&amp;O stocks flipped bearish today.</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="fno">
   <div class="panel">
     <div class="panel-head">
       <div class="panel-title">ENTRY SIGNALS <span class="panel-meta">F&amp;O · Supertrend flipped red&rarr;green today &middot; 50 EMA shown, not filtered</span></div>
@@ -416,7 +445,10 @@
     <div class="row-count" id="dash-st-entry-empty" style="display:none;">No F&amp;O stocks flipped bullish today.</div>
     <div class="dash-footnote">Your own rule: Supertrend(10,3) flips from red to green, with the 50 EMA position shown alongside — every fresh bullish flip is listed, whether or not it's above the 50 EMA.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="universe">
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
@@ -446,7 +478,10 @@
       <div class="dash-footnote">Highest close within this repo's 5-year backfill window only — not a verified lifetime all-time-high for stocks that have traded longer.</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="universe">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
     <div class="table-scroll" style="max-height:300px;">
@@ -458,6 +493,8 @@
     <div class="row-count" id="dash-results-empty" style="display:none;">No upcoming results in the current Sensibull snapshot.</div>
     <div class="dash-footnote">Source: manual Sensibull (Zerodha) export, not a live feed — NSE's own API blocks this project's hosting infrastructure (see docs/SPEC.md). Paste a fresh export to refresh; stale after ~1-2 weeks.</div>
   </div>
+  </div><!-- /subtab-panel -->
+
 
 </div>
 
@@ -1055,17 +1092,30 @@
 
   <div id="ot-results" style="display:none;">
 
+    <div class="subnav" id="subnav-opttrades">
+      <button data-subtab="overview">OVERVIEW</button>
+      <button data-subtab="perf">PERFORMANCE ANALYSIS</button>
+      <button data-subtab="positions">POSITIONS &amp; DETAIL</button>
+    </div>
+
+      <div class="subtab-panel" data-subtab="overview">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">SUMMARY <span class="panel-meta" id="ot-summary-meta">—</span></div></div>
       <div class="stat-row" id="ot-summary-row"></div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="overview">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">CALL vs PUT SPLIT</div></div>
       <div class="stat-row" id="ot-cepe-row"></div>
       <div class="dash-footnote">Your own rule (CLAUDE.md): CE-heavy default (~5CE:4PE), bidirectional ~80% of the time.</div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="perf">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">CALL vs PUT — WHICH IS WORKING <span class="panel-meta">closed positions only</span></div></div>
       <div class="stat-row" id="ot-cepe-perf-row"></div>
@@ -1075,20 +1125,29 @@
       </div>
       <div class="chart-box"><div id="chart-ot-cepe-pnl" style="height:220px;"></div></div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="perf">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">STOCK ROI — RETURN ON PREMIUM COLLECTED <span class="panel-meta">realised P&amp;L &divide; premium sold, stocks with &ge;2 closed positions</span></div></div>
       <div class="chart-box" style="max-height:600px;overflow-y:auto;"><div id="chart-ot-stock-roi" style="height:420px;"></div></div>
       <div class="dash-footnote" id="ot-roi-insight">—</div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="perf">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">TRAILING SL EFFECTIVENESS <span class="panel-meta">target: exit at 3&times; premium collected, on losing trades</span></div></div>
       <div class="stat-row" id="ot-sl-row"></div>
       <div class="chart-box"><div id="chart-ot-sl-hist" style="height:280px;"></div></div>
       <div class="dash-footnote" id="ot-sl-insight">—</div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">PER-STOCK BREAKDOWN <span class="panel-meta">click a column to sort</span></div></div>
       <div class="table-scroll">
@@ -1101,7 +1160,10 @@
         </table>
       </div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">WEEKLY / EXPIRY P&amp;L <span class="panel-meta">grouped by expiry date</span></div></div>
       <div class="table-scroll">
@@ -1111,7 +1173,10 @@
         </table>
       </div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
       <div class="panel-head"><div class="panel-title">ALL POSITIONS <span class="panel-meta">from your uploaded P&amp;L statement</span></div></div>
       <div class="controls">
@@ -1127,7 +1192,10 @@
         </table>
       </div>
     </div>
+      </div><!-- /subtab-panel -->
 
+
+      <div class="subtab-panel" data-subtab="positions">
     <div class="panel" id="ot-unparsed-panel" style="display:none;">
       <div class="panel-head"><div class="panel-title">UNPARSED SYMBOLS <span class="panel-meta">couldn't extract strike/expiry/CE-PE — excluded from analysis above</span></div></div>
       <div class="table-scroll" style="max-height:220px;">
@@ -1137,6 +1205,8 @@
         </table>
       </div>
     </div>
+      </div><!-- /subtab-panel -->
+
 
   </div>
 
@@ -1315,6 +1385,13 @@
     </div>
   </div>
 
+  <div class="subnav" id="subnav-eqdash">
+    <button data-subtab="overview">OVERVIEW</button>
+    <button data-subtab="pnl">P&amp;L &amp; RISK</button>
+    <button data-subtab="signals">SIGNALS &amp; BREADTH</button>
+  </div>
+
+  <div class="subtab-panel" data-subtab="overview">
   <!-- FY / Quarter summary -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">FY SUMMARY <span class="panel-meta" id="eqd-fy-label">—</span></div></div>
@@ -1322,7 +1399,10 @@
     <div class="stat-row" id="eqd-fy-row"></div>
     <div class="stat-row" id="eqd-qtr-row" style="border-top:1px solid var(--border-soft)"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="overview">
   <!-- KPI row -->
   <div class="dash-split">
     <div class="panel">
@@ -1334,27 +1414,39 @@
       <div class="stat-row" id="eqd-edge-row"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="overview">
   <!-- Performance summary -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">PERFORMANCE SUMMARY</div></div>
     <div class="stat-row" id="eqd-perf-row"></div>
     <div class="dash-footnote" id="eqd-perf-footer">—</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- Position sizing & portfolio limits -->
   <div class="panel" id="eqd-sizing-card">
     <div class="panel-head"><div class="panel-title">POSITION SIZING &amp; LIMITS</div></div>
     <div class="stat-row" id="eqd-sizing-row"></div>
     <div id="eqd-maxpos-alert" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;background:rgba(255,59,48,.12);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:700;"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- Loss buckets -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">LOSS BUCKETS <span class="panel-meta" id="eqd-lossbucket-meta">—</span></div></div>
     <div id="eqd-lossbucket-body"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- Sector P&L — open positions -->
   <div class="dash-split">
     <div class="panel">
@@ -1366,18 +1458,27 @@
       <div id="chart-eqd-sectorcap" style="min-height:280px;"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="overview">
   <!-- Equity curve -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
     <div id="chart-eqdash-equity"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">⚡ SYSTEM MOMENTUM — LAST 10 EXITS</div></div>
     <div id="eqd-momentum-body"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <!-- Sector breadth — universe signals -->
   <div class="dash-split">
     <div class="panel">
@@ -1389,7 +1490,10 @@
       <div id="chart-eqd-sectorturn" style="min-height:320px;"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- P&L Calendar -->
   <div class="panel">
     <div class="panel-head">
@@ -1402,7 +1506,10 @@
     </div>
     <div id="eqd-cal-body"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- Top stocks + loss summary -->
   <div class="dash-split">
     <div class="panel">
@@ -1419,7 +1526,10 @@
       <div class="stat-row" id="eqd-lossummary-row"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="pnl">
   <!-- Capital concentration -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">CAPITAL CONCENTRATION — TOP POSITIONS</div></div>
@@ -1430,7 +1540,10 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <!-- 52-Week High breadth -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">🚀 OPEN BOOK — 52-WEEK HIGH BREADTH <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
@@ -1442,12 +1555,17 @@
     </div>
     <div class="dash-footnote">Open positions within 5% of their 52-week high, closest first — a portfolio-wide breakout-strength read. Informational only, doesn't drive exit/add-on signals (see the Alerts page for the same list with position sizing).</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="overview">
   <!-- Heatmap -->
   <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS AT A GLANCE <span class="panel-meta" id="eqd-heatmap-meta">—</span></div></div>
     <div id="eqd-heatmap-body" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
+  </div><!-- /subtab-panel -->
+
 
 </div>
 
@@ -1750,6 +1868,13 @@
     </div>
   </div>
 
+  <div class="subnav" id="subnav-dhcc">
+    <button data-subtab="signals">SIGNALS</button>
+    <button data-subtab="positions">POSITIONS</button>
+    <button data-subtab="log">LOG &amp; RECONCILE</button>
+  </div>
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
       <button class="refresh-btn" id="dhcc-refresh-btn" title="Refresh from sheet">↻</button>
@@ -1765,7 +1890,10 @@
       <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--red);">
     <div class="panel-head"><div class="panel-title">🔴 EQUITY EXIT SIGNAL <span class="panel-meta" id="dhcc-exit-count">—</span></div></div>
     <div class="table-scroll">
@@ -1776,7 +1904,10 @@
     </div>
     <div class="dash-footnote">Supertrend red AND the position is in profit — exit the whole position. If Supertrend is red but the position is still in loss, hold — this rule doesn't fire until profit shows up.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
     <div class="panel-head"><div class="panel-title">🎯 EQUITY ENTRY SIGNAL <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
     <div class="table-scroll">
@@ -1787,7 +1918,10 @@
     </div>
     <div class="dash-footnote">Supertrend(10,3) daily is green and you don't already hold it. Log a BUY below if you take one. <span id="dhcc-entry-asof" style="color:var(--muted);"></span></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
     <div class="table-scroll">
@@ -1798,7 +1932,10 @@
     </div>
     <div class="dash-footnote">Supertrend green, position in loss, ≥7 calendar days since the last fill on that position (max one add per week). Add qty = 10% of current qty, rounded up.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--amber);">
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
     <div class="table-scroll">
@@ -1809,7 +1946,10 @@
     </div>
     <div class="dash-footnote">Whole 10-stock universe, regardless of whether you hold the equity. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Informational only — strike/expiry/qty and the 3&times; premium stoploss are yours to execute via GTT; nothing here is logged or tracked.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
       <div style="display:flex;gap:6px;">
@@ -1852,7 +1992,10 @@
       <div id="dhcc-bulk-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel" style="border-color:var(--amber);">
     <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
     <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
@@ -1868,7 +2011,10 @@
     </div>
     <div class="dash-footnote">Shows what's actually in the trade log for each weekday in range — can't know what signals existed on a day you forgot to check. For a flagged day, cross-check your broker's contract note, then click Backfill to jump to Bulk Entry with the date pre-filled.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head" id="dhcc-log-table-header" style="cursor:pointer;user-select:none;">
       <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dhcc-log-table-meta">—</span></div>
@@ -1887,7 +2033,10 @@
       <div class="dash-footnote" id="dhcc-log-table-footnote">Every row ever logged, any date. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (confirms first).</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dhcc-pos-count">—</span></div></div>
     <div class="table-scroll">
@@ -1897,7 +2046,10 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dhcc-closed-count">—</span></div></div>
     <div class="table-scroll">
@@ -1907,6 +2059,8 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
+
 
 </div>
 
@@ -1949,6 +2103,49 @@
 </div><!-- /.main -->
 
 <script>
+// ============================================================
+// IN-PAGE SUB-TABS — breaks a long single-scroll page into grouped
+// sections. Generic: any page can opt in by giving its sub-tab-bar
+// container the id `subnav-<pageId>` (buttons: data-subtab="<id>") and
+// wrapping each content group in `<div class="subtab-panel"
+// data-subtab="<id>">`. Call subTabInit('<pageId>', ['id1','id2',...])
+// once from that page's own init function. Remembers the last-active
+// sub-tab per page in localStorage (single-user app — this is a
+// convenience, not a multi-user layout-picker feature).
+// ============================================================
+const SUBTAB_KEY_PREFIX = 'tradeiq_subtab_';
+
+function subTabInit(pageId, tabIds){
+  const nav = document.getElementById('subnav-' + pageId);
+  if(!nav) return;
+  const saved = localStorage.getItem(SUBTAB_KEY_PREFIX + pageId);
+  const initial = tabIds.includes(saved) ? saved : tabIds[0];
+  subTabSwitch(pageId, initial, tabIds);
+  nav.querySelectorAll('button[data-subtab]').forEach(btn => {
+    btn.onclick = () => subTabSwitch(pageId, btn.dataset.subtab, tabIds);
+  });
+}
+
+function subTabSwitch(pageId, activeId, tabIds){
+  const page = document.getElementById('page-' + pageId);
+  if(!page) return;
+  const nav = document.getElementById('subnav-' + pageId);
+  if(nav) nav.querySelectorAll('button[data-subtab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === activeId);
+  });
+  page.querySelectorAll('.subtab-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.subtab === activeId);
+  });
+  localStorage.setItem(SUBTAB_KEY_PREFIX + pageId, activeId);
+  // ApexCharts instances created while their container was display:none
+  // (an inactive sub-tab) render at zero width — it listens for window
+  // resize and recalculates, so firing one after the tab becomes visible
+  // fixes any chart that was hidden at creation time. Works generically
+  // across every sub-tabbed page without needing each chart's JS
+  // variable name here.
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+}
+
 // ============================================================
 // NAV
 // ============================================================
@@ -2020,6 +2217,7 @@ let dashInitialized = false;
 
 async function initDashboard(){
   dashInitialized = true;
+  subTabInit('dashboard', ['fno', 'universe']);
   await Promise.all([loadMarketSnapshot(), loadMarketScreens(), loadMarketScreensFull(), loadEarningsCalendar(), loadPipelineStatus(), loadSupertrend()]);
 }
 
@@ -4680,6 +4878,7 @@ async function otRenderFromDb(){
 let otInitialized = false;
 async function otInit(){
   otInitialized = true;
+  subTabInit('opttrades', ['overview', 'perf', 'positions']);
   otShowLastFetch();
   await otRenderFromDb();
 }
@@ -6079,6 +6278,7 @@ let eqDashCalOffset = 0; // months from current month, for P&L Calendar nav
 
 function eqDashInit(){
   eqDashInitialized = true;
+  subTabInit('eqdash', ['overview', 'pnl', 'signals']);
   eqDashRefresh();
 }
 
@@ -8730,6 +8930,7 @@ async function dhccLogDeleteRow(row){
 let dhccInitialized = false;
 function dhccInit(){
   dhccInitialized = true;
+  subTabInit('dhcc', ['signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dhcc-f-date').value = todayIso;
   document.getElementById('dhcc-f-symbol').innerHTML = dhccSymbolOptionsHtml();
