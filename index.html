@@ -960,9 +960,9 @@
   </div>
 
   <div class="subnav" id="subnav-ivp">
+    <button data-subtab="signals">SIGNALS</button>
     <button data-subtab="screen">SCREEN</button>
     <button data-subtab="results">RESULTS</button>
-    <button data-subtab="signals">SIGNALS</button>
   </div>
 
   <div class="subtab-panel" data-subtab="screen">
@@ -4234,7 +4234,7 @@ function ivpLoadSupertrend(st){
 // has no rows yet or is unreachable.
 async function initIvpScreener(){
   ivpInitialized = true;
-  subTabInit('ivp', ['screen', 'results', 'signals']);
+  subTabInit('ivp', ['signals', 'screen', 'results']);
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
