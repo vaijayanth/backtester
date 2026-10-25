@@ -1700,6 +1700,13 @@
     </div>
   </div>
 
+  <div class="subnav" id="subnav-dh252">
+    <button data-subtab="signals">SIGNALS</button>
+    <button data-subtab="positions">POSITIONS</button>
+    <button data-subtab="log">LOG &amp; RECONCILE</button>
+  </div>
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
@@ -1721,7 +1728,10 @@
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--red);">
     <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
     <div class="table-scroll">
@@ -1732,7 +1742,10 @@
     </div>
     <div class="dash-footnote">Supertrend flipped red — exit the whole position regardless of profit or loss. This is the rule you're building the habit of actually following.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
@@ -1743,7 +1756,10 @@
     </div>
     <div class="dash-footnote">Close at/above the trailing 52-week high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span></div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
@@ -1753,7 +1769,10 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
     <div class="table-scroll">
@@ -1764,7 +1783,10 @@
     </div>
     <div class="dash-footnote">Close ≤6% below weighted-average cost, Supertrend green, ≥7 calendar days since the last fill on that position.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
       <div style="display:flex;gap:6px;">
@@ -1807,7 +1829,10 @@
       <div id="dh252-bulk-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel" style="border-color:var(--amber);">
     <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
     <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
@@ -1823,7 +1848,10 @@
     </div>
     <div class="dash-footnote">Shows what's actually in the trade log for each weekday in range — it can't know what signals you had on a day you forgot to even check (signals aren't stored historically, only today's are ever computed). For a day flagged with no trades, cross-check your broker's contract note / trade book for that date, then click Backfill to jump to Bulk Entry with the date pre-filled.</div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head" id="dh252-log-table-header" style="cursor:pointer;user-select:none;">
       <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
@@ -1842,7 +1870,10 @@
       <div class="dash-footnote" id="dh252-log-table-footnote">Every row ever logged, any date — not just today's. Edit fixes a wrong qty/price/date in place; Delete removes the row entirely (asks to confirm first). Both rewrite the Google Sheet directly, so refresh everything downstream (open/closed positions, reconciliation) once saved.</div>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
 
+
+  <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dh252-closed-count">—</span></div></div>
     <div class="table-scroll">
@@ -1852,6 +1883,8 @@
       </table>
     </div>
   </div>
+  </div><!-- /subtab-panel -->
+
 
 </div>
 
@@ -8027,6 +8060,7 @@ async function dh252LogTrade(){
 let dh252Initialized = false;
 function dh252Init(){
   dh252Initialized = true;
+  subTabInit('dh252', ['signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dh252-f-date').value = todayIso;
   document.getElementById('dh252-sheet-url').value = dh252GetSheetUrl();
