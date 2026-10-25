@@ -1169,6 +1169,29 @@
       <div class="stat-row" id="op-summary-row"></div>
     </div>
 
+    <div class="panel" style="border-color:var(--amber);">
+      <div class="panel-head">
+        <div class="panel-title">⚠ EXIT SIGNAL <span class="panel-meta" id="op-exit-count">—</span></div>
+      </div>
+      <div style="padding:0 18px 12px;font-size:11px;color:var(--muted);">
+        Short legs where the entry thesis no longer holds — SOLD CALL needs Supertrend(10,3) red or RSI14&gt;70; SOLD PUT needs Supertrend green or RSI14&lt;30 (same rule as every other Options Signal panel in this app). This is a trend/RSI early-warning only — it does NOT replace your own 60-70% profit-target exit or the breakeven-triggered A1-A4 adjustment strategies (CLAUDE.md). Long/hedge legs are excluded — no directional rule applies to those.
+      </div>
+      <div class="table-scroll" style="max-height:420px;">
+        <table class="op-table">
+          <thead><tr>
+            <th style="text-align:left;padding:10px 14px;">Broker</th>
+            <th style="text-align:left;padding:10px 14px;">Instrument</th>
+            <th style="text-align:right;padding:10px 14px;">Qty</th>
+            <th style="text-align:right;padding:10px 14px;">P&amp;L</th>
+            <th style="text-align:center;padding:10px 14px;">Supertrend</th>
+            <th style="text-align:right;padding:10px 14px;">RSI14</th>
+            <th style="text-align:left;padding:10px 14px;">Thesis broken</th>
+          </tr></thead>
+          <tbody id="op-exit-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="controls" style="padding:14px 18px 0;">
       <input type="text" class="search-box" id="op-search" placeholder="filter by stock..." oninput="opRenderTable()">
     </div>
@@ -7849,6 +7872,62 @@ function opMonthLabel(isoDate){
   return d.toLocaleDateString('en-US', { month: 'short' });
 }
 
+// Exit-signal data: same supertrend.json / market_screens.json files and
+// same independent-OR rule as ivpRenderOptionsSignal/dhccRenderSignals/
+// divRenderSignals — SELL CALL thesis needs Supertrend red OR RSI14>70,
+// SELL PUT thesis needs Supertrend green OR RSI14<30. Here it's run in
+// reverse: flag an already-open SHORT leg once NEITHER condition for its
+// side holds any more (the thesis that justified selling it has broken).
+let opStBySymbol = {};  // 'RELIANCE.NS' -> {close, color}
+let opRsiBySymbol = {}; // 'RELIANCE.NS' -> rsi14
+const OP_RSI_OVERBOUGHT = 70;
+const OP_RSI_OVERSOLD = 30;
+
+async function opLoadSignalData(){
+  try{
+    const [stResp, screensResp] = await Promise.all([
+      fetch('supertrend.json?t=' + Date.now()),
+      fetch('market_screens.json?t=' + Date.now()),
+    ]);
+    opStBySymbol = {};
+    if(stResp.ok){
+      const st = await stResp.json();
+      (st.entries || []).forEach(e => { opStBySymbol[e.symbol] = e; });
+    }
+    opRsiBySymbol = {};
+    if(screensResp.ok){
+      const screens = await screensResp.json();
+      (screens.rsi_all || []).forEach(r => { opRsiBySymbol[r.symbol] = r.rsi14; });
+    }
+  }catch(err){
+    console.error('Open Positions exit-signal data failed:', err);
+  }
+}
+
+// Only SHORT legs (bs === 'S') carry a directional thesis under this
+// rule — a bought/hedge leg has none, so it's excluded rather than
+// guessed at.
+function opComputeExitSignals(rows){
+  return rows.filter(r => r.bs === 'S').map(r => {
+    const key = r.symbol.toUpperCase() + '.NS';
+    const st = opStBySymbol[key];
+    const stColor = st && st.color ? st.color : null;
+    const rsi = opRsiBySymbol[key];
+    const haveData = stColor != null || rsi != null;
+    let broken = false, reason = '';
+    if(haveData){
+      if(r.type === 'CALL'){
+        const thesisHolds = stColor === 'red' || (rsi != null && rsi > OP_RSI_OVERBOUGHT);
+        if(!thesisHolds){ broken = true; reason = 'Sold CALL, but trend turned bullish (not red/overbought)'; }
+      }else if(r.type === 'PUT'){
+        const thesisHolds = stColor === 'green' || (rsi != null && rsi < OP_RSI_OVERSOLD);
+        if(!thesisHolds){ broken = true; reason = 'Sold PUT, but trend turned bearish (not green/oversold)'; }
+      }
+    }
+    return { ...r, stColor, rsi, broken, reason, haveData };
+  }).filter(r => r.broken);
+}
+
 async function opRenderFromDb(){
   const metaEl = document.getElementById('op-db-meta');
   metaEl.innerHTML = '<span class="eq-spinner"></span> Fetching from sheet…';
@@ -7857,6 +7936,7 @@ async function opRenderFromDb(){
       opFetchBrokerSheet(OP_BROKER_SHEETS.zerodha).catch(() => []),
       opFetchBrokerSheet(OP_BROKER_SHEETS.dhan).catch(() => []),
       opFetchBrokerSheet(OP_BROKER_SHEETS.icici).catch(() => []),
+      opLoadSignalData(),
     ]);
     const rows = [];
     [['zerodha', zerodha], ['dhan', dhan], ['icici', icici]].forEach(([broker, brokerRows]) => {
@@ -7880,10 +7960,38 @@ async function opRenderFromDb(){
     const now = Date.now();
     metaEl.textContent = `${rows.length} open leg${rows.length===1?'':'s'} across 3 brokers · last fetched ${otFmtTime(now)}`;
     document.getElementById('op-results').style.display = rows.length ? 'block' : 'none';
+    opRenderExitSignals();
     opRenderTable();
   }catch(err){
     metaEl.textContent = 'Could not reach the Sheet: ' + err.message;
   }
+}
+
+function opRenderExitSignals(){
+  const signals = opComputeExitSignals(opAllRows);
+  document.getElementById('op-exit-count').textContent =
+    signals.length ? `${signals.length} position${signals.length===1?'':'s'}` : 'none';
+  const body = document.getElementById('op-exit-body');
+  if(!signals.length){
+    body.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--muted);">No short leg currently breaks its Supertrend/RSI thesis.</td></tr>';
+    return;
+  }
+  body.innerHTML = signals.map(s => {
+    const monthLabel = opMonthLabel(s.expiry);
+    const typeAbbr = s.type === 'CALL' ? 'CE' : s.type === 'PUT' ? 'PE' : s.type;
+    const pnlClass = s.pnl >= 0 ? 'op-pnl-pos' : 'op-pnl-neg';
+    const stText = s.stColor ? s.stColor.toUpperCase() : '—';
+    const stColorCss = s.stColor === 'green' ? 'var(--green)' : s.stColor === 'red' ? 'var(--red)' : 'var(--muted)';
+    return `<tr>
+      <td><span class="op-broker-tag ${s.broker}">${s.broker.toUpperCase()}</span></td>
+      <td>${s.symbol} ${monthLabel.toUpperCase()} ${s.strike} ${typeAbbr}</td>
+      <td style="text-align:right;" class="op-qty-short">${s.qty}</td>
+      <td style="text-align:right;" class="${pnlClass}">${s.pnl>=0?'+':''}${s.pnl.toLocaleString('en-IN',{maximumFractionDigits:2})}</td>
+      <td style="text-align:center;color:${stColorCss};font-weight:700;">${stText}</td>
+      <td style="text-align:right;">${s.rsi != null ? s.rsi.toFixed(1) : '—'}</td>
+      <td style="color:var(--amber);">${s.reason}</td>
+    </tr>`;
+  }).join('');
 }
 
 function opGroupRows(rows){
