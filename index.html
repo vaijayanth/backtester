@@ -2270,14 +2270,25 @@ function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
 // recent_flip_days_ago/recent_flip_date/recent_flip_direction (either
 // direction, last 7 trading days; separate from the bullish-only
 // recent_bullish_flip_* fields the Equity Alerts re-entry signal uses).
+// Falls back to current_streak_days/current_streak_start_date (uncapped —
+// "how long has today's colour held", regardless of whether that's 2 days
+// or 2 months) once the flip is older than the 7-day window, so a
+// long-settled trend shows "GREEN 132d" instead of a bare em-dash.
 // `entry` is one supertrend.json entries[] row (or null/undefined).
 function stFlipLabel(entry){
-  if(!entry || entry.recent_flip_days_ago == null) return '<span style="color:var(--muted);">—</span>';
-  const days = entry.recent_flip_days_ago;
-  const dirLabel = entry.recent_flip_direction === 'up' ? 'GREEN' : 'RED';
-  const dirColor = entry.recent_flip_direction === 'up' ? 'var(--green)' : 'var(--red)';
-  const daysLabel = days === 0 ? '0' : String(days);
-  return `<span style="color:${dirColor};font-weight:600;">Flipped to ${dirLabel} (${daysLabel})</span>`;
+  if(!entry) return '<span style="color:var(--muted);">—</span>';
+  if(entry.recent_flip_days_ago != null){
+    const days = entry.recent_flip_days_ago;
+    const dirLabel = entry.recent_flip_direction === 'up' ? 'GREEN' : 'RED';
+    const dirColor = entry.recent_flip_direction === 'up' ? 'var(--green)' : 'var(--red)';
+    return `<span style="color:${dirColor};font-weight:600;">Flipped to ${dirLabel} (${days})</span>`;
+  }
+  if(entry.current_streak_days != null && entry.color){
+    const dirLabel = entry.color === 'green' ? 'GREEN' : 'RED';
+    const dirColor = entry.color === 'green' ? 'var(--green)' : 'var(--red)';
+    return `<span style="color:${dirColor};opacity:0.75;">${dirLabel} ${entry.current_streak_days}d</span>`;
+  }
+  return '<span style="color:var(--muted);">—</span>';
 }
 
 async function loadMarketScreens(){

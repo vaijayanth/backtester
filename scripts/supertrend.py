@@ -164,6 +164,30 @@ def _recent_bullish_flip(direction, dates):
     return None, None
 
 
+def _current_streak(direction, dates):
+    """How long has the CURRENT colour held, uncapped — unlike
+    _recent_flip/_recent_bullish_flip (both hard-capped at
+    RECENT_FLIP_LOOKBACK_DAYS so they only ever answer "did it flip
+    recently"). A stock that's been green for 45 days gets a null from
+    both of those; this answers "since when" regardless of how long ago.
+    Scans backward from today to the earliest day still matching today's
+    direction. Returns (streak_days, start_date_str) — streak_days is 0
+    when today itself is the start (i.e. flipped today, same day
+    _recent_flip would report days_ago=0). None/None if today's
+    direction is unknown or there's no history to walk."""
+    n = len(direction)
+    if n == 0 or direction[-1] is None:
+        return None, None
+    today_dir = direction[-1]
+    start_idx = n - 1
+    for idx in range(n - 2, -1, -1):
+        if direction[idx] != today_dir:
+            break
+        start_idx = idx
+    streak_days = (n - 1) - start_idx
+    return streak_days, str(dates[start_idx].date())
+
+
 def _recent_flip(direction, dates):
     """Same lookback as _recent_bullish_flip, but either direction — a
     red->green OR a green->red flip in the last RECENT_FLIP_LOOKBACK_DAYS
@@ -197,6 +221,7 @@ def _cmp_only_entry(symbol, latest_close, latest_date):
         "color": None, "flipped_today": False, "above_ema50": None, "date": latest_date,
         "recent_bullish_flip_days_ago": None, "recent_bullish_flip_date": None,
         "recent_flip_days_ago": None, "recent_flip_date": None, "recent_flip_direction": None,
+        "current_streak_days": None, "current_streak_start_date": None,
     }
 
 
@@ -244,6 +269,7 @@ def build_supertrend(universe="fno"):
         flipped = yesterday_dir is not None and today_dir != yesterday_dir
         recent_flip_days_ago, recent_flip_date = _recent_bullish_flip(direction, df.index)
         any_flip_days_ago, any_flip_date, any_flip_dir = _recent_flip(direction, df.index)
+        streak_days, streak_start_date = _current_streak(direction, df.index)
 
         ema50 = compute_ema(closes, EMA_FAST)
         # None (not False) when there isn't enough history for a real 50
@@ -262,6 +288,8 @@ def build_supertrend(universe="fno"):
             "recent_flip_days_ago": any_flip_days_ago,
             "recent_flip_date": any_flip_date,
             "recent_flip_direction": any_flip_dir,
+            "current_streak_days": streak_days,
+            "current_streak_start_date": streak_start_date,
         }
         entries.append(entry)
         if flipped:
