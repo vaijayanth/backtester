@@ -1,13 +1,21 @@
 # Backtester — Project Context for Claude
 
 ## What this is
-Shared backtesting engine + manual strategy builder, serving both the SST equity swing system (TradingJournal) and the deferred options strangle strategy (Options Terminal). Single-file `index.html` frontend hosted on GitHub Pages, GitHub Actions as the compute/scheduling layer, no hosted database.
+This repo is the canonical home of **VJ TradeIQ** — read [`PLATFORM.md`](PLATFORM.md) first, every session, before anything else here. It has the strategy→repo→data→integration map and the doc-layering rule the rest of this file assumes. "VJ TradeIQ" is a UI/brand name only (used in the sidebar, docs, commit messages) — it does not rename this repo, any file, or any existing identifier.
 
-Full architecture and every design decision — including the ones that reverse or correct an earlier decision — is recorded in [`docs/SPEC.md`](docs/SPEC.md). Read it before making a non-trivial change; nothing in this repo should contradict it, and if a change requires deviating from it, the spec gets updated as part of that change, not left stale.
+Single-file `index.html` frontend hosted on GitHub Pages, GitHub Actions as the compute/scheduling layer, no hosted database. `vaijayanth/TradingJournal` is a frozen legacy sibling (no new strategy/data rules go there — see its own CLAUDE.md banner).
 
-## Equity Trading Journal — Reconciliation Rule (CRITICAL)
+**Read before touching the relevant area:**
+- [`PLATFORM.md`](PLATFORM.md) — always, first
+- [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — any data source, schema, or precedence question (Holdings-vs-FIFO, Supertrend/RSI feed, expiry-date logic, broker position formats)
+- [`docs/INTEGRATIONS.md`](docs/INTEGRATIONS.md) — any Apps Script URL, Sheet ID, or external connector
+- [`docs/SPEC.md`](docs/SPEC.md) — any non-trivial engineering change. Full architecture and every design decision, including reversed ones, is recorded here. Nothing in this repo should contradict it; if a change requires deviating from it, the spec gets updated as part of that change, not left stale.
 
-This repo hosts a synced copy of the Equity Trading Journal feature (FIFO positions computed from a Zerodha Tradebook, reconciled against an uploaded Holdings snapshot). **On any mismatch between FIFO and Holdings, Holdings is always the final reference** — it's what Zerodha actually shows the user holds right now. The full rule (how to tell a split from an off-market transfer from a merger, and which `index.html` structures — `EQ_SPLIT_ADJUSTMENTS` / `EQ_MANUAL_FILLS` — to use for each) is documented in `vaijayanth/TradingJournal`'s `CLAUDE.md` under "Equity Trading Journal — Reconciliation Rule". Any fix made there must be mirrored here, and vice versa — the two `index.html` Equity Journal sections (search `EQ_LONGTERM_EXCLUDE`) must stay in sync.
+## Equity Trading Journal — sync tax with the legacy repo (CRITICAL)
+
+This repo hosts a synced copy of the Equity Trading Journal feature. **This is a standing sync burden, not a design choice** — it exists only because `vaijayanth/TradingJournal` hasn't been sunset yet. Any fix made to one `index.html`'s Equity Journal section (search `EQ_LONGTERM_EXCLUDE`) must be mirrored to the other until cutover — do not let them drift, and do not "fix" this by investing further engineering into the sync itself; the real fix is finishing the sunset (see `PLATFORM.md`).
+
+The Holdings-vs-FIFO precedence rule and corporate-action triage (split vs. transfer vs. merger) live in [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — read that, not this section, for the actual rule.
 
 **Read `docs/SPEC.md` section 21 before touching anything equity-journal/alerts/dashboard-related.** It's the full write-up of this feature's data model, the FIFO oversell bug and its fix (`unmatchedQty`), the Alerts page's exit/add-on categorization, the Dashboard's windowed-vs-all-time P&L split (`EQ_DASHBOARD_START_DATE`, currently `2026-06-01`) and why mixing those two scopes is a bug that has already shipped once, the Journal table's exact column order/date format, and the sector data pipeline (`scripts/fetch_equity_sectors.py` → `data/equity_sectors.json`). This feature is **backtester-only** beyond the Journal page itself — Equity Alerts and Equity Dashboard do not exist in `vaijayanth/TradingJournal`, don't add them there.
 
