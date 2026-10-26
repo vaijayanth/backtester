@@ -1116,6 +1116,7 @@
       <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
       <div class="dash-meta" id="ot-meta">Upload your Zerodha P&amp;L statement (Console &rarr; Reports, Excel export) — stored server-side in your own Google Sheet, fetched fresh every time you open this page.</div>
     </div>
+    <div id="ot-data-asof" style="padding:0 18px 14px;">—</div>
   </div>
 
   <div class="panel">
@@ -4937,6 +4938,13 @@ function otShowLastFetch(){
   } catch(e){}
 }
 
+// P&L file uploads are occasional/manual (not a daily pipeline), so this
+// uses the same longer 8-day staleness threshold as IVP's Sensibull
+// upload badge rather than the 30h daily-data one.
+function otRenderFreshness(){
+  renderFreshnessStat('ot-data-asof', window._otLastUploadedAt, 'P&L FILE LAST UPLOADED', 24 * 8);
+}
+
 async function otUpdateDbMeta(){
   const url = otGetSheetUrl();
   if(!url){
@@ -4957,6 +4965,7 @@ async function otUpdateDbMeta(){
 
 async function otRenderFromDb(){
   await otUpdateDbMeta();
+  otRenderFreshness();
   if(!otGetSheetUrl()) return;
   let sheetRows;
   try{ sheetRows = await otFetchAllRows(); }
