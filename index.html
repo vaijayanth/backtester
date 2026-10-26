@@ -311,6 +311,7 @@
       <div class="dash-meta" id="dash-pipeline-status">Daily update pipeline: —</div>
       <div id="dash-pipeline-run-alert" style="display:none;"></div>
     </div>
+    <div style="padding:0 18px 14px;" id="dash-data-asof">—</div>
   </div>
 
   <div class="subnav" id="subnav-dashboard">
@@ -963,6 +964,10 @@
     <div class="dash-header">
       <div class="dash-title">IVP ENTRY SCREENER</div>
       <div class="dash-meta" id="ivp-meta">Weekly entry-screening tool — NOT live position monitoring. See footnote.</div>
+    </div>
+    <div class="stat-row" style="padding:0 18px 14px;gap:36px;flex-wrap:wrap;">
+      <div id="ivp-data-asof">—</div>
+      <div id="ivp-upload-asof">—</div>
     </div>
   </div>
 
@@ -1664,6 +1669,7 @@
       <div class="dash-title">DHAN ST 52WK HIGH SWING</div>
       <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000 base position size (+Rs1,000 every 100 closed trades), full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
+    <div id="dh252-data-asof-header" style="padding:0 18px 14px;">—</div>
     <div style="padding:0 18px 18px;">
       <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
       <input type="text" id="dh252-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;max-width:520px;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
@@ -1681,7 +1687,6 @@
     <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
-    <div id="dh252-data-asof" style="padding:0 18px 14px;font-size:11.5px;color:var(--muted);">—</div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
       <div class="stat"><div class="stat-label">INITIAL CAPITAL</div><div class="stat-value">₹20,00,000</div></div>
       <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
@@ -1865,6 +1870,7 @@
       <div class="dash-title">DHAN OPTIONS &amp; COVERED CALL</div>
       <div class="dash-meta">Fixed 10-stock universe. Equity leg: enter on Supertrend(10,3) daily green, exit on Supertrend red only if in profit, add 10% on Supertrend green while in loss (max once/week). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding — this app only signals, it doesn't size or track option trades. Stoploss (3&times; premium) is handled by your own GTT in the broker, outside this app. Shares the 52-Week Journal's spreadsheet via its own tab (DHCC_TRADES) — same URL, no separate setup needed.</div>
     </div>
+    <div id="dhcc-data-asof-header" style="padding:0 18px 14px;">—</div>
     <div style="padding:0 18px 18px;">
       <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
       <input type="text" id="dhcc-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;max-width:520px;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
@@ -1882,7 +1888,6 @@
     <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
       <button class="refresh-btn" id="dhcc-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
-    <div id="dhcc-data-asof" style="padding:0 18px 14px;font-size:11.5px;color:var(--muted);">—</div>
     <div class="stat-row" id="dhcc-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
       <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dhcc-open-count">—</div></div>
       <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dhcc-realized">—</div></div>
@@ -2074,7 +2079,7 @@
       <div class="dash-title">ICICI DIVIDEND LONGTERM</div>
       <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 25, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
     </div>
-    <div id="div-data-asof" style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);">—</div>
+    <div id="div-data-asof" style="padding:0 18px 18px;">—</div>
   </div>
 
   <div class="panel" style="border-color:var(--green);">
@@ -2489,8 +2494,9 @@ async function loadMarketSnapshot(){
   try{ renderMarketPulse(snap); }
   catch(err){ console.error('Market pulse failed:', err); }
   document.getElementById('dash-meta').textContent =
-    `Market Data: Latest EOD (${snap.as_of_date})  |  Updated: ${new Date(snap.generated_at).toLocaleString('en-IN')}  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
+    `Market Data: Latest EOD (${snap.as_of_date})  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
   document.getElementById('sidebar-status-sub').textContent = snap.as_of_date;
+  renderFreshnessStat('dash-data-asof', snap.generated_at, 'MARKET DATA LAST UPDATED');
 }
 
 function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
@@ -4177,6 +4183,7 @@ async function initIvpScreenerFetch(){
 
     if(screensResp.ok){
       const screens = await screensResp.json();
+      window._ivpScreensGeneratedAt = screens.generated_at || null;
       // rsi_all carries every F&O stock's RSI14 (not just the >=70/<=30
       // extremes in rsi_overbought/rsi_oversold) — full join, no more "—"
       // gaps for stocks sitting in the 30-70 range.
@@ -4196,6 +4203,7 @@ async function initIvpScreenerFetch(){
 
   try{ renderIvpScreener(); } catch(err){ console.error('IVP screener failed:', err); }
   try{ ivpRenderOptionsSignal(); } catch(err){ console.error('IVP options signal failed:', err); }
+  try{ ivpRenderFreshness(); } catch(err){ console.error('IVP freshness render failed:', err); }
 }
 
 // Populates ivpStBySymbol/ivpOptUniverse from supertrend.json (F&O-scoped,
@@ -4214,6 +4222,18 @@ function ivpLoadSupertrend(st){
     ivpOptUniverse.push(e.symbol);
   });
   ivpOptUniverse.sort();
+  window._ivpSupertrendGeneratedAt = st.generated_at || null;
+}
+
+// CMP/Supertrend/RSI freshness (the daily pipeline files) is a separate
+// concern from the Sensibull upload/snapshot freshness below it — shown as
+// two distinct stats since they're on completely different refresh
+// cadences (daily pipeline vs. a weekly manual export).
+function ivpRenderFreshness(){
+  const dataIso = window._ivpSupertrendGeneratedAt || window._ivpScreensGeneratedAt;
+  renderFreshnessStat('ivp-data-asof', dataIso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
+  renderFreshnessStat('ivp-upload-asof', ivpData ? ivpData.generated_at : null,
+    ivpData && ivpData.source === 'google_sheet' ? 'SENSIBULL FILE UPLOADED' : 'SENSIBULL SNAPSHOT (SITE DEFAULT)', 24 * 8);
 }
 
 // Tries the Google Sheet DB first (an upload from any device shows up
@@ -4233,6 +4253,7 @@ async function initIvpScreener(){
 
     if(screensResp.status === 'fulfilled' && screensResp.value.ok){
       const screens = await screensResp.value.json();
+      window._ivpScreensGeneratedAt = screens.generated_at || null;
       (screens.rsi_all || []).forEach(r => { ivpRsiBySymbol[r.symbol] = r.rsi14; });
     }
     if(stResp.status === 'fulfilled' && stResp.value.ok) ivpLoadSupertrend(await stResp.value.json());
@@ -4253,6 +4274,7 @@ async function initIvpScreener(){
         document.getElementById('ivp-meta').innerHTML =
           `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">uploaded ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>`;
         renderIvpScreener();
+        try{ ivpRenderFreshness(); } catch(err){ console.error('IVP freshness render failed:', err); }
         return;
       }
     }
@@ -7772,7 +7794,38 @@ function dh252FmtDataAsOf(iso){
   const agoStr = hoursAgo < 1 ? `${Math.max(0, Math.round(hoursAgo * 60))}m ago`
     : hoursAgo < 48 ? `${hoursAgo.toFixed(1)}h ago`
     : `${Math.round(hoursAgo / 24)}d ago`;
-  return {text: `${dateStr}, ${timeStr} IST (${agoStr})`, hoursAgo};
+  // dateTimeStr/agoStr split out (alongside the original combined `text`,
+  // kept for any caller still using it) so a prominent "big letters" display
+  // can show the absolute timestamp as the headline and the relative age as
+  // a smaller sub-line, instead of one long string at one size.
+  return {text: `${dateStr}, ${timeStr} IST (${agoStr})`, dateTimeStr: `${dateStr}, ${timeStr} IST`, agoStr, hoursAgo};
+}
+
+// Renders a prominent "data as of" stat — big bold absolute timestamp +
+// smaller relative-age sub-line — reusing the app's existing .stat/
+// .stat-label/.stat-value visual language (the same classes every P&L/
+// win-rate headline number uses) so a freshness timestamp reads as just
+// another important number on the page, not a new design language bolted
+// on. `thresholdHours` controls when it switches to the red/stale color
+// (defaults to 30h, matching the once-daily pipeline's existing convention).
+function renderFreshnessStat(elId, iso, label, thresholdHours){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const threshold = thresholdHours == null ? 30 : thresholdHours;
+  const fmt = dh252FmtDataAsOf(iso);
+  if(!fmt){
+    el.innerHTML = `<div class="stat" style="border-right:none;padding:14px 0;">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value" style="font-size:16px;color:var(--amber);">⚠ Unknown — no timestamp found</div>
+    </div>`;
+    return;
+  }
+  const stale = fmt.hoursAgo > threshold;
+  el.innerHTML = `<div class="stat" style="border-right:none;padding:14px 0;">
+    <div class="stat-label">${label}</div>
+    <div class="stat-value" style="color:${stale ? 'var(--red)' : 'var(--white)'};">${fmt.dateTimeStr}</div>
+    <div style="font-size:11px;color:${stale ? 'var(--red)' : 'var(--muted)'};margin-top:2px;">${fmt.agoStr}${stale ? ' — stale, check Actions tab' : ''}</div>
+  </div>`;
 }
 
 // Shared by both the 52-Week Journal and Dhan Covered Call's "CAPITAL &
@@ -7793,20 +7846,9 @@ function dh252LastLoggedText(trades){
 
 function dh252RenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
-  const fmt = dh252FmtDataAsOf(iso);
-
-  const el = document.getElementById('dh252-data-asof');
-  if(el){
-    if(!fmt){
-      el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
-      el.style.color = 'var(--amber)';
-    }else{
-      // Daily job runs once a day — comfortably under ~30h old is normal
-      // (pre-market the next day); past that the pipeline likely didn't run.
-      el.textContent = `📊 CMP / Supertrend / 52W High data as of: ${fmt.text}`;
-      el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
-    }
-  }
+  // Daily job runs once a day — comfortably under ~30h old is normal
+  // (pre-market the next day); past that the pipeline likely didn't run.
+  renderFreshnessStat('dh252-data-asof-header', iso, 'CMP / SUPERTREND / 52W HIGH DATA AS OF');
 
   // Same note repeated right on the Entry Signal panel — the page-top line
   // is easy to scroll past, and this is exactly where the "is this fresh
@@ -8331,16 +8373,7 @@ function dhccRenderPositions(state){
 function dhccRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
-  const el = document.getElementById('dhcc-data-asof');
-  if(el){
-    if(!fmt){
-      el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
-      el.style.color = 'var(--amber)';
-    }else{
-      el.textContent = `📊 CMP / Supertrend / RSI14 data as of: ${fmt.text}`;
-      el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
-    }
-  }
+  renderFreshnessStat('dhcc-data-asof-header', iso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
   const entryEl = document.getElementById('dhcc-entry-asof');
   if(entryEl){
     entryEl.textContent = fmt ? `Data as of ${fmt.text}.` : '';
@@ -8794,15 +8827,7 @@ const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
-  const fmt = dh252FmtDataAsOf(iso);
-  const el = document.getElementById('div-data-asof');
-  if(!fmt){
-    el.textContent = '⚠ Market data freshness unknown — could not read a generated-at timestamp from the daily data files.';
-    el.style.color = 'var(--amber)';
-  }else{
-    el.textContent = `📊 CMP / Supertrend / RSI14 data as of: ${fmt.text}`;
-    el.style.color = fmt.hoursAgo > 30 ? 'var(--amber)' : 'var(--muted)';
-  }
+  renderFreshnessStat('div-data-asof', iso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
 }
 
 function divRenderSignals(){
