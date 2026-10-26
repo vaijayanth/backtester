@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T17:00:07.377699+00:00",
+  "generated_at": "2026-10-26T20:10:04.542254+00:00",
   "universe": "nse_fno",
   "universe_size": 213,
   "params": {
@@ -131,17 +131,17 @@
     },
     {
       "symbol": "DRREDDY.NS",
-      "close": 1310.9,
+      "close": 1229.5,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-26",
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 23,
+      "current_streak_days": 22,
       "current_streak_start_date": "2026-09-21"
     },
     {
@@ -401,17 +401,17 @@
     },
     {
       "symbol": "ETERNAL.NS",
-      "close": 325.55,
+      "close": 317.4,
       "color": "red",
       "flipped_today": false,
-      "above_ema50": true,
-      "date": "2026-10-26",
+      "above_ema50": false,
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 15,
+      "current_streak_days": 14,
       "current_streak_start_date": "2026-10-01"
     },
     {
@@ -551,17 +551,17 @@
     },
     {
       "symbol": "BEL.NS",
-      "close": 363.0,
+      "close": 362.0,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-26",
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 27,
+      "current_streak_days": 26,
       "current_streak_start_date": "2026-09-15"
     },
     {
@@ -581,17 +581,17 @@
     },
     {
       "symbol": "BRITANNIA.NS",
-      "close": 4580.0,
+      "close": 4537.9,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-26",
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 39,
+      "current_streak_days": 38,
       "current_streak_start_date": "2026-08-27"
     },
     {
@@ -641,17 +641,17 @@
     },
     {
       "symbol": "HCLTECH.NS",
-      "close": 1417.0,
+      "close": 1422.2,
       "color": "green",
       "flipped_today": false,
       "above_ema50": true,
-      "date": "2026-10-26",
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 8,
+      "current_streak_days": 7,
       "current_streak_start_date": "2026-10-13"
     },
     {
@@ -1661,17 +1661,17 @@
     },
     {
       "symbol": "GLENMARK.NS",
-      "close": 2225.8,
+      "close": 2166.6,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
-      "date": "2026-10-26",
+      "date": "2026-10-23",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 14,
+      "current_streak_days": 13,
       "current_streak_start_date": "2026-10-05"
     },
     {
@@ -1766,17 +1766,17 @@
     },
     {
       "symbol": "HAVELLS.NS",
-      "close": 1009.9,
+      "close": 1031.0,
       "color": "red",
-      "flipped_today": false,
+      "flipped_today": true,
       "above_ema50": false,
-      "date": "2026-10-26",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": 1,
+      "date": "2026-10-23",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-14",
+      "recent_flip_days_ago": 0,
       "recent_flip_date": "2026-10-23",
       "recent_flip_direction": "down",
-      "current_streak_days": 1,
+      "current_streak_days": 0,
       "current_streak_start_date": "2026-10-23"
     },
     {
@@ -3267,6 +3267,21 @@
       "recent_flip_direction": "down",
       "current_streak_days": 0,
       "current_streak_start_date": "2026-10-26"
+    },
+    {
+      "symbol": "HAVELLS.NS",
+      "close": 1031.0,
+      "color": "red",
+      "flipped_today": true,
+      "above_ema50": false,
+      "date": "2026-10-23",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-14",
+      "recent_flip_days_ago": 0,
+      "recent_flip_date": "2026-10-23",
+      "recent_flip_direction": "down",
+      "current_streak_days": 0,
+      "current_streak_start_date": "2026-10-23"
     },
     {
       "symbol": "SUPREMEIND.NS",
