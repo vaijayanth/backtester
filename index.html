@@ -968,6 +968,7 @@
     <div class="stat-row" style="padding:0 18px 14px;gap:36px;flex-wrap:wrap;">
       <div id="ivp-data-asof">—</div>
       <div id="ivp-upload-asof">—</div>
+      <div id="ivp-nifty-stat">—</div>
     </div>
   </div>
 
@@ -4257,6 +4258,37 @@ function ivpRenderFreshness(){
     ivpData && ivpData.source === 'google_sheet' ? 'SENSIBULL FILE UPLOADED' : 'SENSIBULL SNAPSHOT (SITE DEFAULT)', 24 * 8);
 }
 
+// Nifty 50 itself isn't tracked anywhere in the daily pipeline (no index
+// OHLC feed) — NIFTYIETF (ICICI Prudential Nifty ETF) is used as the index
+// proxy, same convention TradingJournal's own market-regime detector
+// already uses for NIFTYBEES/MIDCAPETF/SMALLCAP. Reuses the shared
+// eqFetchSupertrend()/eqFetchWeek52() fetchers (supertrend_full.json /
+// market_screens_full.json — the FULL universe, since the F&O-scoped
+// supertrend.json this page otherwise uses doesn't carry index ETFs) —
+// same pattern every other page already uses for cross-page data, no new
+// endpoint needed.
+async function ivpRenderNiftyStat(){
+  const el = document.getElementById('ivp-nifty-stat');
+  if(!el) return;
+  try{
+    const [stMap] = await Promise.all([eqFetchSupertrend(), eqFetchWeek52()]);
+    const st = stMap && stMap['NIFTYIETF'];
+    const rsi = (window._eqRsiMap || {})['NIFTYIETF'];
+    const color = st && st.color ? st.color : null;
+    if(!color && rsi == null){
+      el.innerHTML = `<div class="stat"><div class="stat-label">NIFTY50 (NIFTYIETF PROXY)</div><div class="stat-value" style="font-size:16px;color:var(--amber);">⚠ Unavailable</div></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="stat">
+      <div class="stat-label">NIFTY50 (NIFTYIETF PROXY)</div>
+      <div class="stat-value" style="color:${color === 'green' ? 'var(--green)' : color === 'red' ? 'var(--red)' : 'var(--white)'};">${color ? color.toUpperCase() : '—'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">RSI14: ${rsi != null ? rsi.toFixed(1) : '—'}</div>
+    </div>`;
+  }catch(err){
+    console.error('IVP Nifty50 proxy stat failed:', err);
+  }
+}
+
 // Tries the Google Sheet DB first (an upload from any device shows up
 // everywhere); falls back to the site's own weekly snapshot if the Sheet
 // has no rows yet or is unreachable.
@@ -4264,6 +4296,16 @@ async function initIvpScreener(){
   ivpInitialized = true;
   subTabInit('ivp', ['signals', 'screen', 'results']);
   topTabInit('ivpsignals', ['call', 'put']);
+  // Deferred, not called directly: initIvpScreener() itself is invoked by a
+  // bare top-level call earlier in this same <script> block (IVP is the
+  // default landing page), which runs before later `const`s further down
+  // the file — including EQ_SUPERTREND_URL, which eqFetchSupertrend() (used
+  // inside ivpRenderNiftyStat) reads. Calling it directly here hits that
+  // temporal-dead-zone window and silently fails (caught by
+  // eqFetchSupertrend's own try/catch, returns null). setTimeout defers to
+  // a fresh task, by which point the whole script — including every later
+  // const — has finished executing once.
+  setTimeout(ivpRenderNiftyStat, 0);
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
