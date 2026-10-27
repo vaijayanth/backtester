@@ -4497,7 +4497,7 @@ function ivpRenderOptionsSignal(){
     const days = ivpDaysToEarnings(ivpEventDateBySymbol[sym]);
     const nearEarnings = days != null && days >= 0 && days <= 7;
     const earningsCell = nearEarnings
-      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      ? `<td style="color:var(--amber);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
       : `<td style="color:var(--muted);">—</td>`;
     const restCells = `<td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
@@ -4531,7 +4531,7 @@ function ivpRenderOptionsSignal(){
     // and row tint, repeated here since the stock name is what people
     // actually scan first.
     const earningsNameBadge = nearEarnings
-      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')} — see EARNINGS column">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      ? ` <span style="color:var(--amber);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')} — see EARNINGS column">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
       : '';
     const stockCellCall = `<td>${ivpSymLabel(sym)}${earningsNameBadge}${oversold ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>` : ''}</td>`;
     const stockCellPlain = `<td>${ivpSymLabel(sym)}${earningsNameBadge}</td>`;
@@ -9056,10 +9056,10 @@ function dhccRenderSignals(open){
     const days = ivpDaysToEarnings(earningsBySymbol[sym]);
     const nearEarnings = days != null && days >= 0 && days <= 7;
     const earningsCell = nearEarnings
-      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      ? `<td style="color:var(--amber);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
       : `<td style="color:var(--muted);">—</td>`;
     const earningsNameBadge = nearEarnings
-      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      ? ` <span style="color:var(--amber);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
       : '';
     const oversold = sellCall && rsi != null && rsi < DHCC_RSI_OVERSOLD;
     const oversoldBadge = oversold
@@ -9511,10 +9511,10 @@ function divRenderSignals(){
     const days = ivpDaysToEarnings(earningsBySymbol[sym]);
     const nearEarnings = days != null && days >= 0 && days <= 7;
     const earningsCell = nearEarnings
-      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      ? `<td style="color:var(--amber);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
       : `<td style="color:var(--muted);">—</td>`;
     const earningsNameBadge = nearEarnings
-      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      ? ` <span style="color:var(--amber);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
       : '';
     const oversold = sellCall && rsi != null && rsi < DIV_RSI_OVERSOLD;
     const oversoldBadge = oversold
