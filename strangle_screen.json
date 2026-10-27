@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T10:57:40.329205+00:00",
+  "generated_at": "2026-10-27T16:05:37.263615+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -38389,7 +38389,7 @@
     {
       "symbol": "CDSL.NS",
       "month": "2021-10",
-      "return_pct": -0.43,
+      "return_pct": -4.03,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -38405,28 +38405,28 @@
       "month": "2021-12",
       "return_pct": 1.08,
       "status": "Win",
-      "rsi_at_start": 52.2
+      "rsi_at_start": 53.7
     },
     {
       "symbol": "CDSL.NS",
       "month": "2022-01",
       "return_pct": 0.22,
       "status": "Win",
-      "rsi_at_start": 54.9
+      "rsi_at_start": 55.2
     },
     {
       "symbol": "CDSL.NS",
       "month": "2022-02",
       "return_pct": -10.9,
       "status": "Loose",
-      "rsi_at_start": 46.1
+      "rsi_at_start": 46.2
     },
     {
       "symbol": "CDSL.NS",
       "month": "2022-03",
       "return_pct": 9.38,
       "status": "Win",
-      "rsi_at_start": 42.8
+      "rsi_at_start": 42.9
     },
     {
       "symbol": "CDSL.NS",
@@ -42232,7 +42232,7 @@
     {
       "symbol": "DABUR.NS",
       "month": "2021-10",
-      "return_pct": -1.04,
+      "return_pct": 0.32,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -42248,21 +42248,21 @@
       "month": "2021-12",
       "return_pct": -2.53,
       "status": "Win",
-      "rsi_at_start": 38.6
+      "rsi_at_start": 36.2
     },
     {
       "symbol": "DABUR.NS",
       "month": "2022-01",
       "return_pct": -7.46,
       "status": "Win",
-      "rsi_at_start": 56.2
+      "rsi_at_start": 55.7
     },
     {
       "symbol": "DABUR.NS",
       "month": "2022-02",
       "return_pct": 4.1,
       "status": "Win",
-      "rsi_at_start": 39.9
+      "rsi_at_start": 39.8
     },
     {
       "symbol": "DABUR.NS",
@@ -43037,8 +43037,8 @@
     {
       "symbol": "DIXON.NS",
       "month": "2021-10",
-      "return_pct": -14.57,
-      "status": "Loose",
+      "return_pct": -3.63,
+      "status": "Win",
       "rsi_at_start": null
     },
     {
@@ -43053,28 +43053,28 @@
       "month": "2021-12",
       "return_pct": 8.02,
       "status": "Win",
-      "rsi_at_start": 39.6
+      "rsi_at_start": 47.3
     },
     {
       "symbol": "DIXON.NS",
       "month": "2022-01",
       "return_pct": -20.25,
       "status": "Loose",
-      "rsi_at_start": 52.8
+      "rsi_at_start": 54.8
     },
     {
       "symbol": "DIXON.NS",
       "month": "2022-02",
       "return_pct": -4.25,
       "status": "Win",
-      "rsi_at_start": 23.3
+      "rsi_at_start": 23.5
     },
     {
       "symbol": "DIXON.NS",
       "month": "2022-03",
       "return_pct": 0.62,
       "status": "Win",
-      "rsi_at_start": 44.4
+      "rsi_at_start": 44.5
     },
     {
       "symbol": "DIXON.NS",
@@ -51437,7 +51437,7 @@
     {
       "symbol": "IDFCFIRSTB.NS",
       "month": "2021-10",
-      "return_pct": -3.98,
+      "return_pct": -7.48,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -51453,21 +51453,21 @@
       "month": "2021-12",
       "return_pct": 7.44,
       "status": "Win",
-      "rsi_at_start": 42.5
+      "rsi_at_start": 37.5
     },
     {
       "symbol": "IDFCFIRSTB.NS",
       "month": "2022-01",
       "return_pct": -4.2,
       "status": "Win",
-      "rsi_at_start": 56.5
+      "rsi_at_start": 55.5
     },
     {
       "symbol": "IDFCFIRSTB.NS",
       "month": "2022-02",
       "return_pct": -11.18,
       "status": "Loose",
-      "rsi_at_start": 48.7
+      "rsi_at_start": 48.5
     },
     {
       "symbol": "IDFCFIRSTB.NS",
@@ -53572,7 +53572,7 @@
     {
       "symbol": "INDUSINDBK.NS",
       "month": "2021-10",
-      "return_pct": -5.45,
+      "return_pct": -1.37,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -53588,14 +53588,14 @@
       "month": "2021-12",
       "return_pct": -0.32,
       "status": "Win",
-      "rsi_at_start": 33.4
+      "rsi_at_start": 35.0
     },
     {
       "symbol": "INDUSINDBK.NS",
       "month": "2022-01",
       "return_pct": -1.81,
       "status": "Win",
-      "rsi_at_start": 48.0
+      "rsi_at_start": 48.3
     },
     {
       "symbol": "INDUSINDBK.NS",
@@ -53609,7 +53609,7 @@
       "month": "2022-03",
       "return_pct": 3.13,
       "status": "Win",
-      "rsi_at_start": 45.1
+      "rsi_at_start": 45.2
     },
     {
       "symbol": "INDUSINDBK.NS",
@@ -68825,7 +68825,7 @@
     {
       "symbol": "OIL.NS",
       "month": "2021-10",
-      "return_pct": -4.64,
+      "return_pct": 2.86,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -68841,28 +68841,28 @@
       "month": "2021-12",
       "return_pct": -6.62,
       "status": "Win",
-      "rsi_at_start": 49.8
+      "rsi_at_start": 52.6
     },
     {
       "symbol": "OIL.NS",
       "month": "2022-01",
       "return_pct": 20.49,
       "status": "Loose",
-      "rsi_at_start": 51.5
+      "rsi_at_start": 52.0
     },
     {
       "symbol": "OIL.NS",
       "month": "2022-02",
       "return_pct": -5.01,
       "status": "Win",
-      "rsi_at_start": 64.4
+      "rsi_at_start": 64.6
     },
     {
       "symbol": "OIL.NS",
       "month": "2022-03",
       "return_pct": 2.58,
       "status": "Win",
-      "rsi_at_start": 71.7
+      "rsi_at_start": 71.8
     },
     {
       "symbol": "OIL.NS",
@@ -75216,8 +75216,8 @@
     {
       "symbol": "POWERINDIA.NS",
       "month": "2021-10",
-      "return_pct": -12.55,
-      "status": "Loose",
+      "return_pct": -6.33,
+      "status": "Win",
       "rsi_at_start": null
     },
     {
@@ -75232,21 +75232,21 @@
       "month": "2021-12",
       "return_pct": -2.82,
       "status": "Win",
-      "rsi_at_start": 59.1
+      "rsi_at_start": 64.4
     },
     {
       "symbol": "POWERINDIA.NS",
       "month": "2022-01",
       "return_pct": 21.55,
       "status": "Loose",
-      "rsi_at_start": 47.1
+      "rsi_at_start": 48.5
     },
     {
       "symbol": "POWERINDIA.NS",
       "month": "2022-02",
       "return_pct": 3.88,
       "status": "Win",
-      "rsi_at_start": 69.6
+      "rsi_at_start": 69.8
     },
     {
       "symbol": "POWERINDIA.NS",
@@ -89286,6 +89286,13 @@
       "win_pct": 62.3
     },
     {
+      "symbol": "DIXON.NS",
+      "win": 38,
+      "loose": 23,
+      "total": 61,
+      "win_pct": 62.3
+    },
+    {
       "symbol": "LAURUSLABS.NS",
       "win": 38,
       "loose": 23,
@@ -89315,13 +89322,6 @@
     },
     {
       "symbol": "BHEL.NS",
-      "win": 37,
-      "loose": 24,
-      "total": 61,
-      "win_pct": 60.7
-    },
-    {
-      "symbol": "DIXON.NS",
       "win": 37,
       "loose": 24,
       "total": 61,
@@ -89461,6 +89461,13 @@
       "win_pct": 50.8
     },
     {
+      "symbol": "POWERINDIA.NS",
+      "win": 31,
+      "loose": 30,
+      "total": 61,
+      "win_pct": 50.8
+    },
+    {
       "symbol": "ADANIENSOL.NS",
       "win": 30,
       "loose": 31,
@@ -89469,13 +89476,6 @@
     },
     {
       "symbol": "GVT&D.NS",
-      "win": 30,
-      "loose": 31,
-      "total": 61,
-      "win_pct": 49.2
-    },
-    {
-      "symbol": "POWERINDIA.NS",
       "win": 30,
       "loose": 31,
       "total": 61,
@@ -89520,9 +89520,9 @@
   "monthly_aggregate": [
     {
       "month": "2021-10",
-      "win_count": 173,
-      "loose_count": 21,
-      "final_impression": 152
+      "win_count": 175,
+      "loose_count": 19,
+      "final_impression": 156
     },
     {
       "month": "2021-11",
