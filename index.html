@@ -1102,7 +1102,7 @@
       </div><!-- /toptab-panel -->
     </div>
 
-    <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. A stock meeting both conditions appears on both tabs. EARNINGS column flags a results date within 7 days (red ⚠) — still listed, not filtered out, since whether to skip it is your call, but think twice before selling into that window. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+    <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. A stock meeting both conditions appears on both tabs. A results date within 7 days flags the EARNINGS column (red ⚠) AND tints the whole row red — hard to miss, still listed rather than filtered out, since whether to skip it is your call, but think twice before selling into that window. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -4486,8 +4486,9 @@ function ivpRenderOptionsSignal(){
     // SELL CALL signal") independently of the other. Earnings proximity is
     // a warning, not a filter — still listed, just flagged, since the
     // decision to skip it stays with the user.
-    if(sellCall) callRows.push(`<tr>${commonCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
-    if(sellPut) putRows.push(`<tr>${commonCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
+    const rowAttr = nearEarnings ? ` style="background:var(--red-dim);"` : '';
+    if(sellCall) callRows.push(`<tr${rowAttr}>${commonCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
+    if(sellPut) putRows.push(`<tr${rowAttr}>${commonCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
   });
   callBody.innerHTML = callRows.length ? callRows.join('') : '<tr><td colspan="8" class="loading">No SELL CALL signals right now.</td></tr>';
   putBody.innerHTML = putRows.length ? putRows.join('') : '<tr><td colspan="8" class="loading">No SELL PUT signals right now.</td></tr>';
