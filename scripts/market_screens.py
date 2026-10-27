@@ -108,13 +108,16 @@ def build_screens(universe="fno"):
         latest_close = closes[-1]
         latest_date = str(df.index[-1].date())
 
-        # 52-week high
+        # 52-week high / low (same trailing window, opposite extremes)
         window = closes[-FIFTY_TWO_WEEK_DAYS:] if len(closes) >= FIFTY_TWO_WEEK_DAYS else closes
         high_52w = max(window)
+        low_52w = min(window)
         pct_from_52wh = (latest_close - high_52w) / high_52w * 100
+        pct_from_52wl = (latest_close - low_52w) / low_52w * 100
         week52_entry = {
             "symbol": symbol, "close": round(latest_close, 2),
             "high_52w": round(high_52w, 2), "pct_from_high": round(pct_from_52wh, 2),
+            "low_52w": round(low_52w, 2), "pct_from_low": round(pct_from_52wl, 2),
             "date": latest_date,
         }
         week52_all.append(week52_entry)
