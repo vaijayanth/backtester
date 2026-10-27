@@ -2117,6 +2117,17 @@
     <div class="dash-footnote">RSI14 below 25. ₹20,000 suggested add, max once per week per stock — this page doesn't log trades, so tracking that cadence is on you. Supertrend shown for context only, it doesn't gate this signal.</div>
   </div>
 
+  <div class="panel" style="border-color:var(--green);">
+    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — WITHIN 5% OF 52-WEEK LOW <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
+    <div class="table-scroll">
+      <table class="list-table" id="div-lowentry-table">
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>52W LOW ₹</th><th>% FROM LOW</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
+        <tbody id="div-lowentry-tbody"></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">CMP within 5% of the trailing 52-week low (close-based, same 252-trading-day window as the Dashboard's 52-Week High screen, opposite extreme). Separate signal from the RSI entry above — a stock can trigger one, both, or neither. ₹20,000 suggested add, same once-per-week discipline. Supertrend shown for context only, it doesn't gate this signal.</div>
+  </div>
+
   <div class="panel" style="border-color:var(--amber-dim);">
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="div-opt-count">—</span></div></div>
     <div class="table-scroll">
@@ -8902,6 +8913,7 @@ const DIV_UNIVERSE = [
 const DIV_RSI_OVERSOLD = 30;
 const DIV_RSI_OVERBOUGHT = 70;
 const DIV_ENTRY_RSI_THRESHOLD = 25; // equity add-on entry signal only — distinct from DIV_RSI_OVERSOLD (options sell-put thesis, still 30)
+const DIV_ENTRY_NEAR_LOW_PCT = 5; // second, independent entry signal — CMP within this % of the trailing 52-week low
 const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
@@ -8930,6 +8942,28 @@ function divRenderSignals(){
       <td>${stFlipLabel(st)}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
   }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;25 signals right now.</td></tr>';
+
+  // Independent of the RSI entry signal above — a stock can trip one,
+  // both, or neither. pct_from_low is always >= 0 by construction (close
+  // is itself a member of the window the low is drawn from), so "within
+  // 5%" is simply pct_from_low <= DIV_ENTRY_NEAR_LOW_PCT.
+  const lowEntries = DIV_UNIVERSE.filter(sym => {
+    const w = week52[sym];
+    return w && w.pct_from_low != null && w.pct_from_low <= DIV_ENTRY_NEAR_LOW_PCT;
+  });
+  document.getElementById('div-lowentry-count').textContent = lowEntries.length;
+  document.getElementById('div-lowentry-tbody').innerHTML = lowEntries.length ? lowEntries.map(sym => {
+    const w = week52[sym];
+    const st = stMap[sym];
+    const stColor = st && st.color ? st.color : null;
+    const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
+    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td>
+      <td>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
+      <td>${w && w.pct_from_low != null ? '+' + w.pct_from_low.toFixed(1) + '%' : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td>${stFlipLabel(st)}</td>
+      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
+  }).join('') : '<tr><td colspan="8" class="loading">No stocks within 5% of their 52-week low right now.</td></tr>';
 
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
   document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
