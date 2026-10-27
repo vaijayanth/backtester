@@ -1108,7 +1108,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD ZERODHA OPEN POSITIONS <span class="panel-meta">session only — not stored, re-upload each time you check</span></div></div>
+    <div class="panel-head"><div class="panel-title">UPLOAD ZERODHA OPEN POSITIONS <span class="panel-meta">stored in Google Sheet, synced across devices</span></div></div>
     <div class="stat-row" style="padding:0 18px 4px;">
       <div id="ivp-pos-asof">—</div>
     </div>
@@ -1117,11 +1117,11 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ivp-pos-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
         <button class="refresh-btn" id="ivp-pos-upload-btn" style="padding:11px 18px;background:var(--amber);color:#fff;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; CHECK</button>
-        <button class="refresh-btn" id="ivp-pos-clear-btn" style="padding:11px 18px;">↺ CLEAR</button>
+        <button class="refresh-btn" id="ivp-pos-clear-btn" title="Clears this browser's view only — does not delete what's saved in the Sheet. Reload the page to pull it back." style="padding:11px 18px;">↺ CLEAR VIEW</button>
       </div>
       <div id="ivp-pos-upload-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
       <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
-        Export your open positions from Kite (Portfolio → Positions → download CSV). Columns expected: Product, Instrument, Qty., Avg., LTP, P&amp;L, Chg. Parsed in your browser only — nothing is sent anywhere or stored, so you'll need to re-upload each time you want a fresh check.
+        Export your open positions from Kite (Portfolio → Positions → download CSV). Columns expected: Product, Instrument, Qty., Avg., LTP, P&amp;L, Chg. Parsed in your browser, then written to the "Open Options for Zerodha" tab of the Option Trade Analysis Google Sheet — full replace each upload, same convention as the Sensibull snapshot above — so it's there on every device until your next upload. Expiry date shown is calculated (last Tuesday of the contract month, hand-adjusted for known NSE holiday shifts) — Qty/Avg/LTP/P&amp;L are exact, taken straight from your CSV.
       </div>
     </div>
   </div>
@@ -4376,6 +4376,7 @@ async function initIvpScreener(){
   // const — has finished executing once.
   setTimeout(ivpRenderNiftyStat, 0);
   ivpRenderPositions();
+  setTimeout(ivpPosFetchFromSheet, 0);
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
@@ -4508,6 +4509,37 @@ const IVP_POS_INSTRUMENT_RE = /^(.+?)(\d{2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP
 // suitable ETF proxy is confirmed for the others.
 const IVP_POS_INDEX_PROXY = { 'NIFTY': 'NIFTYIETF' };
 
+// NSE monthly F&O expiry = last Tuesday of the contract month, EXCEPT when
+// that Tuesday is an NSE trading holiday, in which case it shifts to the
+// previous trading day. That shift is NOT predictable from a pure calendar
+// rule and must be hand-verified against NSE's published holiday circular
+// — e.g. Nov 2026's expiry moved from Tue 24th to Mon 23rd for Guru Nanak
+// Jayanti. IVP_POS_EXPIRY_OVERRIDES holds verified exceptions (key =
+// 2-digit year + 3-letter month, e.g. "26NOV"); anything not listed falls
+// back to the plain last-Tuesday computation — correct most months,
+// occasionally off by a day or two around an unlisted holiday. This is
+// cosmetic only (display date), not used in any signal/P&L math — Qty/Avg
+// Price/LTP/P&L come straight from the uploaded CSV unmodified regardless.
+// Verified via NSE expiry calendar research, 2026-10-27: Oct'26 = 27 (no
+// shift), Nov'26 = 23 (shifted from Tue 24), Dec'26 = 29 (no shift).
+// Extend this table as new months need verifying.
+const IVP_POS_EXPIRY_OVERRIDES = {
+  '26OCT': '2026-10-27',
+  '26NOV': '2026-11-23',
+  '26DEC': '2026-12-29',
+};
+const IVP_POS_MONTHS = { JAN:0, FEB:1, MAR:2, APR:3, MAY:4, JUN:5, JUL:6, AUG:7, SEP:8, OCT:9, NOV:10, DEC:11 };
+function ivpPosLastTuesday(yy, monAbbr){
+  const year = 2000 + parseInt(yy, 10);
+  const d = new Date(Date.UTC(year, IVP_POS_MONTHS[monAbbr] + 1, 0)); // last day of month
+  const diff = (d.getUTCDay() - 2 + 7) % 7; // days back to the preceding/same Tuesday
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.toISOString().slice(0, 10);
+}
+function ivpPosExpiryDate(yy, monAbbr){
+  return IVP_POS_EXPIRY_OVERRIDES[yy + monAbbr] || ivpPosLastTuesday(yy, monAbbr);
+}
+
 function ivpParseCsvLine(line){
   const cells = [];
   let cur = '', inQuotes = false;
@@ -4545,7 +4577,7 @@ function ivpParsePositionsCsv(text){
     const qty = ivpToFloat(cells[idx.qty]);
     if(qty == null || qty === 0) continue;
     positions.push({
-      instrument, underlying: m[1], expiryYY: m[2], expiryMonth: m[3], strike: parseFloat(m[4]), right: m[5],
+      instrument, underlying: m[1], expiryTxt: ivpPosExpiryDate(m[2], m[3]), strike: parseFloat(m[4]), right: m[5],
       qty, avg: ivpToFloat(cells[idx.avg]), ltp: ivpToFloat(cells[idx.ltp]), pnl: ivpToFloat(cells[idx.pnl]), chg: ivpToFloat(cells[idx.chg]),
     });
   }
@@ -4594,6 +4626,71 @@ function ivpPositionStatusText(check){
   return `${check.thesis} still valid — Supertrend ${stTxt}, RSI14 ${rsiTxt}.`;
 }
 
+// Google Sheet DB for open positions — "Open Options for Zerodha" tab of
+// the same "Option Trade Analysis DB" sheet the Zerodha Option Trade
+// Analysis page already reads TRADES from (OT_SHEET_URL_DEFAULT, declared
+// later in this file). Full-replace on every upload, same convention as
+// every other upload feature in this app (IVP Sensibull snapshot, Equity
+// Tradebook, Holdings) — the tab becomes exactly what was uploaded, not a
+// merge. Referencing OT_SHEET_URL_DEFAULT here is safe even though it's
+// declared later in the script: both functions below only run from a user
+// click or a setTimeout-deferred init call, well after the whole script
+// has finished its first synchronous pass — see initIvpScreener's own
+// comment on the identical EQ_SUPERTREND_URL timing issue for why a
+// direct top-level reference would NOT be safe here.
+const IVP_POS_SHEET_NAME = 'Open Options for Zerodha';
+
+function ivpPosRowFor(p){
+  return {
+    'Symbol': p.underlying, 'Expiry': p.expiryTxt, 'Strike': p.strike,
+    'Type': p.right === 'CE' ? 'CALL' : 'PUT', 'B/S': p.qty < 0 ? 'S' : 'B', 'Qty': p.qty,
+    'Avg Price': p.avg, 'LTP': p.ltp, 'P&L Rs': p.pnl, '% Change': p.chg,
+    'As Of Date': new Date().toISOString().slice(0, 10),
+  };
+}
+
+async function ivpPosSyncToSheet(positions){
+  const resp = await fetch(OT_SHEET_URL_DEFAULT, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({ sheet: IVP_POS_SHEET_NAME, rows: positions.map(ivpPosRowFor) }),
+  });
+  if(!resp.ok) throw new Error(`Sheet request failed (HTTP ${resp.status}).`);
+  const result = await resp.json();
+  if(!result.success) throw new Error(result.error || 'Write to Google Sheet failed.');
+  return result;
+}
+
+// Row shape read back from the Sheet matches BROKER_COLS exactly (see
+// readBrokerSheet_ in the Apps Script) — Type is already "CALL"/"PUT" and
+// B/S + signed Qty both carry direction, so this maps straight across to
+// the same position-object shape ivpParsePositionsCsv produces, no
+// re-parsing of an Instrument string needed.
+async function ivpPosFetchFromSheet(){
+  try{
+    const resp = await fetch(OT_SHEET_URL_DEFAULT + '?sheet=' + encodeURIComponent(IVP_POS_SHEET_NAME) + '&t=' + Date.now());
+    if(!resp.ok) return;
+    const result = await resp.json();
+    if(!result.success || !Array.isArray(result.rows) || !result.rows.length) return;
+    let latestAsOf = null;
+    const positions = result.rows.map(r => {
+      const asOf = r['As Of Date'];
+      if(asOf && (!latestAsOf || asOf > latestAsOf)) latestAsOf = asOf;
+      return {
+        instrument: `${r['Symbol']} ${r['Expiry']} ${r['Strike']}${r['Type'] === 'CALL' ? 'CE' : 'PE'}`,
+        underlying: r['Symbol'], expiryTxt: r['Expiry'], strike: ivpToFloat(r['Strike']),
+        right: r['Type'] === 'CALL' ? 'CE' : 'PE', qty: ivpToFloat(r['Qty']),
+        avg: ivpToFloat(r['Avg Price']), ltp: ivpToFloat(r['LTP']), pnl: ivpToFloat(r['P&L Rs']), chg: ivpToFloat(r['% Change']),
+      };
+    }).filter(p => p.qty != null && p.qty !== 0);
+    if(!positions.length) return;
+    window._ivpPositions = { generated_at: latestAsOf ? new Date(latestAsOf).toISOString() : new Date().toISOString(), positions, skipped_count: 0, fromSheet: true };
+    ivpRenderPositions();
+  }catch(err){
+    console.error('IVP positions sheet fetch failed:', err);
+  }
+}
+
 async function ivpUploadPositions(){
   const errEl = document.getElementById('ivp-pos-upload-error');
   errEl.style.display = 'none';
@@ -4606,8 +4703,13 @@ async function ivpUploadPositions(){
   btn.textContent = 'CHECKING...';
   try{
     const text = await file.text();
-    window._ivpPositions = ivpParsePositionsCsv(text);
+    const parsed = ivpParsePositionsCsv(text);
+    window._ivpPositions = parsed;
     ivpRenderPositions();
+    btn.textContent = 'SAVING TO SHEET...';
+    await ivpPosSyncToSheet(parsed.positions);
+    document.getElementById('ivp-pos-meta').insertAdjacentHTML('beforeend',
+      ' · <span style="color:var(--green);">✓ saved to Google Sheet, visible on every device</span>');
   }catch(err){
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -4680,14 +4782,13 @@ function ivpRenderPositions(){
   rows.sort((a, b) => STATUS_PRIORITY[a.statusKey] - STATUS_PRIORITY[b.statusKey]);
 
   body.innerHTML = rows.map(({ p, statusLabel, statusColor, rationale }) => {
-    const expiryTxt = `${p.expiryMonth}'${p.expiryYY}`;
     const qtyColor = p.qty < 0 ? 'var(--red)' : 'var(--green)';
     const pnlColor = p.pnl != null && p.pnl < 0 ? 'var(--red)' : 'var(--green)';
     return `<tr>
       <td>${p.underlying}</td>
       <td>${p.right === 'CE' ? 'CALL' : 'PUT'}</td>
       <td>₹${p.strike.toLocaleString('en-IN')}</td>
-      <td>${expiryTxt}</td>
+      <td>${p.expiryTxt}</td>
       <td style="color:${qtyColor};">${p.qty > 0 ? '+' : ''}${p.qty.toLocaleString('en-IN')}</td>
       <td>${p.ltp != null ? '₹' + p.ltp.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${pnlColor};">${p.pnl != null ? (p.pnl >= 0 ? '+' : '') + '₹' + Math.round(p.pnl).toLocaleString('en-IN') : '—'}</td>
