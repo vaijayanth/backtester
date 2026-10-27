@@ -4474,7 +4474,7 @@ function ivpRenderOptionsSignal(){
     const earningsCell = nearEarnings
       ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
       : `<td style="color:var(--muted);">—</td>`;
-    const commonCells = `<td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
+    const restCells = `<td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
@@ -4487,8 +4487,19 @@ function ivpRenderOptionsSignal(){
     // a warning, not a filter — still listed, just flagged, since the
     // decision to skip it stays with the user.
     const rowAttr = nearEarnings ? ` style="background:var(--red-dim);"` : '';
-    if(sellCall) callRows.push(`<tr${rowAttr}>${commonCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
-    if(sellPut) putRows.push(`<tr${rowAttr}>${commonCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
+    // CALL-side-only warning: a stock can land in SELL CALL purely on its
+    // Supertrend turning red (RSI not required for that condition), but if
+    // RSI14 is ALSO already < 30 (the SELL PUT threshold), the stock is
+    // oversold — a bounce is more likely, working against a fresh short
+    // call. Flagged next to the stock name since it's a conflicting-signal
+    // risk specific to selling calls, not relevant on the PUT SELL side
+    // (there, RSI<30 is itself one of the two conditions that put it on
+    // the list in the first place, not a contradiction).
+    const oversold = rsi != null && rsi < IVP_OPT_RSI_OVERSOLD;
+    const stockCellCall = `<td>${ivpSymLabel(sym)}${oversold ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>` : ''}</td>`;
+    const stockCellPlain = `<td>${ivpSymLabel(sym)}</td>`;
+    if(sellCall) callRows.push(`<tr${rowAttr}>${stockCellCall}${restCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
+    if(sellPut) putRows.push(`<tr${rowAttr}>${stockCellPlain}${restCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
   });
   callBody.innerHTML = callRows.length ? callRows.join('') : '<tr><td colspan="8" class="loading">No SELL CALL signals right now.</td></tr>';
   putBody.innerHTML = putRows.length ? putRows.join('') : '<tr><td colspan="8" class="loading">No SELL PUT signals right now.</td></tr>';
