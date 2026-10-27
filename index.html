@@ -2016,11 +2016,11 @@
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-opt-table">
-        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>EARNINGS</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
         <tbody id="dhcc-opt-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Whole 10-stock universe, regardless of whether you hold the equity. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Informational only — strike/expiry/qty and the 3&times; premium stoploss are yours to execute via GTT; nothing here is logged or tracked.</div>
+    <div class="dash-footnote">Whole 10-stock universe, regardless of whether you hold the equity. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. A results date within 7 days flags the EARNINGS column (red ⚠), the stock name, AND tints the whole row red — think twice before selling into that window. A stock flagged SELL CALL whose RSI14 is also &lt;30 (oversold — contradicts a fresh short call) gets an extra "⚠ OVERSOLD" next to its name. Informational only — strike/expiry/qty and the 3&times; premium stoploss are yours to execute via GTT; nothing here is logged or tracked.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -2189,11 +2189,11 @@
     <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="div-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="div-opt-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>EARNINGS</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
         <tbody id="div-opt-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Whole universe, regardless of holding. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+    <div class="dash-footnote">Whole universe, regardless of holding. SELL CALL when Supertrend is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. A results date within 7 days flags the EARNINGS column (red ⚠), the stock name, AND tints the whole row red — think twice before selling into that window. A stock flagged SELL CALL whose RSI14 is also &lt;30 (oversold — contradicts a fresh short call) gets an extra "⚠ OVERSOLD" next to its name. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -6281,6 +6281,42 @@ async function eqFetchWeek52(){
 function eqWeek52For(symbol){
   return (window._eqWeek52 && window._eqWeek52[symbol]) || null;
 }
+
+// Shared earnings-date source for any page's Options Signal table (IVP
+// Screener builds its own from the Sensibull upload directly since it
+// already has that data loaded; this is for pages that don't — ICICI
+// Dividend Longterm, Dhan Covered Call). Same Sheet-first/static-fallback
+// pattern as the Dashboard's loadEarningsCalendar() (IVP_SHEET_URL is the
+// same underlying upload both read from), returned as a bare-symbol ->
+// ISO-date map rather than the Dashboard's own upcoming-list shape.
+async function eqFetchEarningsBySymbol(){
+  let cal;
+  try{
+    const sheetResp = await fetch(IVP_SHEET_URL + '?type=ivp&t=' + Date.now());
+    if(sheetResp.ok){
+      const sheet = await sheetResp.json();
+      if(sheet.success && Array.isArray(sheet.rows) && sheet.rows.length){
+        const entries = sheet.rows
+          .map(ivpSheetRowToEntry)
+          .filter(e => e.event_date)
+          .map(e => ({symbol: e.symbol, date: e.event_date}));
+        if(entries.length) cal = {entries};
+      }
+    }
+  }catch(e){ console.error('eqFetchEarningsBySymbol: Sheet fetch failed, falling back to site snapshot', e); }
+
+  if(!cal){
+    try{
+      const resp = await fetch('earnings_calendar.json?t=' + Date.now());
+      if(!resp.ok) return {};
+      cal = await resp.json();
+    }catch(err){ return {}; }
+  }
+
+  const bySymbol = {};
+  (cal.entries || []).forEach(e => { bySymbol[e.symbol.replace(/\.(NS|BO)$/, '')] = e.date; });
+  return bySymbol;
+}
 // Strength tiers, used consistently across the Dashboard panel and the
 // Alerts bucket — SST reads a stock sitting at/near its 52-week high as a
 // breakout-strength signal (O'Neil/Minervini-style), distinct from the
@@ -8971,6 +9007,7 @@ function dhccRenderSignals(open){
   }).join('') : '<tr><td colspan="11" class="loading">No exit signals right now.</td></tr>';
 
   // Options Signal — whole universe, regardless of holding.
+  const earningsBySymbol = window._earningsBySymbol || {};
   document.getElementById('dhcc-opt-count').textContent = DHCC_UNIVERSE.length;
   document.getElementById('dhcc-opt-tbody').innerHTML = DHCC_UNIVERSE.map(sym => {
     const w = week52[sym] || week52[sym + '.NS'];
@@ -8979,11 +9016,27 @@ function dhccRenderSignals(open){
     const stColor = st && st.color ? st.color : null;
     const sellCall = stColor === 'red' || (rsi != null && rsi > DHCC_RSI_OVERBOUGHT);
     const sellPut = stColor === 'green' || (rsi != null && rsi < DHCC_RSI_OVERSOLD);
-    return `<tr>
-      <td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
+    // Same EARNINGS/OVERSOLD warning pattern as the IVP Screener Signals
+    // tab and ICICI Dividend Longterm's Options Signal table.
+    const days = ivpDaysToEarnings(earningsBySymbol[sym]);
+    const nearEarnings = days != null && days >= 0 && days <= 7;
+    const earningsCell = nearEarnings
+      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      : `<td style="color:var(--muted);">—</td>`;
+    const earningsNameBadge = nearEarnings
+      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      : '';
+    const oversold = sellCall && rsi != null && rsi < DHCC_RSI_OVERSOLD;
+    const oversoldBadge = oversold
+      ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>`
+      : '';
+    const rowAttr = nearEarnings ? ` style="background:rgba(255,59,48,0.45);border-left:3px solid var(--red);"` : '';
+    return `<tr${rowAttr}>
+      <td>${sym}${earningsNameBadge}${oversoldBadge}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      ${earningsCell}
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
     </tr>`;
@@ -8998,16 +9051,18 @@ async function dhccRefresh(){
   }
   document.getElementById('dhcc-cap-meta').innerHTML = '<span class="eq-spinner"></span> Loading…';
   try{
-    const [trades, stMap, week52, sectors] = await Promise.all([
+    const [trades, stMap, week52, sectors, earningsBySymbol] = await Promise.all([
       dhccFetchTrades(),
       eqFetchSupertrend(),
       eqFetchWeek52(),
       eqFetchSectors(),
+      eqFetchEarningsBySymbol(),
     ]);
     window._dhccTrades = trades;
     window._eqSupertrend = stMap || {};
     window._eqWeek52 = week52 || {};
     window._eqSectors = sectors || {};
+    window._earningsBySymbol = earningsBySymbol || {};
     dhccRenderDataAsOf();
     const state = dhccBuildPositions(trades);
     dhccRenderPositions(state);
@@ -9403,6 +9458,7 @@ function divRenderSignals(){
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
   }).join('') : '<tr><td colspan="7" class="loading">No stocks at their 52-week low right now.</td></tr>';
 
+  const earningsBySymbol = window._earningsBySymbol || {};
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
   document.getElementById('div-opt-tbody').innerHTML = DIV_UNIVERSE.map(sym => {
     const w = week52[sym];
@@ -9411,11 +9467,30 @@ function divRenderSignals(){
     const rsi = rsiMap[sym];
     const sellCall = stColor === 'red' || (rsi != null && rsi > DIV_RSI_OVERBOUGHT);
     const sellPut = stColor === 'green' || (rsi != null && rsi < DIV_RSI_OVERSOLD);
-    return `<tr>
-      <td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
+    // Same EARNINGS/OVERSOLD warning pattern as the IVP Screener Signals
+    // tab: results within 7 days flags the column, the stock name, and
+    // tints the row; a SELL CALL stock that's also RSI<30 (oversold) gets
+    // an extra name badge since a bounce there works against a fresh
+    // short call.
+    const days = ivpDaysToEarnings(earningsBySymbol[sym]);
+    const nearEarnings = days != null && days >= 0 && days <= 7;
+    const earningsCell = nearEarnings
+      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      : `<td style="color:var(--muted);">—</td>`;
+    const earningsNameBadge = nearEarnings
+      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')}">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      : '';
+    const oversold = sellCall && rsi != null && rsi < DIV_RSI_OVERSOLD;
+    const oversoldBadge = oversold
+      ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>`
+      : '';
+    const rowAttr = nearEarnings ? ` style="background:rgba(255,59,48,0.45);border-left:3px solid var(--red);"` : '';
+    return `<tr${rowAttr}>
+      <td>${sym}${earningsNameBadge}${oversoldBadge}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      ${earningsCell}
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
       <td style="${sellPut ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${sellPut ? 'SELL PUT' : '—'}</td>
     </tr>`;
@@ -9424,9 +9499,10 @@ function divRenderSignals(){
 
 async function divRefresh(){
   try{
-    const [stMap, week52] = await Promise.all([eqFetchSupertrend(), eqFetchWeek52()]);
+    const [stMap, week52, earningsBySymbol] = await Promise.all([eqFetchSupertrend(), eqFetchWeek52(), eqFetchEarningsBySymbol()]);
     window._eqSupertrend = stMap || {};
     window._eqWeek52 = week52 || {};
+    window._earningsBySymbol = earningsBySymbol || {};
     divRenderDataAsOf();
     divRenderSignals();
   }catch(err){
