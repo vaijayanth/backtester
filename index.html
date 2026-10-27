@@ -2602,6 +2602,19 @@ function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
 // or 2 months) once the flip is older than the 7-day window, so a
 // long-settled trend shows "GREEN 132d" instead of a bare em-dash.
 // `entry` is one supertrend.json entries[] row (or null/undefined).
+// Raw days-since-flip for the generic column sorter's data-sort-value
+// override — stFlipLabel()'s own text combines direction + days into one
+// string ("RED 9d"), which the sorter's fallback text-compare can't sort
+// numerically (alphabetical puts "94d" before "9d"). Mirrors stFlipLabel's
+// own branch order/field choice exactly, so whatever number is visible is
+// what gets sorted.
+function stFlipSortValue(entry){
+  if(!entry) return '';
+  if(entry.recent_flip_days_ago != null) return entry.recent_flip_days_ago;
+  if(entry.current_streak_days != null && entry.color) return entry.current_streak_days;
+  return '';
+}
+
 function stFlipLabel(entry){
   if(!entry) return '<span style="color:var(--muted);">—</span>';
   if(entry.recent_flip_days_ago != null){
@@ -4486,7 +4499,7 @@ function ivpRenderOptionsSignal(){
       : `<td style="color:var(--muted);">—</td>`;
     const restCells = `<td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       <td>${ivp != null ? ivp.toFixed(0) + '%' : '—'}</td>
       ${earningsCell}`;
@@ -6567,7 +6580,7 @@ function eqRenderOpen(open, stMap){
       <td>${p.cmp === null ? '—' : eqFmtRs(p.cmp)}</td>
       <td style="color:${plColor};font-weight:700">${p.plPct === null ? '— no data' : eqFmtPct(p.plPct)}</td>
       <td>${stLabel}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td style="color:${sigColor};font-weight:700">${sig.label}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" class="loading">No open positions yet — upload a Tradebook export above.</td></tr>';
@@ -7716,7 +7729,7 @@ function eqAlertsRender(){
 
   eqAlertsRenderTable('eqa-exit-tbody', 'eqa-exit-count', exitNow, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td></tr>`, 7);
+    ${plCell(p)}<td>${stLabel(p.st)}</td><td data-sort-value="${stFlipSortValue(p.st)}">${stFlipLabel(p.st)}</td></tr>`, 7);
 
   const rsiMapForAlerts = window._eqRsiMap || {};
   const rsiCell = p => {
@@ -7725,7 +7738,7 @@ function eqAlertsRender(){
   };
   eqAlertsRenderTable('eqa-addon-tbody', 'eqa-addon-count', addOnEligible, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td><td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td>${rsiCell(p)}</tr>`, 9);
+    ${plCell(p)}<td>${Math.ceil(p.qty * EQ_ADDON_FRACTION)}</td><td>${stLabel(p.st)}</td><td data-sort-value="${stFlipSortValue(p.st)}">${stFlipLabel(p.st)}</td>${rsiCell(p)}</tr>`, 9);
 
   eqAlertsRenderTable('eqa-cooldown-tbody', 'eqa-cooldown-count', addOnCooldown, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
@@ -7733,7 +7746,7 @@ function eqAlertsRender(){
 
   eqAlertsRenderTable('eqa-approach-tbody', 'eqa-approach-count', approaching, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
-    ${plCell(p)}<td>${stLabel(p.st)}</td><td>${stFlipLabel(p.st)}</td></tr>`, 7);
+    ${plCell(p)}<td>${stLabel(p.st)}</td><td data-sort-value="${stFlipSortValue(p.st)}">${stFlipLabel(p.st)}</td></tr>`, 7);
 
   eqAlertsRenderTable('eqa-hold-tbody', 'eqa-hold-count', holdWait, p => `<tr>
     <td>${p.symbol}</td><td>${p.qty}</td><td>${eqFmtRs(p.avgEntry)}</td><td>${eqFmtRs(p.cmp)}</td>
@@ -8231,7 +8244,7 @@ function dh252RenderPositions(state){
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td style="color:${awayFromHigh === null ? '' : awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${awayFromHigh === null ? '—' : dh252FmtPct(awayFromHigh)}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
@@ -8322,7 +8335,7 @@ function dh252RenderSignals(open, closedCount){
   document.getElementById('dh252-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td data-sort-value="${stFlipSortValue(r.st)}">${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
   </tr>`).join('') : '<tr><td colspan="10" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dh252-exit-count').textContent = exitRows.length;
@@ -8333,7 +8346,7 @@ function dh252RenderSignals(open, closedCount){
       <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
       <td>${dh252FmtRs(r.cmp)}</td>
       <td style="color:var(--red);font-weight:700">RED</td>
-      <td>${stFlipLabel(r.st)}</td>
+      <td data-sort-value="${stFlipSortValue(r.st)}">${stFlipLabel(r.st)}</td>
       <td style="color:${r.awayFromHigh == null ? '' : r.awayFromHigh >= 0 ? 'var(--green)' : 'var(--red)'}">${r.awayFromHigh == null ? '—' : dh252FmtPct(r.awayFromHigh)}</td>
       <td style="color:${notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtRs(notionalPl)}</td>
       <td style="color:${r.plPct >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${dh252FmtPct(r.plPct)}</td>
@@ -8918,7 +8931,7 @@ function dhccRenderPositions(state){
       <td>${dh252FmtDate(p.entryDate)}</td><td>${p.symbol}</td><td>${p.qty}</td><td>${dh252FmtRs(p.wac)}</td>
       <td>${cmp !== null ? dh252FmtRs(cmp) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td style="color:${notionalPl === null ? '' : notionalPl >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${notionalPl === null ? '—' : dh252FmtRs(notionalPl)}</td>
       <td style="color:${notionalPlPct === null ? '' : notionalPlPct >= 0 ? 'var(--green)' : 'var(--red)'}">${notionalPlPct === null ? '—' : dh252FmtPct(notionalPlPct)}</td>
       <td>${p.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
@@ -8961,7 +8974,7 @@ function dhccRenderSignals(open){
     const rsi = rsiMap[sym];
     const st = stMap[sym] || stMap[sym + '.NS'];
     return `<tr><td>${sym}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
-      <td style="color:var(--green);font-weight:700">GREEN</td><td>${stFlipLabel(st)}</td><td>${rsi != null ? rsi.toFixed(1) : '—'}</td></tr>`;
+      <td style="color:var(--green);font-weight:700">GREEN</td><td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td><td>${rsi != null ? rsi.toFixed(1) : '—'}</td></tr>`;
   }).join('') : '<tr><td colspan="6" class="loading">No Supertrend-green entries right now.</td></tr>';
 
   // Equity Exit / Add-on — evaluated against open positions only.
@@ -8989,7 +9002,7 @@ function dhccRenderSignals(open){
   document.getElementById('dhcc-add-tbody').innerHTML = addRows.length ? addRows.map(r => `<tr>
     <td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td><td>${dh252FmtRs(r.cmp)}</td>
     <td style="color:var(--red)">${dh252FmtPct(r.plPct)}</td><td>${r.addQty}</td><td>${r.daysSinceFill}d</td>
-    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td>${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
+    <td style="color:var(--green);font-weight:700">${r.stColor.toUpperCase()}</td><td data-sort-value="${stFlipSortValue(r.st)}">${stFlipLabel(r.st)}</td><td>${r.rsi != null ? r.rsi.toFixed(1) : '—'}</td>
   </tr>`).join('') : '<tr><td colspan="10" class="loading">No add-on signals right now.</td></tr>';
 
   document.getElementById('dhcc-exit-count').textContent = exitRows.length;
@@ -8999,7 +9012,7 @@ function dhccRenderSignals(open){
     return `<tr>
       <td>${dh252FmtDate(r.pos.entryDate)}</td><td>${r.pos.symbol}</td><td>${r.pos.qty}</td><td>${dh252FmtRs(r.pos.wac)}</td>
       <td>${dh252FmtRs(r.cmp)}</td><td style="color:var(--red);font-weight:700">RED</td>
-      <td>${stFlipLabel(r.st)}</td>
+      <td data-sort-value="${stFlipSortValue(r.st)}">${stFlipLabel(r.st)}</td>
       <td style="color:var(--green);font-weight:700">${dh252FmtRs(notionalPl)}</td>
       <td style="color:var(--green);font-weight:700">${dh252FmtPct(r.plPct)}</td>
       <td>${r.pos.numAdds}</td><td>${ageDays === null ? '—' : ageDays}</td>
@@ -9034,7 +9047,7 @@ function dhccRenderSignals(open){
     return `<tr${rowAttr}>
       <td>${sym}${earningsNameBadge}${oversoldBadge}</td><td>${DHCC_COMPANY_NAMES[sym] || ''}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       ${earningsCell}
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
@@ -9435,7 +9448,7 @@ function divRenderSignals(){
     const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
     return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td><td>${rsi.toFixed(1)}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
   }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;25 signals right now.</td></tr>';
 
@@ -9454,7 +9467,7 @@ function divRenderSignals(){
     return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td>
       <td>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
   }).join('') : '<tr><td colspan="7" class="loading">No stocks at their 52-week low right now.</td></tr>';
 
@@ -9488,7 +9501,7 @@ function divRenderSignals(){
     return `<tr${rowAttr}>
       <td>${sym}${earningsNameBadge}${oversoldBadge}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td>${stFlipLabel(st)}</td>
+      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       ${earningsCell}
       <td style="${sellCall ? 'color:var(--red);font-weight:700;' : 'color:var(--muted);'}">${sellCall ? 'SELL CALL' : '—'}</td>
