@@ -1086,8 +1086,8 @@
       <div class="toptab-panel" data-subtab="call">
         <div class="table-scroll" style="max-height:none;overflow-y:visible;">
           <table class="list-table">
-            <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>SELL CALL</th></tr></thead>
-            <tbody id="ivp-opt-body-call"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+            <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>EARNINGS</th><th>SELL CALL</th></tr></thead>
+            <tbody id="ivp-opt-body-call"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div><!-- /toptab-panel -->
@@ -1095,14 +1095,14 @@
       <div class="toptab-panel" data-subtab="put">
         <div class="table-scroll" style="max-height:none;overflow-y:visible;">
           <table class="list-table">
-            <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>SELL PUT</th></tr></thead>
-            <tbody id="ivp-opt-body-put"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+            <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>IVP</th><th>EARNINGS</th><th>SELL PUT</th></tr></thead>
+            <tbody id="ivp-opt-body-put"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div><!-- /toptab-panel -->
     </div>
 
-    <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. A stock meeting both conditions appears on both tabs. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+    <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. A stock meeting both conditions appears on both tabs. EARNINGS column flags a results date within 7 days (red ⚠) — still listed, not filtered out, since whether to skip it is your call, but think twice before selling into that window. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -4447,7 +4447,11 @@ function ivpRenderOptionsSignal(){
   // separately, since ivpData itself can be swapped (site snapshot vs
   // uploaded Google Sheet data).
   const ivpPctBySymbol = {};
-  ((ivpData && ivpData.entries) || []).forEach(e => { ivpPctBySymbol[e.symbol] = e.iv_percentile; });
+  const ivpEventDateBySymbol = {};
+  ((ivpData && ivpData.entries) || []).forEach(e => {
+    ivpPctBySymbol[e.symbol] = e.iv_percentile;
+    ivpEventDateBySymbol[e.symbol] = e.event_date;
+  });
   let sellCallCount = 0, sellPutCount = 0, rsiOverboughtCount = 0, rsiOversoldCount = 0;
   const callRows = [], putRows = [];
   universe.forEach(sym => {
@@ -4461,20 +4465,32 @@ function ivpRenderOptionsSignal(){
     if(sellPut) sellPutCount++;
     if(rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT) rsiOverboughtCount++;
     if(rsi != null && rsi < IVP_OPT_RSI_OVERSOLD) rsiOversoldCount++;
+    // Earnings-proximity warning — placing a fresh SELL CALL/PUT into a
+    // results announcement risks an overnight gap blowing straight
+    // through the strike, so flag anything inside a 7-day window
+    // regardless of how good the Supertrend/RSI signal otherwise looks.
+    const days = ivpDaysToEarnings(ivpEventDateBySymbol[sym]);
+    const nearEarnings = days != null && days >= 0 && days <= 7;
+    const earningsCell = nearEarnings
+      ? `<td style="color:var(--red);font-weight:700;">⚠ ${days === 0 ? 'TODAY' : days + 'd'}</td>`
+      : `<td style="color:var(--muted);">—</td>`;
     const commonCells = `<td>${ivpSymLabel(sym)}</td><td>${st ? '₹' + st.close.toLocaleString('en-IN') : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
       <td>${stFlipLabel(st)}</td>
       <td>${rsi != null ? rsi.toFixed(1) : '—'}</td>
-      <td>${ivp != null ? ivp.toFixed(0) + '%' : '—'}</td>`;
+      <td>${ivp != null ? ivp.toFixed(0) + '%' : '—'}</td>
+      ${earningsCell}`;
     // A stock meeting both the SELL CALL and SELL PUT conditions
     // (independent ORs, so not mutually exclusive) appears in both tabs —
     // each tab answers its own question ("which stocks have a pending
-    // SELL CALL signal") independently of the other.
+    // SELL CALL signal") independently of the other. Earnings proximity is
+    // a warning, not a filter — still listed, just flagged, since the
+    // decision to skip it stays with the user.
     if(sellCall) callRows.push(`<tr>${commonCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
     if(sellPut) putRows.push(`<tr>${commonCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
   });
-  callBody.innerHTML = callRows.length ? callRows.join('') : '<tr><td colspan="7" class="loading">No SELL CALL signals right now.</td></tr>';
-  putBody.innerHTML = putRows.length ? putRows.join('') : '<tr><td colspan="7" class="loading">No SELL PUT signals right now.</td></tr>';
+  callBody.innerHTML = callRows.length ? callRows.join('') : '<tr><td colspan="8" class="loading">No SELL CALL signals right now.</td></tr>';
+  putBody.innerHTML = putRows.length ? putRows.join('') : '<tr><td colspan="8" class="loading">No SELL PUT signals right now.</td></tr>';
 
   const summaryEl = document.getElementById('ivp-opt-summary');
   if(summaryEl){
