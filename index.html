@@ -12,6 +12,7 @@
   :root{
     color-scheme: dark;
     --bg:#08080a; --panel:#111114; --panel2:#17171b;
+    --table-row:#1c1c22;
     --border:#2a2a30; --border-soft:#1e1e23;
     --amber:#2f9fff; --amber-dim:#1a5a99; --amber-glow:rgba(47,159,255,0.12);
     --subnav-active:var(--amber); --subnav-active-dim:var(--amber-dim);
@@ -136,6 +137,15 @@
   .list-table th:hover{color:var(--white);}
   .list-table th.sorted-col{color:var(--amber);}
   .list-table th .sort-arrow{display:inline-block;margin-left:4px;font-size:8px;}
+  /* A step lighter than --panel (the surrounding card) so table rows read
+     as a distinct, slightly-raised content surface instead of blending
+     into near-black (--bg/--panel sit at ~#08-11, easy to read as "no
+     contrast" against body text on long tables). Stays dark-theme-
+     appropriate — not a jump to mid-gray — just enough lift to be easier
+     on the eyes scanning many rows. Set on tbody tr (not td) specifically
+     so inline per-row style backgrounds (warning/highlight rows) still
+     override it via normal CSS specificity. */
+  .list-table tbody tr{background:var(--table-row);}
   .list-table td{padding:7px 18px;font-size:12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
   .list-table tr:hover td{background:var(--panel2);}
   /* overflow-x is the fix for a real bug: without it, a table wider than
