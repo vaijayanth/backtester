@@ -4361,6 +4361,12 @@ async function initIvpScreener(){
         document.getElementById('ivp-meta').innerHTML =
           `Weekly entry-screening tool — NOT live position monitoring (see footnote) · F&amp;O universe (${ivpData.universe_size} stocks) · <span style="color:var(--amber);">uploaded ${new Date(ivpData.generated_at).toLocaleString('en-IN')}</span>`;
         renderIvpScreener();
+        // Re-render: the call above at the top of this function ran before
+        // ivpData was set (it was still null/stale at that point), so the
+        // IVP% column it builds from ivpData.entries came up empty even
+        // though Supertrend/RSI14 (sourced from the separate ivpStBySymbol/
+        // ivpRsiBySymbol dicts, already populated earlier) rendered fine.
+        try{ ivpRenderOptionsSignal(); } catch(err){ console.error('IVP options signal failed:', err); }
         try{ ivpRenderFreshness(); } catch(err){ console.error('IVP freshness render failed:', err); }
         return;
       }
