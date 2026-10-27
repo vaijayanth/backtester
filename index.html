@@ -4500,8 +4500,16 @@ function ivpRenderOptionsSignal(){
     // (there, RSI<30 is itself one of the two conditions that put it on
     // the list in the first place, not a contradiction).
     const oversold = rsi != null && rsi < IVP_OPT_RSI_OVERSOLD;
-    const stockCellCall = `<td>${ivpSymLabel(sym)}${oversold ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>` : ''}</td>`;
-    const stockCellPlain = `<td>${ivpSymLabel(sym)}</td>`;
+    // Earnings badge next to the stock name applies to BOTH tabs (results
+    // risk doesn't care which side you're selling), unlike OVERSOLD which
+    // is a CALL-specific contradiction. Same info as the EARNINGS column
+    // and row tint, repeated here since the stock name is what people
+    // actually scan first.
+    const earningsNameBadge = nearEarnings
+      ? ` <span style="color:var(--red);font-weight:700;" title="Results ${days === 0 ? 'today' : 'in ' + days + ' day' + (days === 1 ? '' : 's')} — see EARNINGS column">⚠ EARNINGS ${days === 0 ? 'TODAY' : days + 'd'}</span>`
+      : '';
+    const stockCellCall = `<td>${ivpSymLabel(sym)}${earningsNameBadge}${oversold ? ` <span style="color:var(--amber);font-weight:700;" title="RSI14 ${rsi.toFixed(1)} — oversold; a bounce here would work against a fresh short call">⚠ OVERSOLD</span>` : ''}</td>`;
+    const stockCellPlain = `<td>${ivpSymLabel(sym)}${earningsNameBadge}</td>`;
     if(sellCall) callRows.push(`<tr${rowAttr}>${stockCellCall}${restCells}<td style="color:var(--red);font-weight:700;">SELL CALL</td></tr>`);
     if(sellPut) putRows.push(`<tr${rowAttr}>${stockCellPlain}${restCells}<td style="color:var(--green);font-weight:700;">SELL PUT</td></tr>`);
   });
