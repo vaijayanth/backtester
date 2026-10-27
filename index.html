@@ -1770,6 +1770,7 @@
       <div class="stat"><div class="stat-label">CAGR (COMBINED)</div><div class="stat-value" id="dh252-cagr">—</div></div>
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
+    <div id="dh252-skipped-warning" style="display:none;margin:0 18px 18px;padding:12px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;"></div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -1965,6 +1966,7 @@
       <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dhcc-avg-plpct">—</div></div>
       <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
     </div>
+    <div id="dhcc-skipped-warning" style="display:none;margin:0 18px 18px;padding:12px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;"></div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -8419,6 +8421,25 @@ function dh252LastLoggedText(trades){
   return fmt ? ` · last logged ${fmt.text}` : '';
 }
 
+// Shared by both journal pages — a skipped row (dh252BuildPositions /
+// dhccBuildPositions) previously only surfaced as a bare count in the
+// header meta line plus a console.warn, so the single most common mistake
+// (logging BUY again on a stock you meant to ADD to — already-open
+// positions silently reject a second BUY rather than erroring loudly)
+// was invisible without opening devtools. Lists each skipped row with its
+// own reason directly on the page instead.
+function renderSkippedTradesWarning(elId, skipped){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!skipped || !skipped.length){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = `<div style="color:var(--red);font-weight:700;font-size:12px;margin-bottom:6px;">⚠ ${skipped.length} logged row${skipped.length === 1 ? '' : 's'} NOT reflected in positions below</div>` +
+    skipped.map(s => `<div style="font-size:11.5px;color:var(--white);margin-top:4px;">
+      <b>${s.Symbol || '?'}</b> — ${s.Action || '?'} ${s.Qty || ''} @ ₹${s.Price || ''} on ${s.Date || '?'}: <span style="color:var(--red);">${s.reason}</span>
+    </div>`).join('') +
+    `<div style="font-size:11px;color:var(--muted);margin-top:8px;">Fix the row directly in the Google Sheet (correct the Action, or delete a true duplicate), then refresh.</div>`;
+}
+
 function dh252RenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
@@ -8465,7 +8486,8 @@ async function dh252Refresh(){
     dh252RenderTradeLog();
     document.getElementById('dh252-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
       dh252LastLoggedText(trades) +
-      (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
+      (state.skipped.length ? ` · ⚠ ${state.skipped.length} row(s) skipped — see below` : '');
+    renderSkippedTradesWarning('dh252-skipped-warning', state.skipped);
     if(state.skipped.length) console.warn('52-week-high journal: skipped rows', state.skipped);
   }catch(err){
     document.getElementById('dh252-cap-meta').textContent = 'Could not load: ' + err.message;
@@ -9083,7 +9105,8 @@ async function dhccRefresh(){
     dhccRenderTradeLog();
     document.getElementById('dhcc-cap-meta').textContent = `${trades.length} trade${trades.length === 1 ? '' : 's'} logged` +
       dh252LastLoggedText(trades) +
-      (state.skipped.length ? ` · ${state.skipped.length} row(s) skipped — check console` : '');
+      (state.skipped.length ? ` · ⚠ ${state.skipped.length} row(s) skipped — see below` : '');
+    renderSkippedTradesWarning('dhcc-skipped-warning', state.skipped);
     if(state.skipped.length) console.warn('Dhan Covered Call journal: skipped rows', state.skipped);
   }catch(err){
     document.getElementById('dhcc-cap-meta').textContent = 'Could not load: ' + err.message;
