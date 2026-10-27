@@ -976,6 +976,7 @@
 
   <div class="subnav" id="subnav-ivp">
     <button data-subtab="signals">SIGNALS</button>
+    <button data-subtab="positions">POSITIONS</button>
     <button data-subtab="results">RESULTS</button>
     <button data-subtab="screen">SCREEN</button>
   </div>
@@ -1102,6 +1103,36 @@
     </div>
 
     <div class="dash-footnote">Full F&amp;O universe (213 stocks), regardless of any screen above. SELL CALL when Supertrend(10,3) is red OR RSI14 &gt; 70. SELL PUT when Supertrend is green OR RSI14 &lt; 30. Same rule used on the Dhan Covered Call and ICICI Dividend Longterm pages. A stock meeting both conditions appears on both tabs. Informational only — strike/expiry/qty and any stoploss are yours to execute.</div>
+  </div>
+  </div><!-- /subtab-panel -->
+
+  <div class="subtab-panel" data-subtab="positions">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">UPLOAD ZERODHA OPEN POSITIONS <span class="panel-meta">session only — not stored, re-upload each time you check</span></div></div>
+    <div style="padding:18px;">
+      <div id="ivp-pos-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;">No positions uploaded yet.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="file" id="ivp-pos-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
+        <button class="refresh-btn" id="ivp-pos-upload-btn" style="padding:11px 18px;background:var(--amber);color:#fff;border-color:var(--amber);font-weight:700;">⬆ UPLOAD &amp; CHECK</button>
+        <button class="refresh-btn" id="ivp-pos-clear-btn" style="padding:11px 18px;">↺ CLEAR</button>
+      </div>
+      <div id="ivp-pos-upload-error" style="display:none;margin-top:12px;padding:10px 12px;background:var(--red-dim);border-radius:4px;color:var(--red);font-size:12px;"></div>
+      <div class="dash-footnote" style="padding:12px 0 0;border-top:none;">
+        Export your open positions from Kite (Portfolio → Positions → download CSV). Columns expected: Product, Instrument, Qty., Avg., LTP, P&amp;L, Chg. Parsed in your browser only — nothing is sent anywhere or stored, so you'll need to re-upload each time you want a fresh check.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="border-color:var(--amber-dim);">
+    <div class="panel-head"><div class="panel-title">⚠ POSITION vs SIGNAL CHECK <span class="panel-meta" id="ivp-pos-count">—</span></div></div>
+    <div class="stat-row" id="ivp-pos-summary" style="padding:0 18px 14px;"></div>
+    <div class="table-scroll" style="max-height:620px;">
+      <table class="list-table">
+        <thead><tr><th>STOCK</th><th>TYPE</th><th>STRIKE</th><th>EXPIRY</th><th>QTY</th><th>LTP ₹</th><th>P&amp;L ₹</th><th>STATUS</th><th>RATIONALE</th></tr></thead>
+        <tbody id="ivp-pos-body"><tr><td colspan="9" class="loading">Upload your positions CSV above.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-footnote">Checks each SOLD (short) option leg's underlying against the same SELL CALL/SELL PUT signal used in the Signals tab — Supertrend(10,3) + RSI14, as of the last daily pipeline run, not live. Long (bought) legs are treated as hedges and aren't independently flagged — they close alongside whichever short leg they protect. NIFTY options are checked against the NIFTYIETF index proxy (same as the header stat above); BANKNIFTY/FINNIFTY and any symbol outside the tracked F&amp;O universe show as Unknown rather than a guess. This is a periodic manual check against end-of-day signal data, not real-time breach monitoring — see the page footnote below for why that distinction matters.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -4329,7 +4360,7 @@ async function ivpRenderNiftyStat(){
 // has no rows yet or is unreachable.
 async function initIvpScreener(){
   ivpInitialized = true;
-  subTabInit('ivp', ['signals', 'screen', 'results']);
+  subTabInit('ivp', ['signals', 'positions', 'screen', 'results']);
   topTabInit('ivpsignals', ['call', 'put']);
   // Deferred, not called directly: initIvpScreener() itself is invoked by a
   // bare top-level call earlier in this same <script> block (IVP is the
@@ -4451,6 +4482,220 @@ function ivpRenderOptionsSignal(){
     `;
   }
 }
+
+// ============================================================
+// POSITIONS vs SIGNAL — checks a Zerodha open-positions export against
+// the same SELL CALL/SELL PUT thesis above. Session-only (no Google
+// Sheet persistence — positions change constantly, nothing to sync
+// across devices for this).
+// ============================================================
+
+// Zerodha NRML/MIS monthly option symbol: SYMBOL + YY + MMM + STRIKE + CE|PE
+// (e.g. "360ONE26NOV1100CE", "ASHOKLEY26NOV162.5CE"). Restricting the month
+// token to real month abbreviations (not a bare [A-Z]{3}) forces correct
+// backtracking through symbols that themselves contain letters right before
+// the expiry (e.g. "NAM-INDIA26NOV1000CE") — a loose pattern could split in
+// the wrong place. Weekly-expiry symbol formats aren't handled (out of
+// scope for now); such rows are skipped, not mis-parsed.
+const IVP_POS_INSTRUMENT_RE = /^(.+?)(\d{2})(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)(\d+(?:\.\d+)?)(CE|PE)$/;
+
+// No BANKNIFTY/FINNIFTY proxy configured yet — only NIFTY has one
+// (NIFTYIETF, same as the header stat). Extend this map if/when a
+// suitable ETF proxy is confirmed for the others.
+const IVP_POS_INDEX_PROXY = { 'NIFTY': 'NIFTYIETF' };
+
+function ivpParseCsvLine(line){
+  const cells = [];
+  let cur = '', inQuotes = false;
+  for(let i = 0; i < line.length; i++){
+    const c = line[i];
+    if(c === '"'){
+      if(inQuotes && line[i + 1] === '"'){ cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(c === ',' && !inQuotes){
+      cells.push(cur); cur = '';
+    } else cur += c;
+  }
+  cells.push(cur);
+  return cells.map(c => c.trim());
+}
+
+function ivpParsePositionsCsv(text){
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length);
+  if(!lines.length) throw new Error('Empty file.');
+  const headers = ivpParseCsvLine(lines[0]).map(h => h.trim());
+  const col = name => headers.indexOf(name);
+  const idx = { instrument: col('Instrument'), qty: col('Qty.'), avg: col('Avg.'), ltp: col('LTP'), pnl: col('P&L'), chg: col('Chg.') };
+  if(idx.instrument === -1 || idx.qty === -1){
+    throw new Error('Could not find "Instrument"/"Qty." columns — check this is a Zerodha Positions CSV export.');
+  }
+
+  const positions = [];
+  let skipped = 0;
+  for(let i = 1; i < lines.length; i++){
+    const cells = ivpParseCsvLine(lines[i]);
+    const instrument = (cells[idx.instrument] || '').trim();
+    if(!instrument) continue;
+    const m = instrument.match(IVP_POS_INSTRUMENT_RE);
+    if(!m){ skipped++; continue; } // futures/equity rows, or a format this parser doesn't handle (e.g. weekly expiry)
+    const qty = ivpToFloat(cells[idx.qty]);
+    if(qty == null || qty === 0) continue;
+    positions.push({
+      instrument, underlying: m[1], expiryYY: m[2], expiryMonth: m[3], strike: parseFloat(m[4]), right: m[5],
+      qty, avg: ivpToFloat(cells[idx.avg]), ltp: ivpToFloat(cells[idx.ltp]), pnl: ivpToFloat(cells[idx.pnl]), chg: ivpToFloat(cells[idx.chg]),
+    });
+  }
+  if(!positions.length){
+    throw new Error('No option positions found (after excluding non-option rows) — check this is a Zerodha Positions export with Instrument/Qty./Avg./LTP/P&L columns.');
+  }
+  return { generated_at: new Date().toISOString(), positions, skipped_count: skipped };
+}
+
+// Looks up the underlying's current Supertrend colour + RSI14 and
+// evaluates it against the same SELL CALL / SELL PUT condition
+// ivpRenderOptionsSignal() uses. NIFTY routes through the NIFTYIETF proxy
+// (window._eqSupertrendMap/_eqRsiMap, populated by ivpRenderNiftyStat());
+// everything else uses the F&O-scoped ivpStBySymbol/ivpRsiBySymbol already
+// loaded for the Signals tab.
+function ivpPositionSignalCheck(underlying, right){
+  let stColor = null, rsi = null, found = false;
+  const proxy = IVP_POS_INDEX_PROXY[underlying];
+  if(proxy){
+    const st = (window._eqSupertrendMap || {})[proxy];
+    rsi = (window._eqRsiMap || {})[proxy];
+    stColor = st && st.color ? st.color : null;
+    found = !!(stColor || rsi != null);
+  } else {
+    const st = ivpStBySymbol[underlying + '.NS'];
+    rsi = ivpRsiBySymbol[underlying + '.NS'];
+    stColor = st && st.color ? st.color : null;
+    found = !!(st || rsi != null);
+  }
+  if(!found) return { status: 'unknown' };
+
+  if(right === 'CE'){
+    const valid = stColor === 'red' || (rsi != null && rsi > IVP_OPT_RSI_OVERBOUGHT);
+    return { status: valid ? 'hold' : 'exit', stColor, rsi, thesis: 'SELL CALL', reqText: `Supertrend RED or RSI14 > ${IVP_OPT_RSI_OVERBOUGHT}` };
+  }
+  const valid = stColor === 'green' || (rsi != null && rsi < IVP_OPT_RSI_OVERSOLD);
+  return { status: valid ? 'hold' : 'exit', stColor, rsi, thesis: 'SELL PUT', reqText: `Supertrend GREEN or RSI14 < ${IVP_OPT_RSI_OVERSOLD}` };
+}
+
+function ivpPositionStatusText(check){
+  const stTxt = check.stColor ? check.stColor.toUpperCase() : '—';
+  const rsiTxt = check.rsi != null ? check.rsi.toFixed(1) : '—';
+  if(check.status === 'exit'){
+    return `${check.thesis} needs ${check.reqText}. Now: Supertrend ${stTxt}, RSI14 ${rsiTxt} — thesis no longer holds.`;
+  }
+  return `${check.thesis} still valid — Supertrend ${stTxt}, RSI14 ${rsiTxt}.`;
+}
+
+async function ivpUploadPositions(){
+  const errEl = document.getElementById('ivp-pos-upload-error');
+  errEl.style.display = 'none';
+  const fileInput = document.getElementById('ivp-pos-file-input');
+  const file = fileInput.files && fileInput.files[0];
+  if(!file){ errEl.textContent = 'Choose a file first.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('ivp-pos-upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'CHECKING...';
+  try{
+    const text = await file.text();
+    window._ivpPositions = ivpParsePositionsCsv(text);
+    ivpRenderPositions();
+  }catch(err){
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬆ UPLOAD & CHECK';
+  }
+}
+
+function ivpClearPositions(){
+  window._ivpPositions = null;
+  document.getElementById('ivp-pos-file-input').value = '';
+  document.getElementById('ivp-pos-meta').textContent = 'No positions uploaded yet.';
+  ivpRenderPositions();
+}
+
+function ivpRenderPositions(){
+  const body = document.getElementById('ivp-pos-body');
+  const summaryEl = document.getElementById('ivp-pos-summary');
+  const countEl = document.getElementById('ivp-pos-count');
+  if(!body) return;
+  const data = window._ivpPositions;
+
+  if(!data || !data.positions.length){
+    body.innerHTML = '<tr><td colspan="9" class="loading">Upload your positions CSV above to check open option legs against current SELL CALL/PUT signals.</td></tr>';
+    summaryEl.innerHTML = '';
+    countEl.textContent = '—';
+    return;
+  }
+
+  const metaEl = document.getElementById('ivp-pos-meta');
+  metaEl.innerHTML = `${data.positions.length} option legs loaded` +
+    (data.skipped_count ? ` · <span style="color:var(--muted);">${data.skipped_count} non-option/unrecognized row${data.skipped_count === 1 ? '' : 's'} skipped</span>` : '');
+
+  let exitCount = 0, holdCount = 0, hedgeCount = 0, unknownCount = 0;
+  const STATUS_PRIORITY = { exit: 0, unknown: 1, hold: 2, hedge: 3 };
+
+  const rows = data.positions.map(p => {
+    let statusKey, statusLabel, statusColor, rationale;
+    if(p.qty > 0){
+      statusKey = 'hedge'; hedgeCount++;
+      statusLabel = 'HEDGE LEG'; statusColor = 'var(--muted)';
+      rationale = 'Long leg (bought) — not independently signalled; closes alongside whichever short leg it protects.';
+    } else {
+      const check = ivpPositionSignalCheck(p.underlying, p.right);
+      if(check.status === 'unknown'){
+        statusKey = 'unknown'; unknownCount++;
+        statusLabel = '? UNKNOWN'; statusColor = 'var(--amber)';
+        rationale = 'Underlying not in the tracked F&O/index-proxy universe — cannot verify.';
+      } else if(check.status === 'exit'){
+        statusKey = 'exit'; exitCount++;
+        statusLabel = '⚠ EXIT SIGNAL'; statusColor = 'var(--red)';
+        rationale = ivpPositionStatusText(check);
+      } else {
+        statusKey = 'hold'; holdCount++;
+        statusLabel = '✓ THESIS HOLDS'; statusColor = 'var(--green)';
+        rationale = ivpPositionStatusText(check);
+      }
+    }
+    return { p, statusKey, statusLabel, statusColor, rationale };
+  });
+
+  rows.sort((a, b) => STATUS_PRIORITY[a.statusKey] - STATUS_PRIORITY[b.statusKey]);
+
+  body.innerHTML = rows.map(({ p, statusLabel, statusColor, rationale }) => {
+    const expiryTxt = `${p.expiryMonth}'${p.expiryYY}`;
+    const qtyColor = p.qty < 0 ? 'var(--red)' : 'var(--green)';
+    const pnlColor = p.pnl != null && p.pnl < 0 ? 'var(--red)' : 'var(--green)';
+    return `<tr>
+      <td>${p.underlying}</td>
+      <td>${p.right === 'CE' ? 'CALL' : 'PUT'}</td>
+      <td>₹${p.strike.toLocaleString('en-IN')}</td>
+      <td>${expiryTxt}</td>
+      <td style="color:${qtyColor};">${p.qty > 0 ? '+' : ''}${p.qty.toLocaleString('en-IN')}</td>
+      <td>${p.ltp != null ? '₹' + p.ltp.toLocaleString('en-IN') : '—'}</td>
+      <td style="color:${pnlColor};">${p.pnl != null ? (p.pnl >= 0 ? '+' : '') + '₹' + Math.round(p.pnl).toLocaleString('en-IN') : '—'}</td>
+      <td style="color:${statusColor};font-weight:700;">${statusLabel}</td>
+      <td style="font-size:11px;color:var(--muted);">${rationale}</td>
+    </tr>`;
+  }).join('');
+
+  countEl.textContent = `${data.positions.length} legs`;
+  summaryEl.innerHTML = `
+    <div class="stat"><div class="stat-label">EXIT SIGNALS</div><div class="stat-value" style="color:var(--red);">${exitCount}</div></div>
+    <div class="stat"><div class="stat-label">THESIS HOLDS</div><div class="stat-value" style="color:var(--green);">${holdCount}</div></div>
+    <div class="stat"><div class="stat-label">HEDGE LEGS</div><div class="stat-value">${hedgeCount}</div></div>
+    <div class="stat"><div class="stat-label">UNKNOWN</div><div class="stat-value" style="color:var(--amber);">${unknownCount}</div></div>
+  `;
+}
+
+document.getElementById('ivp-pos-upload-btn').onclick = ivpUploadPositions;
+document.getElementById('ivp-pos-clear-btn').onclick = ivpClearPositions;
 
 function ivpDaysToEarnings(eventDate){
   if(!eventDate) return null;
