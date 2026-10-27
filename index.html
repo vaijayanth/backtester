@@ -1109,7 +1109,10 @@
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">UPLOAD ZERODHA OPEN POSITIONS <span class="panel-meta">session only — not stored, re-upload each time you check</span></div></div>
-    <div style="padding:18px;">
+    <div class="stat-row" style="padding:0 18px 4px;">
+      <div id="ivp-pos-asof">—</div>
+    </div>
+    <div style="padding:0 18px 18px;">
       <div id="ivp-pos-meta" style="font-size:11px;color:var(--muted);margin-bottom:14px;">No positions uploaded yet.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="file" id="ivp-pos-file-input" accept=".csv,text/csv" style="color:var(--muted);font-size:12px;">
@@ -4372,6 +4375,7 @@ async function initIvpScreener(){
   // a fresh task, by which point the whole script — including every later
   // const — has finished executing once.
   setTimeout(ivpRenderNiftyStat, 0);
+  ivpRenderPositions();
   document.getElementById('ivp-upload-meta').textContent = 'Checking Google Sheet for the latest upload...';
 
   try{
@@ -4626,6 +4630,13 @@ function ivpRenderPositions(){
   const countEl = document.getElementById('ivp-pos-count');
   if(!body) return;
   const data = window._ivpPositions;
+
+  // No threshold check for "stale" here (unlike the pipeline-fed freshness
+  // badges elsewhere) — this is a session-only snapshot of when the file
+  // was parsed, not data that goes stale on its own schedule. A huge
+  // threshold keeps renderFreshnessStat's colour logic effectively
+  // always-green rather than flagging a 2-hour-old upload as "stale".
+  renderFreshnessStat('ivp-pos-asof', data ? data.generated_at : null, 'POSITIONS LAST UPLOADED', 24 * 365);
 
   if(!data || !data.positions.length){
     body.innerHTML = '<tr><td colspan="9" class="loading">Upload your positions CSV above to check open option legs against current SELL CALL/PUT signals.</td></tr>';
