@@ -1,20 +1,20 @@
 {
-  "last_run_started_utc": "2026-10-26T20:03:33.785414+00:00",
-  "last_run_finished_utc": "2026-10-26T20:08:23.666951+00:00",
+  "last_run_started_utc": "2026-10-27T02:19:44.689001+00:00",
+  "last_run_finished_utc": "2026-10-27T02:25:19.576400+00:00",
   "latest_trading_date": "2026-10-26",
   "universe_size": 1539,
   "validated": 1493,
   "failed": 42,
   "pending": 0,
   "incremental": {
-    "attempted": 1424,
-    "updated": 0,
-    "unchanged": 1424,
+    "attempted": 1412,
+    "updated": 28,
+    "unchanged": 1384,
     "failed": 0
   },
   "full_refresh": {
-    "attempted": 69,
-    "refreshed": 69,
+    "attempted": 81,
+    "refreshed": 81,
     "failed": 0,
     "outage_breaker_tripped": 0,
     "ended_in_outage_mode": false
