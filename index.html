@@ -1844,8 +1844,7 @@
         <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><input type="text" id="dh252-f-symbol" placeholder="RELIANCE" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:120px;"></div>
         <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
           <select id="dh252-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
-            <option value="BUY">BUY (new)</option>
-            <option value="ADD">ADD (average down)</option>
+            <option value="BUY">BUY</option>
             <option value="SELL">SELL (exit)</option>
           </select>
         </div>
@@ -1854,11 +1853,12 @@
         <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Price ₹</label><input type="number" step="0.01" id="dh252-f-price" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:110px;"></div>
         <button class="refresh-btn" id="dh252-log-btn" style="padding:9px 18px;background:var(--amber);color:#fff;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
       </div>
+      <div style="padding:0 18px 10px;font-size:11px;color:var(--muted);">BUY always works — if the stock already has an open position, it's logged as an add-on (qty blended into WAC, original entry date kept) automatically. No need to check first.</div>
       <div id="dh252-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
     </div>
 
     <div id="dh252-log-tab-bulk" style="display:none;">
-      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry. Set a different date per row to backfill past fills in one go.</div>
+      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry. Set a different date per row to backfill past fills in one go. BUY auto-resolves to an add-on if the stock's already open (including a stock you BUY earlier in this same batch) — no need to pick ADD yourself.</div>
       <div class="table-scroll">
         <table class="list-table" id="dh252-bulk-table">
           <thead><tr><th style="width:1%;">#</th><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE ₹</th><th>STATUS</th></tr></thead>
@@ -8576,7 +8576,7 @@ function dh252BulkRowHtml(){
     <td style="color:var(--muted);">${dh252BulkRowSeq}</td>
     <td><input type="text" class="dh252-bulk-symbol" placeholder="RELIANCE" style="width:110px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
     <td><select class="dh252-bulk-action" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
-      <option value="BUY">BUY</option><option value="ADD">ADD</option><option value="SELL">SELL</option>
+      <option value="BUY">BUY</option><option value="SELL">SELL</option>
     </select></td>
     <td><input type="date" class="dh252-bulk-date" value="${todayIso}" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
     <td><input type="number" class="dh252-bulk-qty" style="width:70px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
@@ -8612,6 +8612,11 @@ async function dh252LogBulk(){
   const btn = document.getElementById('dh252-bulk-log-btn');
   btn.disabled = true; btn.textContent = 'LOGGING...';
   let ok = 0, fail = 0, attempted = 0;
+  // Running open-symbol set, seeded from the server's last-known state and
+  // kept in sync locally as rows post — a BUY on a symbol just BUY'd two
+  // rows earlier in this same batch still needs to resolve to ADD, and
+  // window._dh252Trades only gets refreshed once, after the whole loop.
+  const openSymbols = dh252OpenSymbolSet();
   const rows = Array.from(document.querySelectorAll('#dh252-bulk-tbody tr'));
   for(const row of rows){
     const symbolEl = row.querySelector('.dh252-bulk-symbol');
@@ -8628,9 +8633,13 @@ async function dh252LogBulk(){
       statusCell.textContent = '✗ incomplete row'; statusCell.style.color = 'var(--red)';
       fail++; continue;
     }
+    const action = dh252ResolveAction(openSymbols, symbol, actionEl.value);
     try{
-      await dh252PostTrade({Symbol: symbol, Action: actionEl.value, Date: date, Qty: Number(qty), Price: Number(price)});
-      statusCell.textContent = '✓ logged'; statusCell.style.color = 'var(--green)';
+      await dh252PostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+      statusCell.textContent = action !== actionEl.value ? `✓ logged (as ${action})` : '✓ logged';
+      statusCell.style.color = 'var(--green)';
+      if(action === 'BUY' || action === 'ADD') openSymbols.add(symbol);
+      else if(action === 'SELL') openSymbols.delete(symbol);
       ok++;
       symbolEl.value = ''; qtyEl.value = ''; priceEl.value = '';
     }catch(err){
@@ -8721,9 +8730,27 @@ function dh252BackfillDate(date){
   document.querySelectorAll('#dh252-bulk-tbody .dh252-bulk-date').forEach(inp => { inp.value = date; });
 }
 
+// The log form only offers BUY/SELL — ADD used to be a separate option,
+// which meant the user had to remember whether a stock was already open
+// before picking the right one (get it wrong and the BUY silently gets
+// rejected — see renderSkippedTradesWarning's whole reason for existing).
+// A requested BUY auto-resolves to an ADD when the stock already has an
+// open position (same symbol match dh252BuildPositions itself uses),
+// keeping the original entry date untouched (dh252BuildPositions' own ADD
+// branch already never overwrites entryDate — only lastFillDate/qty/wac).
+// SELL is never resolved — it's unambiguous on its own.
+function dh252OpenSymbolSet(){
+  const state = dh252BuildPositions(window._dh252Trades || []);
+  return new Set(Object.keys(state.open));
+}
+function dh252ResolveAction(openSymbols, symbol, requestedAction){
+  if(requestedAction !== 'BUY') return requestedAction;
+  return openSymbols.has(symbol) ? 'ADD' : 'BUY';
+}
+
 async function dh252LogTrade(){
   const symbol = document.getElementById('dh252-f-symbol').value.trim().toUpperCase();
-  const action = document.getElementById('dh252-f-action').value;
+  const requestedAction = document.getElementById('dh252-f-action').value;
   const date = document.getElementById('dh252-f-date').value;
   const qty = document.getElementById('dh252-f-qty').value;
   const price = document.getElementById('dh252-f-price').value;
@@ -8740,8 +8767,10 @@ async function dh252LogTrade(){
   const btn = document.getElementById('dh252-log-btn');
   btn.disabled = true; btn.textContent = 'LOGGING...';
   try{
+    const action = dh252ResolveAction(dh252OpenSymbolSet(), symbol, requestedAction);
     await dh252PostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
-    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}`, false);
+    const context = action === 'ADD' ? ' (added to existing open position, entry date unchanged)' : action === 'BUY' ? ' (new position)' : '';
+    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}${context}`, false);
     document.getElementById('dh252-f-symbol').value = '';
     document.getElementById('dh252-f-qty').value = '';
     document.getElementById('dh252-f-price').value = '';
