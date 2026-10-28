@@ -1752,7 +1752,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span></div>
+    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
@@ -8163,6 +8163,25 @@ function dh252RenderPositions(state){
     openInvestedPriced += p.wac * p.qty;
     return s + (w.close - p.wac) * p.qty;
   }, 0);
+  // Positive/loss split for the open book — same per-position MTM sign
+  // already computed in the openMtm reduce above, just tallied separately
+  // since that reduce only needed the summed total. Unpriced positions
+  // (no week52 match yet) are neither — shown separately so the two
+  // counts plus the unpriced count always add up to openList.length.
+  let openProfitCount = 0, openLossCount = 0, openUnpricedCount = 0;
+  openList.forEach(p => {
+    const w = week52ForMtm[p.symbol] || week52ForMtm[p.symbol + '.NS'];
+    if(!w){ openUnpricedCount++; return; }
+    if(w.close >= p.wac) openProfitCount++; else openLossCount++;
+  });
+  const plSplitEl = document.getElementById('dh252-open-plsplit');
+  if(plSplitEl){
+    plSplitEl.innerHTML = openList.length
+      ? `· <span style="color:var(--green);font-weight:700;">🟢 ${openProfitCount} profit</span> &nbsp;<span style="color:var(--red);font-weight:700;">🔴 ${openLossCount} loss</span>` +
+        (openUnpricedCount ? ` <span style="color:var(--muted);">(${openUnpricedCount} unpriced)</span>` : '')
+      : '';
+  }
+
   const notionalEl = document.getElementById('dh252-notional');
   const notionalPctEl = document.getElementById('dh252-notional-pct');
   if(!openList.length){
