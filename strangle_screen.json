@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-28T16:51:13.287604+00:00",
+  "generated_at": "2026-10-28T19:55:34.035133+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -428,7 +428,7 @@
     {
       "symbol": "JSWSTEEL.NS",
       "month": "2026-10",
-      "return_pct": -0.94,
+      "return_pct": -0.02,
       "status": "Win",
       "rsi_at_start": 38.9
     },
@@ -855,7 +855,7 @@
     {
       "symbol": "TATASTEEL.NS",
       "month": "2026-10",
-      "return_pct": -8.19,
+      "return_pct": -7.02,
       "status": "Win",
       "rsi_at_start": 38.0
     },
@@ -1282,8 +1282,8 @@
     {
       "symbol": "NMDC.NS",
       "month": "2026-10",
-      "return_pct": -10.51,
-      "status": "Loose",
+      "return_pct": -8.52,
+      "status": "Win",
       "rsi_at_start": 27.9
     },
     {
@@ -1709,7 +1709,7 @@
     {
       "symbol": "HINDALCO.NS",
       "month": "2026-10",
-      "return_pct": -4.41,
+      "return_pct": -4.68,
       "status": "Win",
       "rsi_at_start": 35.6
     },
@@ -2136,14 +2136,14 @@
     {
       "symbol": "VEDL.NS",
       "month": "2026-10",
-      "return_pct": -7.28,
-      "status": "Win",
+      "return_pct": -10.24,
+      "status": "Loose",
       "rsi_at_start": 37.8
     },
     {
       "symbol": "SUNPHARMA.NS",
       "month": "2021-10",
-      "return_pct": -2.55,
+      "return_pct": -3.51,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -2159,21 +2159,21 @@
       "month": "2021-12",
       "return_pct": 11.75,
       "status": "Loose",
-      "rsi_at_start": 31.3
+      "rsi_at_start": 33.7
     },
     {
       "symbol": "SUNPHARMA.NS",
       "month": "2022-01",
       "return_pct": -1.24,
       "status": "Win",
-      "rsi_at_start": 69.2
+      "rsi_at_start": 69.8
     },
     {
       "symbol": "SUNPHARMA.NS",
       "month": "2022-02",
       "return_pct": 0.37,
       "status": "Win",
-      "rsi_at_start": 69.9
+      "rsi_at_start": 70.0
     },
     {
       "symbol": "SUNPHARMA.NS",
@@ -2563,7 +2563,7 @@
     {
       "symbol": "SUNPHARMA.NS",
       "month": "2026-10",
-      "return_pct": -3.17,
+      "return_pct": -3.52,
       "status": "Win",
       "rsi_at_start": 36.7
     },
@@ -2990,7 +2990,7 @@
     {
       "symbol": "CIPLA.NS",
       "month": "2026-10",
-      "return_pct": 1.22,
+      "return_pct": 0.07,
       "status": "Win",
       "rsi_at_start": 34.8
     },
@@ -3417,7 +3417,7 @@
     {
       "symbol": "DIVISLAB.NS",
       "month": "2026-10",
-      "return_pct": 3.03,
+      "return_pct": 2.46,
       "status": "Win",
       "rsi_at_start": 51.7
     },
@@ -3844,14 +3844,14 @@
     {
       "symbol": "DRREDDY.NS",
       "month": "2026-10",
-      "return_pct": 8.3,
+      "return_pct": 6.24,
       "status": "Win",
       "rsi_at_start": 53.9
     },
     {
       "symbol": "AUROPHARMA.NS",
       "month": "2021-10",
-      "return_pct": -4.65,
+      "return_pct": -2.36,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -3867,28 +3867,28 @@
       "month": "2021-12",
       "return_pct": 10.59,
       "status": "Loose",
-      "rsi_at_start": 44.5
+      "rsi_at_start": 48.3
     },
     {
       "symbol": "AUROPHARMA.NS",
       "month": "2022-01",
       "return_pct": -14.04,
       "status": "Loose",
-      "rsi_at_start": 61.3
+      "rsi_at_start": 62.2
     },
     {
       "symbol": "AUROPHARMA.NS",
       "month": "2022-02",
       "return_pct": -2.82,
       "status": "Win",
-      "rsi_at_start": 45.5
+      "rsi_at_start": 45.7
     },
     {
       "symbol": "AUROPHARMA.NS",
       "month": "2022-03",
       "return_pct": 8.53,
       "status": "Win",
-      "rsi_at_start": 39.1
+      "rsi_at_start": 39.2
     },
     {
       "symbol": "AUROPHARMA.NS",
@@ -4271,7 +4271,7 @@
     {
       "symbol": "AUROPHARMA.NS",
       "month": "2026-10",
-      "return_pct": -1.97,
+      "return_pct": -3.0,
       "status": "Win",
       "rsi_at_start": 50.3
     },
@@ -4698,7 +4698,7 @@
     {
       "symbol": "BAJAJFINSV.NS",
       "month": "2026-10",
-      "return_pct": -4.1,
+      "return_pct": -2.67,
       "status": "Win",
       "rsi_at_start": 25.1
     },
@@ -5125,7 +5125,7 @@
     {
       "symbol": "BAJFINANCE.NS",
       "month": "2026-10",
-      "return_pct": -3.84,
+      "return_pct": -4.39,
       "status": "Win",
       "rsi_at_start": 32.2
     },
@@ -5979,7 +5979,7 @@
     {
       "symbol": "HDFCAMC.NS",
       "month": "2026-10",
-      "return_pct": 0.79,
+      "return_pct": -0.63,
       "status": "Win",
       "rsi_at_start": 37.8
     },
@@ -6406,7 +6406,7 @@
     {
       "symbol": "MUTHOOTFIN.NS",
       "month": "2026-10",
-      "return_pct": -12.35,
+      "return_pct": -11.81,
       "status": "Loose",
       "rsi_at_start": 34.7
     },
@@ -6833,7 +6833,7 @@
     {
       "symbol": "APOLLOHOSP.NS",
       "month": "2026-10",
-      "return_pct": 0.58,
+      "return_pct": -3.69,
       "status": "Win",
       "rsi_at_start": 30.1
     },
@@ -7260,7 +7260,7 @@
     {
       "symbol": "MAXHEALTH.NS",
       "month": "2026-10",
-      "return_pct": -7.43,
+      "return_pct": -8.14,
       "status": "Win",
       "rsi_at_start": 31.8
     },
@@ -7687,7 +7687,7 @@
     {
       "symbol": "TMPV.NS",
       "month": "2026-10",
-      "return_pct": -5.86,
+      "return_pct": -6.71,
       "status": "Win",
       "rsi_at_start": 27.4
     },
@@ -8114,7 +8114,7 @@
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2026-10",
-      "return_pct": -2.02,
+      "return_pct": -2.91,
       "status": "Win",
       "rsi_at_start": 21.8
     },
@@ -8541,7 +8541,7 @@
     {
       "symbol": "M&M.NS",
       "month": "2026-10",
-      "return_pct": -1.92,
+      "return_pct": -2.31,
       "status": "Win",
       "rsi_at_start": 23.2
     },
@@ -8968,7 +8968,7 @@
     {
       "symbol": "MARUTI.NS",
       "month": "2026-10",
-      "return_pct": -2.7,
+      "return_pct": -3.78,
       "status": "Win",
       "rsi_at_start": 21.9
     },
@@ -9395,7 +9395,7 @@
     {
       "symbol": "HEROMOTOCO.NS",
       "month": "2026-10",
-      "return_pct": 1.67,
+      "return_pct": -0.32,
       "status": "Win",
       "rsi_at_start": 40.7
     },
@@ -9822,7 +9822,7 @@
     {
       "symbol": "ITC.NS",
       "month": "2026-10",
-      "return_pct": -1.22,
+      "return_pct": -1.03,
       "status": "Win",
       "rsi_at_start": 36.3
     },
@@ -10249,7 +10249,7 @@
     {
       "symbol": "SBIN.NS",
       "month": "2026-10",
-      "return_pct": 0.39,
+      "return_pct": -0.84,
       "status": "Win",
       "rsi_at_start": 32.3
     },
@@ -10676,7 +10676,7 @@
     {
       "symbol": "INFY.NS",
       "month": "2026-10",
-      "return_pct": 11.2,
+      "return_pct": 15.15,
       "status": "Loose",
       "rsi_at_start": 44.5
     },
@@ -11103,7 +11103,7 @@
     {
       "symbol": "HINDUNILVR.NS",
       "month": "2026-10",
-      "return_pct": -2.9,
+      "return_pct": -2.79,
       "status": "Win",
       "rsi_at_start": 29.3
     },
@@ -11530,7 +11530,7 @@
     {
       "symbol": "ETERNAL.NS",
       "month": "2026-10",
-      "return_pct": 2.97,
+      "return_pct": 4.55,
       "status": "Win",
       "rsi_at_start": 39.5
     },
@@ -11950,7 +11950,7 @@
     {
       "symbol": "NYKAA.NS",
       "month": "2026-10",
-      "return_pct": 8.04,
+      "return_pct": 7.07,
       "status": "Win",
       "rsi_at_start": 44.7
     },
@@ -12377,7 +12377,7 @@
     {
       "symbol": "ONGC.NS",
       "month": "2026-10",
-      "return_pct": 0.06,
+      "return_pct": 2.27,
       "status": "Win",
       "rsi_at_start": 31.2
     },
@@ -12804,7 +12804,7 @@
     {
       "symbol": "IOC.NS",
       "month": "2026-10",
-      "return_pct": -2.87,
+      "return_pct": -1.68,
       "status": "Win",
       "rsi_at_start": 40.0
     },
@@ -13231,7 +13231,7 @@
     {
       "symbol": "YESBANK.NS",
       "month": "2026-10",
-      "return_pct": -25.49,
+      "return_pct": -24.11,
       "status": "Loose",
       "rsi_at_start": 32.7
     },
@@ -13658,7 +13658,7 @@
     {
       "symbol": "RELIANCE.NS",
       "month": "2026-10",
-      "return_pct": -1.87,
+      "return_pct": 1.36,
       "status": "Win",
       "rsi_at_start": 28.2
     },
@@ -14085,7 +14085,7 @@
     {
       "symbol": "ADANIENT.NS",
       "month": "2026-10",
-      "return_pct": -14.49,
+      "return_pct": -14.14,
       "status": "Loose",
       "rsi_at_start": 40.4
     },
@@ -14512,7 +14512,7 @@
     {
       "symbol": "ADANIPORTS.NS",
       "month": "2026-10",
-      "return_pct": -1.38,
+      "return_pct": -1.76,
       "status": "Win",
       "rsi_at_start": 48.1
     },
@@ -14939,7 +14939,7 @@
     {
       "symbol": "ASIANPAINT.NS",
       "month": "2026-10",
-      "return_pct": -4.45,
+      "return_pct": -4.77,
       "status": "Win",
       "rsi_at_start": 35.6
     },
@@ -15366,7 +15366,7 @@
     {
       "symbol": "AXISBANK.NS",
       "month": "2026-10",
-      "return_pct": 0.07,
+      "return_pct": -1.1,
       "status": "Win",
       "rsi_at_start": 44.6
     },
@@ -15793,7 +15793,7 @@
     {
       "symbol": "BEL.NS",
       "month": "2026-10",
-      "return_pct": -5.67,
+      "return_pct": -4.48,
       "status": "Win",
       "rsi_at_start": 36.6
     },
@@ -16220,7 +16220,7 @@
     {
       "symbol": "BHARTIARTL.NS",
       "month": "2026-10",
-      "return_pct": 11.64,
+      "return_pct": 13.4,
       "status": "Loose",
       "rsi_at_start": 32.6
     },
@@ -16647,7 +16647,7 @@
     {
       "symbol": "BRITANNIA.NS",
       "month": "2026-10",
-      "return_pct": -4.81,
+      "return_pct": -4.96,
       "status": "Win",
       "rsi_at_start": 26.9
     },
@@ -17074,7 +17074,7 @@
     {
       "symbol": "COALINDIA.NS",
       "month": "2026-10",
-      "return_pct": -6.93,
+      "return_pct": -5.51,
       "status": "Win",
       "rsi_at_start": 52.1
     },
@@ -17501,7 +17501,7 @@
     {
       "symbol": "EICHERMOT.NS",
       "month": "2026-10",
-      "return_pct": 2.53,
+      "return_pct": 0.63,
       "status": "Win",
       "rsi_at_start": 19.2
     },
@@ -17928,7 +17928,7 @@
     {
       "symbol": "GRASIM.NS",
       "month": "2026-10",
-      "return_pct": -4.54,
+      "return_pct": -4.52,
       "status": "Win",
       "rsi_at_start": 28.3
     },
@@ -18355,7 +18355,7 @@
     {
       "symbol": "HCLTECH.NS",
       "month": "2026-10",
-      "return_pct": 14.88,
+      "return_pct": 16.47,
       "status": "Loose",
       "rsi_at_start": 45.2
     },
@@ -18782,7 +18782,7 @@
     {
       "symbol": "HDFCBANK.NS",
       "month": "2026-10",
-      "return_pct": -3.26,
+      "return_pct": -3.98,
       "status": "Win",
       "rsi_at_start": 49.2
     },
@@ -19209,7 +19209,7 @@
     {
       "symbol": "HDFCLIFE.NS",
       "month": "2026-10",
-      "return_pct": -0.75,
+      "return_pct": -0.85,
       "status": "Win",
       "rsi_at_start": 48.1
     },
@@ -19636,7 +19636,7 @@
     {
       "symbol": "ICICIBANK.NS",
       "month": "2026-10",
-      "return_pct": 4.68,
+      "return_pct": 5.39,
       "status": "Win",
       "rsi_at_start": 34.0
     },
@@ -19909,7 +19909,7 @@
     {
       "symbol": "JIOFIN.NS",
       "month": "2026-10",
-      "return_pct": -5.02,
+      "return_pct": -4.06,
       "status": "Win",
       "rsi_at_start": 23.1
     },
@@ -20336,7 +20336,7 @@
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2026-10",
-      "return_pct": 3.29,
+      "return_pct": 3.87,
       "status": "Win",
       "rsi_at_start": 57.6
     },
@@ -20763,14 +20763,14 @@
     {
       "symbol": "LT.NS",
       "month": "2026-10",
-      "return_pct": 2.02,
+      "return_pct": -1.63,
       "status": "Win",
       "rsi_at_start": 31.5
     },
     {
       "symbol": "NESTLEIND.NS",
       "month": "2021-10",
-      "return_pct": -1.67,
+      "return_pct": -0.05,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -20786,14 +20786,14 @@
       "month": "2021-12",
       "return_pct": 2.58,
       "status": "Win",
-      "rsi_at_start": 57.1
+      "rsi_at_start": 58.6
     },
     {
       "symbol": "NESTLEIND.NS",
       "month": "2022-01",
       "return_pct": -5.96,
       "status": "Win",
-      "rsi_at_start": 62.0
+      "rsi_at_start": 62.5
     },
     {
       "symbol": "NESTLEIND.NS",
@@ -21190,8 +21190,8 @@
     {
       "symbol": "NESTLEIND.NS",
       "month": "2026-10",
-      "return_pct": -10.28,
-      "status": "Loose",
+      "return_pct": -9.32,
+      "status": "Win",
       "rsi_at_start": 30.2
     },
     {
@@ -21617,7 +21617,7 @@
     {
       "symbol": "NTPC.NS",
       "month": "2026-10",
-      "return_pct": -5.31,
+      "return_pct": -5.92,
       "status": "Win",
       "rsi_at_start": 31.3
     },
@@ -22044,7 +22044,7 @@
     {
       "symbol": "POWERGRID.NS",
       "month": "2026-10",
-      "return_pct": -2.63,
+      "return_pct": -2.5,
       "status": "Win",
       "rsi_at_start": 35.0
     },
@@ -22471,7 +22471,7 @@
     {
       "symbol": "SBILIFE.NS",
       "month": "2026-10",
-      "return_pct": -0.57,
+      "return_pct": -2.58,
       "status": "Win",
       "rsi_at_start": 46.3
     },
@@ -22898,7 +22898,7 @@
     {
       "symbol": "SHRIRAMFIN.NS",
       "month": "2026-10",
-      "return_pct": -14.48,
+      "return_pct": -15.4,
       "status": "Loose",
       "rsi_at_start": 30.0
     },
@@ -23325,7 +23325,7 @@
     {
       "symbol": "TCS.NS",
       "month": "2026-10",
-      "return_pct": 20.49,
+      "return_pct": 22.29,
       "status": "Loose",
       "rsi_at_start": 36.1
     },
@@ -23752,7 +23752,7 @@
     {
       "symbol": "TATACONSUM.NS",
       "month": "2026-10",
-      "return_pct": 5.06,
+      "return_pct": 5.04,
       "status": "Win",
       "rsi_at_start": 33.7
     },
@@ -24179,7 +24179,7 @@
     {
       "symbol": "TECHM.NS",
       "month": "2026-10",
-      "return_pct": 15.36,
+      "return_pct": 17.62,
       "status": "Loose",
       "rsi_at_start": 44.1
     },
@@ -24606,7 +24606,7 @@
     {
       "symbol": "TITAN.NS",
       "month": "2026-10",
-      "return_pct": -5.18,
+      "return_pct": -4.57,
       "status": "Win",
       "rsi_at_start": 26.9
     },
@@ -25033,8 +25033,8 @@
     {
       "symbol": "TRENT.NS",
       "month": "2026-10",
-      "return_pct": 11.43,
-      "status": "Loose",
+      "return_pct": 7.86,
+      "status": "Win",
       "rsi_at_start": 24.7
     },
     {
@@ -25460,7 +25460,7 @@
     {
       "symbol": "ULTRACEMCO.NS",
       "month": "2026-10",
-      "return_pct": 2.72,
+      "return_pct": 3.15,
       "status": "Win",
       "rsi_at_start": 37.9
     },
@@ -25887,7 +25887,7 @@
     {
       "symbol": "WIPRO.NS",
       "month": "2026-10",
-      "return_pct": 16.32,
+      "return_pct": 17.9,
       "status": "Loose",
       "rsi_at_start": 32.2
     },
@@ -26314,7 +26314,7 @@
     {
       "symbol": "360ONE.NS",
       "month": "2026-10",
-      "return_pct": -3.59,
+      "return_pct": -5.34,
       "status": "Win",
       "rsi_at_start": 36.0
     },
@@ -26741,7 +26741,7 @@
     {
       "symbol": "ABB.NS",
       "month": "2026-10",
-      "return_pct": -4.28,
+      "return_pct": -3.39,
       "status": "Win",
       "rsi_at_start": 39.4
     },
@@ -27168,7 +27168,7 @@
     {
       "symbol": "ABCAPITAL.NS",
       "month": "2026-10",
-      "return_pct": -5.97,
+      "return_pct": -6.62,
       "status": "Win",
       "rsi_at_start": 38.1
     },
@@ -27595,14 +27595,14 @@
     {
       "symbol": "ADANIENSOL.NS",
       "month": "2026-10",
-      "return_pct": -1.83,
+      "return_pct": -0.49,
       "status": "Win",
       "rsi_at_start": 37.8
     },
     {
       "symbol": "ADANIGREEN.NS",
       "month": "2021-10",
-      "return_pct": -4.0,
+      "return_pct": -4.29,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -27618,28 +27618,28 @@
       "month": "2021-12",
       "return_pct": 7.71,
       "status": "Win",
-      "rsi_at_start": 56.0
+      "rsi_at_start": 63.6
     },
     {
       "symbol": "ADANIGREEN.NS",
       "month": "2022-01",
       "return_pct": 40.14,
       "status": "Loose",
-      "rsi_at_start": 47.3
+      "rsi_at_start": 48.5
     },
     {
       "symbol": "ADANIGREEN.NS",
       "month": "2022-02",
       "return_pct": -4.39,
       "status": "Win",
-      "rsi_at_start": 67.7
+      "rsi_at_start": 67.8
     },
     {
       "symbol": "ADANIGREEN.NS",
       "month": "2022-03",
       "return_pct": 6.02,
       "status": "Win",
-      "rsi_at_start": 50.4
+      "rsi_at_start": 50.5
     },
     {
       "symbol": "ADANIGREEN.NS",
@@ -28022,7 +28022,7 @@
     {
       "symbol": "ADANIGREEN.NS",
       "month": "2026-10",
-      "return_pct": -0.4,
+      "return_pct": 1.17,
       "status": "Win",
       "rsi_at_start": 46.5
     },
@@ -28449,7 +28449,7 @@
     {
       "symbol": "ADANIPOWER.NS",
       "month": "2026-10",
-      "return_pct": -9.02,
+      "return_pct": -7.0,
       "status": "Win",
       "rsi_at_start": 41.2
     },
@@ -28876,7 +28876,7 @@
     {
       "symbol": "ALKEM.NS",
       "month": "2026-10",
-      "return_pct": -1.55,
+      "return_pct": -1.4,
       "status": "Win",
       "rsi_at_start": 45.8
     },
@@ -29303,7 +29303,7 @@
     {
       "symbol": "AMBER.NS",
       "month": "2026-10",
-      "return_pct": -6.8,
+      "return_pct": -9.43,
       "status": "Win",
       "rsi_at_start": 29.4
     },
@@ -29730,7 +29730,7 @@
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2026-10",
-      "return_pct": -5.46,
+      "return_pct": -6.11,
       "status": "Win",
       "rsi_at_start": 29.8
     },
@@ -30143,7 +30143,7 @@
     {
       "symbol": "ANANDRATHI.NS",
       "month": "2026-10",
-      "return_pct": 8.04,
+      "return_pct": 7.78,
       "status": "Win",
       "rsi_at_start": 40.6
     },
@@ -30570,7 +30570,7 @@
     {
       "symbol": "ANGELONE.NS",
       "month": "2026-10",
-      "return_pct": 6.73,
+      "return_pct": 5.55,
       "status": "Win",
       "rsi_at_start": 37.8
     },
@@ -30997,7 +30997,7 @@
     {
       "symbol": "APLAPOLLO.NS",
       "month": "2026-10",
-      "return_pct": -1.0,
+      "return_pct": 1.22,
       "status": "Win",
       "rsi_at_start": 45.1
     },
@@ -31424,7 +31424,7 @@
     {
       "symbol": "ASHOKLEY.NS",
       "month": "2026-10",
-      "return_pct": -6.22,
+      "return_pct": -8.06,
       "status": "Win",
       "rsi_at_start": 31.7
     },
@@ -31851,7 +31851,7 @@
     {
       "symbol": "ASTRAL.NS",
       "month": "2026-10",
-      "return_pct": -0.55,
+      "return_pct": 0.58,
       "status": "Win",
       "rsi_at_start": 31.3
     },
@@ -31977,7 +31977,7 @@
     {
       "symbol": "ATHERENERG.NS",
       "month": "2026-10",
-      "return_pct": 16.03,
+      "return_pct": 17.72,
       "status": "Loose",
       "rsi_at_start": 38.2
     },
@@ -32404,7 +32404,7 @@
     {
       "symbol": "AUBANK.NS",
       "month": "2026-10",
-      "return_pct": -12.87,
+      "return_pct": -15.96,
       "status": "Loose",
       "rsi_at_start": 37.0
     },
@@ -32831,7 +32831,7 @@
     {
       "symbol": "BAJAJHLDNG.NS",
       "month": "2026-10",
-      "return_pct": -2.91,
+      "return_pct": 1.17,
       "status": "Win",
       "rsi_at_start": 42.0
     },
@@ -33258,7 +33258,7 @@
     {
       "symbol": "BANDHANBNK.NS",
       "month": "2026-10",
-      "return_pct": -12.84,
+      "return_pct": -14.78,
       "status": "Loose",
       "rsi_at_start": 48.7
     },
@@ -33685,14 +33685,14 @@
     {
       "symbol": "BANKBARODA.NS",
       "month": "2026-10",
-      "return_pct": 0.79,
+      "return_pct": 1.71,
       "status": "Win",
       "rsi_at_start": 41.2
     },
     {
       "symbol": "BANKINDIA.NS",
       "month": "2021-10",
-      "return_pct": 0.25,
+      "return_pct": -4.31,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -33708,21 +33708,21 @@
       "month": "2021-12",
       "return_pct": -6.55,
       "status": "Win",
-      "rsi_at_start": 31.7
+      "rsi_at_start": 33.0
     },
     {
       "symbol": "BANKINDIA.NS",
       "month": "2022-01",
       "return_pct": 5.13,
       "status": "Win",
-      "rsi_at_start": 45.4
+      "rsi_at_start": 45.9
     },
     {
       "symbol": "BANKINDIA.NS",
       "month": "2022-02",
       "return_pct": -14.66,
       "status": "Loose",
-      "rsi_at_start": 55.0
+      "rsi_at_start": 55.2
     },
     {
       "symbol": "BANKINDIA.NS",
@@ -34112,7 +34112,7 @@
     {
       "symbol": "BANKINDIA.NS",
       "month": "2026-10",
-      "return_pct": 2.23,
+      "return_pct": 1.55,
       "status": "Win",
       "rsi_at_start": 28.8
     },
@@ -34539,8 +34539,8 @@
     {
       "symbol": "BDL.NS",
       "month": "2026-10",
-      "return_pct": -10.02,
-      "status": "Loose",
+      "return_pct": -8.79,
+      "status": "Win",
       "rsi_at_start": 29.9
     },
     {
@@ -34966,7 +34966,7 @@
     {
       "symbol": "BHARATFORG.NS",
       "month": "2026-10",
-      "return_pct": -7.85,
+      "return_pct": -7.7,
       "status": "Win",
       "rsi_at_start": 34.8
     },
@@ -35393,7 +35393,7 @@
     {
       "symbol": "BHEL.NS",
       "month": "2026-10",
-      "return_pct": -2.04,
+      "return_pct": -3.35,
       "status": "Win",
       "rsi_at_start": 49.9
     },
@@ -35820,8 +35820,8 @@
     {
       "symbol": "BIOCON.NS",
       "month": "2026-10",
-      "return_pct": -5.36,
-      "status": "Win",
+      "return_pct": -10.28,
+      "status": "Loose",
       "rsi_at_start": 33.6
     },
     {
@@ -36247,7 +36247,7 @@
     {
       "symbol": "BLUESTARCO.NS",
       "month": "2026-10",
-      "return_pct": 5.62,
+      "return_pct": 0.86,
       "status": "Win",
       "rsi_at_start": 41.4
     },
@@ -36674,7 +36674,7 @@
     {
       "symbol": "BOSCHLTD.NS",
       "month": "2026-10",
-      "return_pct": 1.74,
+      "return_pct": -2.58,
       "status": "Win",
       "rsi_at_start": 42.0
     },
@@ -37101,7 +37101,7 @@
     {
       "symbol": "BPCL.NS",
       "month": "2026-10",
-      "return_pct": -4.97,
+      "return_pct": -2.12,
       "status": "Win",
       "rsi_at_start": 41.0
     },
@@ -37528,7 +37528,7 @@
     {
       "symbol": "BSE.NS",
       "month": "2026-10",
-      "return_pct": 12.79,
+      "return_pct": 11.37,
       "status": "Loose",
       "rsi_at_start": 37.4
     },
@@ -38382,7 +38382,7 @@
     {
       "symbol": "CANBK.NS",
       "month": "2026-10",
-      "return_pct": -1.36,
+      "return_pct": -1.21,
       "status": "Win",
       "rsi_at_start": 30.4
     },
@@ -38809,7 +38809,7 @@
     {
       "symbol": "CDSL.NS",
       "month": "2026-10",
-      "return_pct": -2.53,
+      "return_pct": -3.32,
       "status": "Win",
       "rsi_at_start": 32.3
     },
@@ -39236,7 +39236,7 @@
     {
       "symbol": "CGPOWER.NS",
       "month": "2026-10",
-      "return_pct": -3.33,
+      "return_pct": -2.97,
       "status": "Win",
       "rsi_at_start": 48.7
     },
@@ -39663,7 +39663,7 @@
     {
       "symbol": "CHOLAFIN.NS",
       "month": "2026-10",
-      "return_pct": -4.6,
+      "return_pct": -9.3,
       "status": "Win",
       "rsi_at_start": 23.3
     },
@@ -40090,7 +40090,7 @@
     {
       "symbol": "COCHINSHIP.NS",
       "month": "2026-10",
-      "return_pct": -14.08,
+      "return_pct": -14.56,
       "status": "Loose",
       "rsi_at_start": 33.7
     },
@@ -40517,7 +40517,7 @@
     {
       "symbol": "COFORGE.NS",
       "month": "2026-10",
-      "return_pct": 11.17,
+      "return_pct": 13.16,
       "status": "Loose",
       "rsi_at_start": 52.0
     },
@@ -40944,7 +40944,7 @@
     {
       "symbol": "COLPAL.NS",
       "month": "2026-10",
-      "return_pct": -9.17,
+      "return_pct": -9.07,
       "status": "Win",
       "rsi_at_start": 31.8
     },
@@ -41371,7 +41371,7 @@
     {
       "symbol": "CONCOR.NS",
       "month": "2026-10",
-      "return_pct": -6.7,
+      "return_pct": -5.1,
       "status": "Win",
       "rsi_at_start": 29.2
     },
@@ -41798,14 +41798,14 @@
     {
       "symbol": "CROMPTON.NS",
       "month": "2026-10",
-      "return_pct": -2.26,
+      "return_pct": -5.97,
       "status": "Win",
       "rsi_at_start": 20.6
     },
     {
       "symbol": "CUMMINSIND.NS",
       "month": "2021-10",
-      "return_pct": 2.37,
+      "return_pct": -3.46,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -41821,14 +41821,14 @@
       "month": "2021-12",
       "return_pct": 7.02,
       "status": "Win",
-      "rsi_at_start": 58.1
+      "rsi_at_start": 58.3
     },
     {
       "symbol": "CUMMINSIND.NS",
       "month": "2022-01",
       "return_pct": -0.04,
       "status": "Win",
-      "rsi_at_start": 55.4
+      "rsi_at_start": 55.5
     },
     {
       "symbol": "CUMMINSIND.NS",
@@ -42225,7 +42225,7 @@
     {
       "symbol": "CUMMINSIND.NS",
       "month": "2026-10",
-      "return_pct": -3.55,
+      "return_pct": -5.38,
       "status": "Win",
       "rsi_at_start": 39.4
     },
@@ -42652,7 +42652,7 @@
     {
       "symbol": "DABUR.NS",
       "month": "2026-10",
-      "return_pct": -5.19,
+      "return_pct": -5.77,
       "status": "Win",
       "rsi_at_start": 35.2
     },
@@ -43030,7 +43030,7 @@
     {
       "symbol": "DELHIVERY.NS",
       "month": "2026-10",
-      "return_pct": -5.64,
+      "return_pct": -6.37,
       "status": "Win",
       "rsi_at_start": 31.0
     },
@@ -43457,7 +43457,7 @@
     {
       "symbol": "DIXON.NS",
       "month": "2026-10",
-      "return_pct": -13.31,
+      "return_pct": -14.58,
       "status": "Loose",
       "rsi_at_start": 34.3
     },
@@ -43884,7 +43884,7 @@
     {
       "symbol": "DLF.NS",
       "month": "2026-10",
-      "return_pct": 0.27,
+      "return_pct": 0.98,
       "status": "Win",
       "rsi_at_start": 48.7
     },
@@ -44311,7 +44311,7 @@
     {
       "symbol": "DMART.NS",
       "month": "2026-10",
-      "return_pct": -17.74,
+      "return_pct": -16.01,
       "status": "Loose",
       "rsi_at_start": 50.6
     },
@@ -44430,14 +44430,14 @@
     {
       "symbol": "ENRIN.NS",
       "month": "2026-10",
-      "return_pct": -11.61,
+      "return_pct": -11.49,
       "status": "Loose",
       "rsi_at_start": 56.9
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2021-10",
-      "return_pct": -7.19,
+      "return_pct": -2.89,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -44453,35 +44453,35 @@
       "month": "2021-12",
       "return_pct": -5.14,
       "status": "Win",
-      "rsi_at_start": 29.0
+      "rsi_at_start": 33.9
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2022-01",
       "return_pct": 20.91,
       "status": "Loose",
-      "rsi_at_start": 51.3
+      "rsi_at_start": 52.4
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2022-02",
       "return_pct": -4.06,
       "status": "Win",
-      "rsi_at_start": 63.2
+      "rsi_at_start": 63.4
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2022-03",
       "return_pct": 1.46,
       "status": "Win",
-      "rsi_at_start": 46.4
+      "rsi_at_start": 46.5
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2022-04",
       "return_pct": -1.44,
       "status": "Win",
-      "rsi_at_start": 60.8
+      "rsi_at_start": 60.9
     },
     {
       "symbol": "FEDERALBNK.NS",
@@ -44857,7 +44857,7 @@
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2026-10",
-      "return_pct": 9.46,
+      "return_pct": 8.07,
       "status": "Win",
       "rsi_at_start": 30.9
     },
@@ -45277,7 +45277,7 @@
     {
       "symbol": "FORCEMOT.NS",
       "month": "2026-10",
-      "return_pct": -1.19,
+      "return_pct": 0.43,
       "status": "Win",
       "rsi_at_start": 39.5
     },
@@ -45704,7 +45704,7 @@
     {
       "symbol": "FORTIS.NS",
       "month": "2026-10",
-      "return_pct": -0.46,
+      "return_pct": -3.47,
       "status": "Win",
       "rsi_at_start": 25.0
     },
@@ -46131,7 +46131,7 @@
     {
       "symbol": "GAIL.NS",
       "month": "2026-10",
-      "return_pct": -3.41,
+      "return_pct": -2.88,
       "status": "Win",
       "rsi_at_start": 46.0
     },
@@ -46558,7 +46558,7 @@
     {
       "symbol": "GLENMARK.NS",
       "month": "2026-10",
-      "return_pct": -1.67,
+      "return_pct": -3.13,
       "status": "Win",
       "rsi_at_start": 43.4
     },
@@ -46985,7 +46985,7 @@
     {
       "symbol": "GMRAIRPORT.NS",
       "month": "2026-10",
-      "return_pct": -5.06,
+      "return_pct": -5.3,
       "status": "Win",
       "rsi_at_start": 39.4
     },
@@ -47412,7 +47412,7 @@
     {
       "symbol": "GODFRYPHLP.NS",
       "month": "2026-10",
-      "return_pct": -9.38,
+      "return_pct": -8.78,
       "status": "Win",
       "rsi_at_start": 32.8
     },
@@ -47839,7 +47839,7 @@
     {
       "symbol": "GODREJCP.NS",
       "month": "2026-10",
-      "return_pct": -3.52,
+      "return_pct": -2.72,
       "status": "Win",
       "rsi_at_start": 29.3
     },
@@ -48266,7 +48266,7 @@
     {
       "symbol": "GODREJPROP.NS",
       "month": "2026-10",
-      "return_pct": -2.24,
+      "return_pct": -2.32,
       "status": "Win",
       "rsi_at_start": 24.6
     },
@@ -48693,7 +48693,7 @@
     {
       "symbol": "GVT&D.NS",
       "month": "2026-10",
-      "return_pct": -4.24,
+      "return_pct": -6.13,
       "status": "Win",
       "rsi_at_start": 46.6
     },
@@ -49120,7 +49120,7 @@
     {
       "symbol": "HAL.NS",
       "month": "2026-10",
-      "return_pct": 3.94,
+      "return_pct": 4.05,
       "status": "Win",
       "rsi_at_start": 39.6
     },
@@ -49547,7 +49547,7 @@
     {
       "symbol": "HAVELLS.NS",
       "month": "2026-10",
-      "return_pct": 0.53,
+      "return_pct": -1.13,
       "status": "Win",
       "rsi_at_start": 30.7
     },
@@ -49974,7 +49974,7 @@
     {
       "symbol": "HINDPETRO.NS",
       "month": "2026-10",
-      "return_pct": -1.14,
+      "return_pct": 0.81,
       "status": "Win",
       "rsi_at_start": 40.0
     },
@@ -50401,7 +50401,7 @@
     {
       "symbol": "HINDZINC.NS",
       "month": "2026-10",
-      "return_pct": -10.21,
+      "return_pct": -12.74,
       "status": "Loose",
       "rsi_at_start": 39.8
     },
@@ -50576,7 +50576,7 @@
     {
       "symbol": "HYUNDAI.NS",
       "month": "2026-10",
-      "return_pct": -8.08,
+      "return_pct": -8.36,
       "status": "Win",
       "rsi_at_start": 38.3
     },
@@ -51003,7 +51003,7 @@
     {
       "symbol": "ICICIGI.NS",
       "month": "2026-10",
-      "return_pct": 0.3,
+      "return_pct": -0.18,
       "status": "Win",
       "rsi_at_start": 53.4
     },
@@ -51430,7 +51430,7 @@
     {
       "symbol": "IDEA.NS",
       "month": "2026-10",
-      "return_pct": -8.42,
+      "return_pct": -6.49,
       "status": "Win",
       "rsi_at_start": 33.0
     },
@@ -51857,8 +51857,8 @@
     {
       "symbol": "IDFCFIRSTB.NS",
       "month": "2026-10",
-      "return_pct": -9.17,
-      "status": "Win",
+      "return_pct": -11.85,
+      "status": "Loose",
       "rsi_at_start": 38.5
     },
     {
@@ -52284,7 +52284,7 @@
     {
       "symbol": "IEX.NS",
       "month": "2026-10",
-      "return_pct": -4.02,
+      "return_pct": -3.29,
       "status": "Win",
       "rsi_at_start": 26.5
     },
@@ -52711,7 +52711,7 @@
     {
       "symbol": "INDHOTEL.NS",
       "month": "2026-10",
-      "return_pct": 10.6,
+      "return_pct": 11.66,
       "status": "Loose",
       "rsi_at_start": 46.9
     },
@@ -53138,7 +53138,7 @@
     {
       "symbol": "INDIANB.NS",
       "month": "2026-10",
-      "return_pct": 4.21,
+      "return_pct": 4.23,
       "status": "Win",
       "rsi_at_start": 27.8
     },
@@ -53565,7 +53565,7 @@
     {
       "symbol": "INDIGO.NS",
       "month": "2026-10",
-      "return_pct": -4.98,
+      "return_pct": -6.88,
       "status": "Win",
       "rsi_at_start": 46.3
     },
@@ -53992,7 +53992,7 @@
     {
       "symbol": "INDUSINDBK.NS",
       "month": "2026-10",
-      "return_pct": -5.03,
+      "return_pct": -7.01,
       "status": "Win",
       "rsi_at_start": 30.8
     },
@@ -54419,7 +54419,7 @@
     {
       "symbol": "INDUSTOWER.NS",
       "month": "2026-10",
-      "return_pct": 0.51,
+      "return_pct": 3.83,
       "status": "Win",
       "rsi_at_start": 50.0
     },
@@ -54846,7 +54846,7 @@
     {
       "symbol": "INOXWIND.NS",
       "month": "2026-10",
-      "return_pct": -14.99,
+      "return_pct": -15.62,
       "status": "Loose",
       "rsi_at_start": 35.0
     },
@@ -55098,8 +55098,8 @@
     {
       "symbol": "IREDA.NS",
       "month": "2026-10",
-      "return_pct": -9.78,
-      "status": "Win",
+      "return_pct": -10.58,
+      "status": "Loose",
       "rsi_at_start": 45.7
     },
     {
@@ -55525,7 +55525,7 @@
     {
       "symbol": "IRFC.NS",
       "month": "2026-10",
-      "return_pct": -5.17,
+      "return_pct": -5.26,
       "status": "Win",
       "rsi_at_start": 32.0
     },
@@ -55952,7 +55952,7 @@
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2026-10",
-      "return_pct": -7.29,
+      "return_pct": -6.24,
       "status": "Win",
       "rsi_at_start": 42.0
     },
@@ -56379,7 +56379,7 @@
     {
       "symbol": "JSWENERGY.NS",
       "month": "2026-10",
-      "return_pct": -2.03,
+      "return_pct": -4.74,
       "status": "Win",
       "rsi_at_start": 31.5
     },
@@ -56806,7 +56806,7 @@
     {
       "symbol": "JUBLFOOD.NS",
       "month": "2026-10",
-      "return_pct": -6.4,
+      "return_pct": -5.19,
       "status": "Win",
       "rsi_at_start": 34.0
     },
@@ -57233,7 +57233,7 @@
     {
       "symbol": "KALYANKJIL.NS",
       "month": "2026-10",
-      "return_pct": -7.8,
+      "return_pct": -9.61,
       "status": "Win",
       "rsi_at_start": 30.1
     },
@@ -57569,8 +57569,8 @@
     {
       "symbol": "KAYNES.NS",
       "month": "2026-10",
-      "return_pct": -10.54,
-      "status": "Loose",
+      "return_pct": -4.55,
+      "status": "Win",
       "rsi_at_start": 41.4
     },
     {
@@ -57996,7 +57996,7 @@
     {
       "symbol": "KEI.NS",
       "month": "2026-10",
-      "return_pct": -13.45,
+      "return_pct": -13.12,
       "status": "Loose",
       "rsi_at_start": 36.2
     },
@@ -58325,7 +58325,7 @@
     {
       "symbol": "KFINTECH.NS",
       "month": "2026-10",
-      "return_pct": 1.57,
+      "return_pct": 3.31,
       "status": "Win",
       "rsi_at_start": 30.8
     },
@@ -58752,7 +58752,7 @@
     {
       "symbol": "KPITTECH.NS",
       "month": "2026-10",
-      "return_pct": 9.86,
+      "return_pct": 5.77,
       "status": "Win",
       "rsi_at_start": 27.1
     },
@@ -59179,8 +59179,8 @@
     {
       "symbol": "LAURUSLABS.NS",
       "month": "2026-10",
-      "return_pct": 10.55,
-      "status": "Loose",
+      "return_pct": 8.53,
+      "status": "Win",
       "rsi_at_start": 58.7
     },
     {
@@ -59606,7 +59606,7 @@
     {
       "symbol": "LICHSGFIN.NS",
       "month": "2026-10",
-      "return_pct": -3.82,
+      "return_pct": -3.85,
       "status": "Win",
       "rsi_at_start": 35.5
     },
@@ -59984,7 +59984,7 @@
     {
       "symbol": "LICI.NS",
       "month": "2026-10",
-      "return_pct": -0.65,
+      "return_pct": -1.6,
       "status": "Win",
       "rsi_at_start": 40.2
     },
@@ -60411,7 +60411,7 @@
     {
       "symbol": "LODHA.NS",
       "month": "2026-10",
-      "return_pct": -9.76,
+      "return_pct": -9.46,
       "status": "Win",
       "rsi_at_start": 41.3
     },
@@ -60838,7 +60838,7 @@
     {
       "symbol": "LTF.NS",
       "month": "2026-10",
-      "return_pct": -6.65,
+      "return_pct": -8.81,
       "status": "Win",
       "rsi_at_start": 28.3
     },
@@ -61265,7 +61265,7 @@
     {
       "symbol": "LTM.NS",
       "month": "2026-10",
-      "return_pct": 3.16,
+      "return_pct": 2.05,
       "status": "Win",
       "rsi_at_start": 35.5
     },
@@ -61692,7 +61692,7 @@
     {
       "symbol": "LUPIN.NS",
       "month": "2026-10",
-      "return_pct": -2.84,
+      "return_pct": -3.86,
       "status": "Win",
       "rsi_at_start": 31.6
     },
@@ -62119,7 +62119,7 @@
     {
       "symbol": "MAHABANK.NS",
       "month": "2026-10",
-      "return_pct": 0.73,
+      "return_pct": 0.79,
       "status": "Win",
       "rsi_at_start": 45.8
     },
@@ -62546,7 +62546,7 @@
     {
       "symbol": "MANAPPURAM.NS",
       "month": "2026-10",
-      "return_pct": -8.58,
+      "return_pct": -9.31,
       "status": "Win",
       "rsi_at_start": 37.5
     },
@@ -62840,7 +62840,7 @@
     {
       "symbol": "MANKIND.NS",
       "month": "2026-10",
-      "return_pct": -0.4,
+      "return_pct": 0.1,
       "status": "Win",
       "rsi_at_start": 61.7
     },
@@ -63267,7 +63267,7 @@
     {
       "symbol": "MARICO.NS",
       "month": "2026-10",
-      "return_pct": -2.08,
+      "return_pct": -1.25,
       "status": "Win",
       "rsi_at_start": 35.0
     },
@@ -63694,7 +63694,7 @@
     {
       "symbol": "MAZDOCK.NS",
       "month": "2026-10",
-      "return_pct": -17.88,
+      "return_pct": -16.87,
       "status": "Loose",
       "rsi_at_start": 24.2
     },
@@ -64121,7 +64121,7 @@
     {
       "symbol": "MCX.NS",
       "month": "2026-10",
-      "return_pct": -3.62,
+      "return_pct": -3.43,
       "status": "Win",
       "rsi_at_start": 48.4
     },
@@ -64548,8 +64548,8 @@
     {
       "symbol": "MFSL.NS",
       "month": "2026-10",
-      "return_pct": -10.48,
-      "status": "Loose",
+      "return_pct": -9.99,
+      "status": "Win",
       "rsi_at_start": 38.1
     },
     {
@@ -64975,7 +64975,7 @@
     {
       "symbol": "MOTHERSON.NS",
       "month": "2026-10",
-      "return_pct": -0.63,
+      "return_pct": -2.11,
       "status": "Win",
       "rsi_at_start": 42.7
     },
@@ -65402,7 +65402,7 @@
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2026-10",
-      "return_pct": -2.62,
+      "return_pct": -2.52,
       "status": "Win",
       "rsi_at_start": 47.3
     },
@@ -65829,7 +65829,7 @@
     {
       "symbol": "MPHASIS.NS",
       "month": "2026-10",
-      "return_pct": 16.57,
+      "return_pct": 21.22,
       "status": "Loose",
       "rsi_at_start": 43.3
     },
@@ -66256,7 +66256,7 @@
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2026-10",
-      "return_pct": -13.29,
+      "return_pct": -12.26,
       "status": "Loose",
       "rsi_at_start": 30.7
     },
@@ -66683,7 +66683,7 @@
     {
       "symbol": "NATIONALUM.NS",
       "month": "2026-10",
-      "return_pct": -3.43,
+      "return_pct": -8.0,
       "status": "Win",
       "rsi_at_start": 33.0
     },
@@ -67110,7 +67110,7 @@
     {
       "symbol": "NAUKRI.NS",
       "month": "2026-10",
-      "return_pct": -2.07,
+      "return_pct": 0.1,
       "status": "Win",
       "rsi_at_start": 36.5
     },
@@ -67537,8 +67537,8 @@
     {
       "symbol": "NBCC.NS",
       "month": "2026-10",
-      "return_pct": -10.8,
-      "status": "Loose",
+      "return_pct": -9.96,
+      "status": "Win",
       "rsi_at_start": 29.4
     },
     {
@@ -67964,7 +67964,7 @@
     {
       "symbol": "NHPC.NS",
       "month": "2026-10",
-      "return_pct": 2.32,
+      "return_pct": 0.62,
       "status": "Win",
       "rsi_at_start": 29.1
     },
@@ -68391,7 +68391,7 @@
     {
       "symbol": "OBEROIRLTY.NS",
       "month": "2026-10",
-      "return_pct": -9.33,
+      "return_pct": -8.31,
       "status": "Win",
       "rsi_at_start": 41.8
     },
@@ -68818,14 +68818,14 @@
     {
       "symbol": "OFSS.NS",
       "month": "2026-10",
-      "return_pct": -5.57,
+      "return_pct": -6.12,
       "status": "Win",
       "rsi_at_start": 33.7
     },
     {
       "symbol": "OIL.NS",
       "month": "2021-10",
-      "return_pct": 2.86,
+      "return_pct": 3.69,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -68841,14 +68841,14 @@
       "month": "2021-12",
       "return_pct": -6.62,
       "status": "Win",
-      "rsi_at_start": 52.6
+      "rsi_at_start": 54.4
     },
     {
       "symbol": "OIL.NS",
       "month": "2022-01",
       "return_pct": 20.49,
       "status": "Loose",
-      "rsi_at_start": 52.0
+      "rsi_at_start": 52.3
     },
     {
       "symbol": "OIL.NS",
@@ -69245,7 +69245,7 @@
     {
       "symbol": "OIL.NS",
       "month": "2026-10",
-      "return_pct": 0.34,
+      "return_pct": 2.54,
       "status": "Win",
       "rsi_at_start": 32.6
     },
@@ -69672,7 +69672,7 @@
     {
       "symbol": "PAGEIND.NS",
       "month": "2026-10",
-      "return_pct": -7.24,
+      "return_pct": -5.14,
       "status": "Win",
       "rsi_at_start": 50.9
     },
@@ -70099,7 +70099,7 @@
     {
       "symbol": "PATANJALI.NS",
       "month": "2026-10",
-      "return_pct": 1.68,
+      "return_pct": -4.28,
       "status": "Win",
       "rsi_at_start": 43.6
     },
@@ -70519,7 +70519,7 @@
     {
       "symbol": "PAYTM.NS",
       "month": "2026-10",
-      "return_pct": -2.42,
+      "return_pct": -4.2,
       "status": "Win",
       "rsi_at_start": 47.1
     },
@@ -70946,7 +70946,7 @@
     {
       "symbol": "PERSISTENT.NS",
       "month": "2026-10",
-      "return_pct": 10.84,
+      "return_pct": 10.55,
       "status": "Loose",
       "rsi_at_start": 47.7
     },
@@ -71373,7 +71373,7 @@
     {
       "symbol": "PETRONET.NS",
       "month": "2026-10",
-      "return_pct": 0.14,
+      "return_pct": 4.04,
       "status": "Win",
       "rsi_at_start": 49.1
     },
@@ -71800,7 +71800,7 @@
     {
       "symbol": "PFC.NS",
       "month": "2026-10",
-      "return_pct": -2.9,
+      "return_pct": -3.15,
       "status": "Win",
       "rsi_at_start": 22.8
     },
@@ -72227,7 +72227,7 @@
     {
       "symbol": "PGEL.NS",
       "month": "2026-10",
-      "return_pct": 8.37,
+      "return_pct": 1.13,
       "status": "Win",
       "rsi_at_start": 23.2
     },
@@ -72654,7 +72654,7 @@
     {
       "symbol": "PHOENIXLTD.NS",
       "month": "2026-10",
-      "return_pct": -1.84,
+      "return_pct": -1.55,
       "status": "Win",
       "rsi_at_start": 50.9
     },
@@ -73081,7 +73081,7 @@
     {
       "symbol": "PIDILITIND.NS",
       "month": "2026-10",
-      "return_pct": -5.35,
+      "return_pct": -1.23,
       "status": "Win",
       "rsi_at_start": 29.5
     },
@@ -73508,8 +73508,8 @@
     {
       "symbol": "PIIND.NS",
       "month": "2026-10",
-      "return_pct": -10.75,
-      "status": "Loose",
+      "return_pct": -9.39,
+      "status": "Win",
       "rsi_at_start": 35.0
     },
     {
@@ -73935,7 +73935,7 @@
     {
       "symbol": "PNB.NS",
       "month": "2026-10",
-      "return_pct": 6.41,
+      "return_pct": 7.26,
       "status": "Win",
       "rsi_at_start": 34.4
     },
@@ -74362,7 +74362,7 @@
     {
       "symbol": "PNBHOUSING.NS",
       "month": "2026-10",
-      "return_pct": 0.53,
+      "return_pct": -3.23,
       "status": "Win",
       "rsi_at_start": 42.3
     },
@@ -74782,7 +74782,7 @@
     {
       "symbol": "POLICYBZR.NS",
       "month": "2026-10",
-      "return_pct": -5.9,
+      "return_pct": -3.96,
       "status": "Win",
       "rsi_at_start": 19.7
     },
@@ -75209,7 +75209,7 @@
     {
       "symbol": "POLYCAB.NS",
       "month": "2026-10",
-      "return_pct": -4.36,
+      "return_pct": -3.89,
       "status": "Win",
       "rsi_at_start": 31.6
     },
@@ -75636,7 +75636,7 @@
     {
       "symbol": "POWERINDIA.NS",
       "month": "2026-10",
-      "return_pct": -7.35,
+      "return_pct": -7.48,
       "status": "Win",
       "rsi_at_start": 47.4
     },
@@ -75818,7 +75818,7 @@
     {
       "symbol": "PREMIERENE.NS",
       "month": "2026-10",
-      "return_pct": -2.96,
+      "return_pct": -1.03,
       "status": "Win",
       "rsi_at_start": 33.7
     },
@@ -76245,7 +76245,7 @@
     {
       "symbol": "PRESTIGE.NS",
       "month": "2026-10",
-      "return_pct": -5.65,
+      "return_pct": -3.61,
       "status": "Win",
       "rsi_at_start": 46.4
     },
@@ -76672,7 +76672,7 @@
     {
       "symbol": "RADICO.NS",
       "month": "2026-10",
-      "return_pct": -5.3,
+      "return_pct": -1.75,
       "status": "Win",
       "rsi_at_start": 38.8
     },
@@ -77099,7 +77099,7 @@
     {
       "symbol": "RBLBANK.NS",
       "month": "2026-10",
-      "return_pct": -13.6,
+      "return_pct": -13.95,
       "status": "Loose",
       "rsi_at_start": 54.4
     },
@@ -77526,15 +77526,15 @@
     {
       "symbol": "RECLTD.NS",
       "month": "2026-10",
-      "return_pct": -2.7,
+      "return_pct": -3.88,
       "status": "Win",
       "rsi_at_start": 30.4
     },
     {
       "symbol": "RVNL.NS",
       "month": "2021-10",
-      "return_pct": -19.77,
-      "status": "Loose",
+      "return_pct": -5.61,
+      "status": "Win",
       "rsi_at_start": null
     },
     {
@@ -77549,21 +77549,21 @@
       "month": "2021-12",
       "return_pct": -0.57,
       "status": "Win",
-      "rsi_at_start": 39.9
+      "rsi_at_start": 44.0
     },
     {
       "symbol": "RVNL.NS",
       "month": "2022-01",
       "return_pct": 2.86,
       "status": "Win",
-      "rsi_at_start": 53.4
+      "rsi_at_start": 54.5
     },
     {
       "symbol": "RVNL.NS",
       "month": "2022-02",
       "return_pct": -15.78,
       "status": "Loose",
-      "rsi_at_start": 48.6
+      "rsi_at_start": 48.9
     },
     {
       "symbol": "RVNL.NS",
@@ -77953,8 +77953,8 @@
     {
       "symbol": "RVNL.NS",
       "month": "2026-10",
-      "return_pct": -8.64,
-      "status": "Win",
+      "return_pct": -10.17,
+      "status": "Loose",
       "rsi_at_start": 37.1
     },
     {
@@ -78121,14 +78121,14 @@
     {
       "symbol": "SAGILITY.NS",
       "month": "2026-10",
-      "return_pct": 6.49,
+      "return_pct": 8.3,
       "status": "Win",
       "rsi_at_start": 41.6
     },
     {
       "symbol": "SAIL.NS",
       "month": "2021-10",
-      "return_pct": -6.42,
+      "return_pct": -1.03,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -78144,28 +78144,28 @@
       "month": "2021-12",
       "return_pct": 5.3,
       "status": "Win",
-      "rsi_at_start": 34.7
+      "rsi_at_start": 40.2
     },
     {
       "symbol": "SAIL.NS",
       "month": "2022-01",
       "return_pct": -8.59,
       "status": "Win",
-      "rsi_at_start": 50.4
+      "rsi_at_start": 51.8
     },
     {
       "symbol": "SAIL.NS",
       "month": "2022-02",
       "return_pct": -3.12,
       "status": "Win",
-      "rsi_at_start": 47.4
+      "rsi_at_start": 47.7
     },
     {
       "symbol": "SAIL.NS",
       "month": "2022-03",
       "return_pct": 5.21,
       "status": "Win",
-      "rsi_at_start": 50.9
+      "rsi_at_start": 51.0
     },
     {
       "symbol": "SAIL.NS",
@@ -78548,8 +78548,8 @@
     {
       "symbol": "SAIL.NS",
       "month": "2026-10",
-      "return_pct": -10.25,
-      "status": "Loose",
+      "return_pct": -5.15,
+      "status": "Win",
       "rsi_at_start": 44.4
     },
     {
@@ -78975,7 +78975,7 @@
     {
       "symbol": "SBICARD.NS",
       "month": "2026-10",
-      "return_pct": -8.89,
+      "return_pct": -8.81,
       "status": "Win",
       "rsi_at_start": 27.3
     },
@@ -79402,7 +79402,7 @@
     {
       "symbol": "SHREECEM.NS",
       "month": "2026-10",
-      "return_pct": 3.46,
+      "return_pct": 4.72,
       "status": "Win",
       "rsi_at_start": 36.8
     },
@@ -79829,8 +79829,8 @@
     {
       "symbol": "SIEMENS.NS",
       "month": "2026-10",
-      "return_pct": -9.47,
-      "status": "Win",
+      "return_pct": -10.37,
+      "status": "Loose",
       "rsi_at_start": 45.5
     },
     {
@@ -80256,7 +80256,7 @@
     {
       "symbol": "SOLARINDS.NS",
       "month": "2026-10",
-      "return_pct": -1.78,
+      "return_pct": -1.62,
       "status": "Win",
       "rsi_at_start": 46.7
     },
@@ -80683,14 +80683,14 @@
     {
       "symbol": "SONACOMS.NS",
       "month": "2026-10",
-      "return_pct": 6.21,
+      "return_pct": 2.88,
       "status": "Win",
       "rsi_at_start": 50.8
     },
     {
       "symbol": "SRF.NS",
       "month": "2021-10",
-      "return_pct": 2.31,
+      "return_pct": -1.77,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -80706,7 +80706,7 @@
       "month": "2021-12",
       "return_pct": 19.07,
       "status": "Loose",
-      "rsi_at_start": 40.8
+      "rsi_at_start": 40.6
     },
     {
       "symbol": "SRF.NS",
@@ -81110,7 +81110,7 @@
     {
       "symbol": "SRF.NS",
       "month": "2026-10",
-      "return_pct": -4.95,
+      "return_pct": -5.56,
       "status": "Win",
       "rsi_at_start": 43.4
     },
@@ -81537,7 +81537,7 @@
     {
       "symbol": "SUPREMEIND.NS",
       "month": "2026-10",
-      "return_pct": -6.05,
+      "return_pct": -4.03,
       "status": "Win",
       "rsi_at_start": 43.7
     },
@@ -81964,7 +81964,7 @@
     {
       "symbol": "SUZLON.NS",
       "month": "2026-10",
-      "return_pct": -5.55,
+      "return_pct": -6.51,
       "status": "Win",
       "rsi_at_start": 19.1
     },
@@ -82132,7 +82132,7 @@
     {
       "symbol": "SWIGGY.NS",
       "month": "2026-10",
-      "return_pct": -26.14,
+      "return_pct": -23.95,
       "status": "Loose",
       "rsi_at_start": 27.2
     },
@@ -82559,7 +82559,7 @@
     {
       "symbol": "TATAELXSI.NS",
       "month": "2026-10",
-      "return_pct": 21.13,
+      "return_pct": 20.11,
       "status": "Loose",
       "rsi_at_start": 24.3
     },
@@ -82986,7 +82986,7 @@
     {
       "symbol": "TATAPOWER.NS",
       "month": "2026-10",
-      "return_pct": -5.09,
+      "return_pct": -3.92,
       "status": "Win",
       "rsi_at_start": 35.2
     },
@@ -83413,7 +83413,7 @@
     {
       "symbol": "TIINDIA.NS",
       "month": "2026-10",
-      "return_pct": -10.55,
+      "return_pct": -11.81,
       "status": "Loose",
       "rsi_at_start": 21.1
     },
@@ -83840,7 +83840,7 @@
     {
       "symbol": "TORNTPHARM.NS",
       "month": "2026-10",
-      "return_pct": -5.06,
+      "return_pct": -3.65,
       "status": "Win",
       "rsi_at_start": 41.1
     },
@@ -84267,7 +84267,7 @@
     {
       "symbol": "TVSMOTOR.NS",
       "month": "2026-10",
-      "return_pct": 3.67,
+      "return_pct": -0.07,
       "status": "Win",
       "rsi_at_start": 38.6
     },
@@ -84694,14 +84694,14 @@
     {
       "symbol": "UJJIVANSFB.NS",
       "month": "2026-10",
-      "return_pct": -18.64,
+      "return_pct": -17.26,
       "status": "Loose",
       "rsi_at_start": 49.6
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2021-10",
-      "return_pct": -9.86,
+      "return_pct": -8.43,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -84717,28 +84717,28 @@
       "month": "2021-12",
       "return_pct": -0.91,
       "status": "Win",
-      "rsi_at_start": 46.3
+      "rsi_at_start": 49.0
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2022-01",
       "return_pct": 9.6,
       "status": "Win",
-      "rsi_at_start": 47.3
+      "rsi_at_start": 48.0
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2022-02",
       "return_pct": -16.7,
       "status": "Loose",
-      "rsi_at_start": 55.4
+      "rsi_at_start": 55.6
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2022-03",
       "return_pct": -2.76,
       "status": "Win",
-      "rsi_at_start": 42.0
+      "rsi_at_start": 42.1
     },
     {
       "symbol": "UNIONBANK.NS",
@@ -85121,7 +85121,7 @@
     {
       "symbol": "UNIONBANK.NS",
       "month": "2026-10",
-      "return_pct": 7.83,
+      "return_pct": 8.79,
       "status": "Win",
       "rsi_at_start": 35.7
     },
@@ -85548,7 +85548,7 @@
     {
       "symbol": "UNITDSPR.NS",
       "month": "2026-10",
-      "return_pct": -8.41,
+      "return_pct": -5.23,
       "status": "Win",
       "rsi_at_start": 30.9
     },
@@ -85975,7 +85975,7 @@
     {
       "symbol": "UNOMINDA.NS",
       "month": "2026-10",
-      "return_pct": -5.99,
+      "return_pct": -7.26,
       "status": "Win",
       "rsi_at_start": 32.3
     },
@@ -86402,7 +86402,7 @@
     {
       "symbol": "UPL.NS",
       "month": "2026-10",
-      "return_pct": 0.13,
+      "return_pct": -3.12,
       "status": "Win",
       "rsi_at_start": 28.9
     },
@@ -86829,7 +86829,7 @@
     {
       "symbol": "VBL.NS",
       "month": "2026-10",
-      "return_pct": -5.49,
+      "return_pct": -2.8,
       "status": "Win",
       "rsi_at_start": 49.5
     },
@@ -86990,7 +86990,7 @@
     {
       "symbol": "VMM.NS",
       "month": "2026-10",
-      "return_pct": -12.06,
+      "return_pct": -12.02,
       "status": "Loose",
       "rsi_at_start": 40.2
     },
@@ -87417,8 +87417,8 @@
     {
       "symbol": "VOLTAS.NS",
       "month": "2026-10",
-      "return_pct": -5.43,
-      "status": "Win",
+      "return_pct": -11.57,
+      "status": "Loose",
       "rsi_at_start": 31.2
     },
     {
@@ -87592,7 +87592,7 @@
     {
       "symbol": "WAAREEENER.NS",
       "month": "2026-10",
-      "return_pct": -5.73,
+      "return_pct": -4.17,
       "status": "Win",
       "rsi_at_start": 28.4
     },
@@ -88019,7 +88019,7 @@
     {
       "symbol": "ZYDUSLIFE.NS",
       "month": "2026-10",
-      "return_pct": 2.13,
+      "return_pct": 1.9,
       "status": "Win",
       "rsi_at_start": 47.6
     }
@@ -88096,6 +88096,13 @@
       "win_pct": 91.8
     },
     {
+      "symbol": "NESTLEIND.NS",
+      "win": 56,
+      "loose": 5,
+      "total": 61,
+      "win_pct": 91.8
+    },
+    {
       "symbol": "SUNPHARMA.NS",
       "win": 55,
       "loose": 6,
@@ -88118,13 +88125,6 @@
     },
     {
       "symbol": "GRASIM.NS",
-      "win": 55,
-      "loose": 6,
-      "total": 61,
-      "win_pct": 90.2
-    },
-    {
-      "symbol": "NESTLEIND.NS",
       "win": 55,
       "loose": 6,
       "total": 61,
@@ -88551,13 +88551,6 @@
       "win_pct": 80.3
     },
     {
-      "symbol": "SIEMENS.NS",
-      "win": 49,
-      "loose": 12,
-      "total": 61,
-      "win_pct": 80.3
-    },
-    {
       "symbol": "LICI.NS",
       "win": 43,
       "loose": 11,
@@ -88600,13 +88593,6 @@
       "win_pct": 78.7
     },
     {
-      "symbol": "BIOCON.NS",
-      "win": 48,
-      "loose": 13,
-      "total": 61,
-      "win_pct": 78.7
-    },
-    {
       "symbol": "DMART.NS",
       "win": 48,
       "loose": 13,
@@ -88622,6 +88608,13 @@
     },
     {
       "symbol": "NHPC.NS",
+      "win": 48,
+      "loose": 13,
+      "total": 61,
+      "win_pct": 78.7
+    },
+    {
+      "symbol": "SIEMENS.NS",
       "win": 48,
       "loose": 13,
       "total": 61,
@@ -88663,6 +88656,13 @@
       "win_pct": 77.0
     },
     {
+      "symbol": "BIOCON.NS",
+      "win": 47,
+      "loose": 14,
+      "total": 61,
+      "win_pct": 77.0
+    },
+    {
       "symbol": "HAL.NS",
       "win": 47,
       "loose": 14,
@@ -88692,6 +88692,13 @@
     },
     {
       "symbol": "OFSS.NS",
+      "win": 47,
+      "loose": 14,
+      "total": 61,
+      "win_pct": 77.0
+    },
+    {
+      "symbol": "PIIND.NS",
       "win": 47,
       "loose": 14,
       "total": 61,
@@ -88782,13 +88789,6 @@
       "win_pct": 75.4
     },
     {
-      "symbol": "PIIND.NS",
-      "win": 46,
-      "loose": 15,
-      "total": 61,
-      "win_pct": 75.4
-    },
-    {
       "symbol": "POLYCAB.NS",
       "win": 46,
       "loose": 15,
@@ -88852,13 +88852,6 @@
       "win_pct": 73.8
     },
     {
-      "symbol": "VOLTAS.NS",
-      "win": 45,
-      "loose": 16,
-      "total": 61,
-      "win_pct": 73.8
-    },
-    {
       "symbol": "HINDALCO.NS",
       "win": 44,
       "loose": 17,
@@ -88901,13 +88894,6 @@
       "win_pct": 72.1
     },
     {
-      "symbol": "IDFCFIRSTB.NS",
-      "win": 44,
-      "loose": 17,
-      "total": 61,
-      "win_pct": 72.1
-    },
-    {
       "symbol": "IEX.NS",
       "win": 44,
       "loose": 17,
@@ -88923,6 +88909,13 @@
     },
     {
       "symbol": "KPITTECH.NS",
+      "win": 44,
+      "loose": 17,
+      "total": 61,
+      "win_pct": 72.1
+    },
+    {
+      "symbol": "MFSL.NS",
       "win": 44,
       "loose": 17,
       "total": 61,
@@ -88957,6 +88950,13 @@
       "win_pct": 72.1
     },
     {
+      "symbol": "SAIL.NS",
+      "win": 44,
+      "loose": 17,
+      "total": 61,
+      "win_pct": 72.1
+    },
+    {
       "symbol": "SONACOMS.NS",
       "win": 44,
       "loose": 17,
@@ -88971,11 +88971,25 @@
       "win_pct": 72.1
     },
     {
+      "symbol": "VOLTAS.NS",
+      "win": 44,
+      "loose": 17,
+      "total": 61,
+      "win_pct": 72.1
+    },
+    {
       "symbol": "NYKAA.NS",
       "win": 43,
       "loose": 17,
       "total": 60,
       "win_pct": 71.7
+    },
+    {
+      "symbol": "NMDC.NS",
+      "win": 43,
+      "loose": 18,
+      "total": 61,
+      "win_pct": 70.5
     },
     {
       "symbol": "BANKBARODA.NS",
@@ -89006,6 +89020,13 @@
       "win_pct": 70.5
     },
     {
+      "symbol": "IDFCFIRSTB.NS",
+      "win": 43,
+      "loose": 18,
+      "total": 61,
+      "win_pct": 70.5
+    },
+    {
       "symbol": "INDUSTOWER.NS",
       "win": 43,
       "loose": 18,
@@ -89014,13 +89035,6 @@
     },
     {
       "symbol": "JINDALSTEL.NS",
-      "win": 43,
-      "loose": 18,
-      "total": 61,
-      "win_pct": 70.5
-    },
-    {
-      "symbol": "MFSL.NS",
       "win": 43,
       "loose": 18,
       "total": 61,
@@ -89053,34 +89067,6 @@
       "loose": 18,
       "total": 61,
       "win_pct": 70.5
-    },
-    {
-      "symbol": "SAIL.NS",
-      "win": 43,
-      "loose": 18,
-      "total": 61,
-      "win_pct": 70.5
-    },
-    {
-      "symbol": "IREDA.NS",
-      "win": 25,
-      "loose": 11,
-      "total": 36,
-      "win_pct": 69.4
-    },
-    {
-      "symbol": "NMDC.NS",
-      "win": 42,
-      "loose": 19,
-      "total": 61,
-      "win_pct": 68.9
-    },
-    {
-      "symbol": "VEDL.NS",
-      "win": 42,
-      "loose": 19,
-      "total": 61,
-      "win_pct": 68.9
     },
     {
       "symbol": "ABCAPITAL.NS",
@@ -89132,7 +89118,21 @@
       "win_pct": 68.9
     },
     {
+      "symbol": "VEDL.NS",
+      "win": 41,
+      "loose": 20,
+      "total": 61,
+      "win_pct": 67.2
+    },
+    {
       "symbol": "YESBANK.NS",
+      "win": 41,
+      "loose": 20,
+      "total": 61,
+      "win_pct": 67.2
+    },
+    {
+      "symbol": "TRENT.NS",
       "win": 41,
       "loose": 20,
       "total": 61,
@@ -89174,11 +89174,11 @@
       "win_pct": 67.2
     },
     {
-      "symbol": "TRENT.NS",
-      "win": 40,
-      "loose": 21,
-      "total": 61,
-      "win_pct": 65.6
+      "symbol": "IREDA.NS",
+      "win": 24,
+      "loose": 12,
+      "total": 36,
+      "win_pct": 66.7
     },
     {
       "symbol": "BLUESTARCO.NS",
@@ -89293,6 +89293,13 @@
       "win_pct": 62.3
     },
     {
+      "symbol": "LAURUSLABS.NS",
+      "win": 38,
+      "loose": 23,
+      "total": 61,
+      "win_pct": 62.3
+    },
+    {
       "symbol": "ETERNAL.NS",
       "win": 37,
       "loose": 24,
@@ -89307,6 +89314,13 @@
       "win_pct": 60.7
     },
     {
+      "symbol": "BDL.NS",
+      "win": 37,
+      "loose": 24,
+      "total": 61,
+      "win_pct": 60.7
+    },
+    {
       "symbol": "BHEL.NS",
       "win": 37,
       "loose": 24,
@@ -89315,13 +89329,6 @@
     },
     {
       "symbol": "IDEA.NS",
-      "win": 37,
-      "loose": 24,
-      "total": 61,
-      "win_pct": 60.7
-    },
-    {
-      "symbol": "LAURUSLABS.NS",
       "win": 37,
       "loose": 24,
       "total": 61,
@@ -89356,13 +89363,6 @@
       "win_pct": 59.6
     },
     {
-      "symbol": "BDL.NS",
-      "win": 36,
-      "loose": 25,
-      "total": 61,
-      "win_pct": 59.0
-    },
-    {
       "symbol": "GODREJPROP.NS",
       "win": 36,
       "loose": 25,
@@ -89384,6 +89384,13 @@
       "win_pct": 58.3
     },
     {
+      "symbol": "KAYNES.NS",
+      "win": 28,
+      "loose": 20,
+      "total": 48,
+      "win_pct": 58.3
+    },
+    {
       "symbol": "SWIGGY.NS",
       "win": 14,
       "loose": 10,
@@ -89398,6 +89405,13 @@
       "win_pct": 57.4
     },
     {
+      "symbol": "NBCC.NS",
+      "win": 35,
+      "loose": 26,
+      "total": 61,
+      "win_pct": 57.4
+    },
+    {
       "symbol": "SUZLON.NS",
       "win": 35,
       "loose": 26,
@@ -89405,21 +89419,7 @@
       "win_pct": 57.4
     },
     {
-      "symbol": "KAYNES.NS",
-      "win": 27,
-      "loose": 21,
-      "total": 48,
-      "win_pct": 56.2
-    },
-    {
       "symbol": "COFORGE.NS",
-      "win": 34,
-      "loose": 27,
-      "total": 61,
-      "win_pct": 55.7
-    },
-    {
-      "symbol": "NBCC.NS",
       "win": 34,
       "loose": 27,
       "total": 61,
@@ -89520,9 +89520,9 @@
   "monthly_aggregate": [
     {
       "month": "2021-10",
-      "win_count": 178,
-      "loose_count": 16,
-      "final_impression": 162
+      "win_count": 179,
+      "loose_count": 15,
+      "final_impression": 164
     },
     {
       "month": "2021-11",
@@ -89880,9 +89880,9 @@
     },
     {
       "month": "2026-10",
-      "win_count": 170,
-      "loose_count": 43,
-      "final_impression": 127
+      "win_count": 173,
+      "loose_count": 40,
+      "final_impression": 133
     }
   ]
 }
