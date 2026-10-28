@@ -2041,8 +2041,7 @@
         <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Symbol</label><select id="dhcc-f-symbol" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;width:220px;"></select></div>
         <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">Action</label>
           <select id="dhcc-f-action" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
-            <option value="BUY">BUY (new)</option>
-            <option value="ADD">ADD (average down)</option>
+            <option value="BUY">BUY</option>
             <option value="SELL">SELL (exit)</option>
           </select>
         </div>
@@ -2052,10 +2051,11 @@
         <button class="refresh-btn" id="dhcc-log-btn" style="padding:9px 18px;background:var(--amber);color:#fff;border-color:var(--amber);font-weight:700;">LOG TRADE</button>
       </div>
       <div id="dhcc-log-status" style="display:none;margin:0 18px 14px;padding:8px 10px;border-radius:6px;font-size:12px;"></div>
+      <div style="padding:0 18px 10px;font-size:11px;color:var(--muted);">BUY always works — if the stock already has an open position, it's logged as an add-on (qty blended into WAC, original entry date kept) automatically. No need to check first.</div>
     </div>
 
     <div id="dhcc-log-tab-bulk" style="display:none;">
-      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry.</div>
+      <div style="padding:14px 18px 6px;font-size:11.5px;color:var(--muted);">Fill in whichever rows you need — fully blank rows are skipped. Each filled row posts as its own trade log entry, same as Quick Entry. BUY auto-resolves to an add-on if the stock's already open (including a stock you BUY earlier in this same batch) — no need to pick ADD yourself.</div>
       <div class="table-scroll">
         <table class="list-table" id="dhcc-bulk-table">
           <thead><tr><th style="width:1%;">#</th><th>SYMBOL</th><th>ACTION</th><th>DATE</th><th>QTY</th><th>PRICE ₹</th><th>STATUS</th></tr></thead>
@@ -9162,9 +9162,18 @@ async function dhccRefresh(){
   }
 }
 
+function dhccOpenSymbolSet(){
+  const state = dhccBuildPositions(window._dhccTrades || []);
+  return new Set(Object.keys(state.open));
+}
+function dhccResolveAction(openSymbols, symbol, requestedAction){
+  if(requestedAction !== 'BUY') return requestedAction;
+  return openSymbols.has(symbol) ? 'ADD' : 'BUY';
+}
+
 async function dhccLogTrade(){
   const symbol = document.getElementById('dhcc-f-symbol').value;
-  const action = document.getElementById('dhcc-f-action').value;
+  const requestedAction = document.getElementById('dhcc-f-action').value;
   const date = document.getElementById('dhcc-f-date').value;
   const qty = document.getElementById('dhcc-f-qty').value;
   const price = document.getElementById('dhcc-f-price').value;
@@ -9181,8 +9190,10 @@ async function dhccLogTrade(){
   const btn = document.getElementById('dhcc-log-btn');
   btn.disabled = true; btn.textContent = 'LOGGING...';
   try{
+    const action = dhccResolveAction(dhccOpenSymbolSet(), symbol, requestedAction);
     await dhccPostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
-    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}`, false);
+    const context = action === 'ADD' ? ' (added to existing open position, entry date unchanged)' : action === 'BUY' ? ' (new position)' : '';
+    show(`Logged: ${action} ${qty} ${symbol} @ ₹${price} on ${date}${context}`, false);
     document.getElementById('dhcc-f-qty').value = '';
     document.getElementById('dhcc-f-price').value = '';
     await dhccRefresh();
@@ -9205,7 +9216,7 @@ function dhccBulkRowHtml(){
     <td style="color:var(--muted);">${dhccBulkRowSeq}</td>
     <td><select class="dhcc-bulk-symbol" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"><option value="">—</option>${dhccSymbolOptionsHtml()}</select></td>
     <td><select class="dhcc-bulk-action" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;">
-      <option value="BUY">BUY</option><option value="ADD">ADD</option><option value="SELL">SELL</option>
+      <option value="BUY">BUY</option><option value="SELL">SELL</option>
     </select></td>
     <td><input type="date" class="dhcc-bulk-date" value="${todayIso}" style="padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
     <td><input type="number" class="dhcc-bulk-qty" style="width:70px;padding:6px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;color:var(--fg);font-size:12px;"></td>
@@ -9239,6 +9250,9 @@ async function dhccLogBulk(){
   btn.disabled = true; btn.textContent = 'LOGGING...';
   let ok = 0, fail = 0, attempted = 0;
   const rows = Array.from(document.querySelectorAll('#dhcc-bulk-tbody tr'));
+  // Seeded once from the last-fetched trades, then kept in sync locally as rows post —
+  // window._dhccTrades only gets refreshed once, after the whole loop.
+  const openSymbols = dhccOpenSymbolSet();
   for(const row of rows){
     const symbolEl = row.querySelector('.dhcc-bulk-symbol');
     const actionEl = row.querySelector('.dhcc-bulk-action');
@@ -9255,8 +9269,11 @@ async function dhccLogBulk(){
       fail++; continue;
     }
     try{
-      await dhccPostTrade({Symbol: symbol, Action: actionEl.value, Date: date, Qty: Number(qty), Price: Number(price)});
-      statusCell.textContent = '✓ logged'; statusCell.style.color = 'var(--green)';
+      const action = dhccResolveAction(openSymbols, symbol, actionEl.value);
+      await dhccPostTrade({Symbol: symbol, Action: action, Date: date, Qty: Number(qty), Price: Number(price)});
+      statusCell.textContent = action !== actionEl.value ? `✓ logged (as ${action})` : '✓ logged';
+      statusCell.style.color = 'var(--green)';
+      if(action === 'BUY' || action === 'ADD') openSymbols.add(symbol); else if(action === 'SELL') openSymbols.delete(symbol);
       ok++;
       symbolEl.value = ''; qtyEl.value = ''; priceEl.value = '';
     }catch(err){
