@@ -7915,6 +7915,16 @@ const DH252_POSITION_INCREMENT_TRADES = 100;
 function dh252TierSize(closedCount){
   return DH252_POSITION_SIZE_RS + Math.floor(closedCount / DH252_POSITION_INCREMENT_TRADES) * DH252_POSITION_INCREMENT_RS;
 }
+// User's own milestone rule, separate from the automatic per-100-closed-
+// trades tiering above: once total positions EVER opened (open + closed)
+// reaches 100 AND combined P&L (realised + open notional) is positive,
+// actually double the size used for new entries — not just an advisory.
+// Re-evaluated on every render, so if combined P&L later turns negative
+// the doubling backs off again (don't double size while bleeding).
+const DH252_SIZE_DOUBLE_POSITIONS_THRESHOLD = 100;
+function dh252EffectiveTierSize(baseSize, totalPositionsOpened, combinedPl){
+  return (totalPositionsOpened >= DH252_SIZE_DOUBLE_POSITIONS_THRESHOLD && combinedPl >= 0) ? baseSize * 2 : baseSize;
+}
 const DH252_ADD_TRIGGER_PCT = -6;
 const DH252_ADD_FRACTION = 0.10;
 const DH252_ADD_COOLDOWN_DAYS = 7;
@@ -8215,8 +8225,6 @@ function dh252RenderPositions(state){
   realizedEl.textContent = dh252FmtRs(realized);
   realizedEl.style.color = realized >= 0 ? 'var(--green)' : 'var(--red)';
   const currentTierSize = dh252TierSize(state.closed.length);
-  document.getElementById('dh252-tier-size').textContent = dh252FmtRs(currentTierSize);
-  document.getElementById('dh252-afford').innerHTML = `${Math.max(0, Math.floor(state.cash / currentTierSize))} <span style="font-size:11px;color:var(--muted);">(at ${dh252FmtRs(currentTierSize)})</span>`;
 
   // Live CAGR — mark open positions to market using the same week52 close
   // already fetched for signals, so "combined" matches the backtest's own
@@ -8285,19 +8293,26 @@ function dh252RenderPositions(state){
   combinedPlPctEl.textContent = dh252FmtPct(combinedPlPct);
   combinedPlPctEl.style.color = combinedPlPct >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // Position-size-up alert — user's own milestone rule, separate from the
-  // automatic dh252TierSize tiering (which bumps every 100 CLOSED trades
-  // regardless of P&L). This checks total positions EVER opened (open +
-  // closed) hitting 100, combined with a positive combined P&L, and
-  // suggests manually doubling the current tier size.
+  // Position-size doubling — user's own milestone rule, separate from the
+  // automatic dh252TierSize tiering (which bumps +Rs1,000 every 100 CLOSED
+  // trades regardless of P&L). Once total positions EVER opened (open +
+  // closed) hits 100 AND combined P&L is positive, the size actually used
+  // for new entries (QTY TO BUY on the Entry Signal table, CAN AFFORD,
+  // POSITION SIZE shown here) doubles — not just advisory. Re-evaluated
+  // every render: if combined P&L later turns negative, it backs off.
   const totalPositionsOpened = openList.length + state.closed.length;
+  const effectiveTierSize = dh252EffectiveTierSize(currentTierSize, totalPositionsOpened, combinedPl);
+  const sizeDoubled = effectiveTierSize !== currentTierSize;
+  window._dh252EffectiveTierSize = effectiveTierSize;
+  document.getElementById('dh252-tier-size').textContent = dh252FmtRs(effectiveTierSize) + (sizeDoubled ? ' (2×)' : '');
+  document.getElementById('dh252-afford').innerHTML = `${Math.max(0, Math.floor(state.cash / effectiveTierSize))} <span style="font-size:11px;color:var(--muted);">(at ${dh252FmtRs(effectiveTierSize)})</span>`;
+
   const sizeAlertEl = document.getElementById('dh252-size-alert');
   if(sizeAlertEl){
-    if(totalPositionsOpened >= 100 && combinedPl >= 0){
-      const suggestedSize = currentTierSize * 2;
+    if(sizeDoubled){
       sizeAlertEl.style.display = 'block';
       sizeAlertEl.innerHTML = `🎯 ${totalPositionsOpened} positions opened and combined P&L is positive (${dh252FmtRs(combinedPl)}) — ` +
-        `consider doubling your position size: ${dh252FmtRs(currentTierSize)} → ${dh252FmtRs(suggestedSize)}.`;
+        `position size doubled: ${dh252FmtRs(currentTierSize)} → ${dh252FmtRs(effectiveTierSize)}. Already applied to QTY TO BUY on the Entry Signal table and CAN AFFORD above.`;
     }else{
       sizeAlertEl.style.display = 'none';
       sizeAlertEl.innerHTML = '';
@@ -8440,7 +8455,12 @@ function dh252RenderSignals(open, closedCount){
     // Rs1,000 base size — the live journal never skips a signal for
     // being too expensive, unlike the backtest's missed_entries_price_
     // too_high bucket (which models the strategy exactly as sized there).
-    const qtyToBuy = Math.max(1, Math.floor(dh252TierSize(closedCount) / w.close));
+    // window._dh252EffectiveTierSize (set in dh252RenderPositions, which
+    // always runs first in the refresh flow) already accounts for the
+    // 100-positions/positive-combined-P&L doubling rule — falls back to
+    // the plain per-100-closed-trades tier if that hasn't run yet.
+    const tierSizeForEntry = window._dh252EffectiveTierSize ?? dh252TierSize(closedCount);
+    const qtyToBuy = Math.max(1, Math.floor(tierSizeForEntry / w.close));
     const st = stMap[bare] || stMap[bare + '.NS'];
     const stColor = st && st.color ? st.color.toLowerCase() : null;
     const stCell = stColor
