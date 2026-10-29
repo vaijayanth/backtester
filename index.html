@@ -1798,7 +1798,7 @@
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Close at/above the trailing 52-week high, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span></div>
+    <div class="dash-footnote">Close at/above the trailing 52-week high AND Supertrend green, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span></div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -8287,9 +8287,18 @@ function dh252RenderSignals(open, closedCount){
   const stMap = window._dh252Supertrend || {};
 
   // Entry — universe-wide 52-week-high breakout (market_screens_full.json's
-  // 252-trading-day window IS the ~52-week high), excludes already-held.
+  // 252-trading-day window IS the ~52-week high) AND Supertrend green,
+  // excludes already-held. A fresh high with Supertrend still red is not
+  // a real entry signal — trend confirmation is required, not just price.
   const entries = Object.values(week52)
-    .filter(w => w.pct_from_high >= 0 && !heldSymbols.has(eqStripNs(w.symbol).toUpperCase()) && !eqIsLongTermExcluded(eqStripNs(w.symbol)))
+    .filter(w => {
+      if(w.pct_from_high < 0) return false;
+      if(heldSymbols.has(eqStripNs(w.symbol).toUpperCase())) return false;
+      if(eqIsLongTermExcluded(eqStripNs(w.symbol))) return false;
+      const bare = eqStripNs(w.symbol);
+      const st = stMap[bare] || stMap[bare + '.NS'];
+      return st && st.color && st.color.toLowerCase() === 'green';
+    })
     .sort((a, b) => b.pct_from_high - a.pct_from_high);
 
   // Same "hot sector" tagging as Equity Alerts' Entry Signal panel — a
