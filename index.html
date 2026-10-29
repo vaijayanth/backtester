@@ -1960,14 +1960,25 @@
   </div>
 
   <div class="subnav" id="subnav-dhcc">
+    <button data-subtab="performance">PERFORMANCE</button>
     <button data-subtab="signals">SIGNALS</button>
     <button data-subtab="positions">POSITIONS</button>
     <button data-subtab="log">LOG &amp; RECONCILE</button>
   </div>
 
-  <div class="subtab-panel" data-subtab="positions">
+  <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">POSITIONS <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
+    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div style="padding:10px 18px;">
+      <div id="chart-dhcc-equity" style="min-height:300px;"></div>
+    </div>
+    <div class="dash-footnote">Solid green: cumulative realised P&amp;L from closed trades. Dashed amber: realised + today's open notional P&amp;L — the true all-in picture. No capital-size baseline here (this page doesn't track capital), so the line starts at ₹0.</div>
+  </div>
+  </div><!-- /subtab-panel -->
+
+  <div class="subtab-panel" data-subtab="performance">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">SNAPSHOT <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
       <button class="refresh-btn" id="dhcc-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
     <div class="stat-row" id="dhcc-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
@@ -1975,6 +1986,7 @@
       <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dhcc-realized">—</div></div>
       <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dhcc-notional">—</div></div>
       <div class="stat"><div class="stat-label">NOTIONAL P&amp;L% (OPEN)</div><div class="stat-value" id="dhcc-notional-pct">—</div></div>
+      <div class="stat"><div class="stat-label">COMBINED P&amp;L</div><div class="stat-value" id="dhcc-combined-pl">—</div></div>
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dhcc-closed-stat">—</div></div>
       <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dhcc-avg-plpct">—</div></div>
       <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
@@ -8934,6 +8946,7 @@ function dh252Init(){
 // but dhccGetSheetUrl() falls back to dh252's own saved/default URL first,
 // so no separate setup is needed by default.
 const DHCC_SHEET_URL_KEY = 'dhcc_sheet_url';
+let dhccEquityChart = null;
 const DHCC_SHEET_TAB_NAME = 'DHCC_TRADES';
 const DHCC_UNIVERSE = ['CGPOWER', 'MCX', 'BSE', 'SHRIRAMFIN', 'DIXON', 'CUMMINSIND', 'HCLTECH', 'INFY', 'BANKINDIA', 'BPCL'];
 const DHCC_COMPANY_NAMES = {
@@ -9025,6 +9038,49 @@ function dhccBuildPositions(trades){
   return {open, closed, skipped};
 }
 
+// Same pattern as dh252RenderEquityChart, minus the initial-capital
+// baseline — this page never tracks capital/sizing, so the line starts
+// at ₹0 and shows pure cumulative P&L, not a portfolio value.
+function dhccRenderEquityChart(state, openMtm){
+  try{
+    const el = document.getElementById('chart-dhcc-equity');
+    if(!el) return;
+    const trades = window._dhccTrades || [];
+    const firstDate = trades.length ? trades[0].Date : new Date().toISOString().slice(0, 10);
+    const closedSorted = state.closed.slice().sort((a, b) => new Date(a.exitDate) - new Date(b.exitDate));
+    const points = [{date: firstDate, value: 0}];
+    let running = 0;
+    closedSorted.forEach(t => {
+      running += t.plRs;
+      points.push({date: t.exitDate, value: running});
+    });
+    const todayIso = new Date().toISOString().slice(0, 10);
+    points.push({date: todayIso, value: running + openMtm, today: true});
+
+    const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+    const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
+
+    if(dhccEquityChart){ dhccEquityChart.destroy(); dhccEquityChart = null; }
+    dhccEquityChart = new ApexCharts(el, {
+      chart: {type: 'line', height: 300, background: 'transparent', toolbar: {show: true}},
+      theme: {mode: 'dark'},
+      series: [
+        {name: 'Realized P&L', data: realizedSeries},
+        {name: 'With open positions', data: withOpenSeries},
+      ],
+      colors: ['#00d26a', '#ff9f1a'],
+      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
+      xaxis: {type: 'datetime', labels: {style: {colors: '#8a8a93'}}},
+      yaxis: {labels: {style: {colors: '#8a8a93'}, formatter: v => dh252FmtRs(v)}},
+      grid: {borderColor: '#1e1e23'},
+      legend: {labels: {colors: '#e9e9ec'}},
+    });
+    dhccEquityChart.render();
+  }catch(err){
+    console.error('dhccRenderEquityChart failed:', err);
+  }
+}
+
 function dhccRenderPositions(state){
   const openList = Object.values(state.open);
   document.getElementById('dhcc-open-count').textContent = openList.length;
@@ -9060,6 +9116,12 @@ function dhccRenderPositions(state){
       notionalPctEl.textContent = '—'; notionalPctEl.style.color = '';
     }
   }
+
+  const combinedPl = realized + openMtm;
+  const combinedPlEl = document.getElementById('dhcc-combined-pl');
+  combinedPlEl.textContent = dh252FmtRs(combinedPl);
+  combinedPlEl.style.color = combinedPl >= 0 ? 'var(--green)' : 'var(--red)';
+  dhccRenderEquityChart(state, openMtm);
 
   document.getElementById('dhcc-closed-stat').textContent = state.closed.length;
   const avgPlPct = state.closed.length ? state.closed.reduce((s, t) => s + t.plPct, 0) / state.closed.length : null;
@@ -9529,7 +9591,7 @@ async function dhccLogDeleteRow(row){
 let dhccInitialized = false;
 function dhccInit(){
   dhccInitialized = true;
-  subTabInit('dhcc', ['signals', 'positions', 'log']);
+  subTabInit('dhcc', ['performance', 'signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dhcc-f-date').value = todayIso;
   document.getElementById('dhcc-f-symbol').innerHTML = dhccSymbolOptionsHtml();
