@@ -1745,14 +1745,25 @@
   </div>
 
   <div class="subnav" id="subnav-dh252">
+    <button data-subtab="performance">PERFORMANCE</button>
     <button data-subtab="signals">SIGNALS</button>
     <button data-subtab="positions">POSITIONS</button>
     <button data-subtab="log">LOG &amp; RECONCILE</button>
   </div>
 
-  <div class="subtab-panel" data-subtab="positions">
+  <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CAPITAL &amp; POSITIONS <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
+    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div style="padding:10px 18px;">
+      <div id="chart-dh252-equity" style="min-height:300px;"></div>
+    </div>
+    <div class="dash-footnote">Solid green: cumulative realised P&amp;L from closed trades. Dashed amber: realised + today's open notional P&amp;L — the true all-in picture.</div>
+  </div>
+  </div><!-- /subtab-panel -->
+
+  <div class="subtab-panel" data-subtab="performance">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">SNAPSHOT <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
@@ -7883,6 +7894,7 @@ document.getElementById('cfg-ot-sheet-url').addEventListener('change', async (e)
 // is always derived by replaying that log, never stored directly.
 const DH252_SHEET_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwBJDaJKO5eg2Df2eKwLCN-opkDtNe1ZmCg6YvqZzU5b1-XHZ8L7iSL4zc-iUnwajp6/exec';
 const DH252_SHEET_URL_KEY = 'dh252_sheet_url';
+let dh252EquityChart = null;
 const DH252_INITIAL_CAPITAL_RS = 2000000;
 const DH252_POSITION_SIZE_RS = 1000; // base size — tiers up via dh252TierSize(), never used directly for sizing a new entry
 const DH252_POSITION_INCREMENT_RS = 1000;
@@ -8139,6 +8151,48 @@ function dh252AgeDays(entryDateIso){
 }
 function dh252FmtPct(v){ return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
 
+// Same pattern as Equity Dashboard's eqDashRenderEquityChart: solid line
+// = cumulative realised P&L from closed trades by exit date, dashed amber
+// = that line extended to a synthetic "today" point adding the current
+// open notional P&L — the combined realised+unrealised picture.
+function dh252RenderEquityChart(state, openMtm){
+  try{
+    const el = document.getElementById('chart-dh252-equity');
+    if(!el) return;
+    const closedSorted = state.closed.slice().sort((a, b) => new Date(a.exitDate) - new Date(b.exitDate));
+    const points = [{date: state.firstTradeDate || new Date().toISOString().slice(0, 10), value: DH252_INITIAL_CAPITAL_RS}];
+    let running = DH252_INITIAL_CAPITAL_RS;
+    closedSorted.forEach(t => {
+      running += t.plRs;
+      points.push({date: t.exitDate, value: running});
+    });
+    const todayIso = new Date().toISOString().slice(0, 10);
+    points.push({date: todayIso, value: running + openMtm, today: true});
+
+    const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+    const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
+
+    if(dh252EquityChart){ dh252EquityChart.destroy(); dh252EquityChart = null; }
+    dh252EquityChart = new ApexCharts(el, {
+      chart: {type: 'line', height: 300, background: 'transparent', toolbar: {show: true}},
+      theme: {mode: 'dark'},
+      series: [
+        {name: 'Portfolio (realized)', data: realizedSeries},
+        {name: 'With open positions', data: withOpenSeries},
+      ],
+      colors: ['#00d26a', '#ff9f1a'],
+      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
+      xaxis: {type: 'datetime', labels: {style: {colors: '#8a8a93'}}},
+      yaxis: {labels: {style: {colors: '#8a8a93'}, formatter: v => dh252FmtRs(v)}},
+      grid: {borderColor: '#1e1e23'},
+      legend: {labels: {colors: '#e9e9ec'}},
+    });
+    dh252EquityChart.render();
+  }catch(err){
+    console.error('dh252RenderEquityChart failed:', err);
+  }
+}
+
 function dh252RenderPositions(state){
   const openList = Object.values(state.open);
   document.getElementById('dh252-cash').textContent = dh252FmtRs(state.cash);
@@ -8217,6 +8271,7 @@ function dh252RenderPositions(state){
   const combinedPlPct = combinedPl / DH252_INITIAL_CAPITAL_RS * 100;
   combinedPlPctEl.textContent = dh252FmtPct(combinedPlPct);
   combinedPlPctEl.style.color = combinedPlPct >= 0 ? 'var(--green)' : 'var(--red)';
+  dh252RenderEquityChart(state, openMtm);
   const cagrEl = document.getElementById('dh252-cagr');
   const daysElapsed = state.firstTradeDate ? (new Date() - new Date(state.firstTradeDate)) / 86400000 : 0;
   let liveCagr = null; // percent, null until there's enough live history to annualize meaningfully
@@ -8814,7 +8869,7 @@ async function dh252LogTrade(){
 let dh252Initialized = false;
 function dh252Init(){
   dh252Initialized = true;
-  subTabInit('dh252', ['signals', 'positions', 'log']);
+  subTabInit('dh252', ['performance', 'signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dh252-f-date').value = todayIso;
   document.getElementById('dh252-sheet-url').value = dh252GetSheetUrl();
