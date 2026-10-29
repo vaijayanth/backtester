@@ -1752,6 +1752,7 @@
   </div>
 
   <div class="subtab-panel" data-subtab="performance">
+  <div id="dh252-size-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:8px;background:rgba(0,210,106,.12);border:1px solid var(--green);color:var(--green);font-size:13px;font-weight:700;"></div>
   <div class="panel">
     <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
     <div style="padding:10px 18px;">
@@ -8283,6 +8284,26 @@ function dh252RenderPositions(state){
   const combinedPlPct = combinedPl / DH252_INITIAL_CAPITAL_RS * 100;
   combinedPlPctEl.textContent = dh252FmtPct(combinedPlPct);
   combinedPlPctEl.style.color = combinedPlPct >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Position-size-up alert — user's own milestone rule, separate from the
+  // automatic dh252TierSize tiering (which bumps every 100 CLOSED trades
+  // regardless of P&L). This checks total positions EVER opened (open +
+  // closed) hitting 100, combined with a positive combined P&L, and
+  // suggests manually doubling the current tier size.
+  const totalPositionsOpened = openList.length + state.closed.length;
+  const sizeAlertEl = document.getElementById('dh252-size-alert');
+  if(sizeAlertEl){
+    if(totalPositionsOpened >= 100 && combinedPl >= 0){
+      const suggestedSize = currentTierSize * 2;
+      sizeAlertEl.style.display = 'block';
+      sizeAlertEl.innerHTML = `🎯 ${totalPositionsOpened} positions opened and combined P&L is positive (${dh252FmtRs(combinedPl)}) — ` +
+        `consider doubling your position size: ${dh252FmtRs(currentTierSize)} → ${dh252FmtRs(suggestedSize)}.`;
+    }else{
+      sizeAlertEl.style.display = 'none';
+      sizeAlertEl.innerHTML = '';
+    }
+  }
+
   dh252RenderEquityChart(state, openMtm);
   const cagrEl = document.getElementById('dh252-cagr');
   const daysElapsed = state.firstTradeDate ? (new Date() - new Date(state.firstTradeDate)) / 86400000 : 0;
