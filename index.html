@@ -1762,6 +1762,8 @@
       <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
       <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dh252-notional">—</div></div>
       <div class="stat"><div class="stat-label">NOTIONAL P&amp;L% (OPEN)</div><div class="stat-value" id="dh252-notional-pct">—</div></div>
+      <div class="stat"><div class="stat-label">COMBINED P&amp;L</div><div class="stat-value" id="dh252-combined-pl">—</div></div>
+      <div class="stat"><div class="stat-label">COMBINED P&amp;L%</div><div class="stat-value" id="dh252-combined-plpct">—</div></div>
       <div class="stat"><div class="stat-label">POSITION SIZE (CURRENT)</div><div class="stat-value" id="dh252-tier-size">—</div></div>
       <div class="stat"><div class="stat-label">CAN AFFORD</div><div class="stat-value" id="dh252-afford">—</div></div>
       <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
@@ -8203,6 +8205,18 @@ function dh252RenderPositions(state){
     }
   }
   const combinedValue = DH252_INITIAL_CAPITAL_RS + realized + openMtm;
+  // Combined P&L = realized (closed trades) + notional (open MTM) — the
+  // true all-in picture, since looking at either alone understates it
+  // (e.g. ₹1,000 open profit + ₹200 closed loss = ₹800 combined, not -₹200
+  // or +₹1,000). % is against initial capital, same denominator as CAGR.
+  const combinedPl = realized + openMtm;
+  const combinedPlEl = document.getElementById('dh252-combined-pl');
+  const combinedPlPctEl = document.getElementById('dh252-combined-plpct');
+  combinedPlEl.textContent = dh252FmtRs(combinedPl);
+  combinedPlEl.style.color = combinedPl >= 0 ? 'var(--green)' : 'var(--red)';
+  const combinedPlPct = combinedPl / DH252_INITIAL_CAPITAL_RS * 100;
+  combinedPlPctEl.textContent = dh252FmtPct(combinedPlPct);
+  combinedPlPctEl.style.color = combinedPlPct >= 0 ? 'var(--green)' : 'var(--red)';
   const cagrEl = document.getElementById('dh252-cagr');
   const daysElapsed = state.firstTradeDate ? (new Date() - new Date(state.firstTradeDate)) / 86400000 : 0;
   let liveCagr = null; // percent, null until there's enough live history to annualize meaningfully
