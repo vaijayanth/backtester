@@ -1794,7 +1794,7 @@
     <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
-        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>252D HIGH ₹</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
+        <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>252D HIGH ₹</th><th>SUPERTREND</th><th>FLIP</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
@@ -8330,9 +8330,15 @@ function dh252RenderSignals(open, closedCount){
     // being too expensive, unlike the backtest's missed_entries_price_
     // too_high bucket (which models the strategy exactly as sized there).
     const qtyToBuy = Math.max(1, Math.floor(dh252TierSize(closedCount) / w.close));
+    const st = stMap[bare] || stMap[bare + '.NS'];
+    const stColor = st && st.color ? st.color.toLowerCase() : null;
+    const stCell = stColor
+      ? `<td style="color:${stColor === 'green' ? 'var(--green)' : 'var(--red)'};font-weight:700">${stColor.toUpperCase()}</td>`
+      : '<td style="color:var(--muted);">—</td>';
     return `<tr><td>${bare}</td><td>${eqFmtRs(w.close)}</td><td style="width:1%;text-align:center;">${qtyToBuy}</td><td>${eqFmtRs(w.high_52w)}</td>
+      ${stCell}<td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td style="max-width:160px;white-space:normal;${(whHot||turnHot) ? 'color:var(--amber);font-weight:700;' : ''}">${sectorLabel}</td></tr>`;
-  }).join('') : '<tr><td colspan="5" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="loading">No fresh 52-week-high breakouts today.</td></tr>';
 
   // Add-on and exit — evaluated against open positions only.
   const addRows = [], exitRows = [];
