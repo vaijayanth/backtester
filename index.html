@@ -1812,7 +1812,7 @@
         <tbody id="dh252-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">Close at/above the trailing 52-week high AND Supertrend green, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span></div>
+    <div class="dash-footnote">Close at/above the trailing 52-week high AND Supertrend green, universe-wide, excludes symbols you already hold. Log a BUY below if you take one. <span id="dh252-entry-asof" style="color:var(--muted);"></span> <span id="dh252-entry-size-note" style="color:var(--green);font-weight:700;"></span></div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -8312,7 +8312,7 @@ function dh252RenderPositions(state){
     if(sizeDoubled){
       sizeAlertEl.style.display = 'block';
       sizeAlertEl.innerHTML = `🎯 ${totalPositionsOpened} positions opened and combined P&L is positive (${dh252FmtRs(combinedPl)}) — ` +
-        `position size doubled: ${dh252FmtRs(currentTierSize)} → ${dh252FmtRs(effectiveTierSize)}. Already applied to QTY TO BUY on the Entry Signal table and CAN AFFORD above.`;
+        `position size doubled: ${dh252FmtRs(currentTierSize)} → ${dh252FmtRs(effectiveTierSize)}. Already applied to CAN AFFORD in the Snapshot panel below, and to QTY TO BUY on the Signals tab.`;
     }else{
       sizeAlertEl.style.display = 'none';
       sizeAlertEl.innerHTML = '';
@@ -8402,6 +8402,17 @@ function dh252RenderSignals(open, closedCount){
   const heldSymbols = new Set(Object.keys(open));
   const week52 = window._dh252Week52 || {};
   const stMap = window._dh252Supertrend || {};
+  // window._dh252EffectiveTierSize (set in dh252RenderPositions, which
+  // always runs first in the refresh flow) already accounts for the
+  // 100-positions/positive-combined-P&L doubling rule — falls back to
+  // the plain per-100-closed-trades tier if that hasn't run yet.
+  const tierSizeForEntry = window._dh252EffectiveTierSize ?? dh252TierSize(closedCount);
+  const sizeNoteEl = document.getElementById('dh252-entry-size-note');
+  if(sizeNoteEl){
+    sizeNoteEl.textContent = tierSizeForEntry !== dh252TierSize(closedCount)
+      ? `· Position size doubled to ${dh252FmtRs(tierSizeForEntry)} (100+ positions, combined P&L positive) — already reflected in QTY TO BUY below.`
+      : '';
+  }
 
   // Entry — universe-wide 52-week-high breakout (market_screens_full.json's
   // 252-trading-day window IS the ~52-week high) AND Supertrend green,
@@ -8452,14 +8463,9 @@ function dh252RenderSignals(open, closedCount){
       sectorLabel = `🔥 ${sector} (${tags.join(' · ')})`;
     }
     // Always buy at least 1 share, even if the price exceeds the
-    // Rs1,000 base size — the live journal never skips a signal for
-    // being too expensive, unlike the backtest's missed_entries_price_
-    // too_high bucket (which models the strategy exactly as sized there).
-    // window._dh252EffectiveTierSize (set in dh252RenderPositions, which
-    // always runs first in the refresh flow) already accounts for the
-    // 100-positions/positive-combined-P&L doubling rule — falls back to
-    // the plain per-100-closed-trades tier if that hasn't run yet.
-    const tierSizeForEntry = window._dh252EffectiveTierSize ?? dh252TierSize(closedCount);
+    // base size — the live journal never skips a signal for being too
+    // expensive, unlike the backtest's missed_entries_price_too_high
+    // bucket (which models the strategy exactly as sized there).
     const qtyToBuy = Math.max(1, Math.floor(tierSizeForEntry / w.close));
     const st = stMap[bare] || stMap[bare + '.NS'];
     const stColor = st && st.color ? st.color.toLowerCase() : null;
