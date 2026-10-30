@@ -733,6 +733,14 @@
       </div>
       <div class="sb-meta">Used by the Zerodha Option Trade Analysis page to store/fetch your trade data. Set it once here.</div>
     </div>
+    <div class="sb-section">
+      <div class="sb-section-title">DHAN 52W HIGH SWING — GOOGLE SHEET URL</div>
+      <div class="sb-field">
+        <label>Apps Script Web App URL</label>
+        <input type="text" id="cfg-dh252-sheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="sb-meta">Used by the Dhan ST 52wk High Swing live journal (and, by default, Dhan Options &amp; Covered Call, which shares the same spreadsheet via its own tab) to log and replay trades. Set it once here.</div>
+    </div>
   </div>
 
   <div class="panel">
@@ -1738,10 +1746,7 @@
       <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000 base position size (+Rs1,000 every 100 closed trades), full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
     <div id="dh252-data-asof-header" style="padding:0 18px 14px;">—</div>
-    <div style="padding:0 18px 18px;">
-      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">Google Sheet Apps Script URL</label>
-      <input type="text" id="dh252-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;max-width:520px;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;">
-    </div>
+    <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);">Google Sheet Apps Script URL is configured on the <a href="#" onclick="switchPage('strategy');return false;" style="color:var(--amber);">Strategy Builder page</a> (INTEGRATIONS panel).</div>
   </div>
 
   <div class="subnav" id="subnav-dh252">
@@ -1753,16 +1758,6 @@
 
   <div class="subtab-panel" data-subtab="performance">
   <div id="dh252-size-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:8px;background:rgba(0,210,106,.12);border:1px solid var(--green);color:var(--green);font-size:13px;font-weight:700;"></div>
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
-    <div style="padding:10px 18px;">
-      <div id="chart-dh252-equity" style="min-height:300px;"></div>
-    </div>
-    <div class="dash-footnote">Solid green: cumulative realised P&amp;L from closed trades. Dashed amber: realised + today's open notional P&amp;L — the true all-in picture.</div>
-  </div>
-  </div><!-- /subtab-panel -->
-
-  <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
     <div class="panel-head"><div class="panel-title">SNAPSHOT <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
@@ -1785,6 +1780,16 @@
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
     <div id="dh252-skipped-warning" style="display:none;margin:0 18px 18px;padding:12px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;"></div>
+  </div>
+  </div><!-- /subtab-panel -->
+
+  <div class="subtab-panel" data-subtab="performance">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div style="padding:10px 18px;">
+      <div id="chart-dh252-equity" style="min-height:300px;"></div>
+    </div>
+    <div class="dash-footnote">Solid green: cumulative realised P&amp;L from closed trades. Dashed amber: realised + today's open notional P&amp;L — the true all-in picture.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -7946,6 +7951,12 @@ const DH252_BACKTEST_CAGR = 34.29; // full 10yr equity curve: (final combined va
 
 function dh252GetSheetUrl(){ return (localStorage.getItem(DH252_SHEET_URL_KEY) || DH252_SHEET_URL_DEFAULT).trim(); }
 function dh252SaveSheetUrl(url){ localStorage.setItem(DH252_SHEET_URL_KEY, url.trim()); }
+document.getElementById('cfg-dh252-sheet-url').value = dh252GetSheetUrl();
+document.getElementById('cfg-dh252-sheet-url').addEventListener('change', async (e) => {
+  dh252SaveSheetUrl(e.target.value);
+  window._dh252Trades = null;
+  if(dh252Initialized) await dh252Refresh();
+});
 
 // A Date typed into the Log form is sent as a plain "yyyy-mm-dd" string,
 // but once it lands in a Sheets column Google auto-formats as a date
@@ -8935,12 +8946,6 @@ function dh252Init(){
   subTabInit('dh252', ['performance', 'signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dh252-f-date').value = todayIso;
-  document.getElementById('dh252-sheet-url').value = dh252GetSheetUrl();
-  document.getElementById('dh252-sheet-url').addEventListener('change', async (e) => {
-    dh252SaveSheetUrl(e.target.value);
-    window._dh252Trades = null;
-    await dh252Refresh();
-  });
   document.getElementById('dh252-log-btn').onclick = dh252LogTrade;
   document.getElementById('dh252-refresh-btn').onclick = dh252Refresh;
   dh252AttachAutocomplete(document.getElementById('dh252-f-symbol'));
