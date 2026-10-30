@@ -55,3 +55,10 @@ A request to fix/change X is not blanket permission to also design and build Y, 
 ## Scheduled automation already running
 - `.github/workflows/daily_update.yml` — weekday cron, keeps OHLC data current and regenerates every dependent JSON. See `docs/SPEC.md` section 13.
 - Do not add a second daily OHLC job or duplicate this pipeline — extend `scripts/update_ohlc.py` / this workflow instead.
+
+## GitHub Pages deployment can silently stall (2026-10-30 incident)
+Pages here runs in classic "deploy from branch: main / root" mode — no user workflow file deploys it; GitHub auto-manages an internal `pages-build-deployment` workflow (`dynamic/pages/pages-build-deployment`, not in `.github/workflows/`) that normally fires and completes within ~1 minute of any push to `main`.
+
+Observed once: two consecutive pushes' deployment runs got stuck at `queued`/`waiting` for 10+ minutes, then a `cancel_workflow_run` + `rerun_workflow_run` via the GitHub API only cycled the run to `completed`/`cancelled` again — never to `success`. That workflow has no `workflow_dispatch` trigger, so it cannot be manually re-fired via `run_workflow`; the only way to force a genuinely fresh deployment attempt is a brand-new commit to `main` (a new run gets a new run_id, avoiding whatever state poisoned the stuck one).
+
+**If a push's changes aren't showing live after a reasonable wait**: don't assume browser/CDN caching first — check `pages-build-deployment`'s most recent runs (`mcp__github__actions_list` `list_workflow_runs` with `resource_id` = that workflow's id, found via `list_workflows`) and compare the latest `conclusion: success` run's `head_sha` against the latest commit on `main`. If they differ, the deployment pipeline itself stalled — incognito/hard-refresh troubleshooting is a waste of time until a fresh push produces a run that actually reaches `success`.
