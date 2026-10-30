@@ -8204,7 +8204,11 @@ function dh252RenderEquityChart(state, openMtm){
         {name: 'With open positions', data: withOpenSeries},
       ],
       colors: ['#00d26a', '#ff9f1a'],
-      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
+      // stepline, not straight — with only a handful of closed trades so
+      // far, a straight line between two far-apart points draws a fake
+      // gradual multi-day decline that never actually happened; stepline
+      // stays flat until a trade genuinely closes, then steps.
+      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'stepline'},
       xaxis: {type: 'datetime', labels: {style: {colors: '#8a8a93'}}},
       yaxis: {labels: {style: {colors: '#8a8a93'}, formatter: v => dh252FmtRs(v)}},
       grid: {borderColor: '#1e1e23'},
@@ -9116,7 +9120,8 @@ function dhccRenderEquityChart(state, openMtm){
         {name: 'With open positions', data: withOpenSeries},
       ],
       colors: ['#00d26a', '#ff9f1a'],
-      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
+      // stepline, not straight — see dh252RenderEquityChart for why.
+      stroke: {width: [2, 2], dashArray: [0, 4], curve: 'stepline'},
       xaxis: {type: 'datetime', labels: {style: {colors: '#8a8a93'}}},
       yaxis: {labels: {style: {colors: '#8a8a93'}, formatter: v => dh252FmtRs(v)}},
       grid: {borderColor: '#1e1e23'},
