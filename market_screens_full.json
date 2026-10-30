@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T11:39:45.939275+00:00",
+  "generated_at": "2026-10-30T16:53:34.486412+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1495,
   "skipped": [],
@@ -3024,10 +3024,10 @@
     {
       "symbol": "CYIENT.NS",
       "close": 1134.9,
-      "high_52w": 1233.0,
-      "pct_from_high": -7.96,
-      "low_52w": 752.85,
-      "pct_from_low": 50.75,
+      "high_52w": 1230.28,
+      "pct_from_high": -7.75,
+      "low_52w": 745.21,
+      "pct_from_low": 52.29,
       "date": "2026-10-30"
     },
     {
@@ -3717,10 +3717,10 @@
     {
       "symbol": "EMBASSY.NS",
       "close": 408.08,
-      "high_52w": 452.61,
-      "pct_from_high": -9.84,
-      "low_52w": 397.87,
-      "pct_from_low": 2.57,
+      "high_52w": 444.9,
+      "pct_from_high": -8.28,
+      "low_52w": 391.1,
+      "pct_from_low": 4.34,
       "date": "2026-10-29"
     },
     {
@@ -14452,12 +14452,6 @@
       "date": "2026-10-30"
     },
     {
-      "symbol": "EMBASSY.NS",
-      "close": 408.08,
-      "rsi14": 23.8,
-      "date": "2026-10-29"
-    },
-    {
       "symbol": "RENUKA.NS",
       "close": 17.35,
       "rsi14": 23.9,
@@ -15368,6 +15362,12 @@
       "close": 360.35,
       "rsi14": 29.6,
       "date": "2026-10-30"
+    },
+    {
+      "symbol": "EMBASSY.NS",
+      "close": 408.08,
+      "rsi14": 29.7,
+      "date": "2026-10-29"
     },
     {
       "symbol": "EXICOM.NS",
@@ -17306,7 +17306,7 @@
     {
       "symbol": "CYIENT.NS",
       "close": 1134.9,
-      "rsi14": 49.4,
+      "rsi14": 50.7,
       "date": "2026-10-30"
     },
     {
@@ -17768,7 +17768,7 @@
     {
       "symbol": "EMBASSY.NS",
       "close": 408.08,
-      "rsi14": 23.8,
+      "rsi14": 29.7,
       "date": "2026-10-29"
     },
     {
