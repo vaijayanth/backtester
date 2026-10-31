@@ -310,6 +310,7 @@
   .dash-footnote,.panel p{max-width:80ch;font-size:12px;line-height:1.55;color:var(--muted);}
 
   /* Colour contract enforcement (class added by uiV2Normalize) */
+  td.is-zero{color:var(--neutral) !important;}
   .stat-value.is-zero,.dash-pulse-value.is-zero{color:var(--neutral) !important;}
   .stat-value.is-unknown,.dash-pulse-value.is-unknown{color:var(--muted) !important;}
   .stat-value.is-feed-error{font-family:var(--ui);font-size:14px;font-weight:500;color:var(--muted) !important;}
@@ -1531,7 +1532,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">⚡ System momentum · last 10 exits</div></div>
+    <div class="panel-head"><div class="panel-title">System momentum · last 10 exits</div></div>
     <div id="eqd-momentum-body"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1605,7 +1606,7 @@
   <div class="subtab-panel" data-subtab="signals">
   <!-- 52-Week High breadth -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🚀 Open book · 52-week high breadth <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Open book · 52-week high breadth <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqd-52wh-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
@@ -1652,7 +1653,7 @@
   </div>
 
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 Entry signal · 52-week high breakout <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Entry signal · 52-week high breakout <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-entry52wh-table">
         <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
@@ -1707,7 +1708,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🚀 Near 52-week high <span class="panel-meta" id="eqa-52wh-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Near 52-week high <span class="panel-meta" id="eqa-52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-52wh-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
@@ -1718,7 +1719,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🆕 new bullish signals · universe <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">New bullish signals · universe <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-newsig-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND FLIPPED TO GREEN</th><th>ABOVE 50 EMA</th><th>SECTOR</th></tr></thead>
@@ -1906,7 +1907,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 Entry signal · 52-week high breakout <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Entry signal · 52-week high breakout <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
         <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>252D HIGH ₹</th><th>SUPERTREND</th><th>FLIP</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
@@ -2114,7 +2115,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 Equity entry signal <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Equity entry signal <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-entry-table">
         <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
@@ -2302,7 +2303,7 @@
 
   <div class="subtab-panel" data-subtab="low">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 Entry signal · at 52-week low <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Entry signal · at 52-week low <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="div-lowentry-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>52W LOW ₹</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
@@ -9934,13 +9935,19 @@ function uiV2Normalize(root){
     el.classList.toggle('is-unknown', unknown);
   });
 }
+function uiV2NormalizeCells(){
+  document.querySelectorAll('td[style*="color"]').forEach(function(td){
+    var t = td.textContent.trim();
+    td.classList.toggle('is-zero', /^[+\-\u2212]?(?:\u20b9\s?)?0(?:[.,]0+)?\s?%?$/.test(t));
+  });
+}
 function uiV2Retry(){ try{ location.reload(); }catch(e){} }
 (function(){
   var pending = false;
-  function run(){ pending = false; uiV2Normalize(); }
+  function run(){ pending = false; uiV2Normalize(); uiV2NormalizeCells(); }
   function schedule(){ if(pending) return; pending = true; (window.requestAnimationFrame || setTimeout)(run); }
   function start(){
-    uiV2Normalize();
+    uiV2Normalize(); uiV2NormalizeCells();
     var main = document.querySelector('.main') || document.body;
     new MutationObserver(schedule).observe(main, {childList:true, subtree:true, characterData:true});
   }
