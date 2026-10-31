@@ -575,3 +575,28 @@ Applied to: F&O Stock Dashboard (`#dash-data-asof`, market data), IVP Screener (
 
 ### Pipeline schedule (answered, not changed)
 User asked whether running `daily_update.yml` more often *during* market hours (e.g. 9:30am/11am/1:30pm IST) would give fresher Supertrend signals for option selling. Answer: no — Supertrend(10,3) here is computed on **daily** bars (`update_ohlc.py`'s `ticker.history()` defaults to `interval="1d"`, explicitly "through today's EOD close"). A mid-day run either returns no new data (today's daily bar isn't final yet) or returns an in-progress bar whose Close is just a live price snapshot — computing Supertrend against that can flip and then revert before the close, i.e. *worse* signal quality, not better. A genuinely more-responsive signal would need an actual intraday-interval Supertrend (hourly/15-min bars), a different indicator with its own whipsaw profile — not a scheduling change to the existing daily one. Decision: left the schedule as-is (4×/weekday: 8am/11am/4pm/8pm IST — see `.github/workflows/daily_update.yml`).
+
+## 23. UI v2 — type/colour contract, sentence-case labels, collapsed chrome, mobile pass (2026-10-31 session)
+
+Design review of the whole app (frontend-design lens), approved and built as three phases in one change. **Presentation only** — no data, scope, column-order or strategy logic changed.
+
+### Contracts (the part future changes must keep)
+- **Type:** IBM Plex Sans for words (nav, titles, labels, footnotes); IBM Plex Mono only for numbers/symbols/table cells/inputs, with `tabular-nums`. Orbitron = logo only. Implemented as a final `UI v2` CSS block in `index.html` (layered last, overrides by order — don't scatter edits above it).
+- **Colour:** blue = interactive/selected; green/red = signed money or direction only; white = neutral/zero; grey = unknown. Enforced centrally by `uiV2Normalize()` + a `MutationObserver` on `.main` (adds `.is-zero` / `.is-unknown` to `.stat-value` and `.dash-pulse-value`; CSS uses `!important` to beat inline colours). Reason: ~100 render sites set colour inline; patching each would drift. New renderers get this for free — don't add per-site zero handling.
+- **Casing:** sentence case for titles, tabs, stat labels. ALL-CAPS survives only in table headers and status chips. Acronyms kept (IVP, RSI, SST, FY, MTM, P&L, CE/PE, ETF, EMA, ST).
+- **Feed errors** say what happened ("Not in today's data feed") and offer "Reload data" (`uiV2Retry`) instead of a bare "⚠ Unavailable".
+
+### Structural (Phase B)
+- Nested duplicate headings removed: inside `.toptab-panel` the `.dash-title` is hidden (the active tab already names it; the caption stays). Zerodha Swing's standalone title card became a plain heading.
+- Hero figure per page via `.stat-row.hero` (first tile larger) on Equity Dashboard FY summary/Open book; IVP's Sell call / Sell put are the two dominant figures.
+- Nav icons: unicode glyphs → inline 16px stroke SVGs (`.nav-icon svg`). 📞 and dash-wrapped section titles removed. Semantic status emoji in Alerts (🔴/🟢/⚠/⏳) deliberately kept — they encode state.
+
+### Mobile (Phase C)
+- `.subnav`/`.tabs` scroll horizontally with an edge fade instead of wrapping (no orphan tab).
+- `.stat-row` is a 2-up grid on ≤760px (`display:grid !important` because several rows carry inline `display:flex`); IVP's three index cells sit in one row; IVP signal tiles use a 6-col grid (two hero tiles + three).
+- Found while building: an inline `display:flex;gap:24px` on `#dh252-cap-row` pushed `scrollWidth` 10px past the viewport at 375px once tabs stopped wrapping — hence the `!important` grid rule. Pre-existing: Stock Detail overflows ~9px at 320px (not introduced here, not fixed here).
+
+### Deliberately not touched
+- **Equity Journal section** (`#page-journal`): its text strings were excluded from the sentence-case pass because that section is mirrored in the frozen `vaijayanth/TradingJournal`. It still inherits the global CSS (fonts/colour contract), which is presentation-only; the legacy repo is unchanged and will look different until sunset.
+- `--amber` still holds blue (naming debt kept for compatibility).
+- Table-header casing, status chips, and per-row Supertrend/flip colours (a possible later reduction in red noise on the IVP table).

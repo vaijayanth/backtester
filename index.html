@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VJ'S TRADEIQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -273,6 +273,102 @@
   .ss-grid-sticky-col{position:sticky;left:0;background:var(--panel);}
   .ss-bt-total-row td{font-weight:700;font-size:13px;border-top:2px solid var(--border);background:var(--panel2);}
   .ss-winpct-good{background:var(--green-dim);color:var(--green);font-weight:700;}
+
+  /* ============================================================
+     UI v2 (2026-10-31) — design pass, see docs/SPEC.md "UI v2".
+     Type contract: IBM Plex Sans for words, IBM Plex Mono for numbers/
+     symbols/table cells (tabular figures). Orbitron = logo only.
+     Colour contract: blue = interactive/selected; green/red = signed
+     money or direction ONLY; white = neutral/zero; grey = unknown.
+     Zero/unknown colouring is enforced by uiV2Normalize() (JS), not by
+     each renderer. Layered last on purpose — overrides above by order.
+     ============================================================ */
+  :root{--muted:#a8a8b3;--neutral:#e9e9ec;--ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--num:'IBM Plex Mono',ui-monospace,monospace;}
+  body{font-family:var(--ui);font-size:14px;line-height:1.45;}
+  td,.sym,.stat-value,.dash-pulse-value,input,textarea,select,.search-box,.sb-field input,.sb-trail-input,code,pre,.mono,.num{font-family:var(--num);font-variant-numeric:tabular-nums;}
+  button,.nav button,.tab-btn,.subnav button,.refresh-btn{font-family:var(--ui);}
+  .nav button{font-size:13px;font-weight:500;letter-spacing:0;}
+  .nav-section-label{font-size:11px;font-weight:600;letter-spacing:.2px;text-transform:none;color:var(--muted);}
+  .sidebar-logo .logo-sub{text-transform:none;letter-spacing:1px;font-size:10px;}
+  .nav button .nav-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex:none;font-size:0;}
+  .nav button .nav-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+  .nav button{align-items:center;}
+
+  /* Titles: a plain heading, not a blue shouting card */
+  .dash-title{font-size:18px;font-weight:600;letter-spacing:0;color:var(--white);}
+  .dash-meta{font-size:12.5px;max-width:78ch;}
+  .panel-title{font-size:14px;font-weight:600;letter-spacing:0;color:var(--white);}
+  .panel-title b,.panel-title .panel-meta{margin-left:8px;font-weight:400;}
+  .panel-title b{font-family:var(--num);color:var(--dim);}
+  .panel-meta{font-size:12px;}
+  .stat-label{font-size:12px;letter-spacing:0;min-height:0;line-height:16px;color:var(--muted);}
+  .stat-value{font-size:22px;}
+  .progress-label{font-size:12px;letter-spacing:0;}
+  th{font-size:11.5px;font-weight:600;letter-spacing:.3px;color:var(--muted);}
+  .tab-btn,.subnav button{font-size:13px;font-weight:500;letter-spacing:0;}
+  .panel{border-radius:8px;}
+  .dash-footnote,.panel p{max-width:80ch;font-size:12px;line-height:1.55;color:var(--muted);}
+
+  /* Colour contract enforcement (class added by uiV2Normalize) */
+  .stat-value.is-zero,.dash-pulse-value.is-zero{color:var(--neutral) !important;}
+  .stat-value.is-unknown,.dash-pulse-value.is-unknown{color:var(--muted) !important;}
+  .stat-value.is-feed-error{font-family:var(--ui);font-size:14px;font-weight:500;color:var(--muted) !important;}
+  .feed-retry{display:inline-block;margin-top:4px;background:none;border:0;padding:0;color:var(--amber);font:500 12px var(--ui);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+
+  /* Hero numbers: one dominant figure per page, rest stay quiet */
+  .stat-row.hero .stat:first-child{flex:1.4;}
+  .stat-row.hero .stat:first-child .stat-value,.stat.hero .stat-value{font-size:34px;line-height:1.1;}
+  #ivp-opt-summary .stat:nth-child(-n+2) .stat-value{font-size:34px;line-height:1.1;}
+  #ivp-opt-summary .stat:nth-child(n+3){opacity:.9;}
+
+  /* Collapse redundant title/tab stacking (Phase B) — the active tab
+     already names the sub-page, so nested headings keep only the caption. */
+  .toptab-panel .dash-title{display:none;}
+  .toptab-panel .dash-header{padding-top:12px;}
+  #page-zswing > .panel:first-child{background:none;border:0;margin-bottom:0;}
+  #page-zswing > .panel:first-child .dash-header{border:0;padding:6px 4px 0;}
+  .subnav{padding:8px 14px;}
+  .subnav button{padding:7px 14px;}
+  .subnav button:not(.active){color:var(--dim);}
+
+  #page-ivp > .panel > .stat-row{display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1fr 1fr;gap:0 24px !important;}
+  #page-ivp > .panel > .stat-row .stat-value{font-size:16px;}
+  #page-ivp > .panel > .stat-row .stat{padding-left:0;padding-right:0;}
+
+  /* Keyboard focus + reduced motion */
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
+  input:focus-visible,select:focus-visible,.search-box:focus-visible{outline-offset:0;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}}
+
+  /* Mobile pass (Phase C) */
+  @media (max-width:760px){
+    body{font-size:14px;}
+    .page{padding:12px;}
+    .dash-title{font-size:17px;}
+    .dash-header{padding:14px 14px 10px;}
+    .subnav,.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+      -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);}
+    .subnav::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none;}
+    .subnav,.tabs{max-width:100%;min-width:0;}
+    .subnav button,.tab-btn{flex:none;white-space:nowrap;}
+    /* KPI strips: 2-up grid, no clipped tiles */
+    .stat-row{display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 !important;}
+    .stat-row .stat{min-width:0;border-right:0;border-bottom:1px solid var(--border-soft);padding:12px 14px;}
+    .stat-row .stat:nth-child(odd){border-right:1px solid var(--border-soft);}
+    .stat-row:not(.hero) .stat:last-child:nth-child(odd){grid-column:1 / -1;border-right:0;}
+    .stat-value{font-size:20px;}
+    .stat-row.hero .stat:first-child{grid-column:1 / -1;border-right:0;}
+    #ivp-opt-summary{grid-template-columns:repeat(6,minmax(0,1fr));}
+    #ivp-opt-summary .stat{grid-column:span 2;border-right:1px solid var(--border-soft) !important;}
+    #ivp-opt-summary .stat:nth-child(-n+2){grid-column:span 3;}
+    #ivp-opt-summary .stat:nth-child(2),#ivp-opt-summary .stat:last-child{border-right:0 !important;}
+    /* IVP market strip: one compact row of three */
+    #page-ivp > .panel > .stat-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px !important;padding:0 14px 12px !important;}
+    #page-ivp > .panel > .stat-row > div:nth-child(-n+2){grid-column:1 / -1;}
+    #page-ivp > .panel > .stat-row .stat{padding:8px 0;border:0 !important;min-width:0;}
+    #page-ivp > .panel > .stat-row .stat-label{font-size:11px;line-height:14px;overflow-wrap:anywhere;}
+    #page-ivp > .panel > .stat-row .stat-value{font-size:15px;}
+  }
 </style>
 </head>
 <body>
@@ -287,23 +383,23 @@
   </div>
   <div class="nav">
     <div class="nav-section-label">F&amp;O</div>
-    <button class="active" data-page="ivp" id="nav-ivp"><span class="nav-icon">◈</span>IVP Screener</button>
-    <button data-page="dashboard" id="nav-dashboard"><span class="nav-icon">◆</span>F&amp;O Stock Dashboard</button>
-    <button data-page="stock" id="nav-stock"><span class="nav-icon">◴</span>Stock Detail</button>
-    <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon">◫</span>Zerodha Option Trade Analysis</button>
+    <button class="active" data-page="ivp" id="nav-ivp"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l3-4 3 2 4-6"/><path d="M3 3v10h10"/></svg></span>IVP Screener</button>
+    <button data-page="dashboard" id="nav-dashboard"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></span>F&amp;O Stock Dashboard</button>
+    <button data-page="stock" id="nav-stock"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg></span>Stock Detail</button>
+    <button data-page="opttrades" id="nav-opttrades"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h10v12H3z"/><path d="M5.5 6h5M5.5 9h5M5.5 12h3"/></svg></span>Zerodha Option Trade Analysis</button>
 
     <div class="nav-section-label">Swing / Equity</div>
-    <button data-page="zswing" id="nav-zswing"><span class="nav-icon">▥</span>Zerodha Swing</button>
-    <button data-page="dh252" id="nav-dh252"><span class="nav-icon">▲</span>Dhan ST 52wk High Swing</button>
-    <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon">☏</span>Dhan Options &amp; Covered Call</button>
-    <button data-page="dividend" id="nav-dividend"><span class="nav-icon">◉</span>ICICI Dividend Longterm</button>
+    <button data-page="zswing" id="nav-zswing"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11l3-4 3 2 5-6"/><path d="M10 3h3v3"/></svg></span>Zerodha Swing</button>
+    <button data-page="dh252" id="nav-dh252"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l5 9H3z"/><path d="M2 14h12"/></svg></span>Dhan ST 52wk High Swing</button>
+    <button data-page="dhcc" id="nav-dhcc"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v6M6 7h3a1 1 0 010 2H6"/></svg></span>Dhan Options &amp; Covered Call</button>
+    <button data-page="dividend" id="nav-dividend"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg></span>ICICI Dividend Longterm</button>
 
     <div class="nav-section-label">Setup</div>
-    <button data-page="results" id="nav-results"><span class="nav-icon">▤</span>Results</button>
-    <button data-page="universe" id="nav-universe"><span class="nav-icon">▦</span>Universe</button>
-    <button data-page="backfill" id="nav-backfill"><span class="nav-icon">⇣</span>Backfill</button>
-    <button data-page="strategy" id="nav-strategy"><span class="nav-icon">⚙</span>Strategy Builder</button>
-    <button data-page="strangle" id="nav-strangle"><span class="nav-icon">⇄</span>Stock Threshold Analysis Config</button>
+    <button data-page="results" id="nav-results"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v10H3z"/><path d="M3 6.5h10M6.5 6.5V13"/></svg></span>Results</button>
+    <button data-page="universe" id="nav-universe"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12"/></svg></span>Universe</button>
+    <button data-page="backfill" id="nav-backfill"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 13h10"/></svg></span>Backfill</button>
+    <button data-page="strategy" id="nav-strategy"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h10"/><circle cx="6" cy="4" r="1.3" fill="currentColor"/><circle cx="10.5" cy="8" r="1.3" fill="currentColor"/><circle cx="5" cy="12" r="1.3" fill="currentColor"/></svg></span>Strategy Builder</button>
+    <button data-page="strangle" id="nav-strangle"><span class="nav-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5h9l-2-2M13 11H4l2 2"/></svg></span>Stock Threshold Analysis Config</button>
   </div>
   <div class="sidebar-status" id="sidebar-status"><span class="dot"></span>EOD Data<div class="status-sub" id="sidebar-status-sub">—</div></div>
 </div>
@@ -316,7 +412,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">F&amp;O STOCK DASHBOARD</div>
+      <div class="dash-title">F&amp;O stock dashboard</div>
       <div class="dash-meta" id="dash-meta">Market Data: — &nbsp;|&nbsp; Updated: —</div>
       <div class="dash-meta" id="dash-pipeline-status">Daily update pipeline: —</div>
       <div id="dash-pipeline-run-alert" style="display:none;"></div>
@@ -325,31 +421,31 @@
   </div>
 
   <div class="subnav" id="subnav-dashboard">
-    <button data-subtab="fno">F&amp;O SCREENS</button>
-    <button data-subtab="universe">FULL UNIVERSE &amp; RESULTS</button>
+    <button data-subtab="fno">F&amp;O screens</button>
+    <button data-subtab="universe">Full universe &amp; results</button>
   </div>
 
   <div class="subtab-panel" data-subtab="fno">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">MARKET PULSE</div></div>
+    <div class="panel-head"><div class="panel-title">Market pulse</div></div>
     <div class="stat-row" id="dash-pulse-row">
       <div class="stat">
-        <div class="stat-label">STOCKS &gt; EMA50</div>
+        <div class="stat-label">Stocks &gt; EMA50</div>
         <div class="dash-pulse-value" id="dash-pulse-ema50">—</div>
         <div class="dash-pulse-sub" id="dash-pulse-ema50-pct">—</div>
       </div>
       <div class="stat">
-        <div class="stat-label">STOCKS &gt; EMA200</div>
+        <div class="stat-label">Stocks &gt; EMA200</div>
         <div class="dash-pulse-value" id="dash-pulse-ema200">—</div>
         <div class="dash-pulse-sub" id="dash-pulse-ema200-pct">—</div>
       </div>
       <div class="stat">
-        <div class="stat-label">ABOVE BOTH</div>
+        <div class="stat-label">Above both</div>
         <div class="dash-pulse-value green" id="dash-pulse-both">—</div>
         <div class="dash-pulse-sub" id="dash-pulse-both-pct">—</div>
       </div>
       <div class="stat">
-        <div class="stat-label">BELOW BOTH</div>
+        <div class="stat-label">Below both</div>
         <div class="dash-pulse-value red" id="dash-pulse-neither">—</div>
         <div class="dash-pulse-sub" id="dash-pulse-neither-pct">—</div>
       </div>
@@ -362,7 +458,7 @@
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">52-WEEK HIGH <span class="panel-meta">F&amp;O universe · within 1% of trailing 252-day high</span></div>
+        <div class="panel-title">52-week high <span class="panel-meta">F&amp;O universe · within 1% of trailing 252-day high</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -374,7 +470,7 @@
     </div>
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">5-YEAR HIGH <span class="panel-meta">not a true ATH — see note</span></div>
+        <div class="panel-title">5-year high <span class="panel-meta">not a true ATH — see note</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -393,7 +489,7 @@
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">RSI OVERBOUGHT <span class="panel-meta">F&amp;O · RSI14 ≥ 70</span></div>
+        <div class="panel-title">RSI overbought <span class="panel-meta">F&amp;O · RSI14 ≥ 70</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -405,7 +501,7 @@
     </div>
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">RSI OVERSOLD <span class="panel-meta">F&amp;O · RSI14 ≤ 30</span></div>
+        <div class="panel-title">RSI oversold <span class="panel-meta">F&amp;O · RSI14 ≤ 30</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -423,7 +519,7 @@
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">SUPERTREND — BULLISH FLIPS TODAY <span class="panel-meta">F&amp;O · (10, 3) &middot; red&rarr;green</span></div>
+        <div class="panel-title">Supertrend · bullish flips today <span class="panel-meta">F&amp;O · (10, 3) &middot; red&rarr;green</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -435,7 +531,7 @@
     </div>
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">SUPERTREND — BEARISH FLIPS TODAY <span class="panel-meta">F&amp;O · (10, 3) &middot; green&rarr;red</span></div>
+        <div class="panel-title">Supertrend · bearish flips today <span class="panel-meta">F&amp;O · (10, 3) &middot; green&rarr;red</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -452,7 +548,7 @@
   <div class="subtab-panel" data-subtab="fno">
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">ENTRY SIGNALS <span class="panel-meta">F&amp;O · Supertrend flipped red&rarr;green today &middot; 50 EMA shown, not filtered</span></div>
+      <div class="panel-title">Entry signals <span class="panel-meta">F&amp;O · Supertrend flipped red&rarr;green today &middot; 50 EMA shown, not filtered</span></div>
     </div>
     <div class="table-scroll" style="max-height:280px;">
       <table class="list-table">
@@ -470,7 +566,7 @@
   <div class="dash-split">
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">52-WEEK HIGH <span class="panel-meta">full universe · 1,466 stocks</span></div>
+        <div class="panel-title">52-week high <span class="panel-meta">full universe · 1,466 stocks</span></div>
         <button class="refresh-btn" id="dash-refresh">↻ REFRESH</button>
       </div>
       <div class="table-scroll" style="max-height:280px;">
@@ -484,7 +580,7 @@
     </div>
     <div class="panel">
       <div class="panel-head">
-        <div class="panel-title">5-YEAR HIGH <span class="panel-meta">full universe · not a true ATH</span></div>
+        <div class="panel-title">5-year high <span class="panel-meta">full universe · not a true ATH</span></div>
       </div>
       <div class="table-scroll" style="max-height:280px;">
         <table class="list-table">
@@ -501,7 +597,7 @@
 
   <div class="subtab-panel" data-subtab="universe">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPCOMING RESULTS <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
+    <div class="panel-head"><div class="panel-title">Upcoming results <span class="panel-meta" id="dash-results-meta">F&amp;O universe</span></div></div>
     <div class="table-scroll" style="max-height:300px;">
       <table class="list-table">
         <thead><tr><th>STOCK</th><th>DATE</th><th>DAYS AWAY</th></tr></thead>
@@ -521,15 +617,15 @@
 
   <div class="panel">
     <div class="stat-row" id="stat-row">
-      <div class="stat"><div class="stat-label">RAW SYMBOLS</div><div class="stat-value" id="stat-raw">—</div></div>
-      <div class="stat"><div class="stat-label">ETFS REMOVED</div><div class="stat-value amber" id="stat-etf">—</div></div>
-      <div class="stat"><div class="stat-label">DUPLICATES REMOVED</div><div class="stat-value amber" id="stat-dupe">—</div></div>
-      <div class="stat"><div class="stat-label">CLEAN UNIVERSE</div><div class="stat-value" id="stat-clean">—</div></div>
+      <div class="stat"><div class="stat-label">Raw symbols</div><div class="stat-value" id="stat-raw">—</div></div>
+      <div class="stat"><div class="stat-label">ETFs removed</div><div class="stat-value amber" id="stat-etf">—</div></div>
+      <div class="stat"><div class="stat-label">Duplicates removed</div><div class="stat-value amber" id="stat-dupe">—</div></div>
+      <div class="stat"><div class="stat-label">Clean universe</div><div class="stat-value" id="stat-clean">—</div></div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">ADD STOCK TO UNIVERSE <span class="panel-meta">add any time — merges into the universe automatically</span></div></div>
+    <div class="panel-head"><div class="panel-title">Add stock to universe <span class="panel-meta">add any time — merges into the universe automatically</span></div></div>
     <div style="padding:18px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="univ-add-input" placeholder="e.g. RELIANCE or RELIANCE.NS" style="flex:1;min-width:200px;padding:10px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;color:var(--white);font-family:inherit;font-size:13px;">
@@ -548,14 +644,14 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">EQUITY UNIVERSE — <b id="panel-count">—</b> stocks</div>
+      <div class="panel-title">Equity universe <b id="panel-count">—</b> stocks</div>
       <div class="panel-meta">source: StockList sheet → scripts/clean_universe.py → data/universe_clean.csv · last fetched <span id="univ-last-fetch">—</span></div>
     </div>
     <div class="controls">
       <input class="search-box" id="search" placeholder="search symbol...">
       <div class="tabs">
-        <button class="tab-btn active" data-view="grid" id="tab-grid">GRID</button>
-        <button class="tab-btn" data-view="table" id="tab-table">TABLE</button>
+        <button class="tab-btn active" data-view="grid" id="tab-grid">Grid</button>
+        <button class="tab-btn" data-view="table" id="tab-table">Table</button>
         <button class="tab-btn" data-view="removed" id="tab-removed">REMOVED (<span id="removed-count">—</span>)</button>
       </div>
     </div>
@@ -583,24 +679,24 @@
 
   <div class="panel">
     <div class="progress-wrap">
-      <div class="progress-label"><span>BACKFILL PROGRESS</span><span id="bf-progress-pct">—</span></div>
+      <div class="progress-label"><span>Backfill progress</span><span id="bf-progress-pct">—</span></div>
       <div class="progress-bar-bg">
         <div class="progress-bar-seg validated" id="bf-bar-validated" style="width:0%"></div>
         <div class="progress-bar-seg failed" id="bf-bar-failed" style="width:0%"></div>
       </div>
     </div>
     <div class="stat-row" id="bf-stat-row">
-      <div class="stat"><div class="stat-label">VALIDATED</div><div class="stat-value green" id="bf-stat-validated">—</div></div>
+      <div class="stat"><div class="stat-label">Validated</div><div class="stat-value green" id="bf-stat-validated">—</div></div>
       <div class="stat"><div class="stat-label">FAILED (retryable)</div><div class="stat-value red" id="bf-stat-failed">—</div></div>
-      <div class="stat"><div class="stat-label">EXHAUSTED</div><div class="stat-value red" id="bf-stat-exhausted">—</div></div>
-      <div class="stat"><div class="stat-label">PENDING</div><div class="stat-value" id="bf-stat-pending">—</div></div>
-      <div class="stat"><div class="stat-label">TOTAL UNIVERSE</div><div class="stat-value" id="bf-stat-total">—</div></div>
+      <div class="stat"><div class="stat-label">Exhausted</div><div class="stat-value red" id="bf-stat-exhausted">—</div></div>
+      <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="bf-stat-pending">—</div></div>
+      <div class="stat"><div class="stat-label">Total universe</div><div class="stat-value" id="bf-stat-total">—</div></div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">MANIFEST — <b id="bf-panel-count">—</b> symbols</div>
+      <div class="panel-title">Manifest <b id="bf-panel-count">—</b> symbols</div>
       <div class="panel-meta">source: backfill-checkpoints branch → checkpoints/manifest.csv · last fetched <span id="bf-last-fetch">—</span></div>
       <button class="refresh-btn" id="bf-refresh">↻ REFRESH</button>
     </div>
@@ -608,9 +704,9 @@
       <input class="search-box" id="bf-search" placeholder="search symbol...">
       <div class="tabs" id="bf-filter-tabs">
         <button class="tab-btn active" data-status="all" id="bf-filter-all">ALL</button>
-        <button class="tab-btn" data-status="VALIDATED" id="bf-filter-validated">VALIDATED</button>
-        <button class="tab-btn" data-status="FAILED" id="bf-filter-failed">FAILED</button>
-        <button class="tab-btn" data-status="PENDING" id="bf-filter-pending">PENDING</button>
+        <button class="tab-btn" data-status="VALIDATED" id="bf-filter-validated">Validated</button>
+        <button class="tab-btn" data-status="FAILED" id="bf-filter-failed">Failed</button>
+        <button class="tab-btn" data-status="PENDING" id="bf-filter-pending">Pending</button>
       </div>
     </div>
     <div class="table-scroll">
@@ -648,14 +744,14 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">PRICE — <b id="sd-chart-symbol">—</b></div>
+      <div class="panel-title">Price <b id="sd-chart-symbol">—</b></div>
       <div class="panel-meta">candlestick, adjusted close · EMA50 (cyan) / EMA200 (amber) overlay</div>
     </div>
     <div class="chart-box"><div id="chart-price" style="height:360px;"></div></div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">VOLUME</div></div>
+    <div class="panel-head"><div class="panel-title">Volume</div></div>
     <div class="chart-box"><div id="chart-volume" style="height:140px;"></div></div>
   </div>
 
@@ -666,15 +762,15 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">THRESHOLD BREACH ANALYSIS</div>
+      <div class="panel-title">Threshold breach analysis</div>
       <div class="panel-meta">how many periods moved beyond a fixed ±% from the period's opening price</div>
     </div>
     <div class="sd-controls">
       <div class="rc-group">
         <label class="rc-label">PERIOD</label>
         <div class="tabs" id="oa-period-tabs">
-          <button class="tab-btn" data-val="weekly" id="oa-period-weekly">WEEKLY</button>
-          <button class="tab-btn active" data-val="monthly" id="oa-period-monthly">MONTHLY</button>
+          <button class="tab-btn" data-val="weekly" id="oa-period-weekly">Weekly</button>
+          <button class="tab-btn active" data-val="monthly" id="oa-period-monthly">Monthly</button>
         </div>
       </div>
       <div class="rc-group">
@@ -704,7 +800,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">OUTLIER PERIODS</div><div class="panel-meta">sorted by absolute return size</div></div>
+    <div class="panel-head"><div class="panel-title">Outlier periods</div><div class="panel-meta">sorted by absolute return size</div></div>
     <div class="table-scroll" style="max-height:300px;">
       <table class="list-table">
         <thead><tr><th>START</th><th>END</th><th>RETURN %</th><th>STATUS</th></tr></thead>
@@ -722,7 +818,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">INTEGRATIONS</div>
+      <div class="panel-title">Integrations</div>
       <div class="panel-meta">saved in this browser only — never committed to git</div>
     </div>
     <div class="sb-section">
@@ -745,7 +841,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">SST STRATEGY PARAMETERS</div>
+      <div class="panel-title">SST strategy parameters</div>
       <div class="panel-meta">every value here is tunable — matches docs/SPEC.md section 7 exactly</div>
     </div>
 
@@ -811,7 +907,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">BACKTEST RUNS — <b id="res-run-count">—</b></div>
+      <div class="panel-title">Backtest runs <b id="res-run-count">—</b></div>
       <div class="panel-meta">select up to 4 runs to compare · click REFRESH after triggering a new run from the Actions tab · last fetched <span id="res-last-fetch">—</span></div>
       <button class="refresh-btn" id="res-refresh">↻ REFRESH</button>
     </div>
@@ -831,14 +927,14 @@
 
   <div class="panel" id="res-detail-panel" style="display:none;">
     <div class="panel-head">
-      <div class="panel-title">EQUITY CURVE — <b id="res-detail-label">—</b></div>
+      <div class="panel-title">Equity curve <b id="res-detail-label">—</b></div>
       <div class="panel-meta">realized (solid) vs combined incl. open MTM (dashed)</div>
     </div>
     <div class="chart-box"><div id="chart-equity" style="height:320px;"></div></div>
   </div>
 
   <div class="panel" id="res-metrics-panel" style="display:none;">
-    <div class="panel-head"><div class="panel-title">METRICS COMPARISON</div></div>
+    <div class="panel-head"><div class="panel-title">Metrics comparison</div></div>
     <div class="table-scroll">
       <table class="list-table" id="res-metrics-table">
         <thead><tr id="res-metrics-head"></tr></thead>
@@ -849,7 +945,7 @@
 
   <div class="panel" id="res-trades-panel" style="display:none;">
     <div class="panel-head">
-      <div class="panel-title">TRADES — <b id="res-trades-label">—</b></div>
+      <div class="panel-title">Trades <b id="res-trades-label">—</b></div>
       <div class="panel-meta">single-run view only — select exactly one run to see its trade list</div>
     </div>
     <div class="table-scroll" style="max-height:360px;">
@@ -868,14 +964,14 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">STOCK THRESHOLD ANALYSIS CONFIG</div>
+      <div class="dash-title">Stock threshold analysis config</div>
       <div class="dash-meta" id="ss-meta">Monthly open→close return vs separate CALL/PUT breakevens · F&amp;O universe</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">GRID STOCKS</div>
+      <div class="panel-title">Grid stocks</div>
       <div class="panel-meta">CALL WIN = return ≤ +call% (didn't rally past the CE breakeven) · PUT WIN = return ≥ −put% (didn't fall past the PE breakeven) · each leg judged independently</div>
     </div>
     <div class="sd-controls">
@@ -900,7 +996,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">RSI ENTRY FILTER <span class="panel-meta">optional — tests the "RSI&gt;70 → sell CE further OTM" rule</span></div>
+      <div class="panel-title">RSI entry filter <span class="panel-meta">optional — tests the "RSI&gt;70 → sell CE further OTM" rule</span></div>
     </div>
     <div class="sd-controls">
       <div class="rc-group">
@@ -928,7 +1024,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">MONTHLY GRID <span class="panel-meta">each stock shown as CALL + PUT sub-columns</span></div>
+      <div class="panel-title">Monthly grid <span class="panel-meta">each stock shown as CALL + PUT sub-columns</span></div>
       <div class="panel-meta" id="ss-grid-meta">—</div>
     </div>
     <div class="table-scroll" style="max-height:560px;">
@@ -961,7 +1057,7 @@
 
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">ALL F&amp;O STOCKS — RANKED BY COMBINED WIN % <span class="panel-meta" id="ss-rank-title-suffix"></span> <span class="panel-meta" id="ss-rank-count">—</span></div>
+      <div class="panel-title">All f&amp;O stocks · ranked by combined win % <span class="panel-meta" id="ss-rank-title-suffix"></span> <span class="panel-meta" id="ss-rank-count">—</span></div>
       <input class="search-box" id="ss-rank-search" placeholder="filter..." style="max-width:200px;">
     </div>
     <div class="table-scroll" style="max-height:420px;">
@@ -980,7 +1076,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">IVP ENTRY SCREENER</div>
+      <div class="dash-title">IVP entry screener</div>
       <div class="dash-meta" id="ivp-meta">Weekly entry-screening tool — NOT live position monitoring. See footnote.</div>
     </div>
     <div class="stat-row" style="padding:0 18px 14px;gap:36px;flex-wrap:wrap;">
@@ -993,15 +1089,15 @@
   </div>
 
   <div class="subnav" id="subnav-ivp">
-    <button data-subtab="signals">SIGNALS</button>
-    <button data-subtab="positions">POSITIONS</button>
-    <button data-subtab="results">RESULTS</button>
-    <button data-subtab="screen">SCREEN</button>
+    <button data-subtab="signals">Signals</button>
+    <button data-subtab="positions">Positions</button>
+    <button data-subtab="results">Results</button>
+    <button data-subtab="screen">Screen</button>
   </div>
 
   <div class="subtab-panel" data-subtab="screen">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD SENSIBULL DATA <span class="panel-meta">weekly IVP refresh — stored in Google Sheet, synced across devices</span></div></div>
+    <div class="panel-head"><div class="panel-title">Upload Sensibull data <span class="panel-meta">weekly IVP refresh — stored in Google Sheet, synced across devices</span></div></div>
     <div style="padding:18px;">
       <div id="ivp-upload-stat" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:6px;background:var(--panel2);border:1px solid var(--border);">
         <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;">Last Uploaded</div>
@@ -1023,7 +1119,7 @@
 
   <div class="panel">
     <div class="panel-head" id="ivp-criteria-header" style="cursor:pointer;user-select:none;">
-      <div class="panel-title">SCREEN CRITERIA</div>
+      <div class="panel-title">Screen criteria</div>
       <span id="ivp-criteria-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
     </div>
     <div id="ivp-criteria-body" style="display:none;">
@@ -1054,7 +1150,7 @@
   <div class="subtab-panel" data-subtab="results">
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">STOCKS MATCHING SCREEN CRITERIA <span class="panel-meta" id="ivp-pass-count">—</span></div>
+      <div class="panel-title">Stocks matching screen criteria <span class="panel-meta" id="ivp-pass-count">—</span></div>
     </div>
     <div id="ivp-pass-criteria" style="padding:0 18px 12px;font-size:11px;color:var(--muted);">—</div>
     <div class="table-scroll" style="max-height:560px;">
@@ -1072,7 +1168,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">ALL 213 STOCKS <span class="panel-meta">unfiltered, for reference</span></div></div>
+    <div class="panel-head"><div class="panel-title">All 213 stocks <span class="panel-meta">unfiltered, for reference</span></div></div>
     <div class="table-scroll" style="max-height:420px;">
       <table class="list-table">
         <thead>
@@ -1089,7 +1185,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="ivp-opt-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Options signal · sell call / sell put <span class="panel-meta" id="ivp-opt-count">—</span></div></div>
     <div class="stat-row" id="ivp-opt-summary" style="padding:0 18px 14px;"></div>
     <div style="padding:0 18px 14px;">
       <input class="search-box" id="ivp-opt-search" placeholder="filter symbol..." style="max-width:260px;">
@@ -1097,8 +1193,8 @@
 
     <div id="page-ivpsignals">
       <div class="subnav" id="subnav-ivpsignals">
-        <button data-subtab="call">CALL SELL</button>
-        <button data-subtab="put">PUT SELL</button>
+        <button data-subtab="call">Call sell</button>
+        <button data-subtab="put">Put sell</button>
       </div>
 
       <div class="toptab-panel" data-subtab="call">
@@ -1126,7 +1222,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD ZERODHA OPEN POSITIONS <span class="panel-meta">stored in Google Sheet, synced across devices</span></div></div>
+    <div class="panel-head"><div class="panel-title">Upload Zerodha open positions <span class="panel-meta">stored in Google Sheet, synced across devices</span></div></div>
     <div class="stat-row" style="padding:0 18px 4px;">
       <div id="ivp-pos-asof">—</div>
     </div>
@@ -1168,14 +1264,14 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">ZERODHA OPTION TRADE ANALYSIS</div>
+      <div class="dash-title">Zerodha option trade analysis</div>
       <div class="dash-meta" id="ot-meta">Upload your Zerodha P&amp;L statement (Console &rarr; Reports, Excel export) — stored server-side in your own Google Sheet, fetched fresh every time you open this page.</div>
     </div>
     <div id="ot-data-asof" style="padding:0 18px 14px;">—</div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">UPLOAD P&amp;L STATEMENT <span class="panel-meta">Excel (.xlsx), Console &rarr; Reports &rarr; P&amp;L statement</span></div></div>
+    <div class="panel-head"><div class="panel-title">Upload p&amp;L statement <span class="panel-meta">Excel (.xlsx), Console &rarr; Reports &rarr; P&amp;L statement</span></div></div>
     <div style="padding:18px;">
       <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">
         Zerodha Console (console.zerodha.com) &rarr; Reports &rarr; P&amp;L statement &rarr; Segment: F&amp;O &rarr; pick your period (your usual current-FY pull is fine — this upload is additive, not a full replace) &rarr; Download as Excel. Upload the P&amp;L statement, not the Tradebook — this page reads per-contract Buy/Sell/Open values, which the Tradebook export doesn't carry. Each contract's row is upserted by symbol (replaced with the latest numbers), so re-uploading the same or a wider period is always safe — nothing gets duplicated.
@@ -1195,14 +1291,14 @@
   <div id="ot-results" style="display:none;">
 
     <div class="subnav" id="subnav-opttrades">
-      <button data-subtab="overview">OVERVIEW</button>
-      <button data-subtab="perf">PERFORMANCE ANALYSIS</button>
-      <button data-subtab="positions">POSITIONS &amp; DETAIL</button>
+      <button data-subtab="overview">Overview</button>
+      <button data-subtab="perf">Performance analysis</button>
+      <button data-subtab="positions">Positions &amp; detail</button>
     </div>
 
       <div class="subtab-panel" data-subtab="overview">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">SUMMARY <span class="panel-meta" id="ot-summary-meta">—</span></div></div>
+      <div class="panel-head"><div class="panel-title">Summary <span class="panel-meta" id="ot-summary-meta">—</span></div></div>
       <div class="stat-row" id="ot-summary-row"></div>
     </div>
       </div><!-- /subtab-panel -->
@@ -1232,7 +1328,7 @@
 
       <div class="subtab-panel" data-subtab="perf">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">STOCK ROI — RETURN ON PREMIUM COLLECTED <span class="panel-meta">realised P&amp;L &divide; premium sold, stocks with &ge;2 closed positions</span></div></div>
+      <div class="panel-head"><div class="panel-title">Stock ROI · return on premium collected <span class="panel-meta">realised P&amp;L &divide; premium sold, stocks with &ge;2 closed positions</span></div></div>
       <div class="chart-box" style="max-height:600px;overflow-y:auto;"><div id="chart-ot-stock-roi" style="height:420px;"></div></div>
       <div class="dash-footnote" id="ot-roi-insight">—</div>
     </div>
@@ -1241,7 +1337,7 @@
 
       <div class="subtab-panel" data-subtab="perf">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">TRAILING SL EFFECTIVENESS <span class="panel-meta">target: exit at 3&times; premium collected, on losing trades</span></div></div>
+      <div class="panel-head"><div class="panel-title">Trailing SL effectiveness <span class="panel-meta">target: exit at 3&times; premium collected, on losing trades</span></div></div>
       <div class="stat-row" id="ot-sl-row"></div>
       <div class="chart-box"><div id="chart-ot-sl-hist" style="height:280px;"></div></div>
       <div class="dash-footnote" id="ot-sl-insight">—</div>
@@ -1251,7 +1347,7 @@
 
       <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">PER-STOCK BREAKDOWN <span class="panel-meta">click a column to sort</span></div></div>
+      <div class="panel-head"><div class="panel-title">Per-stock breakdown <span class="panel-meta">click a column to sort</span></div></div>
       <div class="table-scroll">
         <table class="list-table" id="ot-stock-table">
           <thead><tr>
@@ -1267,7 +1363,7 @@
 
       <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">WEEKLY / EXPIRY P&amp;L <span class="panel-meta">grouped by expiry date</span></div></div>
+      <div class="panel-head"><div class="panel-title">Weekly / expiry p&amp;L <span class="panel-meta">grouped by expiry date</span></div></div>
       <div class="table-scroll">
         <table class="list-table" id="ot-weekly-table">
           <thead><tr><th>EXPIRY</th><th>POSITIONS CLOSED</th><th>WINS</th><th>LOSSES</th><th>REALISED P&amp;L</th></tr></thead>
@@ -1280,7 +1376,7 @@
 
       <div class="subtab-panel" data-subtab="positions">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">ALL POSITIONS <span class="panel-meta">from your uploaded P&amp;L statement</span></div></div>
+      <div class="panel-head"><div class="panel-title">All positions <span class="panel-meta">from your uploaded P&amp;L statement</span></div></div>
       <div class="controls">
         <input type="text" class="search-box" id="ot-positions-search" placeholder="filter by stock...">
       </div>
@@ -1299,7 +1395,7 @@
 
       <div class="subtab-panel" data-subtab="positions">
     <div class="panel" id="ot-unparsed-panel" style="display:none;">
-      <div class="panel-head"><div class="panel-title">UNPARSED SYMBOLS <span class="panel-meta">couldn't extract strike/expiry/CE-PE — excluded from analysis above</span></div></div>
+      <div class="panel-head"><div class="panel-title">Unparsed symbols <span class="panel-meta">couldn't extract strike/expiry/CE-PE — excluded from analysis above</span></div></div>
       <div class="table-scroll" style="max-height:220px;">
         <table class="list-table">
           <thead><tr><th>RAW SYMBOL</th><th>ROWS</th></tr></thead>
@@ -1327,14 +1423,14 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">ZERODHA SWING</div>
+      <div class="dash-title">Zerodha swing</div>
     </div>
   </div>
 
   <div class="subnav" id="subnav-zswing">
-    <button data-subtab="dashboard">DASHBOARD</button>
-    <button data-subtab="alerts">ALERTS</button>
-    <button data-subtab="journal">JOURNAL</button>
+    <button data-subtab="dashboard">Dashboard</button>
+    <button data-subtab="alerts">Alerts</button>
+    <button data-subtab="journal">Journal</button>
   </div>
 
   <div class="toptab-panel" data-subtab="dashboard">
@@ -1342,24 +1438,24 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">EQUITY DASHBOARD</div>
+      <div class="dash-title">Equity dashboard</div>
       <div class="dash-meta" id="eqd-meta">Peak deployed capital, realized + unrealized combined</div>
       <div class="dash-meta" id="eqd-sync-status">—</div>
     </div>
   </div>
 
   <div class="subnav" id="subnav-eqdash">
-    <button data-subtab="overview">OVERVIEW</button>
-    <button data-subtab="pnl">P&amp;L &amp; RISK</button>
-    <button data-subtab="signals">SIGNALS &amp; BREADTH</button>
+    <button data-subtab="overview">Overview</button>
+    <button data-subtab="pnl">P&amp;L &amp; risk</button>
+    <button data-subtab="signals">Signals &amp; breadth</button>
   </div>
 
   <div class="subtab-panel" data-subtab="overview">
   <!-- FY / Quarter summary -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">FY SUMMARY <span class="panel-meta" id="eqd-fy-label">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">FY summary <span class="panel-meta" id="eqd-fy-label">—</span></div></div>
     <div id="eqd-fy-months" style="display:flex;gap:6px;padding:12px 14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border-soft);flex-wrap:nowrap"></div>
-    <div class="stat-row" id="eqd-fy-row"></div>
+    <div class="stat-row hero" id="eqd-fy-row"></div>
     <div class="stat-row" id="eqd-qtr-row" style="border-top:1px solid var(--border-soft)"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1369,11 +1465,11 @@
   <!-- KPI row -->
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">OPEN BOOK</div></div>
-      <div class="stat-row" id="eqd-openbook-row"></div>
+      <div class="panel-head"><div class="panel-title">Open book</div></div>
+      <div class="stat-row hero" id="eqd-openbook-row"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">SYSTEM EDGE</div></div>
+      <div class="panel-head"><div class="panel-title">System edge</div></div>
       <div class="stat-row" id="eqd-edge-row"></div>
     </div>
   </div>
@@ -1383,7 +1479,7 @@
   <div class="subtab-panel" data-subtab="overview">
   <!-- Performance summary -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">PERFORMANCE SUMMARY</div></div>
+    <div class="panel-head"><div class="panel-title">Performance summary</div></div>
     <div class="stat-row" id="eqd-perf-row"></div>
     <div class="dash-footnote" id="eqd-perf-footer">—</div>
   </div>
@@ -1393,7 +1489,7 @@
   <div class="subtab-panel" data-subtab="pnl">
   <!-- Position sizing & portfolio limits -->
   <div class="panel" id="eqd-sizing-card">
-    <div class="panel-head"><div class="panel-title">POSITION SIZING &amp; LIMITS</div></div>
+    <div class="panel-head"><div class="panel-title">Position sizing &amp; limits</div></div>
     <div class="stat-row" id="eqd-sizing-row"></div>
     <div id="eqd-maxpos-alert" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;background:rgba(255,59,48,.12);border:1px solid var(--red);color:var(--red);font-size:12px;font-weight:700;"></div>
   </div>
@@ -1403,7 +1499,7 @@
   <div class="subtab-panel" data-subtab="pnl">
   <!-- Loss buckets -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">LOSS BUCKETS <span class="panel-meta" id="eqd-lossbucket-meta">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Loss buckets <span class="panel-meta" id="eqd-lossbucket-meta">—</span></div></div>
     <div id="eqd-lossbucket-body"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1413,11 +1509,11 @@
   <!-- Sector P&L — open positions -->
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">SECTOR P&amp;L — OPEN POSITIONS <span class="panel-meta" id="eqd-sectorpl-meta">—</span></div></div>
+      <div class="panel-head"><div class="panel-title">Sector p&amp;L · open positions <span class="panel-meta" id="eqd-sectorpl-meta">—</span></div></div>
       <div id="chart-eqd-sectorpl" style="min-height:280px;"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">CAPITAL ALLOCATION BY SECTOR</div></div>
+      <div class="panel-head"><div class="panel-title">Capital allocation by sector</div></div>
       <div id="chart-eqd-sectorcap" style="min-height:280px;"></div>
     </div>
   </div>
@@ -1427,7 +1523,7 @@
   <div class="subtab-panel" data-subtab="overview">
   <!-- Equity curve -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div class="panel-head"><div class="panel-title">Equity curve</div></div>
     <div id="chart-eqdash-equity"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1435,7 +1531,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">⚡ SYSTEM MOMENTUM — LAST 10 EXITS</div></div>
+    <div class="panel-head"><div class="panel-title">⚡ System momentum · last 10 exits</div></div>
     <div id="eqd-momentum-body"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1445,11 +1541,11 @@
   <!-- Sector breadth — universe signals -->
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">SECTOR BREADTH — SUPERTREND SIGNALS <span class="panel-meta" id="eqd-sectorbreadth-meta">—</span></div></div>
+      <div class="panel-head"><div class="panel-title">Sector breadth · Supertrend signals <span class="panel-meta" id="eqd-sectorbreadth-meta">—</span></div></div>
       <div id="chart-eqd-sectorbreadth" style="min-height:320px;"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">RECENT TURNAROUND BY SECTOR <span class="panel-meta">flipped green, last 7 trading days</span></div></div>
+      <div class="panel-head"><div class="panel-title">Recent turnaround by sector <span class="panel-meta">flipped green, last 7 trading days</span></div></div>
       <div id="chart-eqd-sectorturn" style="min-height:320px;"></div>
     </div>
   </div>
@@ -1460,7 +1556,7 @@
   <!-- P&L Calendar -->
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">P&amp;L CALENDAR</div>
+      <div class="panel-title">P&amp;L calendar</div>
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="refresh-btn" onclick="eqDashCalNav(-1)" style="padding:4px 10px;">‹</button>
         <span id="eqd-cal-label" class="panel-meta">—</span>
@@ -1476,7 +1572,7 @@
   <!-- Top stocks + loss summary -->
   <div class="dash-split">
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">TOP 10 STOCKS — CUMULATIVE PROFIT</div></div>
+      <div class="panel-head"><div class="panel-title">Top 10 stocks · cumulative profit</div></div>
       <div class="table-scroll">
         <table class="list-table" id="eqd-top-table">
           <thead><tr><th>STOCK</th><th>CUMULATIVE P&amp;L ₹</th></tr></thead>
@@ -1485,7 +1581,7 @@
       </div>
     </div>
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">STOCK POSITIONS — IN LOSS</div></div>
+      <div class="panel-head"><div class="panel-title">Stock positions · in loss</div></div>
       <div class="stat-row" id="eqd-lossummary-row"></div>
     </div>
   </div>
@@ -1495,7 +1591,7 @@
   <div class="subtab-panel" data-subtab="pnl">
   <!-- Capital concentration -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CAPITAL CONCENTRATION — TOP POSITIONS</div></div>
+    <div class="panel-head"><div class="panel-title">Capital concentration · top positions</div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqd-conc-table">
         <thead><tr><th>STOCK</th><th>DEPLOYED ₹</th><th>% OF TOTAL</th></tr></thead>
@@ -1509,7 +1605,7 @@
   <div class="subtab-panel" data-subtab="signals">
   <!-- 52-Week High breadth -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🚀 OPEN BOOK — 52-WEEK HIGH BREADTH <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🚀 Open book · 52-week high breadth <span class="panel-meta" id="eqd-52wh-summary">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqd-52wh-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
@@ -1524,7 +1620,7 @@
   <div class="subtab-panel" data-subtab="overview">
   <!-- Heatmap -->
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS AT A GLANCE <span class="panel-meta" id="eqd-heatmap-meta">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Open positions at a glance <span class="panel-meta" id="eqd-heatmap-meta">—</span></div></div>
     <div id="eqd-heatmap-body" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
   </div><!-- /subtab-panel -->
@@ -1538,14 +1634,14 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">EQUITY ALERTS</div>
+      <div class="dash-title">Equity alerts</div>
       <div class="dash-meta" id="eqa-meta">What needs action today, across your open positions and the full universe</div>
       <div class="dash-meta" id="eqa-sync-status">—</div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="eqa-exit-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🔴 Exit now <span class="panel-meta" id="eqa-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-exit-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th></tr></thead>
@@ -1556,7 +1652,7 @@
   </div>
 
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🎯 Entry signal · 52-week high breakout <span class="panel-meta" id="eqa-entry52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-entry52wh-table">
         <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>52W HIGH ₹</th><th>SECTOR</th></tr></thead>
@@ -1567,7 +1663,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🟢 Add-on eligible <span class="panel-meta" id="eqa-addon-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-addon-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
@@ -1578,7 +1674,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">⏳ ALREADY ADDED THIS WEEK <span class="panel-meta" id="eqa-cooldown-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">⏳ Already added this week <span class="panel-meta" id="eqa-cooldown-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-cooldown-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
@@ -1589,7 +1685,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">⚠ APPROACHING ADD-ON THRESHOLD <span class="panel-meta" id="eqa-approach-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">⚠ Approaching add-on threshold <span class="panel-meta" id="eqa-approach-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-approach-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>SUPERTREND</th><th>FLIP</th></tr></thead>
@@ -1600,7 +1696,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">⏸ HOLD / WAIT FOR STRUCTURE <span class="panel-meta" id="eqa-hold-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">⏸ Hold / wait for structure <span class="panel-meta" id="eqa-hold-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-hold-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>P&amp;L%</th></tr></thead>
@@ -1611,7 +1707,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🚀 NEAR 52-WEEK HIGH <span class="panel-meta" id="eqa-52wh-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🚀 Near 52-week high <span class="panel-meta" id="eqa-52wh-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-52wh-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th><th>CMP ₹</th><th>52W HIGH ₹</th><th>% FROM HIGH</th></tr></thead>
@@ -1622,7 +1718,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🆕 NEW BULLISH SIGNALS — UNIVERSE <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🆕 new bullish signals · universe <span class="panel-meta" id="eqa-newsig-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-newsig-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND FLIPPED TO GREEN</th><th>ABOVE 50 EMA</th><th>SECTOR</th></tr></thead>
@@ -1633,7 +1729,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">— NO PRICE DATA <span class="panel-meta" id="eqa-nodata-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">No price data <span class="panel-meta" id="eqa-nodata-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eqa-nodata-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>AVG ENTRY ₹</th></tr></thead>
@@ -1742,7 +1838,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">DHAN ST 52WK HIGH SWING</div>
+      <div class="dash-title">Dhan ST 52wk high swing</div>
       <div class="dash-meta">52-week-high breakout entry, no EMA filter, Rs1,000 base position size (+Rs1,000 every 100 closed trades), full exit on Supertrend-red regardless of P&amp;L — the variant tested in the backtest comparison. Real trades only, logged by hand.</div>
     </div>
     <div id="dh252-data-asof-header" style="padding:0 18px 14px;">—</div>
@@ -1750,33 +1846,33 @@
   </div>
 
   <div class="subnav" id="subnav-dh252">
-    <button data-subtab="performance">PERFORMANCE</button>
-    <button data-subtab="signals">SIGNALS</button>
-    <button data-subtab="positions">POSITIONS</button>
-    <button data-subtab="log">LOG &amp; RECONCILE</button>
+    <button data-subtab="performance">Performance</button>
+    <button data-subtab="signals">Signals</button>
+    <button data-subtab="positions">Positions</button>
+    <button data-subtab="log">Log &amp; reconcile</button>
   </div>
 
   <div class="subtab-panel" data-subtab="performance">
   <div id="dh252-size-alert" style="display:none;margin:0 0 18px;padding:14px 18px;border-radius:8px;background:rgba(0,210,106,.12);border:1px solid var(--green);color:var(--green);font-size:13px;font-weight:700;"></div>
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">SNAPSHOT <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
+    <div class="panel-head"><div class="panel-title">Snapshot <span class="panel-meta" id="dh252-cap-meta">—</span> <span class="panel-meta" id="dh252-open-plsplit"></span></div>
       <button class="refresh-btn" id="dh252-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
-      <div class="stat"><div class="stat-label">INITIAL CAPITAL</div><div class="stat-value">₹20,00,000</div></div>
-      <div class="stat"><div class="stat-label">CASH REMAINING</div><div class="stat-value" id="dh252-cash">—</div></div>
-      <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dh252-open-count">—</div></div>
-      <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
-      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dh252-notional">—</div></div>
-      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L% (OPEN)</div><div class="stat-value" id="dh252-notional-pct">—</div></div>
-      <div class="stat"><div class="stat-label">COMBINED P&amp;L</div><div class="stat-value" id="dh252-combined-pl">—</div></div>
-      <div class="stat"><div class="stat-label">COMBINED P&amp;L%</div><div class="stat-value" id="dh252-combined-plpct">—</div></div>
-      <div class="stat"><div class="stat-label">POSITION SIZE (CURRENT)</div><div class="stat-value" id="dh252-tier-size">—</div></div>
-      <div class="stat"><div class="stat-label">CAN AFFORD</div><div class="stat-value" id="dh252-afford">—</div></div>
-      <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
-      <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dh252-avg-plpct">—</div></div>
-      <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dh252-winrate">—</div></div>
-      <div class="stat"><div class="stat-label">CAGR (COMBINED)</div><div class="stat-value" id="dh252-cagr">—</div></div>
+      <div class="stat"><div class="stat-label">Initial capital</div><div class="stat-value">₹20,00,000</div></div>
+      <div class="stat"><div class="stat-label">Cash remaining</div><div class="stat-value" id="dh252-cash">—</div></div>
+      <div class="stat"><div class="stat-label">Open positions</div><div class="stat-value" id="dh252-open-count">—</div></div>
+      <div class="stat"><div class="stat-label">Realized p&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
+      <div class="stat"><div class="stat-label">Notional p&amp;L (open)</div><div class="stat-value" id="dh252-notional">—</div></div>
+      <div class="stat"><div class="stat-label">Notional p&amp;L% (open)</div><div class="stat-value" id="dh252-notional-pct">—</div></div>
+      <div class="stat"><div class="stat-label">Combined p&amp;L</div><div class="stat-value" id="dh252-combined-pl">—</div></div>
+      <div class="stat"><div class="stat-label">Combined p&amp;L%</div><div class="stat-value" id="dh252-combined-plpct">—</div></div>
+      <div class="stat"><div class="stat-label">Position size (current)</div><div class="stat-value" id="dh252-tier-size">—</div></div>
+      <div class="stat"><div class="stat-label">Can afford</div><div class="stat-value" id="dh252-afford">—</div></div>
+      <div class="stat"><div class="stat-label">Closed positions</div><div class="stat-value" id="dh252-closed-stat">—</div></div>
+      <div class="stat"><div class="stat-label">Avg p&amp;L % (closed)</div><div class="stat-value" id="dh252-avg-plpct">—</div></div>
+      <div class="stat"><div class="stat-label">Win rate (closed)</div><div class="stat-value" id="dh252-winrate">—</div></div>
+      <div class="stat"><div class="stat-label">CAGR (combined)</div><div class="stat-value" id="dh252-cagr">—</div></div>
     </div>
     <div style="padding:0 18px 18px;font-size:11.5px;color:var(--muted);" id="dh252-vs-backtest"></div>
     <div id="dh252-skipped-warning" style="display:none;margin:0 18px 18px;padding:12px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;"></div>
@@ -1785,7 +1881,7 @@
 
   <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div class="panel-head"><div class="panel-title">Equity curve</div></div>
     <div style="padding:10px 18px;">
       <div id="chart-dh252-equity" style="min-height:300px;"></div>
     </div>
@@ -1796,7 +1892,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--red);">
-    <div class="panel-head"><div class="panel-title">🔴 EXIT NOW <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🔴 Exit now <span class="panel-meta" id="dh252-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-exit-table">
         <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
@@ -1810,7 +1906,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — 52-WEEK HIGH BREAKOUT <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🎯 Entry signal · 52-week high breakout <span class="panel-meta" id="dh252-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-entry-table">
         <thead><tr><th>STOCK</th><th>CLOSE ₹</th><th style="width:1%;">QTY TO BUY</th><th>252D HIGH ₹</th><th>SUPERTREND</th><th>FLIP</th><th style="max-width:160px;white-space:normal;">SECTOR</th></tr></thead>
@@ -1824,7 +1920,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Open positions <span class="panel-meta" id="dh252-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-pos-table">
         <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>AWAY FROM 52W HIGH</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
@@ -1837,7 +1933,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dh252-add-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🟢 Add-on eligible <span class="panel-meta" id="dh252-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-add-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
@@ -1851,7 +1947,7 @@
 
   <div class="subtab-panel" data-subtab="log">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
+    <div class="panel-head"><div class="panel-title">Log a real trade</div>
       <div style="display:flex;gap:6px;">
         <button class="refresh-btn" id="dh252-tab-quick-btn">QUICK ENTRY</button>
         <button class="refresh-btn" id="dh252-tab-bulk-btn">BULK ENTRY (15 ROWS)</button>
@@ -1897,7 +1993,7 @@
 
   <div class="subtab-panel" data-subtab="log">
   <div class="panel" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
+    <div class="panel-head"><div class="panel-title">Weekly reconciliation</div></div>
     <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
       <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">From</label><input type="date" id="dh252-recon-from" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
       <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">To</label><input type="date" id="dh252-recon-to" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
@@ -1917,7 +2013,7 @@
   <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head" id="dh252-log-table-header" style="cursor:pointer;user-select:none;">
-      <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
+      <div class="panel-title">Full trade log · edit or delete <span class="panel-meta" id="dh252-log-table-meta">—</span></div>
       <span id="dh252-log-table-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
     </div>
     <div id="dh252-log-table-body" style="display:none;">
@@ -1938,7 +2034,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dh252-closed-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Closed trades <span class="panel-meta" id="dh252-closed-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dh252-closed-table">
         <thead><tr><th>STOCK</th><th>ENTRY DATE</th><th>EXIT DATE</th><th>QTY</th><th>WAC ₹</th><th>EXIT ₹</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>ADDS</th></tr></thead>
@@ -1955,7 +2051,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">DHAN OPTIONS &amp; COVERED CALL</div>
+      <div class="dash-title">Dhan options &amp; covered call</div>
       <div class="dash-meta">Fixed 10-stock universe. Equity leg: enter on Supertrend(10,3) daily green, exit on Supertrend red only if in profit, add 10% on Supertrend green while in loss (max once/week). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding — this app only signals, it doesn't size or track option trades. Stoploss (3&times; premium) is handled by your own GTT in the broker, outside this app. Shares the 52-Week Journal's spreadsheet via its own tab (DHCC_TRADES) — same URL, no separate setup needed.</div>
     </div>
     <div id="dhcc-data-asof-header" style="padding:0 18px 14px;">—</div>
@@ -1966,15 +2062,15 @@
   </div>
 
   <div class="subnav" id="subnav-dhcc">
-    <button data-subtab="performance">PERFORMANCE</button>
-    <button data-subtab="signals">SIGNALS</button>
-    <button data-subtab="positions">POSITIONS</button>
-    <button data-subtab="log">LOG &amp; RECONCILE</button>
+    <button data-subtab="performance">Performance</button>
+    <button data-subtab="signals">Signals</button>
+    <button data-subtab="positions">Positions</button>
+    <button data-subtab="log">Log &amp; reconcile</button>
   </div>
 
   <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">EQUITY CURVE</div></div>
+    <div class="panel-head"><div class="panel-title">Equity curve</div></div>
     <div style="padding:10px 18px;">
       <div id="chart-dhcc-equity" style="min-height:300px;"></div>
     </div>
@@ -1984,18 +2080,18 @@
 
   <div class="subtab-panel" data-subtab="performance">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">SNAPSHOT <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
+    <div class="panel-head"><div class="panel-title">Snapshot <span class="panel-meta" id="dhcc-cap-meta">—</span></div>
       <button class="refresh-btn" id="dhcc-refresh-btn" title="Refresh from sheet">↻</button>
     </div>
     <div class="stat-row" id="dhcc-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
-      <div class="stat"><div class="stat-label">OPEN POSITIONS</div><div class="stat-value" id="dhcc-open-count">—</div></div>
-      <div class="stat"><div class="stat-label">REALIZED P&amp;L</div><div class="stat-value" id="dhcc-realized">—</div></div>
-      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L (OPEN)</div><div class="stat-value" id="dhcc-notional">—</div></div>
-      <div class="stat"><div class="stat-label">NOTIONAL P&amp;L% (OPEN)</div><div class="stat-value" id="dhcc-notional-pct">—</div></div>
-      <div class="stat"><div class="stat-label">COMBINED P&amp;L</div><div class="stat-value" id="dhcc-combined-pl">—</div></div>
-      <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value" id="dhcc-closed-stat">—</div></div>
-      <div class="stat"><div class="stat-label">AVG P&amp;L % (CLOSED)</div><div class="stat-value" id="dhcc-avg-plpct">—</div></div>
-      <div class="stat"><div class="stat-label">WIN RATE (CLOSED)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
+      <div class="stat"><div class="stat-label">Open positions</div><div class="stat-value" id="dhcc-open-count">—</div></div>
+      <div class="stat"><div class="stat-label">Realized p&amp;L</div><div class="stat-value" id="dhcc-realized">—</div></div>
+      <div class="stat"><div class="stat-label">Notional p&amp;L (open)</div><div class="stat-value" id="dhcc-notional">—</div></div>
+      <div class="stat"><div class="stat-label">Notional p&amp;L% (open)</div><div class="stat-value" id="dhcc-notional-pct">—</div></div>
+      <div class="stat"><div class="stat-label">Combined p&amp;L</div><div class="stat-value" id="dhcc-combined-pl">—</div></div>
+      <div class="stat"><div class="stat-label">Closed positions</div><div class="stat-value" id="dhcc-closed-stat">—</div></div>
+      <div class="stat"><div class="stat-label">Avg p&amp;L % (closed)</div><div class="stat-value" id="dhcc-avg-plpct">—</div></div>
+      <div class="stat"><div class="stat-label">Win rate (closed)</div><div class="stat-value" id="dhcc-winrate">—</div></div>
     </div>
     <div id="dhcc-skipped-warning" style="display:none;margin:0 18px 18px;padding:12px 14px;background:var(--red-dim);border:1px solid var(--red);border-radius:6px;"></div>
   </div>
@@ -2004,7 +2100,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--red);">
-    <div class="panel-head"><div class="panel-title">🔴 EQUITY EXIT SIGNAL <span class="panel-meta" id="dhcc-exit-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🔴 Equity exit signal <span class="panel-meta" id="dhcc-exit-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-exit-table">
         <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
@@ -2018,7 +2114,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 EQUITY ENTRY SIGNAL <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🎯 Equity entry signal <span class="panel-meta" id="dhcc-entry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-entry-table">
         <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
@@ -2032,7 +2128,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">🟢 ADD-ON ELIGIBLE <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🟢 Add-on eligible <span class="panel-meta" id="dhcc-add-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-add-table">
         <thead><tr><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>P&amp;L%</th><th>ADD QTY</th><th>DAYS SINCE LAST FILL</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th></tr></thead>
@@ -2046,7 +2142,7 @@
 
   <div class="subtab-panel" data-subtab="signals">
   <div class="panel" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Options signal · sell call / sell put <span class="panel-meta" id="dhcc-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-opt-table">
         <thead><tr><th>STOCK</th><th>NAME</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>EARNINGS</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
@@ -2060,7 +2156,7 @@
 
   <div class="subtab-panel" data-subtab="log">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">LOG A REAL TRADE</div>
+    <div class="panel-head"><div class="panel-title">Log a real trade</div>
       <div style="display:flex;gap:6px;">
         <button class="refresh-btn" id="dhcc-tab-quick-btn">QUICK ENTRY</button>
         <button class="refresh-btn" id="dhcc-tab-bulk-btn">BULK ENTRY (15 ROWS)</button>
@@ -2106,7 +2202,7 @@
 
   <div class="subtab-panel" data-subtab="log">
   <div class="panel" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">WEEKLY RECONCILIATION</div></div>
+    <div class="panel-head"><div class="panel-title">Weekly reconciliation</div></div>
     <div style="padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
       <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">From</label><input type="date" id="dhcc-recon-from" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
       <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;">To</label><input type="date" id="dhcc-recon-to" style="padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:12px;"></div>
@@ -2126,7 +2222,7 @@
   <div class="subtab-panel" data-subtab="log">
   <div class="panel">
     <div class="panel-head" id="dhcc-log-table-header" style="cursor:pointer;user-select:none;">
-      <div class="panel-title">FULL TRADE LOG — EDIT OR DELETE <span class="panel-meta" id="dhcc-log-table-meta">—</span></div>
+      <div class="panel-title">Full trade log · edit or delete <span class="panel-meta" id="dhcc-log-table-meta">—</span></div>
       <span id="dhcc-log-table-chevron" style="color:var(--muted);font-size:12px;padding-right:4px;">▸</span>
     </div>
     <div id="dhcc-log-table-body" style="display:none;">
@@ -2147,7 +2243,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="dhcc-pos-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Open positions <span class="panel-meta" id="dhcc-pos-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-pos-table">
         <thead><tr><th>ENTRY DATE</th><th>STOCK</th><th>QTY</th><th>WAC ₹</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>NOTIONAL P&amp;L ₹</th><th>NOTIONAL P&amp;L%</th><th>ADDS</th><th>AGE (DAYS)</th></tr></thead>
@@ -2160,7 +2256,7 @@
 
   <div class="subtab-panel" data-subtab="positions">
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="dhcc-closed-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Closed trades <span class="panel-meta" id="dhcc-closed-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="dhcc-closed-table">
         <thead><tr><th>STOCK</th><th>ENTRY DATE</th><th>EXIT DATE</th><th>QTY</th><th>WAC ₹</th><th>EXIT ₹</th><th>P&amp;L ₹</th><th>P&amp;L %</th><th>ADDS</th></tr></thead>
@@ -2177,7 +2273,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">ICICI DIVIDEND LONGTERM</div>
+      <div class="dash-title">ICICI dividend longterm</div>
       <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 25, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
     </div>
     <div id="div-data-asof" style="padding:0 18px 18px;">—</div>
@@ -2185,13 +2281,13 @@
 
   <div class="subnav" id="subnav-dividend">
     <button data-subtab="rsi">RSI</button>
-    <button data-subtab="low">52 WEEK LOW</button>
-    <button data-subtab="options">OPTION SIGNALS</button>
+    <button data-subtab="low">52 week low</button>
+    <button data-subtab="options">Option signals</button>
   </div>
 
   <div class="subtab-panel" data-subtab="rsi">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — RSI14 &lt; 25 <span class="panel-meta" id="div-entry-count">—</span></div>
+    <div class="panel-head"><div class="panel-title">Entry signal · RSI14 &lt; 25 <span class="panel-meta" id="div-entry-count">—</span></div>
       <button class="refresh-btn" id="div-refresh-btn" title="Refresh">↻</button>
     </div>
     <div class="table-scroll">
@@ -2206,7 +2302,7 @@
 
   <div class="subtab-panel" data-subtab="low">
   <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">🎯 ENTRY SIGNAL — AT 52-WEEK LOW <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">🎯 Entry signal · at 52-week low <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="div-lowentry-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>52W LOW ₹</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
@@ -2219,7 +2315,7 @@
 
   <div class="subtab-panel" data-subtab="options">
   <div class="panel" style="border-color:var(--amber-dim);">
-    <div class="panel-head"><div class="panel-title">📞 OPTIONS SIGNAL — SELL CALL / SELL PUT <span class="panel-meta" id="div-opt-count">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Options signal · sell call / sell put <span class="panel-meta" id="div-opt-count">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="div-opt-table">
         <thead><tr><th>STOCK</th><th>CMP ₹</th><th>SUPERTREND</th><th>FLIP</th><th>RSI14</th><th>EARNINGS</th><th>SELL CALL</th><th>SELL PUT</th></tr></thead>
@@ -2620,7 +2716,7 @@ async function loadMarketSnapshot(){
   document.getElementById('dash-meta').textContent =
     `Market Data: Latest EOD (${snap.as_of_date})  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
   document.getElementById('sidebar-status-sub').textContent = snap.as_of_date;
-  renderFreshnessStat('dash-data-asof', snap.generated_at, 'MARKET DATA LAST UPDATED');
+  renderFreshnessStat('dash-data-asof', snap.generated_at, 'Market data last updated');
 }
 
 function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
@@ -4368,9 +4464,9 @@ function ivpLoadSupertrend(st){
 // cadences (daily pipeline vs. a weekly manual export).
 function ivpRenderFreshness(){
   const dataIso = window._ivpSupertrendGeneratedAt || window._ivpScreensGeneratedAt;
-  renderFreshnessStat('ivp-data-asof', dataIso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
+  renderFreshnessStat('ivp-data-asof', dataIso, 'Price / Supertrend / RSI14 data as of');
   renderFreshnessStat('ivp-upload-asof', ivpData ? ivpData.generated_at : null,
-    ivpData && ivpData.source === 'google_sheet' ? 'SENSIBULL FILE UPLOADED' : 'SENSIBULL SNAPSHOT (SITE DEFAULT)', 24 * 8);
+    ivpData && ivpData.source === 'google_sheet' ? 'Sensibull file uploaded' : 'Sensibull snapshot (site default)', 24 * 8);
 }
 
 // Index breadth itself isn't tracked anywhere in the daily pipeline (no
@@ -4392,7 +4488,7 @@ function ivpRenderIndexProxyStat(elId, symbol, label){
   const rsi = (window._eqRsiMap || {})[symbol];
   const color = st && st.color ? st.color : null;
   if(!color && rsi == null){
-    el.innerHTML = `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value" style="font-size:16px;color:var(--amber);">⚠ Unavailable</div></div>`;
+    el.innerHTML = `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value is-feed-error">Not in today\u2019s data feed</div><button class="feed-retry" type="button" onclick="uiV2Retry()">Reload data</button></div>`;
     return;
   }
   el.innerHTML = `<div class="stat">
@@ -4409,9 +4505,9 @@ async function ivpRenderNiftyStat(){
   }catch(err){
     console.error('IVP index proxy stats failed:', err);
   }
-  ivpRenderIndexProxyStat('ivp-nifty-stat', 'NIFTYIETF', 'NIFTY50 (NIFTYIETF PROXY)');
-  ivpRenderIndexProxyStat('ivp-midcap-stat', 'MIDCAPETF', 'MIDCAP (MIDCAPETF PROXY)');
-  ivpRenderIndexProxyStat('ivp-smallcap-stat', 'SMALLCAP', 'SMALLCAP (SMALLCAP PROXY)');
+  ivpRenderIndexProxyStat('ivp-nifty-stat', 'NIFTYIETF', 'Nifty 50 (NIFTYIETF proxy)');
+  ivpRenderIndexProxyStat('ivp-midcap-stat', 'MIDCAPETF', 'Midcap (MIDCAPETF proxy)');
+  ivpRenderIndexProxyStat('ivp-smallcap-stat', 'SMALLCAP', 'Smallcap (SMALLCAP proxy)');
 }
 
 // Tries the Google Sheet DB first (an upload from any device shows up
@@ -4575,11 +4671,11 @@ function ivpRenderOptionsSignal(){
   const summaryEl = document.getElementById('ivp-opt-summary');
   if(summaryEl){
     summaryEl.innerHTML = `
-      <div class="stat"><div class="stat-label">SELL CALL</div><div class="stat-value" style="color:var(--red);">${sellCallCount}</div></div>
-      <div class="stat"><div class="stat-label">SELL PUT</div><div class="stat-value" style="color:var(--green);">${sellPutCount}</div></div>
+      <div class="stat"><div class="stat-label">Sell call</div><div class="stat-value" style="color:var(--red);">${sellCallCount}</div></div>
+      <div class="stat"><div class="stat-label">Sell put</div><div class="stat-value" style="color:var(--green);">${sellPutCount}</div></div>
       <div class="stat"><div class="stat-label">RSI &gt; 70</div><div class="stat-value" style="color:var(--red);">${rsiOverboughtCount}</div></div>
       <div class="stat"><div class="stat-label">RSI &lt; 30</div><div class="stat-value" style="color:var(--green);">${rsiOversoldCount}</div></div>
-      <div class="stat"><div class="stat-label">UNIVERSE</div><div class="stat-value">${universe.length}</div></div>
+      <div class="stat"><div class="stat-label">Universe</div><div class="stat-value">${universe.length}</div></div>
     `;
   }
 }
@@ -4834,7 +4930,7 @@ function ivpRenderPositions(){
   // was parsed, not data that goes stale on its own schedule. A huge
   // threshold keeps renderFreshnessStat's colour logic effectively
   // always-green rather than flagging a 2-hour-old upload as "stale".
-  renderFreshnessStat('ivp-pos-asof', data ? data.generated_at : null, 'POSITIONS LAST UPLOADED', 24 * 365);
+  renderFreshnessStat('ivp-pos-asof', data ? data.generated_at : null, 'Positions last uploaded', 24 * 365);
 
   if(!data || !data.positions.length){
     body.innerHTML = '<tr><td colspan="9" class="loading">Upload your positions CSV above to check open option legs against current SELL CALL/PUT signals.</td></tr>';
@@ -4895,10 +4991,10 @@ function ivpRenderPositions(){
 
   countEl.textContent = `${data.positions.length} legs`;
   summaryEl.innerHTML = `
-    <div class="stat"><div class="stat-label">EXIT SIGNALS</div><div class="stat-value" style="color:var(--red);">${exitCount}</div></div>
-    <div class="stat"><div class="stat-label">THESIS HOLDS</div><div class="stat-value" style="color:var(--green);">${holdCount}</div></div>
-    <div class="stat"><div class="stat-label">HEDGE LEGS</div><div class="stat-value">${hedgeCount}</div></div>
-    <div class="stat"><div class="stat-label">UNKNOWN</div><div class="stat-value" style="color:var(--amber);">${unknownCount}</div></div>
+    <div class="stat"><div class="stat-label">Exit signals</div><div class="stat-value" style="color:var(--red);">${exitCount}</div></div>
+    <div class="stat"><div class="stat-label">Thesis holds</div><div class="stat-value" style="color:var(--green);">${holdCount}</div></div>
+    <div class="stat"><div class="stat-label">Hedge legs</div><div class="stat-value">${hedgeCount}</div></div>
+    <div class="stat"><div class="stat-label">Unknown</div><div class="stat-value" style="color:var(--amber);">${unknownCount}</div></div>
   `;
 }
 
@@ -5478,7 +5574,7 @@ function otShowLastFetch(){
 // uses the same longer 8-day staleness threshold as IVP's Sensibull
 // upload badge rather than the 30h daily-data one.
 function otRenderFreshness(){
-  renderFreshnessStat('ot-data-asof', window._otLastUploadedAt, 'P&L FILE LAST UPLOADED', 24 * 8);
+  renderFreshnessStat('ot-data-asof', window._otLastUploadedAt, 'P&L file last uploaded', 24 * 8);
 }
 
 async function otUpdateDbMeta(){
@@ -5572,21 +5668,21 @@ function otAnalyze(positions, unparsed){
     (Object.keys(unparsed).length ? ` · ${Object.keys(unparsed).length} unparsed symbol(s)` : '');
 
   document.getElementById('ot-summary-row').innerHTML = `
-    <div class="stat"><div class="stat-label">CLOSED POSITIONS</div><div class="stat-value">${closed.length}</div></div>
-    <div class="stat"><div class="stat-label">WIN RATE</div><div class="stat-value ${winRate==null?'':winRate>=50?'green':'red'}">${winRate!=null?winRate.toFixed(1)+'%':'—'}</div></div>
-    <div class="stat"><div class="stat-label">REALISED P&amp;L</div><div class="stat-value ${totalPnl>=0?'green':'red'}">₹${totalPnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    <div class="stat"><div class="stat-label">AVG P&amp;L / POSITION</div><div class="stat-value ${avgPnl==null?'':avgPnl>=0?'green':'red'}">${avgPnl!=null?'₹'+avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
-    <div class="stat"><div class="stat-label">STILL OPEN</div><div class="stat-value amber">${open.length}</div></div>
-    <div class="stat"><div class="stat-label">UNREALIZED P&amp;L</div><div class="stat-value ${totalUnrealized>=0?'green':'red'}">₹${totalUnrealized.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">Closed positions</div><div class="stat-value">${closed.length}</div></div>
+    <div class="stat"><div class="stat-label">Win rate</div><div class="stat-value ${winRate==null?'':winRate>=50?'green':'red'}">${winRate!=null?winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">Realised p&amp;L</div><div class="stat-value ${totalPnl>=0?'green':'red'}">₹${totalPnl.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    <div class="stat"><div class="stat-label">Avg p&amp;L / position</div><div class="stat-value ${avgPnl==null?'':avgPnl>=0?'green':'red'}">${avgPnl!=null?'₹'+avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+    <div class="stat"><div class="stat-label">Still open</div><div class="stat-value amber">${open.length}</div></div>
+    <div class="stat"><div class="stat-label">Unrealized p&amp;L</div><div class="stat-value ${totalUnrealized>=0?'green':'red'}">₹${totalUnrealized.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
   `;
 
   const ceCount = positions.filter(p => p.optType === 'CE').length;
   const peCount = positions.filter(p => p.optType === 'PE').length;
   const ceRatio = peCount ? (ceCount / peCount) : null;
   document.getElementById('ot-cepe-row').innerHTML = `
-    <div class="stat"><div class="stat-label">CALL (CE)</div><div class="stat-value">${ceCount}</div></div>
-    <div class="stat"><div class="stat-label">PUT (PE)</div><div class="stat-value">${peCount}</div></div>
-    <div class="stat"><div class="stat-label">CE : PE RATIO</div><div class="stat-value ${ceRatio!=null && ceRatio>=1 ? 'green':'amber'}">${ceRatio!=null?ceRatio.toFixed(2):'—'}</div></div>
+    <div class="stat"><div class="stat-label">Call (CE)</div><div class="stat-value">${ceCount}</div></div>
+    <div class="stat"><div class="stat-label">Put (PE)</div><div class="stat-value">${peCount}</div></div>
+    <div class="stat"><div class="stat-label">CE : PE ratio</div><div class="stat-value ${ceRatio!=null && ceRatio>=1 ? 'green':'amber'}">${ceRatio!=null?ceRatio.toFixed(2):'—'}</div></div>
   `;
 
   otRenderStockTable(positions);
@@ -5620,10 +5716,10 @@ function otRenderCePePerf(closed){
   const ceS = stat(ce), peS = stat(pe);
 
   document.getElementById('ot-cepe-perf-row').innerHTML = `
-    <div class="stat"><div class="stat-label">CE WIN RATE</div><div class="stat-value ${ceS.winRate==null?'':ceS.winRate>=50?'green':'red'}">${ceS.winRate!=null?ceS.winRate.toFixed(1)+'%':'—'}</div></div>
-    <div class="stat"><div class="stat-label">PE WIN RATE</div><div class="stat-value ${peS.winRate==null?'':peS.winRate>=50?'green':'red'}">${peS.winRate!=null?peS.winRate.toFixed(1)+'%':'—'}</div></div>
-    <div class="stat"><div class="stat-label">CE AVG P&amp;L</div><div class="stat-value ${ceS.avgPnl==null?'':ceS.avgPnl>=0?'green':'red'}">${ceS.avgPnl!=null?'₹'+ceS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
-    <div class="stat"><div class="stat-label">PE AVG P&amp;L</div><div class="stat-value ${peS.avgPnl==null?'':peS.avgPnl>=0?'green':'red'}">${peS.avgPnl!=null?'₹'+peS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+    <div class="stat"><div class="stat-label">CE win rate</div><div class="stat-value ${ceS.winRate==null?'':ceS.winRate>=50?'green':'red'}">${ceS.winRate!=null?ceS.winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">PE win rate</div><div class="stat-value ${peS.winRate==null?'':peS.winRate>=50?'green':'red'}">${peS.winRate!=null?peS.winRate.toFixed(1)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">CE avg p&amp;L</div><div class="stat-value ${ceS.avgPnl==null?'':ceS.avgPnl>=0?'green':'red'}">${ceS.avgPnl!=null?'₹'+ceS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
+    <div class="stat"><div class="stat-label">PE avg p&amp;L</div><div class="stat-value ${peS.avgPnl==null?'':peS.avgPnl>=0?'green':'red'}">${peS.avgPnl!=null?'₹'+peS.avgPnl.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</div></div>
   `;
 
   if(otCeDonut) otCeDonut.destroy();
@@ -5725,7 +5821,7 @@ function otRenderSlEffectiveness(closed){
 
   if(otSlHistChart) otSlHistChart.destroy();
   if(!losers.length){
-    document.getElementById('ot-sl-row').innerHTML = '<div class="stat"><div class="stat-label">LOSING TRADES</div><div class="stat-value">0</div></div>';
+    document.getElementById('ot-sl-row').innerHTML = '<div class="stat"><div class="stat-label">Losing trades</div><div class="stat-value">0</div></div>';
     document.getElementById('chart-ot-sl-hist').innerHTML = '<div class="loading">No closed losing positions yet.</div>';
     document.getElementById('ot-sl-insight').textContent = '—';
     return;
@@ -5737,8 +5833,8 @@ function otRenderSlEffectiveness(closed){
   const undershot = losers.filter(p => p.ratio < 2.5).length;
 
   document.getElementById('ot-sl-row').innerHTML = `
-    <div class="stat"><div class="stat-label">LOSING TRADES</div><div class="stat-value">${losers.length}</div></div>
-    <div class="stat"><div class="stat-label">AVG EXIT MULTIPLE</div><div class="stat-value ${Math.abs(avgRatio-3)<=0.5?'green':'amber'}">${avgRatio.toFixed(2)}&times;</div></div>
+    <div class="stat"><div class="stat-label">Losing trades</div><div class="stat-value">${losers.length}</div></div>
+    <div class="stat"><div class="stat-label">Avg exit multiple</div><div class="stat-value ${Math.abs(avgRatio-3)<=0.5?'green':'amber'}">${avgRatio.toFixed(2)}&times;</div></div>
     <div class="stat"><div class="stat-label">NEAR TARGET (2.5&ndash;3.5&times;)</div><div class="stat-value green">${(inBand/losers.length*100).toFixed(0)}%</div></div>
     <div class="stat"><div class="stat-label">OVERSHOT &gt;3.5&times;</div><div class="stat-value ${overshot?'red':'green'}">${(overshot/losers.length*100).toFixed(0)}%</div></div>
   `;
@@ -7199,10 +7295,10 @@ function eqDashRenderSizing(s){
   const nextSize = Math.min(currentSize + EQ_POSITION_INCREMENT_RS, EQ_POSITION_CAP_RS);
 
   document.getElementById('eqd-sizing-row').innerHTML = [
-    eqDashStatHtml('CURRENT POSITION SIZE', eqFmtRs(currentSize), atCap ? 'var(--amber)' : 'var(--green)', atCap ? 'at cap' : `based on ${closedCount} closed trades`),
-    eqDashStatHtml('NEXT TIER', atCap ? '— at cap' : eqFmtRs(nextSize), null, atCap ? '' : `in ${tradesToNextTier} more closed trade${tradesToNextTier===1?'':'s'}`),
-    eqDashStatHtml('OPEN POSITIONS', `${s.openLive.length} / ${EQ_MAX_POSITIONS}`, s.openLive.length >= EQ_MAX_POSITIONS ? 'var(--red)' : s.openLive.length >= EQ_MAX_POSITIONS * 0.9 ? 'var(--amber)' : 'var(--green)', 'portfolio cap'),
-    eqDashStatHtml('CLOSED TRADES', closedCount, null, `since ${EQ_DASHBOARD_START_DATE}`),
+    eqDashStatHtml('Current position size', eqFmtRs(currentSize), atCap ? 'var(--amber)' : 'var(--green)', atCap ? 'at cap' : `based on ${closedCount} closed trades`),
+    eqDashStatHtml('Next tier', atCap ? '— at cap' : eqFmtRs(nextSize), null, atCap ? '' : `in ${tradesToNextTier} more closed trade${tradesToNextTier===1?'':'s'}`),
+    eqDashStatHtml('Open positions', `${s.openLive.length} / ${EQ_MAX_POSITIONS}`, s.openLive.length >= EQ_MAX_POSITIONS ? 'var(--red)' : s.openLive.length >= EQ_MAX_POSITIONS * 0.9 ? 'var(--amber)' : 'var(--green)', 'portfolio cap'),
+    eqDashStatHtml('Closed trades', closedCount, null, `since ${EQ_DASHBOARD_START_DATE}`),
   ].join('');
 
   const alertEl = document.getElementById('eqd-maxpos-alert');
@@ -7281,11 +7377,11 @@ function eqDashRenderFySummary(s){
   const curMonKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
   const curMonPl = monthMap[curMonKey] || 0;
   document.getElementById('eqd-fy-row').innerHTML = [
-    eqDashStatHtml('STARTING CAPITAL (PEAK DEPLOYED)', eqFmtRs(s.initialCapital)),
-    eqDashStatHtml(`P&amp;L (SINCE ${EQ_DASHBOARD_START_DATE})`, eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
-    eqDashStatHtml('THIS MONTH P&amp;L', eqFmtRs(curMonPl), curMonPl >= 0 ? 'var(--green)' : 'var(--red)', MNAMES[today.getMonth()] + ' ' + today.getFullYear()),
-    eqDashStatHtml('COMBINED P&amp;L (ALL-TIME)', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', `${eqFmtRs(s.realizedPLAllTime)} realized (all-time) + ${eqFmtRs(s.unrealizedMTM)} open MTM`),
-    eqDashStatHtml(`WIN RATE (SINCE ${EQ_DASHBOARD_START_DATE})`, s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
+    eqDashStatHtml('Starting capital (peak deployed)', eqFmtRs(s.initialCapital)),
+    eqDashStatHtml(`P&amp;L (since ${EQ_DASHBOARD_START_DATE})`, eqFmtRs(fyPl), fyPl >= 0 ? 'var(--green)' : 'var(--red)', `${fyClosed.length} trades · ${fyWins}W / ${fyClosed.length - fyWins}L`),
+    eqDashStatHtml('This month p&amp;L', eqFmtRs(curMonPl), curMonPl >= 0 ? 'var(--green)' : 'var(--red)', MNAMES[today.getMonth()] + ' ' + today.getFullYear()),
+    eqDashStatHtml('Combined p&amp;L (all-time)', eqFmtRs(s.realizedPLAllTime + s.unrealizedMTM), (s.realizedPLAllTime + s.unrealizedMTM) >= 0 ? 'var(--green)' : 'var(--red)', `${eqFmtRs(s.realizedPLAllTime)} realized (all-time) + ${eqFmtRs(s.unrealizedMTM)} open MTM`),
+    eqDashStatHtml(`Win rate (since ${EQ_DASHBOARD_START_DATE})`, s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', `${s.closed.length} closed`),
   ].join('');
 
   const qtrCells = [1, 2, 3, 4].map(q => {
@@ -7304,27 +7400,27 @@ function eqDashRenderFySummary(s){
 function eqDashRenderOpenBook(s){
   const bookHealthPct = s.openLive.length ? (s.openWinning.length / s.openLive.length) * 100 : null;
   document.getElementById('eqd-openbook-row').innerHTML = [
-    eqDashStatHtml('TOTAL OPEN', s.openLive.length, null, `${s.openWinning.length} profit · ${s.openLosing.length} loss`),
-    eqDashStatHtml('AT TARGET ≥7%', s.openAtTarget.length, 'var(--green)'),
-    eqDashStatHtml('BOOK HEALTH', bookHealthPct == null ? '—' : bookHealthPct.toFixed(0) + '%', bookHealthPct >= 60 ? 'var(--green)' : 'var(--amber)', 'target ≥60%'),
-    eqDashStatHtml('UNREALISED MTM', eqFmtRs(s.unrealizedMTM), s.unrealizedMTM >= 0 ? 'var(--green)' : 'var(--red)'),
-    eqDashStatHtml('AVG HOLD (OPEN)', s.avgHoldOpen == null ? '—' : Math.round(s.avgHoldOpen) + 'd'),
-    eqDashStatHtml('DEPLOYED CAPITAL', eqFmtRs(s.totalDeployed), null, `${s.openLive.length} positions`),
-    eqDashStatHtml('BEST OPEN', s.bestOpen ? eqFmtPct(s.bestOpen.plPct) : '—', 'var(--green)', s.bestOpen ? s.bestOpen.symbol : ''),
-    eqDashStatHtml('WORST OPEN', s.worstOpen ? eqFmtPct(s.worstOpen.plPct) : '—', 'var(--red)', s.worstOpen ? s.worstOpen.symbol : ''),
+    eqDashStatHtml('Total open', s.openLive.length, null, `${s.openWinning.length} profit · ${s.openLosing.length} loss`),
+    eqDashStatHtml('At target ≥7%', s.openAtTarget.length, 'var(--green)'),
+    eqDashStatHtml('Book health', bookHealthPct == null ? '—' : bookHealthPct.toFixed(0) + '%', bookHealthPct >= 60 ? 'var(--green)' : 'var(--amber)', 'target ≥60%'),
+    eqDashStatHtml('Unrealised MTM', eqFmtRs(s.unrealizedMTM), s.unrealizedMTM >= 0 ? 'var(--green)' : 'var(--red)'),
+    eqDashStatHtml('Avg hold (open)', s.avgHoldOpen == null ? '—' : Math.round(s.avgHoldOpen) + 'd'),
+    eqDashStatHtml('Deployed capital', eqFmtRs(s.totalDeployed), null, `${s.openLive.length} positions`),
+    eqDashStatHtml('Best open', s.bestOpen ? eqFmtPct(s.bestOpen.plPct) : '—', 'var(--green)', s.bestOpen ? s.bestOpen.symbol : ''),
+    eqDashStatHtml('Worst open', s.worstOpen ? eqFmtPct(s.worstOpen.plPct) : '—', 'var(--red)', s.worstOpen ? s.worstOpen.symbol : ''),
   ].join('');
 }
 
 function eqDashRenderEdge(s){
   document.getElementById('eqd-edge-row').innerHTML = [
-    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', 'target ≥70%'),
-    eqDashStatHtml('PROFIT FACTOR', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)', 'combined · target ≥2.0'),
-    eqDashStatHtml('STRIKE RATE', s.strikeRatePct == null ? '—' : s.strikeRatePct.toFixed(1) + '%', null, `${s.openWinning.length} open + ${s.wins.length} closed / ${s.openLive.length + s.closed.length}`),
-    eqDashStatHtml('AVG WIN', eqFmtPct(s.avgWinPct), 'var(--green)', eqFmtRs(s.avgWinRs)),
-    eqDashStatHtml('AVG LOSS', '-' + eqFmtPct(s.avgLossPct).replace('+', ''), 'var(--red)', eqFmtRs(-s.avgLossRs)),
-    eqDashStatHtml('WIN:LOSS ₹ RATIO', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
-    eqDashStatHtml('AVG HOLD (CLOSED)', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, `W: ${s.avgHoldClosedWinners == null ? '—' : Math.round(s.avgHoldClosedWinners) + 'd'} · L: ${s.avgHoldClosedLosers == null ? '—' : Math.round(s.avgHoldClosedLosers) + 'd'}`),
-    eqDashStatHtml('CLOSED TRADES', s.closed.length),
+    eqDashStatHtml('Win rate', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)', 'target ≥70%'),
+    eqDashStatHtml('Profit factor', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)', 'combined · target ≥2.0'),
+    eqDashStatHtml('Strike rate', s.strikeRatePct == null ? '—' : s.strikeRatePct.toFixed(1) + '%', null, `${s.openWinning.length} open + ${s.wins.length} closed / ${s.openLive.length + s.closed.length}`),
+    eqDashStatHtml('Avg win', eqFmtPct(s.avgWinPct), 'var(--green)', eqFmtRs(s.avgWinRs)),
+    eqDashStatHtml('Avg loss', '-' + eqFmtPct(s.avgLossPct).replace('+', ''), 'var(--red)', eqFmtRs(-s.avgLossRs)),
+    eqDashStatHtml('Win:loss ₹ ratio', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
+    eqDashStatHtml('Avg hold (closed)', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, `W: ${s.avgHoldClosedWinners == null ? '—' : Math.round(s.avgHoldClosedWinners) + 'd'} · L: ${s.avgHoldClosedLosers == null ? '—' : Math.round(s.avgHoldClosedLosers) + 'd'}`),
+    eqDashStatHtml('Closed trades', s.closed.length),
   ].join('');
 }
 
@@ -7618,10 +7714,10 @@ function eqDashRenderLossSummary(s){
   const longest = losers.filter(p => p.age != null).sort((a, b) => b.age - a.age)[0] || null;
   const pctOfDeployed = s.totalDeployed > 0 ? (capitalFrozen / s.totalDeployed) * 100 : null;
   document.getElementById('eqd-lossummary-row').innerHTML = [
-    eqDashStatHtml('POSITIONS IN LOSS', losers.length, 'var(--red)', `of ${s.openLive.length} open`),
-    eqDashStatHtml('CAPITAL FROZEN', eqFmtRs(capitalFrozen), null, 'notional cost basis'),
-    eqDashStatHtml('LONGEST HELD', longest ? longest.age + 'd' : '—', null, longest ? longest.symbol : ''),
-    eqDashStatHtml('% OF DEPLOYED', pctOfDeployed == null ? '—' : pctOfDeployed.toFixed(1) + '%', pctOfDeployed > 60 ? 'var(--red)' : 'var(--amber)'),
+    eqDashStatHtml('Positions in loss', losers.length, 'var(--red)', `of ${s.openLive.length} open`),
+    eqDashStatHtml('Capital frozen', eqFmtRs(capitalFrozen), null, 'notional cost basis'),
+    eqDashStatHtml('Longest held', longest ? longest.age + 'd' : '—', null, longest ? longest.symbol : ''),
+    eqDashStatHtml('% of deployed', pctOfDeployed == null ? '—' : pctOfDeployed.toFixed(1) + '%', pctOfDeployed > 60 ? 'var(--red)' : 'var(--amber)'),
   ].join('');
 }
 
@@ -7653,18 +7749,18 @@ function eqDashRenderConcentration(s){
 function eqDashRenderPerfSummary(s){
   const totalReturnPct = s.initialCapital > 0 ? ((s.combinedValue - s.initialCapital) / s.initialCapital) * 100 : null;
   document.getElementById('eqd-perf-row').innerHTML = [
-    eqDashStatHtml('INITIAL CAPITAL', eqFmtRs(s.initialCapital), null, 'peak deployed, derived'),
-    eqDashStatHtml('CURRENT VALUE', eqFmtRs(s.combinedValue), null, 'realized + open MTM'),
-    eqDashStatHtml('TOTAL RETURN', totalReturnPct == null ? '—' : (totalReturnPct >= 0 ? '+' : '') + totalReturnPct.toFixed(2) + '%', totalReturnPct >= 0 ? 'var(--green)' : 'var(--red)'),
+    eqDashStatHtml('Initial capital', eqFmtRs(s.initialCapital), null, 'peak deployed, derived'),
+    eqDashStatHtml('Current value', eqFmtRs(s.combinedValue), null, 'realized + open MTM'),
+    eqDashStatHtml('Total return', totalReturnPct == null ? '—' : (totalReturnPct >= 0 ? '+' : '') + totalReturnPct.toFixed(2) + '%', totalReturnPct >= 0 ? 'var(--green)' : 'var(--red)'),
     eqDashStatHtml('CAGR', s.cagrPct == null ? '—' : (s.cagrPct >= 0 ? '+' : '') + s.cagrPct.toFixed(1) + '%', s.cagrPct >= 0 ? 'var(--green)' : 'var(--red)'),
-    eqDashStatHtml('WIN RATE', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)'),
-    eqDashStatHtml('PROFIT FACTOR', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)'),
-    eqDashStatHtml('AVG WIN', eqFmtPct(s.avgWinPct), 'var(--green)'),
-    eqDashStatHtml('AVG LOSS', '-' + eqFmtPct(s.avgLossPct).replace('+', '')),
-    eqDashStatHtml('WIN:LOSS ₹ RATIO', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
-    eqDashStatHtml('MAX DRAWDOWN', s.maxDDPct.toFixed(1) + '%', s.maxDDPct < 15 ? 'var(--green)' : 'var(--amber)', 'realized equity'),
-    eqDashStatHtml('CALMAR RATIO', s.calmar == null ? '—' : s.calmar.toFixed(2), s.calmar >= 0.5 ? 'var(--green)' : 'var(--amber)'),
-    eqDashStatHtml('AVG HOLD', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, 'closed trades'),
+    eqDashStatHtml('Win rate', s.winRatePct == null ? '—' : s.winRatePct.toFixed(1) + '%', s.winRatePct >= 70 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('Profit factor', s.profitFactor == null ? '—' : s.profitFactor.toFixed(2), s.profitFactor >= 2 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('Avg win', eqFmtPct(s.avgWinPct), 'var(--green)'),
+    eqDashStatHtml('Avg loss', '-' + eqFmtPct(s.avgLossPct).replace('+', '')),
+    eqDashStatHtml('Win:loss ₹ ratio', s.winLossRsRatio == null ? '—' : s.winLossRsRatio.toFixed(2) + '×'),
+    eqDashStatHtml('Max drawdown', s.maxDDPct.toFixed(1) + '%', s.maxDDPct < 15 ? 'var(--green)' : 'var(--amber)', 'realized equity'),
+    eqDashStatHtml('Calmar ratio', s.calmar == null ? '—' : s.calmar.toFixed(2), s.calmar >= 0.5 ? 'var(--green)' : 'var(--amber)'),
+    eqDashStatHtml('Avg hold', s.avgHoldClosed == null ? '—' : Math.round(s.avgHoldClosed) + 'd', null, 'closed trades'),
   ].join('');
   document.getElementById('eqd-perf-footer').textContent =
     `Win rate/P&L stats from ${s.closed.length} closed trades since ${EQ_DASHBOARD_START_DATE} (clean-start window) · ${s.openLive.length} open positions · Current Value/Total Return/CAGR are all-time, since ${s.firstTradeDate} (${(eqDaysBetween(s.firstTradeDate, s.todayIso) / 365).toFixed(1)}y) — initial capital is peak deployed capital, all-time, not a configured figure.`;
@@ -8570,7 +8666,7 @@ function renderFreshnessStat(elId, iso, label, thresholdHours){
   if(!fmt){
     el.innerHTML = `<div class="stat" style="border-right:none;padding:14px 0;">
       <div class="stat-label">${label}</div>
-      <div class="stat-value" style="font-size:16px;color:var(--amber);">⚠ Unknown — no timestamp found</div>
+      <div class="stat-value is-feed-error">No timestamp in this file</div>
     </div>`;
     return;
   }
@@ -8622,7 +8718,7 @@ function dh252RenderDataAsOf(){
   const fmt = dh252FmtDataAsOf(iso);
   // Daily job runs once a day — comfortably under ~30h old is normal
   // (pre-market the next day); past that the pipeline likely didn't run.
-  renderFreshnessStat('dh252-data-asof-header', iso, 'CMP / SUPERTREND / 52W HIGH DATA AS OF');
+  renderFreshnessStat('dh252-data-asof-header', iso, 'Price / Supertrend / 52W high data as of');
 
   // Same note repeated right on the Entry Signal panel — the page-top line
   // is easy to scroll past, and this is exactly where the "is this fresh
@@ -9222,7 +9318,7 @@ function dhccRenderPositions(state){
 function dhccRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
-  renderFreshnessStat('dhcc-data-asof-header', iso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
+  renderFreshnessStat('dhcc-data-asof-header', iso, 'Price / Supertrend / RSI14 data as of');
   const entryEl = document.getElementById('dhcc-entry-asof');
   if(entryEl){
     entryEl.textContent = fmt ? `Data as of ${fmt.text}.` : '';
@@ -9718,7 +9814,7 @@ const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
-  renderFreshnessStat('div-data-asof', iso, 'CMP / SUPERTREND / RSI14 DATA AS OF');
+  renderFreshnessStat('div-data-asof', iso, 'Price / Supertrend / RSI14 data as of');
 }
 
 function divRenderSignals(){
@@ -9823,6 +9919,33 @@ function divInit(){
   document.getElementById('div-refresh-btn').onclick = divRefresh;
   divRefresh();
 }
+
+// ============================================================
+// UI v2 colour contract (see CSS "UI v2" block + docs/SPEC.md).
+// Zero / unknown values never wear green/red/blue, whatever the renderer
+// set inline. One observer instead of patching ~100 render sites.
+// ============================================================
+function uiV2Normalize(root){
+  (root || document).querySelectorAll('.stat-value:not(.is-feed-error), .dash-pulse-value').forEach(function(el){
+    var t = el.textContent.trim();
+    var zero = /^[+\-\u2212]?(?:\u20b9\s?)?[+\-\u2212]?0(?:[.,]0+)?\s?%?$/.test(t);
+    var unknown = /^[\u2014\u2013\-]$/.test(t) || t === '' ;
+    el.classList.toggle('is-zero', zero);
+    el.classList.toggle('is-unknown', unknown);
+  });
+}
+function uiV2Retry(){ try{ location.reload(); }catch(e){} }
+(function(){
+  var pending = false;
+  function run(){ pending = false; uiV2Normalize(); }
+  function schedule(){ if(pending) return; pending = true; (window.requestAnimationFrame || setTimeout)(run); }
+  function start(){
+    uiV2Normalize();
+    var main = document.querySelector('.main') || document.body;
+    new MutationObserver(schedule).observe(main, {childList:true, subtree:true, characterData:true});
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 </script>
 </body>
 </html>
