@@ -600,3 +600,8 @@ Design review of the whole app (frontend-design lens), approved and built as thr
 - **Equity Journal section** (`#page-journal`): its text strings were excluded from the sentence-case pass because that section is mirrored in the frozen `vaijayanth/TradingJournal`. It still inherits the global CSS (fonts/colour contract), which is presentation-only; the legacy repo is unchanged and will look different until sunset.
 - `--amber` still holds blue (naming debt kept for compatibility).
 - Table-header casing, status chips, and per-row Supertrend/flip colours (a possible later reduction in red noise on the IVP table).
+
+### 23.1 Follow-up (same day, user asked to clear the leftovers)
+- Equity Journal panel titles/heading now sentence case **in backtester only** — `vaijayanth/TradingJournal` is untouched, so the two copies now differ cosmetically in those four strings (known, accepted drift pending sunset; not a data/logic difference).
+- Zero values neutral in Strangle `.ss-cell-loose`/`.ss-cell-win` cells (`uiV2NormalizeCells` now also catches them) and in Equity Dashboard loss buckets; the "no closed trades" streak line is muted instead of amber.
+- Intentionally left: the `—` after some titles is the placeholder for a count/symbol that fills once data loads (e.g. "Price —", "Closed trades —"), not stray punctuation; `.dash-pulse-sub` secondary lines stay muted grey.

@@ -1748,7 +1748,7 @@
 
   <div class="panel">
     <div class="dash-header">
-      <div class="dash-title">EQUITY TRADING JOURNAL</div>
+      <div class="dash-title">Equity trading journal</div>
       <div class="dash-meta" id="eq-meta">Zerodha Tradebook (Console &rarr; Reports &rarr; Tradebook &rarr; Equity, Excel export) &rarr; FIFO positions &rarr; Supertrend(10,3) exit/add-on signals</div>
       <div class="dash-meta" id="eq-sync-status"></div>
     </div>
@@ -1756,7 +1756,7 @@
 
   <div class="panel">
     <div class="panel-head" style="cursor:pointer;" onclick="toggleEqUploadBox()">
-      <div class="panel-title">UPLOAD &amp; RECONCILE <span class="panel-meta" id="eq-recon-count-text-collapsed">upload Holdings to compare against your Tradebook positions</span></div>
+      <div class="panel-title">Upload &amp; reconcile <span class="panel-meta" id="eq-recon-count-text-collapsed">upload Holdings to compare against your Tradebook positions</span></div>
       <span id="eq-upload-chevron" style="font-size:12px;color:var(--muted);">&#9660;</span>
     </div>
     <div id="eq-upload-body" style="display:none;">
@@ -1802,7 +1802,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">OPEN POSITIONS <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Open positions <span class="panel-meta" id="eq-open-count-text">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eq-open-table">
         <thead><tr>
@@ -1816,7 +1816,7 @@
   </div>
 
   <div class="panel">
-    <div class="panel-head"><div class="panel-title">CLOSED TRADES <span class="panel-meta" id="eq-closed-count-text">—</span></div></div>
+    <div class="panel-head"><div class="panel-title">Closed trades <span class="panel-meta" id="eq-closed-count-text">—</span></div></div>
     <div class="table-scroll">
       <table class="list-table" id="eq-closed-table">
         <thead><tr>
@@ -7449,7 +7449,7 @@ function eqDashRenderLossBuckets(s){
     return `<div style="display:grid;grid-template-columns:140px 1fr 90px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);">
       <div style="font-size:12px;font-weight:700;">${b.label}<div style="font-size:10px;color:var(--muted);font-weight:400;">${inBucket.length} positions · ${eqFmtRs(avgDeployed)} deployed · ${Math.round(avgHold)}d avg hold</div></div>
       <div style="background:var(--border-soft);border-radius:4px;height:8px;overflow:hidden;"><div style="background:var(--red);height:100%;width:${Math.min(pctOfTotal, 100)}%;"></div></div>
-      <div style="text-align:right;font-size:12px;color:var(--red);font-weight:700;">${eqFmtRs(-bucketLossRs)}<div style="font-size:10px;color:var(--muted);font-weight:400;">${pctOfTotal.toFixed(0)}% of loss</div></div>
+      <div style="text-align:right;font-size:12px;color:${bucketLossRs > 0 ? 'var(--red)' : 'var(--neutral)'};font-weight:700;">${eqFmtRs(-bucketLossRs)}<div style="font-size:10px;color:var(--muted);font-weight:400;">${pctOfTotal.toFixed(0)}% of loss</div></div>
     </div>`;
   }).join('');
   document.getElementById('eqd-lossbucket-body').innerHTML = rows || '<div style="color:var(--muted);padding:12px;">No open positions in loss.</div>';
@@ -7648,7 +7648,7 @@ function eqDashRenderMomentum(s){
     : 'No closed trades yet.';
   document.getElementById('eqd-momentum-body').innerHTML =
     `<div style="margin-bottom:10px;">${circles}</div>
-     <div style="font-size:11.5px;color:${streakWin ? 'var(--green)' : 'var(--amber)'};">${streakMsg}</div>`;
+     <div style="font-size:11.5px;color:${!recentClosed.length ? 'var(--muted)' : streakWin ? 'var(--green)' : 'var(--amber)'};">${streakMsg}</div>`;
 }
 
 function eqDashCalNav(dir){ eqDashCalOffset += dir; eqDashRenderCalendar(eqDashComputeStats()); }
@@ -9936,9 +9936,9 @@ function uiV2Normalize(root){
   });
 }
 function uiV2NormalizeCells(){
-  document.querySelectorAll('td[style*="color"]').forEach(function(td){
+  document.querySelectorAll('td[style*="color"], td.ss-cell-loose, td.ss-cell-win').forEach(function(td){
     var t = td.textContent.trim();
-    td.classList.toggle('is-zero', /^[+\-\u2212]?(?:\u20b9\s?)?0(?:[.,]0+)?\s?%?$/.test(t));
+    td.classList.toggle('is-zero', /^[+\-\u2212]?(?:\u20b9\s?)?[+\-\u2212]?0(?:[.,]0+)?\s?%?$/.test(t));
   });
 }
 function uiV2Retry(){ try{ location.reload(); }catch(e){} }
