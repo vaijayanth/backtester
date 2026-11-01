@@ -9907,7 +9907,7 @@ function divRenderEntrySignals(week52, stMap, rsiMap){
       <td${lowCls}>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
       <td${lowCls}>${w && w.pct_from_low != null ? w.pct_from_low.toFixed(1) + '%' : '—'}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : `<tr><td colspan="9" class="loading">Nothing meets an entry rule${dayLabel ? ' as of the ' + dayLabel + ' close' : ''}. Check again after Friday's close.</td></tr>`;
+  }).join('') : `<tr><td colspan="9" class="loading" style="padding:0;"><div style="position:sticky;left:0;max-width:min(560px,calc(100vw - 84px));white-space:normal;text-align:left;font-family:var(--ui);padding:14px 18px;">${dataIso ? 'Nothing meets an entry rule as of the ' + dayLabel + ' close. Check again after Friday\u2019s close.' : 'Entry data not loaded. Press refresh before ordering.'}</div></td></tr>`;
 
   // Order slip in the page header: what to buy this weekend.
   const slip = document.getElementById('div-slip');
