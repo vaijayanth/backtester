@@ -605,3 +605,13 @@ Design review of the whole app (frontend-design lens), approved and built as thr
 - Equity Journal panel titles/heading now sentence case **in backtester only** — `vaijayanth/TradingJournal` is untouched, so the two copies now differ cosmetically in those four strings (known, accepted drift pending sunset; not a data/logic difference).
 - Zero values neutral in Strangle `.ss-cell-loose`/`.ss-cell-win` cells (`uiV2NormalizeCells` now also catches them) and in Equity Dashboard loss buckets; the "no closed trades" streak line is muted instead of amber.
 - Intentionally left: the `—` after some titles is the placeholder for a count/symbol that fills once data loads (e.g. "Price —", "Closed trades —"), not stray punctuation; `.dash-pulse-sub` secondary lines stay muted grey.
+
+## 24. ICICI Dividend Longterm — weekly "Entry signal" tab + order slip (2026-11-01 session)
+User trades this page once a week (Sat/Sun, from Friday's close), so two separate entry tabs (RSI, 52-week low) forced a manual merge.
+- **Replaced** the `RSI` and `52 week low` tabs with one first tab, **Entry signal** (default). `Option signals` is unchanged. `subTabInit('dividend', ['entry','options'])`; a browser with a saved old tab id falls back to the first tab (`subTabInit` already validates the saved id).
+- **Rule = OR of three** (user's choice, not AND — AND of RSI<25 + fresh green flip + at-52w-low is almost never true; on the day this was built only 1 of 29 stocks had a fresh flip, 0 had RSI<25 or sat at its low): RSI14 < 25; Supertrend green and `recent_bullish_flip_days_ago <= 6`; `pct_from_low <= 0`. Implemented once in `divEntryCriteria()`; table and header slip are rendered from the same filtered list in `divRenderEntrySignals()`.
+- **Header order slip** ("Buy this weekend": symbol × qty + the plain-words reason) is the page's one bold element, instead of a big-number banner. States: has entries (green left edge), none (quiet line), stale (amber edge; replaces the "this week" claim when the feed's latest close is 2+ weekdays behind the last completed weekday — `divWeekdaysBehind()`), not loaded.
+- **Table columns:** Stock, Qty (₹20,000/CMP), CMP, RSI14, Supertrend, Flip, 52W low, Above low, Add ₹. The rule that fired is underlined in place (`.rule-hit`) rather than shown as chips. Sorted by rules met, then freshest flip.
+- Freshness stat on this page uses an 80h threshold (weekday-only pipeline ⇒ a Sunday read is ~70h old and normal); other pages keep 30h.
+- Docs: `docs/STRATEGY_DIVIDEND.md` rewritten for OR rule and corrected RSI 30 → 25 for entry.
+- Verified with synthetic JSON (RSI 24.9 in/25.0 out, flip 6 in/7 out, green-then-red out, at-low, multi-rule ordering, stale, none) plus production feeds from `main`.

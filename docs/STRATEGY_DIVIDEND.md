@@ -5,8 +5,9 @@ Signal-only — no trade logging, no position tracking, no Google Sheet. The pag
 | | |
 |---|---|
 | **Universe** | Fixed 29-stock dividend/longterm list (`DIV_UNIVERSE`): Bank of Baroda, BPCL, CDSL, Coal India, CAMS, GAIL, Gold BeES, HDFC AMC, HAL, Hindustan Zinc, ICICI Bank, Nifty IETF, Indian Hotels, IOC, Ircon, ITC, LIC, MCX, National Aluminium, NMDC, NSDL, ONGC, Petronet, PFC, PTC, REC, SBI, Tata Investment, TCS |
-| **Entry signal** | RSI14 < 30 (`DIV_RSI_OVERSOLD`) — the only gating condition |
-| **Suggested add** | ₹20,000 (`DIV_ADD_AMOUNT_RS`), max once per week per stock — tracking that cadence is the user's own discipline, the app does not enforce or remember it |
+| **Entry signal** | Any ONE of three rules lists a stock (OR, not AND): **RSI14 < 25** (`DIV_ENTRY_RSI_THRESHOLD`), **Supertrend flipped to green within the last 6 days and is still green** (`DIV_FLIP_WINDOW_DAYS`; feed field `recent_bullish_flip_days_ago`, whose pipeline lookback is 7 trading days), or **today's close is the trailing 52-week low** (`pct_from_low <= 0`, close-based, 252 trading days). RSI 30 (`DIV_RSI_OVERSOLD`) is NOT the entry rule — it only drives the SELL PUT options leg. (An earlier version of this file said 30 for entry; the code has used 25 since the entry/options thresholds were split.) |
+| **Cadence** | One buy a week, placed Saturday or Sunday from Friday's close. The page header shows a "Buy this weekend" order slip (symbol × quantity) whenever any stock qualifies on the latest data, and warns instead if the feed is 2+ trading days behind. |
+| **Suggested add** | ₹20,000 (`DIV_ADD_AMOUNT_RS`); quantity = floor(20,000 / CMP), min 1. Max once per week per stock — tracking that cadence is the user's own discipline, the app does not enforce or remember it |
 | **Supertrend** | Shown for context only — does **not** gate this entry signal. A stock can show RSI<30 and still appear in the entry list regardless of Supertrend color. |
 | **Options leg** | Same lightweight `SELL CALL`/`SELL PUT` heuristic as Dhan Covered Call and IVP Screener — see `docs/STRATEGY_SST.md`'s "Shared Supertrend+RSI options-signal heuristic" and `docs/STRATEGY_OPTIONS.md`'s closing note. Not the full strangle strategy. |
 

@@ -336,6 +336,31 @@
   #page-ivp > .panel > .stat-row .stat-value{font-size:16px;}
   #page-ivp > .panel > .stat-row .stat{padding-left:0;padding-right:0;}
 
+
+  /* ICICI Dividend Longterm — weekly entry slip (2026-11-01). The header
+     slip is the one bold element: an order list (symbol x qty), not a stat
+     banner. Green left edge = something to order; amber = data may be stale. */
+  .div-slip{margin:0 18px 18px;padding:12px 16px;border-radius:8px;background:var(--panel2);border-left:3px solid var(--border);}
+  .div-slip.has-entries{border-left-color:var(--green);background:var(--green-dim);}
+  .div-slip.stale{border-left-color:var(--amber);}
+  .div-slip-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px 16px;flex-wrap:wrap;margin-bottom:4px;}
+  .div-slip-title{font:600 15px var(--ui);color:var(--white);}
+  .div-slip-meta{font:400 12.5px var(--ui);color:var(--muted);}
+  .div-slip-line{display:flex;align-items:baseline;gap:4px 14px;flex-wrap:wrap;padding:4px 0;}
+  .div-slip-line .s{font:500 15px var(--num);min-width:8.5em;}
+  .div-slip-line .qty{font:600 15px var(--num);min-width:4em;}
+  .div-slip-line .why{font:400 13px var(--ui);color:var(--dim);}
+  .div-tab-count{display:none;margin-left:8px;font:600 12px var(--num);color:var(--green);}
+  .div-tab-count.on{display:inline;}
+  #div-entry-table td.num-qty{font-weight:600;font-size:14px;text-align:right;}
+  #div-entry-table td.rule-hit{color:var(--white);font-weight:600;box-shadow:inset 0 -2px 0 var(--green);}
+  #div-entry-table td:not(.rule-hit):not(:first-child):not(.num-qty){color:var(--dim);}
+  @media (max-width:760px){
+    .div-slip{margin:0 14px 14px;padding:12px;}
+    .div-slip-line .s{min-width:7em;}
+    #div-entry-table th:first-child,#div-entry-table td:first-child{position:sticky;left:0;background:var(--panel);z-index:1;}
+  }
+
   /* Keyboard focus + reduced motion */
   :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
   input:focus-visible,select:focus-visible,.search-box:focus-visible{outline-offset:0;}
@@ -2275,42 +2300,29 @@
   <div class="panel">
     <div class="dash-header">
       <div class="dash-title">ICICI dividend longterm</div>
-      <div class="dash-meta">Fixed 29-stock dividend/longterm universe. Entry signal only — RSI14 &lt; 25, suggested add ₹20,000, max once per week per stock (your own discipline to track; nothing here is logged). Options leg: sell Call when Supertrend red OR RSI14&gt;70, sell Put when Supertrend green OR RSI14&lt;30, across the whole list regardless of holding. No trade logging, no position tracking, no Google Sheet — signals only.</div>
+      <div class="dash-meta">Fixed 29-stock dividend/longterm universe. One buy a week: adds of ₹20,000 per stock, placed on Saturday or Sunday from Friday's close. Nothing here is logged or remembered. Options leg (Option signals tab): sell call when Supertrend is red or RSI14 is above 70, sell put when Supertrend is green or RSI14 is below 30.</div>
     </div>
-    <div id="div-data-asof" style="padding:0 18px 18px;">—</div>
+    <div id="div-data-asof" style="padding:0 18px 14px;">—</div>
+    <div id="div-slip" class="div-slip" aria-live="polite"></div>
   </div>
 
   <div class="subnav" id="subnav-dividend">
-    <button data-subtab="rsi">RSI</button>
-    <button data-subtab="low">52 week low</button>
+    <button data-subtab="entry">Entry signal<span class="div-tab-count" id="div-tab-count"></span></button>
     <button data-subtab="options">Option signals</button>
   </div>
 
-  <div class="subtab-panel" data-subtab="rsi">
-  <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">Entry signal · RSI14 &lt; 25 <span class="panel-meta" id="div-entry-count">—</span></div>
+  <div class="subtab-panel" data-subtab="entry">
+  <div class="panel">
+    <div class="panel-head"><div class="panel-title">Entry signal <span class="panel-meta" id="div-entry-count">—</span></div>
       <button class="refresh-btn" id="div-refresh-btn" title="Refresh">↻</button>
     </div>
     <div class="table-scroll">
       <table class="list-table" id="div-entry-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>RSI14</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
+        <thead><tr><th>STOCK</th><th title="Shares for a ₹20,000 add">QTY</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>FLIP</th><th>52W LOW ₹</th><th>ABOVE LOW</th><th>ADD ₹</th></tr></thead>
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">RSI14 below 25. ₹20,000 suggested add, max once per week per stock — this page doesn't log trades, so tracking that cadence is on you. Supertrend shown for context only, it doesn't gate this signal.</div>
-  </div>
-  </div><!-- /subtab-panel -->
-
-  <div class="subtab-panel" data-subtab="low">
-  <div class="panel" style="border-color:var(--green);">
-    <div class="panel-head"><div class="panel-title">Entry signal · at 52-week low <span class="panel-meta" id="div-lowentry-count">—</span></div></div>
-    <div class="table-scroll">
-      <table class="list-table" id="div-lowentry-table">
-        <thead><tr><th>STOCK</th><th>CMP ₹</th><th style="width:1%;">QTY</th><th>52W LOW ₹</th><th>SUPERTREND</th><th>FLIP</th><th>SUGGESTED ADD ₹</th></tr></thead>
-        <tbody id="div-lowentry-tbody"></tbody>
-      </table>
-    </div>
-    <div class="dash-footnote">Today's close IS the trailing 52-week low (close-based, same 252-trading-day window as the Dashboard's 52-Week High screen, opposite extreme) — not just near it. Separate signal from the RSI entry above — a stock can trigger one, both, or neither. ₹20,000 suggested add, same once-per-week discipline. Supertrend shown for context only, it doesn't gate this signal.</div>
+    <div class="dash-footnote">A stock is listed when any one rule fires: RSI14 below 25, Supertrend flipped to green in the last 6 days and still green, or today's close is the 52-week low (close-based, 252 trading days). The rule that fired is underlined. Quantity is ₹20,000 divided by CMP, rounded down. Place one add per stock per week; this page doesn't track what you bought.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -9815,7 +9827,116 @@ const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
-  renderFreshnessStat('div-data-asof', iso, 'Price / Supertrend / RSI14 data as of');
+  renderFreshnessStat('div-data-asof', iso, 'Price / Supertrend / RSI14 data as of', 80); // weekday-only pipeline: a Sunday read is ~70h old and normal
+}
+
+// Entry rules for the weekly buy (any one fires — see docs/STRATEGY_DIVIDEND.md):
+//   RSI14 < DIV_ENTRY_RSI_THRESHOLD, OR Supertrend flipped to green within
+//   DIV_FLIP_WINDOW_DAYS and is still green, OR close == trailing 52-week low.
+// The supertrend feed's own lookback is 7 trading days (days_ago 0-6), so a
+// 6-day window is fully covered without touching the pipeline.
+const DIV_FLIP_WINDOW_DAYS = 6;
+
+function divEntryCriteria(sym, week52, stMap, rsiMap){
+  const w = week52[sym], st = stMap[sym], rsi = rsiMap[sym];
+  const rsiHit = rsi != null && rsi < DIV_ENTRY_RSI_THRESHOLD;
+  const flipDays = st && st.color === 'green' && st.recent_bullish_flip_days_ago != null
+    ? st.recent_bullish_flip_days_ago : null;
+  const flipHit = flipDays != null && flipDays <= DIV_FLIP_WINDOW_DAYS;
+  const lowHit = !!(w && w.pct_from_low != null && w.pct_from_low <= 0);
+  return {rsiHit, flipHit, lowHit, flipDays, hits: (rsiHit ? 1 : 0) + (flipHit ? 1 : 0) + (lowHit ? 1 : 0)};
+}
+
+// 'YYYY-MM-DD' -> 'Fri 31 Oct' (date-only, no timezone shifting)
+function divFmtDay(iso){
+  if(!iso) return null;
+  const d = new Date(iso + 'T00:00:00Z');
+  if(isNaN(d)) return null;
+  return d.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC'});
+}
+
+// Weekdays between the data's close date and the last completed weekday
+// (IST). 0-1 = normal for this once-a-weekday pipeline; 2+ = stale.
+function divWeekdaysBehind(dataIso){
+  if(!dataIso) return null;
+  const fmt = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit'});
+  const todayIso = fmt.format(new Date());
+  let d = new Date(todayIso + 'T00:00:00Z');
+  do { d = new Date(d.getTime() - 86400000); } while(d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  const last = d;
+  const data = new Date(dataIso + 'T00:00:00Z');
+  let behind = 0, c = new Date(data.getTime());
+  while(c < last){
+    c = new Date(c.getTime() + 86400000);
+    if(c.getUTCDay() !== 0 && c.getUTCDay() !== 6) behind++;
+  }
+  return behind;
+}
+
+function divRenderEntrySignals(week52, stMap, rsiMap){
+  const dates = DIV_UNIVERSE.map(s => (stMap[s] && stMap[s].date) || (week52[s] && week52[s].date)).filter(Boolean).sort();
+  const dataIso = dates.length ? dates[dates.length - 1] : null;
+  const dayLabel = divFmtDay(dataIso);
+  const behind = divWeekdaysBehind(dataIso);
+  const stale = behind != null && behind >= 2;
+
+  const rows = DIV_UNIVERSE.map(sym => ({sym, c: divEntryCriteria(sym, week52, stMap, rsiMap)}))
+    .filter(r => r.c.hits > 0)
+    .map(r => {
+      const w = week52[r.sym];
+      const close = w ? w.close : null;
+      return Object.assign(r, {close, qty: close ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / close)) : null});
+    })
+    .sort((a, b) => b.c.hits - a.c.hits || (a.c.flipDays ?? 99) - (b.c.flipDays ?? 99) || a.sym.localeCompare(b.sym));
+
+  document.getElementById('div-entry-count').textContent = rows.length;
+  const tabCount = document.getElementById('div-tab-count');
+  if(tabCount){ tabCount.textContent = rows.length ? rows.length : ''; tabCount.classList.toggle('on', rows.length > 0); }
+
+  document.getElementById('div-entry-tbody').innerHTML = rows.length ? rows.map(r => {
+    const {sym, c, close, qty} = r;
+    const w = week52[sym], st = stMap[sym], rsi = rsiMap[sym];
+    const stColor = st && st.color ? st.color : null;
+    const lowCls = c.lowHit ? ' class="rule-hit"' : '';
+    return `<tr><td>${sym}</td>
+      <td class="num-qty">${qty !== null ? qty : '—'}</td>
+      <td>${close != null ? dh252FmtRs(close) : '—'}</td>
+      <td${c.rsiHit ? ' class="rule-hit"' : ''}>${rsi != null ? rsi.toFixed(1) : '—'}</td>
+      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td${c.flipHit ? ' class="rule-hit"' : ''} data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
+      <td${lowCls}>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
+      <td${lowCls}>${w && w.pct_from_low != null ? w.pct_from_low.toFixed(1) + '%' : '—'}</td>
+      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
+  }).join('') : `<tr><td colspan="9" class="loading">Nothing meets an entry rule${dayLabel ? ' as of the ' + dayLabel + ' close' : ''}. Check again after Friday's close.</td></tr>`;
+
+  // Order slip in the page header: what to buy this weekend.
+  const slip = document.getElementById('div-slip');
+  if(!slip) return;
+  slip.classList.toggle('has-entries', rows.length > 0 && !stale);
+  slip.classList.toggle('stale', stale);
+  if(!dataIso){
+    slip.className = 'div-slip';
+    slip.innerHTML = '<div class="div-slip-title">Entry data not loaded</div><div class="div-slip-meta">Press refresh to reload the Supertrend and 52-week feeds before ordering.</div>';
+    return;
+  }
+  if(stale){
+    slip.innerHTML = `<div class="div-slip-title">Data may be out of date</div><div class="div-slip-meta">Latest close in the feed is ${dayLabel}, ${behind} trading days behind. Press refresh and check the freshness line above before ordering.</div>`;
+    return;
+  }
+  if(!rows.length){
+    slip.innerHTML = `<div class="div-slip-title">No entry signals this week</div><div class="div-slip-meta">Checked against the ${dayLabel} close.</div>`;
+    return;
+  }
+  const total = rows.reduce((sum, r) => sum + (r.qty && r.close ? r.qty * r.close : 0), 0);
+  const lines = rows.map(r => {
+    const reasons = [];
+    if(r.c.rsiHit) reasons.push('RSI ' + rsiMap[r.sym].toFixed(1));
+    if(r.c.flipHit) reasons.push(r.c.flipDays === 0 ? 'green flip today' : 'green flip ' + r.c.flipDays + (r.c.flipDays === 1 ? ' day ago' : ' days ago'));
+    if(r.c.lowHit) reasons.push('at 52-week low');
+    return `<div class="div-slip-line"><span class="s">${r.sym}</span><span class="qty">× ${r.qty !== null ? r.qty : '—'}</span><span class="why">${reasons.join(', ')}</span></div>`;
+  }).join('');
+  slip.innerHTML = `<div class="div-slip-head"><div class="div-slip-title">Buy this weekend</div>
+    <div class="div-slip-meta">${dayLabel} close, about ${dh252FmtRs(total)} across ${rows.length} ${rows.length === 1 ? 'stock' : 'stocks'}</div></div>${lines}`;
 }
 
 function divRenderSignals(){
@@ -9823,41 +9944,7 @@ function divRenderSignals(){
   const stMap = window._eqSupertrend || {};
   const rsiMap = window._eqRsiMap || {};
 
-  const entries = DIV_UNIVERSE.filter(sym => {
-    const rsi = rsiMap[sym];
-    return rsi != null && rsi < DIV_ENTRY_RSI_THRESHOLD;
-  });
-  document.getElementById('div-entry-count').textContent = entries.length;
-  document.getElementById('div-entry-tbody').innerHTML = entries.length ? entries.map(sym => {
-    const w = week52[sym];
-    const st = stMap[sym];
-    const stColor = st && st.color ? st.color : null;
-    const rsi = rsiMap[sym];
-    const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
-    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td><td>${rsi.toFixed(1)}</td>
-      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
-      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : '<tr><td colspan="7" class="loading">No RSI14&lt;25 signals right now.</td></tr>';
-
-  // Independent of the RSI entry signal above — a stock can trip one,
-  // both, or neither.
-  const lowEntries = DIV_UNIVERSE.filter(sym => {
-    const w = week52[sym];
-    return w && w.pct_from_low != null && w.pct_from_low <= 0;
-  });
-  document.getElementById('div-lowentry-count').textContent = lowEntries.length;
-  document.getElementById('div-lowentry-tbody').innerHTML = lowEntries.length ? lowEntries.map(sym => {
-    const w = week52[sym];
-    const st = stMap[sym];
-    const stColor = st && st.color ? st.color : null;
-    const qty = w ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / w.close)) : null;
-    return `<tr><td>${sym}</td><td>${w ? dh252FmtRs(w.close) : '—'}</td><td style="width:1%;text-align:center;">${qty !== null ? qty : '—'}</td>
-      <td>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
-      <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
-      <td data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
-      <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : '<tr><td colspan="7" class="loading">No stocks at their 52-week low right now.</td></tr>';
+  divRenderEntrySignals(week52, stMap, rsiMap);
 
   const earningsBySymbol = window._earningsBySymbol || {};
   document.getElementById('div-opt-count').textContent = DIV_UNIVERSE.length;
@@ -9909,6 +9996,8 @@ async function divRefresh(){
   }catch(err){
     document.getElementById('div-data-asof').textContent = 'Could not load: ' + err.message;
     document.getElementById('div-data-asof').style.color = 'var(--amber)';
+    const slipEl = document.getElementById('div-slip');
+    if(slipEl){ slipEl.className = 'div-slip stale'; slipEl.innerHTML = '<div class="div-slip-title">Entry data not loaded</div><div class="div-slip-meta">' + err.message + '. Press refresh before ordering.</div>'; }
     console.error(err);
   }
 }
@@ -9916,7 +10005,7 @@ async function divRefresh(){
 let divInitialized = false;
 function divInit(){
   divInitialized = true;
-  subTabInit('dividend', ['rsi', 'low', 'options']);
+  subTabInit('dividend', ['entry', 'options']);
   document.getElementById('div-refresh-btn').onclick = divRefresh;
   divRefresh();
 }
