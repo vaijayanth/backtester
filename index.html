@@ -368,6 +368,41 @@
     #div-entry-table th:first-child,#div-entry-table td:first-child{position:sticky;left:0;background:var(--panel);z-index:1;}
   }
 
+  /* Results page: robust backtest range — each metric is a rail from its worst to its best
+     outcome across the sensitivity grid, with a tick at the median. The rail is the point:
+     a daily-bar backtest is a range, not a number. */
+  .rr-intro{padding:12px 18px 4px;font:400 13px/1.55 var(--ui);color:var(--muted);max-width:none;}
+  .rr-grid{padding:8px 18px 6px;display:grid;grid-template-columns:minmax(96px,150px) 110px minmax(120px,1fr) 110px;column-gap:16px;align-items:center;}
+  .rr-head{font:500 12px var(--ui);color:var(--muted);padding:6px 0;}
+  .rr-head.r{text-align:right;}
+  .rr-label{font:500 14px var(--ui);color:var(--white);padding:14px 0;border-top:1px solid var(--border-soft);}
+  .rr-val{font:600 15px var(--num);font-variant-numeric:tabular-nums;color:var(--white);padding:14px 0;border-top:1px solid var(--border-soft);}
+  .rr-val.worst{text-align:right;}
+  .rr-val.best{text-align:left;}
+  .rr-val.pos{color:var(--green);} .rr-val.neg{color:var(--red);}
+  .rr-rail{position:relative;height:46px;border-top:1px solid var(--border-soft);}
+  .rr-rail::before{content:'';position:absolute;left:0;right:0;top:22px;height:2px;border-radius:1px;background:var(--border);}
+  .rr-tick{position:absolute;top:13px;width:3px;height:20px;margin-left:-1.5px;border-radius:1px;background:var(--white);}
+  .rr-cap{position:absolute;top:34px;transform:translateX(-50%);font:400 11.5px var(--num);color:var(--dim);white-space:nowrap;}
+  .rr-end{position:absolute;top:17px;width:2px;height:12px;background:var(--muted);}
+  .rr-end.l{left:0;} .rr-end.r{right:0;}
+  .rr-compare{padding:4px 18px 4px;}
+  .rr-compare .list-table td,.rr-compare .list-table th{white-space:nowrap;}
+  .rr-foot{padding:10px 18px 16px;font:400 12.5px/1.55 var(--ui);color:var(--muted);max-width:none;}
+  .rr-foot.stale{color:var(--red);}
+  .rr-empty{padding:16px 18px 20px;font:400 13.5px/1.55 var(--ui);color:var(--dim);}
+  .res-legacy{display:block;margin-top:2px;font:500 11.5px var(--ui);color:var(--red);}
+  @media (max-width:760px){
+    .rr-grid{grid-template-columns:1fr 1fr;row-gap:0;padding:6px 14px;}
+    .rr-head.mid{display:none;}
+    .rr-label{grid-column:1 / -1;padding:12px 0 2px;}
+    .rr-rail{grid-column:1 / -1;grid-row:auto;border-top:0;order:2;}
+    .rr-val{border-top:0;padding:2px 0 12px;order:3;}
+    .rr-val.worst{text-align:left;} .rr-val.best{text-align:right;}
+    .rr-head.worst,.rr-head.best{order:0;}
+    .rr-intro,.rr-foot,.rr-empty,.rr-compare{padding-left:14px;padding-right:14px;}
+  }
+
   /* Keyboard focus + reduced motion */
   :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
   input:focus-visible,select:focus-visible,.search-box:focus-visible{outline-offset:0;}
@@ -937,6 +972,13 @@
 
 <!-- ============ RESULTS PAGE ============ -->
 <div class="page" id="page-results">
+
+  <div class="panel" id="res-range-panel">
+    <div class="panel-head">
+      <div class="panel-title">Robust backtest range <b id="res-range-meta"></b></div>
+    </div>
+    <div id="res-range-body"></div>
+  </div>
 
   <div class="panel">
     <div class="panel-head">
@@ -3709,7 +3751,78 @@ function fmtPct(v){
 
 async function initResults(){
   resInitialized = true;
-  await loadRunIndex();
+  await Promise.all([loadRunIndex(), loadSensitivity()]);
+}
+
+// ---- Robust backtest range (results/sensitivity_latest.json, built by scripts/backtest_sensitivity.py) ----
+const RES_LEGACY_BEFORE = '2026-11-01T00:00:00Z';  // runs made before gap-aware fills / unbiased entry priority
+const RES_RANGE_STALE_DAYS = 30;
+
+async function loadSensitivity(){
+  const body = document.getElementById('res-range-body');
+  const meta = document.getElementById('res-range-meta');
+  let data = null;
+  try{
+    const resp = await fetch('results/sensitivity_latest.json?t=' + Date.now());
+    if(resp.ok) data = await resp.json();
+  }catch(err){ data = null; }
+  if(!data || !data.range){
+    meta.textContent = '';
+    body.innerHTML = '<div class="rr-empty">No range yet. In GitHub open Actions, run <b>Run SST Backtest (sensitivity range)</b>, then press Refresh below. It runs the strategy under 10 different assumptions and shows the worst, median and best outcome.</div>';
+    return;
+  }
+  renderSensitivity(data, body, meta);
+}
+
+function rrFmt(metric, v){
+  if(v == null) return '—';
+  if(metric === 'combined_pl_rs') return fmtRs(v);
+  if(metric === 'profit_factor') return v.toFixed(2);
+  return v.toFixed(1) + '%';
+}
+
+function renderSensitivity(d, body, meta){
+  const rows = [['win_rate_pct','Win rate'], ['profit_factor','Profit factor'], ['max_drawdown_pct','Max drawdown'], ['combined_pl_rs','Combined P&L']];
+  const through = d.data_through ? new Date(d.data_through + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'}) : null;
+  meta.textContent = [through ? 'data through ' + through : null, d.universe_size ? d.universe_size.toLocaleString('en-IN') + ' stocks' : null].filter(Boolean).join(', ');
+
+  const cells = rows.map(([key, label]) => {
+    const r = d.range[key] || {};
+    const money = key === 'combined_pl_rs';
+    const cls = v => money && v != null ? (v >= 0 ? ' pos' : ' neg') : '';
+    let rail = '';
+    if(r.worst != null && r.best != null){
+      const span = r.best - r.worst;
+      const p = span === 0 ? 50 : Math.max(0, Math.min(100, (r.median - r.worst) / span * 100));
+      rail = `<div class="rr-rail"><span class="rr-end l"></span><span class="rr-end r"></span>
+        <span class="rr-tick" style="left:${p}%"></span><span class="rr-cap" style="left:${Math.max(12, Math.min(88, p))}%">median ${rrFmt(key, r.median)}</span></div>`;
+    } else {
+      rail = '<div class="rr-rail"></div>';
+    }
+    return `<div class="rr-label">${label}</div>
+      <div class="rr-val worst${cls(r.worst)}">${rrFmt(key, r.worst)}</div>${rail}<div class="rr-val best${cls(r.best)}">${rrFmt(key, r.best)}</div>`;
+  }).join('');
+
+  const orderName = {high_first: 'High first', low_first: 'Low first'};
+  const byOrder = d.by_intrabar_order || {};
+  const compare = Object.keys(byOrder).map(o => {
+    const m = byOrder[o];
+    return `<tr><td>${orderName[o] || o}</td><td>${rrFmt('win_rate_pct', m.win_rate_pct.median)}</td><td>${rrFmt('profit_factor', m.profit_factor.median)}</td>
+      <td>${rrFmt('max_drawdown_pct', m.max_drawdown_pct.median)}</td><td style="color:${m.combined_pl_rs.median >= 0 ? 'var(--green)' : 'var(--red)'}">${rrFmt('combined_pl_rs', m.combined_pl_rs.median)}</td></tr>`;
+  }).join('');
+
+  const ageDays = d.generated_at ? (Date.now() - new Date(d.generated_at).getTime()) / 86400000 : null;
+  const stale = ageDays != null && ageDays > RES_RANGE_STALE_DAYS;
+  const ran = d.generated_at ? new Date(d.generated_at).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : '';
+  const g = d.grid || {};
+  body.innerHTML = `
+    <div class="rr-intro">Daily price bars can't show whether a day's high or low came first, and several entries can compete for the same slot on one day, so a backtest depends on those assumptions. Read the result as a range: the worst, median and best of ${g.runs || (d.runs || []).length} runs.</div>
+    <div class="rr-grid">
+      <div class="rr-head"></div><div class="rr-head r worst">Worst</div><div class="rr-head mid"></div><div class="rr-head best">Best</div>
+      ${cells}
+    </div>
+    <div class="rr-compare table-scroll"><table class="list-table"><thead><tr><th>MEDIAN BY ASSUMPTION</th><th>WIN RATE</th><th>PROFIT FACTOR</th><th>MAX DRAWDOWN</th><th>COMBINED P&amp;L</th></tr></thead><tbody>${compare}</tbody></table></div>
+    <div class="rr-foot${stale ? ' stale' : ''}">Fills use the day's open when a stop or breakout gaps. Entry priority is shuffled across ${(g.random_seeds || []).length} seeds. Run ${ran}${stale ? ': older than ' + RES_RANGE_STALE_DAYS + ' days, run it again.' : '.'}</div>`;
 }
 
 async function loadRunIndex(){
@@ -3745,7 +3858,7 @@ function renderRunList(){
   tbody.innerHTML = resRunIndex.map(r => `
     <tr>
       <td><input type="checkbox" class="res-run-checkbox" data-filename="${r.filename}" ${resSelected.has(r.filename)?'checked':''}></td>
-      <td>${r.run_label}</td>
+      <td>${r.run_label}${r.run_at < RES_LEGACY_BEFORE ? '<span class="res-legacy" title="Made before 2026-11-01: stops filled at prices the market never traded on gap days and same-day entries went in alphabetical order, so these figures are overstated.">old fill assumptions</span>' : ''}</td>
       <td>${new Date(r.run_at).toLocaleString('en-IN')}</td>
       <td>${fmtPct(r.win_rate_pct)}</td>
       <td>${r.profit_factor != null ? r.profit_factor.toFixed(2) : '—'}</td>
@@ -3897,6 +4010,7 @@ function renderTradesTable(trades){
 document.getElementById('res-refresh').onclick = () => {
   resFullCache = {};
   loadRunIndex();
+  loadSensitivity();
 };
 
 // ============================================================

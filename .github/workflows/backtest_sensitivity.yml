@@ -1,0 +1,84 @@
+name: Run SST Backtest (sensitivity range)
+
+# Manually triggered from the Actions tab. Runs the SST backtest across a small grid —
+# 2 intrabar orders (High-first / Low-first) x N random seeds, gap-aware fills — on ONE load of
+# the checkpoint data and commits results/sensitivity_latest.json, which the Results page shows as
+# the "Robust backtest range". Why a range: daily OHLC can't say whether a day's High or Low came
+# first, and same-day entry priority is a seeded shuffle; those assumptions move the result a lot
+# (docs/SPEC.md sections 26-27). Takes a few minutes for the full universe.
+
+on:
+  workflow_dispatch:
+    inputs:
+      params_json:
+        description: "Base strategy params JSON (leave blank for engine defaults). intrabar_order / entry_priority / gap_aware_fills / random_seed are set by the grid and ignored here."
+        required: false
+        default: ""
+      seeds:
+        description: "Random seeds per intrabar order (default 5 -> 10 runs)"
+        required: false
+        default: "5"
+
+permissions:
+  contents: write   # commits results/sensitivity_latest.json to main
+
+jobs:
+  sensitivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout backfill-checkpoints branch (read-only — the historical data lives there)
+        uses: actions/checkout@v4
+        with:
+          ref: backfill-checkpoints
+          path: checkpoints-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r main/requirements.txt
+
+      - name: Restore checkpoint data into working copy
+        run: |
+          mkdir -p main/checkpoints
+          cp -r checkpoints-branch/checkpoints/. main/checkpoints/
+
+      - name: Write params file
+        working-directory: main
+        env:
+          PARAMS_JSON: ${{ github.event.inputs.params_json }}
+        run: |
+          if [ -n "$PARAMS_JSON" ]; then
+            printf '%s' "$PARAMS_JSON" > params.json
+            echo "Using provided base params:"; cat params.json
+          else
+            echo '{}' > params.json
+            echo "No params provided — engine defaults."
+          fi
+
+      - name: Run sensitivity grid
+        working-directory: main
+        env:
+          SEEDS: ${{ github.event.inputs.seeds }}
+        run: python scripts/backtest_sensitivity.py --params params.json --seeds "${SEEDS:-5}" --out results/sensitivity_latest.json
+
+      - name: Commit result
+        working-directory: main
+        run: |
+          git config user.name "backtest-bot"
+          git config user.email "actions@github.com"
+          git add results/sensitivity_latest.json
+          git commit -m "Backtest sensitivity range: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "push raced with another workflow, retrying ($i/3)"; sleep 5
+          done
+          exit 1
