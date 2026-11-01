@@ -83,6 +83,13 @@ def test_as_of_is_majority_date_and_laggards_counted():
     assert snap2["as_of_date"] == str(days[-1].date()) and snap2["symbols_behind_as_of"] == 1
 
 
+def test_as_of_tie_prefers_the_newer_date():
+    days = pd.bdate_range("2025-01-01", periods=260)
+    frames = {f"A{i}.NS": frame(days, i) for i in range(3)}
+    frames.update({f"B{i}.NS": frame(days[:-1], 10 + i) for i in range(3)})   # 3 vs 3
+    assert snapshot_of(frames)["as_of_date"] == str(days[-1].date())
+
+
 def test_pulse_counts_are_consistent():
     days = pd.bdate_range("2024-01-01", periods=320)
     snap = snapshot_of({f"S{i}.NS": frame(days, i) for i in range(10)})

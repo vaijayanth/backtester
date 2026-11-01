@@ -30,7 +30,7 @@ Usage:
 import argparse
 import json
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -168,11 +168,10 @@ def weekdays_between(after_iso, up_to_iso):
     """Weekdays strictly after `after_iso` up to and including `up_to_iso` (holidays unknown)."""
     if not after_iso or not up_to_iso:
         return None
-    from datetime import date as _d
-    a, b = _d.fromisoformat(after_iso), _d.fromisoformat(up_to_iso)
+    a, b = date.fromisoformat(after_iso), date.fromisoformat(up_to_iso)
     n, cur = 0, a
     while cur < b:
-        cur = _d.fromordinal(cur.toordinal() + 1)
+        cur += timedelta(days=1)
         n += cur.weekday() < 5
     return n
 

@@ -70,8 +70,8 @@ def build_snapshot():
     # Breadth trend: one aligned (dates x symbols) frame per flag, then column-wise counts —
     # replaces a per-date x per-symbol DataFrame.loc double loop (~1.9M lookups, ~1 minute).
     # Same semantics: a stock is in a day's denominator only if it has a non-NaN flag that day.
-    A50 = pd.concat(flags50, axis=1).sort_index()
-    A200 = pd.concat(flags200, axis=1).reindex(A50.index)
+    A50 = pd.concat(flags50, axis=1, sort=True)
+    A200 = pd.concat(flags200, axis=1, sort=True).reindex(A50.index)
     tot50, cnt50 = A50.notna().sum(axis=1), (A50 == 1.0).sum(axis=1)
     tot200, cnt200 = A200.notna().sum(axis=1), (A200 == 1.0).sum(axis=1)
     breadth_trend = []
@@ -99,7 +99,7 @@ def build_snapshot():
     # the max can be set by a handful of symbols while ~all others lag (2026-10-30 incident),
     # which made a stale snapshot look current. Laggards are counted, not hidden.
     date_counts = Counter(d for d, _, _ in last_state.values())
-    as_of = date_counts.most_common(1)[0][0]
+    as_of = max(date_counts, key=lambda d: (date_counts[d], d))   # most stocks; on a tie the newer date
     newest = max(date_counts)
     behind = sum(c for d, c in date_counts.items() if d < as_of)
 
