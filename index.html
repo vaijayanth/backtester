@@ -339,10 +339,10 @@
 
   /* ICICI Dividend Longterm — weekly entry slip (2026-11-01). The header
      slip is the one bold element: an order list (symbol x qty), not a stat
-     banner. Green left edge = something to order; amber = data may be stale. */
+     banner. Green left edge = something to order; red = data may be stale. */
   .div-slip{margin:0 18px 18px;padding:12px 16px;border-radius:8px;background:var(--panel2);border-left:3px solid var(--border);}
   .div-slip.has-entries{border-left-color:var(--green);background:var(--green-dim);}
-  .div-slip.stale{border-left-color:var(--amber);}
+  .div-slip.stale{border-left-color:var(--red);} /* matches the app's stale convention (freshness line is red); --amber here is blue */
   .div-slip-head{display:flex;justify-content:space-between;align-items:baseline;gap:4px 16px;flex-wrap:wrap;margin-bottom:4px;}
   .div-slip-title{font:600 15px var(--ui);color:var(--white);}
   .div-slip-meta{font:400 12.5px var(--ui);color:var(--muted);}
