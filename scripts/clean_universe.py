@@ -65,6 +65,18 @@ KNOWN_ETFS = {
     "PVTBANKADD",
 }
 
+# ETFs that ARE deliberately kept in the universe because the app reads their
+# price/Supertrend/RSI: NIFTYIETF / MIDCAPETF / SMALLCAP are the IVP Screener's
+# Nifty50 / Midcap / Smallcap index proxies, GOLDBEES + NIFTYIETF are in the ICICI
+# Dividend Longterm universe (DIV_UNIVERSE in index.html). They sit in KNOWN_ETFS
+# because the backtest should not trade them, but dropping them from
+# universe_clean.csv stops update_ohlc.py refreshing them (found 2026-11-01:
+# merge_universe_additions.py regenerates this file whenever a stock is added
+# from the UI, which silently removed all four). The backtest engines skip
+# nothing here — they trade whatever is VALIDATED — so keeping them is the
+# existing, committed behaviour; this set just makes that explicit and tested.
+KEEP_ETFS = {"GOLDBEES", "NIFTYIETF", "MIDCAPETF", "SMALLCAP"}
+
 # Symbols confirmed NOT ETFs despite sitting in/near the ETF block in the
 # source sheet — real companies, kept explicitly to document the judgment
 # call (not acted on here, just documentation; they're simply absent from
@@ -86,22 +98,20 @@ def load_manual_additions():
         return [row["symbol"].strip() for row in reader if row.get("symbol", "").strip()]
 
 
-def main():
-    raw_lines = [
-        line.strip() for line in RAW_FILE.read_text().splitlines() if line.strip()
-    ]
-    manual_lines = load_manual_additions()
+def is_removed_etf(ticker: str) -> bool:
+    base = strip_suffix(ticker)
+    return base in KNOWN_ETFS and base not in KEEP_ETFS
 
+
+def build_clean(raw_lines, manual_lines):
+    """Pure core of the cleanup (no file I/O) so it can be tested. Returns
+    (clean, removed_etf, removed_dupe, added_manual), each a list of tickers."""
     seen = set()
-    clean = []
-    removed_etf = []
-    removed_dupe = []
-    added_manual = []
+    clean, removed_etf, removed_dupe, added_manual = [], [], [], []
 
     # Source StockList first — it's the primary, authoritative list.
     for ticker in raw_lines:
-        base = strip_suffix(ticker)
-        if base in KNOWN_ETFS:
+        if is_removed_etf(ticker):
             removed_etf.append(ticker)
             continue
         if ticker in seen:
@@ -114,8 +124,7 @@ def main():
     # a manual addition that duplicates something already in the source list
     # is silently absorbed (not an error, not double-counted).
     for ticker in manual_lines:
-        base = strip_suffix(ticker)
-        if base in KNOWN_ETFS:
+        if is_removed_etf(ticker):
             removed_etf.append(ticker)
             continue
         if ticker in seen:
@@ -124,6 +133,15 @@ def main():
         seen.add(ticker)
         clean.append(ticker)
         added_manual.append(ticker)
+    return clean, removed_etf, removed_dupe, added_manual
+
+
+def main():
+    raw_lines = [
+        line.strip() for line in RAW_FILE.read_text().splitlines() if line.strip()
+    ]
+    manual_lines = load_manual_additions()
+    clean, removed_etf, removed_dupe, added_manual = build_clean(raw_lines, manual_lines)
 
     OUT_DIR.mkdir(exist_ok=True)
 

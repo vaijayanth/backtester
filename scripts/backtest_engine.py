@@ -34,6 +34,7 @@ Usage:
 
 import argparse
 import json
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,6 +69,17 @@ DEFAULT_PARAMS = {
     "position_size_cap_rs": 100000,
     "max_open_positions": 200,
     "initial_capital_rs": 5000000,
+    # Realism switches (added 2026-11-01; set to the legacy value to reproduce
+    # runs made before this date — those results are NOT comparable):
+    #  - gap_aware_fills: a buy-stop at level L fills at max(Open, L) and a sell-stop
+    #    at S fills at min(Open, S). Legacy (False) filled at L / S even when the
+    #    day gapped through them, i.e. at a price that never traded.
+    #  - entry_priority: when more breakouts fire on a day than max_open_positions
+    #    allows, "random" picks among them with a seeded per-date shuffle (reproducible,
+    #    no bias); legacy "symbol" took them in manifest order (alphabetical bias).
+    "gap_aware_fills": True,
+    "entry_priority": "random",
+    "random_seed": 0,
 }
 
 
@@ -130,6 +142,27 @@ def prep_symbol_df(df, params):
 # ---------------------------------------------------------------------------
 # Backtest core
 # ---------------------------------------------------------------------------
+def buy_stop_fill(day_open, level, params):
+    """Fill price of a buy-stop resting at `level` on a day that triggered it."""
+    return max(day_open, level) if params.get("gap_aware_fills", True) else level
+
+
+def sell_stop_fill(day_open, stop, params):
+    """Fill price of a sell-stop resting at `stop` on a day whose Low breached it."""
+    return min(day_open, stop) if params.get("gap_aware_fills", True) else stop
+
+
+def entry_order(symbols, date, params):
+    """Order in which same-day entry candidates are considered when the position
+    cap can bind. Seeded per date so a run is exactly reproducible."""
+    syms = list(symbols)
+    if params.get("entry_priority", "random") == "symbol":
+        return syms
+    rng = random.Random(f"{params.get('random_seed', 0)}|{date.date()}")
+    rng.shuffle(syms)
+    return syms
+
+
 def trail_distance_for_profit(profit_pct, params):
     checkpoints = sorted(params["trail_checkpoints"], key=lambda c: c["profit_pct"])
     dist = checkpoints[0]["trail_pct"] if checkpoints else 6.0
@@ -181,7 +214,7 @@ def run_backtest(params=None, symbols=None):
                 candidate_stop = pos["peak_price"] * (1 - dist / 100)
                 pos["stop_price"] = max(pos.get("stop_price", 0), candidate_stop)  # ratchet never loosens
                 if row["Low"] <= pos["stop_price"]:
-                    exit_price = pos["stop_price"]
+                    exit_price = sell_stop_fill(row["Open"], pos["stop_price"], params)
                     pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
                     # Computed from exit_price (the actual stop fill), NOT
                     # cur_pl_pct (which is based on the day's Close) — those
@@ -217,7 +250,7 @@ def run_backtest(params=None, symbols=None):
                 )
                 if above_emas and fresh_breakout and days_since_addon >= 7:
                     add_qty = max(1, int(pos["qty"] * params["add_on_size_fraction"]))
-                    add_price = row["rolling_high"]
+                    add_price = buy_stop_fill(row["Open"], row["rolling_high"], params)
                     total_cost = pos["avg_entry_price"] * pos["qty"] + add_price * add_qty
                     pos["qty"] += add_qty
                     pos["avg_entry_price"] = total_cost / pos["qty"]
@@ -225,7 +258,8 @@ def run_backtest(params=None, symbols=None):
 
         # --- 2. new entries ---
         if len(positions) < params["max_open_positions"]:
-            for sym, df in data.items():
+            for sym in entry_order(data.keys(), date, params):
+                df = data[sym]
                 if sym in positions or date not in df.index:
                     continue
                 row = df.loc[date]
@@ -234,7 +268,7 @@ def run_backtest(params=None, symbols=None):
                 above_emas = row["Close"] > row["ema_fast"] and row["Close"] > row["ema_slow"]
                 breakout = row["High"] >= row["rolling_high"]
                 if above_emas and breakout:
-                    entry_price = row["rolling_high"]
+                    entry_price = buy_stop_fill(row["Open"], row["rolling_high"], params)
                     size_rs = current_tier_size(len(closed_trades), params)
                     qty = int(size_rs // entry_price)
                     if qty < 1:

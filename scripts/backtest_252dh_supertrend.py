@@ -37,6 +37,7 @@ Usage:
 
 import argparse
 import json
+import random
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -152,8 +153,26 @@ def current_tier_size(closed_trades_count, base_position_rs):
     return base_position_rs + (closed_trades_count // POSITION_INCREMENT_TRADES) * POSITION_INCREMENT_RS
 
 
+def symbol_order(symbols, date, entry_priority="random", random_seed=0, first=()):
+    """Order symbols are processed within one trading day. Cash is finite, so
+    the first symbols processed get filled first; iterating in manifest
+    (alphabetical) order systematically favoured early names. "random" is a
+    per-date seeded shuffle (unbiased, exactly reproducible); "symbol" keeps the
+    legacy order for reproducing runs made before 2026-11-01.
+
+    `first` = symbols served before the rest (those with a pending sell_exit):
+    a sale must free its cash before any buy that day is attempted, otherwise
+    a buy is wrongly counted as "no cash" only because its sale hadn't run yet."""
+    syms = list(symbols)
+    if entry_priority != "symbol":
+        random.Random(f"{random_seed}|{date.date()}").shuffle(syms)
+    first = set(first)
+    return [x for x in syms if x in first] + [x for x in syms if x not in first]
+
+
 def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs=INITIAL_POSITION_RS, symbols=None,
-                  breakout_window_days=BREAKOUT_WINDOW_DAYS, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV):
+                  breakout_window_days=BREAKOUT_WINDOW_DAYS, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV,
+                  entry_priority="random", random_seed=0):
     raw_data = load_universe_data(symbols, raw_dir=raw_dir, manifest_csv=manifest_csv, breakout_window_days=breakout_window_days)
     if not raw_data:
         raise RuntimeError(f"No validated symbol data found in {raw_dir} — run the backfill workflow first.")
@@ -172,7 +191,9 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
     missed_adds_no_cash = 0
 
     for date in all_dates:
-        for sym, bars in data.items():
+        sells_due = [x for x, o in pending.items() if o["action"] == "sell_exit"]
+        for sym in symbol_order(data.keys(), date, entry_priority, random_seed, first=sells_due):
+            bars = data[sym]
             bar = bars.get(date)
             if bar is None:
                 continue
@@ -358,12 +379,16 @@ def main():
                          help=f"Breakout lookback in trading days (default {BREAKOUT_WINDOW_DAYS} = ~52-week high)")
     parser.add_argument("--raw-dir", type=str, default=str(RAW_DIR), help="Directory of per-symbol parquet OHLC")
     parser.add_argument("--manifest", type=str, default=str(MANIFEST_CSV), help="Manifest CSV listing VALIDATED symbols")
+    parser.add_argument("--entry-priority", choices=["random", "symbol"], default="random",
+                         help="order symbols are served cash on a day: seeded per-date shuffle (default, unbiased) or legacy manifest order")
+    parser.add_argument("--seed", type=int, default=0, help="seed for --entry-priority random")
     parser.add_argument("--out", type=str, default="results_252dh.json")
     args = parser.parse_args()
 
     results = run_backtest(initial_capital_rs=args.capital, position_size_rs=args.position_size,
                             breakout_window_days=args.breakout_window,
-                            raw_dir=Path(args.raw_dir), manifest_csv=Path(args.manifest))
+                            raw_dir=Path(args.raw_dir), manifest_csv=Path(args.manifest),
+                            entry_priority=args.entry_priority, random_seed=args.seed)
     Path(args.out).write_text(json.dumps(results, indent=2))
 
     m = results["metrics"]

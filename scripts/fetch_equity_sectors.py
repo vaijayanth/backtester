@@ -18,6 +18,7 @@ Usage:
   python scripts/fetch_equity_sectors.py
 """
 
+import argparse
 import json
 import time
 from pathlib import Path
@@ -57,18 +58,25 @@ def fetch_distinct_symbols():
 
 
 def fetch_sector(symbol):
+    """Returns (sector, definitive). definitive=False when a lookup raised and
+    nothing was found — a transient failure must not be cached as '—' forever."""
+    errored = False
     for suffix in (".NS", ".BO"):
         try:
-            info = yf.Ticker(symbol + suffix).get_info()
-            sector = info.get("sector")
-            if sector:
-                return sector
+            info = yf.Ticker(symbol + suffix).get_info() or {}
         except Exception:
+            errored = True
             continue
-    return None
+        sector = info.get("sector")
+        if sector:
+            return sector, True
+    return None, not errored
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retry-empty", action="store_true", help="also re-attempt symbols cached as '—' (may be past transient failures)")
+    args = parser.parse_args()
     symbols = fetch_distinct_symbols()
     print(f"{len(symbols)} distinct equity symbols in the Tradebook")
 
@@ -76,13 +84,16 @@ def main():
     if OUT_PATH.exists():
         cache = json.loads(OUT_PATH.read_text())
 
-    todo = [s for s in symbols if s not in cache]
+    todo = [s for s in symbols if s not in cache or (args.retry_empty and cache[s] == "—")]
     print(f"{len(todo)} symbols not yet cached — fetching")
 
     for i, sym in enumerate(todo):
-        sector = fetch_sector(sym)
-        cache[sym] = sector or "—"
-        print(f"  [{i+1}/{len(todo)}] {sym}: {cache[sym]}")
+        sector, definitive = fetch_sector(sym)
+        if sector or definitive:
+            cache[sym] = sector or "—"
+            print(f"  [{i+1}/{len(todo)}] {sym}: {cache[sym]}")
+        else:
+            print(f"  [{i+1}/{len(todo)}] {sym}: lookup failed (transient) — not cached, will retry next run")
         time.sleep(0.3)  # light rate-limit courtesy to Yahoo's endpoint
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)

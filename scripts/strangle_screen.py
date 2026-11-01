@@ -30,7 +30,7 @@ Usage:
 import argparse
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -74,21 +74,51 @@ def load_validated_set():
     return set(manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist())
 
 
-def monthly_returns(df):
+def current_month_key(today=None):
+    """YYYY-MM of today in IST (injectable for tests)."""
+    if today is None:
+        today = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date()
+    return today.strftime("%Y-%m")
+
+
+def month_covered(month_key, months_present, last_bar):
+    """True if this symbol's data covers the whole of `month_key`: a later month
+    has bars, or the last bar is on/after the month's last weekday."""
+    if months_present and months_present[-1] > month_key:
+        return True
+    y, m = int(month_key[:4]), int(month_key[5:])
+    last_day = pd.Timestamp(year=y, month=m, day=1) + pd.offsets.MonthEnd(0)
+    while last_day.weekday() >= 5:
+        last_day -= pd.Timedelta(days=1)
+    return last_bar is not None and last_bar >= last_day
+
+
+def monthly_returns(df, today=None):
     """Group by calendar month, return [(month_key, open_to_close_pct,
     rsi_at_start), ...] sorted by month — same grouping + OC formula as the
     JS groupIntoPeriods()/computePeriodReturns() on the Stock Detail page.
     rsi_at_start = RSI14 computed as of the month's first trading day
-    (using only data up to and including that day — no look-ahead)."""
+    (using only data up to and including that day — no look-ahead).
+
+    A month is scored only when COMPLETE: the calendar has passed it AND this
+    symbol's data actually covers it (a bar in a later month, or a last bar on/after
+    the month's last weekday). The in-progress month would otherwise score a few
+    days of a move as a Win (found 2026-11-01), and a month whose data stops early
+    (feed lagging past month-end) would be scored from a stale close."""
     df = df.copy()
     df["month_key"] = df.index.to_series().dt.strftime("%Y-%m")
+    last_bar = df.index.max()
     closes = df["Close"].tolist()
     rsi_series = compute_rsi14(closes)
     df = df.reset_index(drop=True)
     first_idx_per_month = df.groupby("month_key").apply(lambda g: g.index[0])
+    in_progress = current_month_key(today)
+    months_present = sorted(df["month_key"].unique())
 
     out = []
     for month_key, g in df.groupby("month_key", sort=True):
+        if month_key >= in_progress or not month_covered(month_key, months_present, last_bar):
+            continue
         open_px = g["Open"].iloc[0]
         close_px = g["Close"].iloc[-1]
         ret = (close_px - open_px) / open_px * 100
