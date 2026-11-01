@@ -352,8 +352,12 @@
   .div-slip-line .why{font:400 13px var(--ui);color:var(--dim);}
   .div-tab-count{display:none;margin-left:8px;font:600 12px var(--num);color:var(--green);}
   .div-tab-count.on{display:inline;}
-  #div-entry-table td.num-qty{font-weight:600;font-size:14px;text-align:right;}
-  #div-entry-table td.rule-hit{color:var(--white);font-weight:600;box-shadow:inset 0 -2px 0 var(--green);}
+  #div-entry-table th,#div-entry-table td{text-align:left;}
+  #div-entry-table td.num-qty{font-weight:600;font-size:14px;}
+  /* fired rule: short bar under the start of the value (a full-cell underline is 400px wide on big screens) */
+  #div-entry-table td.rule-hit{color:var(--white);font-weight:600;background:linear-gradient(var(--green),var(--green)) 18px bottom / 28px 2px no-repeat;}
+  /* this page's prose uses the full panel width (no 80ch cap) */
+  #page-dividend .dash-footnote,#page-dividend .dash-meta{max-width:none;}
   #div-entry-table td:not(.rule-hit):not(:first-child):not(.num-qty){color:var(--dim);}
   @media (max-width:760px){
     .div-slip{margin:0 14px 14px;padding:12px;}
