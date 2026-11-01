@@ -20,9 +20,11 @@ Usage:
 
 import argparse
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from common import MANIFEST_CSV, RAW_DIR, ROOT, load_validated_symbols  # noqa: F401
@@ -32,9 +34,22 @@ EMA_FAST = 50
 EMA_SLOW = 200
 
 
+def _stock_flags(df):
+    """Per-bar above-EMA flags as float arrays (1.0 above, 0.0 not above, NaN = EMA not
+    warmed up yet, which must not count as 'below' — it is simply not in that day's
+    denominator)."""
+    closes = df["Close"].tolist()
+    out = {}
+    for name, period in (("above50", EMA_FAST), ("above200", EMA_SLOW)):
+        ema = compute_ema(closes, period)
+        out[name] = np.array([np.nan if e is None else float(c > e) for c, e in zip(closes, ema)])
+    return out
+
+
 def build_snapshot():
     symbols = load_validated_symbols()
-    per_stock = {}  # symbol -> DataFrame with Close, above50, above200
+    flags50, flags200 = {}, {}   # symbol -> Series on the symbol's own dates
+    last_state = {}              # symbol -> (last_date, above50 | None, above200 | None)
 
     for symbol in symbols:
         path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
@@ -43,84 +58,60 @@ def build_snapshot():
         df = pd.read_parquet(path)
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df = df.sort_index()
-        closes = df["Close"].tolist()
-        ema50 = compute_ema(closes, EMA_FAST)
-        ema200 = compute_ema(closes, EMA_SLOW)
-        # NaN EMA rows (not enough warm-up history yet) must not count as
-        # "below" — they're simply not in the denominator for that day.
-        # Built as plain Python lists of True/False/None (object dtype)
-        # rather than a bool column + NA-assignment, which pandas refuses
-        # (bool dtype can't hold NA without an explicit nullable dtype).
-        above50 = [None if e is None else (c > e) for c, e in zip(closes, ema50)]
-        above200 = [None if e is None else (c > e) for c, e in zip(closes, ema200)]
-        out = pd.DataFrame({
-            "close": closes,
-            "above50": above50,
-            "above200": above200,
-        }, index=df.index)
-        per_stock[symbol] = out
+        f = _stock_flags(df)
+        flags50[symbol] = pd.Series(f["above50"], index=df.index)
+        flags200[symbol] = pd.Series(f["above200"], index=df.index)
+        a50, a200 = f["above50"][-1], f["above200"][-1]
+        last_state[symbol] = (df.index[-1], None if np.isnan(a50) else bool(a50), None if np.isnan(a200) else bool(a200))
 
-    if not per_stock:
+    if not last_state:
         raise RuntimeError("No validated symbol data found in checkpoints/raw/")
 
-    all_dates = sorted(set().union(*[set(df.index) for df in per_stock.values()]))
-
+    # Breadth trend: one aligned (dates x symbols) frame per flag, then column-wise counts —
+    # replaces a per-date x per-symbol DataFrame.loc double loop (~1.9M lookups, ~1 minute).
+    # Same semantics: a stock is in a day's denominator only if it has a non-NaN flag that day.
+    A50 = pd.concat(flags50, axis=1).sort_index()
+    A200 = pd.concat(flags200, axis=1).reindex(A50.index)
+    tot50, cnt50 = A50.notna().sum(axis=1), (A50 == 1.0).sum(axis=1)
+    tot200, cnt200 = A200.notna().sum(axis=1), (A200 == 1.0).sum(axis=1)
     breadth_trend = []
-    for date in all_dates:
-        above50_count = 0
-        above50_total = 0
-        above200_count = 0
-        above200_total = 0
-        for df in per_stock.values():
-            if date not in df.index:
-                continue
-            row = df.loc[date]
-            if pd.notna(row["above50"]):
-                above50_total += 1
-                if row["above50"]:
-                    above50_count += 1
-            if pd.notna(row["above200"]):
-                above200_total += 1
-                if row["above200"]:
-                    above200_count += 1
+    for date, t50, c50, t200, c200 in zip(A50.index, tot50.tolist(), cnt50.tolist(), tot200.tolist(), cnt200.tolist()):
         breadth_trend.append({
             "date": str(date.date()),
-            "above_ema50_pct": round(above50_count / above50_total * 100, 2) if above50_total else None,
-            "above_ema200_pct": round(above200_count / above200_total * 100, 2) if above200_total else None,
+            "above_ema50_pct": round(c50 / t50 * 100, 2) if t50 else None,
+            "above_ema200_pct": round(c200 / t200 * 100, 2) if t200 else None,
         })
 
-    # Pulse: as-of the latest date each stock individually has (not a single
-    # shared date — backfill runs can leave a few symbols a day or two
-    # behind if delisted/thin, so "latest available per stock" is correct,
-    # not "latest shared date across all 1,466").
+    # Pulse: as-of the latest bar each stock individually has (a delisted/thin symbol can
+    # trail by a day or two, so "latest per stock" rather than one shared date).
     above50 = above200 = above_both = below_both = 0
     counted = 0
-    latest_dates = []
-    for df in per_stock.values():
-        last = df.iloc[-1]
-        latest_dates.append(df.index[-1])
-        if pd.isna(last["above50"]) or pd.isna(last["above200"]):
+    for _, a50, a200 in last_state.values():
+        if a50 is None or a200 is None:
             continue
         counted += 1
-        a50, a200 = bool(last["above50"]), bool(last["above200"])
-        if a50:
-            above50 += 1
-        if a200:
-            above200 += 1
-        if a50 and a200:
-            above_both += 1
-        if not a50 and not a200:
-            below_both += 1
+        above50 += a50
+        above200 += a200
+        above_both += a50 and a200
+        below_both += (not a50) and (not a200)
 
-    as_of_date = str(max(latest_dates).date()) if latest_dates else None
+    # The snapshot's date is the date MOST stocks are on, not the newest date any stock has:
+    # the max can be set by a handful of symbols while ~all others lag (2026-10-30 incident),
+    # which made a stale snapshot look current. Laggards are counted, not hidden.
+    date_counts = Counter(d for d, _, _ in last_state.values())
+    as_of = date_counts.most_common(1)[0][0]
+    newest = max(date_counts)
+    behind = sum(c for d, c in date_counts.items() if d < as_of)
 
     def pct(n):
         return round(n / counted * 100, 2) if counted else None
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "as_of_date": as_of_date,
-        "universe_size": len(per_stock),
+        "as_of_date": str(as_of.date()),
+        "newest_date_any_symbol": str(newest.date()),
+        "symbols_behind_as_of": behind,
+        "universe_size": len(last_state),
         "pulse": {
             "counted": counted,
             "above_ema50": above50,
@@ -145,7 +136,8 @@ def main():
     Path(args.out).write_text(json.dumps(snapshot, indent=2))
 
     p = snapshot["pulse"]
-    print(f"As of {snapshot['as_of_date']} — {snapshot['universe_size']} stocks")
+    print(f"As of {snapshot['as_of_date']} — {snapshot['universe_size']} stocks "
+          f"({snapshot['symbols_behind_as_of']} behind; newest bar anywhere {snapshot['newest_date_any_symbol']})")
     print(f"Above EMA50: {p['above_ema50']} ({p['above_ema50_pct']}%)")
     print(f"Above EMA200: {p['above_ema200']} ({p['above_ema200_pct']}%)")
     print(f"Above BOTH: {p['above_both']} ({p['above_both_pct']}%)")

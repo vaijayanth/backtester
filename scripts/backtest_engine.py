@@ -164,6 +164,10 @@ def current_tier_size(closed_trades_count, params):
     return min(size, params["position_size_cap_rs"])
 
 
+_BAR_COLS = ["Open", "High", "Low", "Close", "ema_fast", "ema_slow", "rolling_high"]
+_O, _H, _L, _C, _EF, _ES, _RH = range(7)
+
+
 def run_backtest(params=None, symbols=None):
     params = {**DEFAULT_PARAMS, **(params or {})}
     raw_data = load_universe_data(symbols)
@@ -173,8 +177,15 @@ def run_backtest(params=None, symbols=None):
             "run the backfill workflow first."
         )
 
-    data = {sym: prep_symbol_df(df, params) for sym, df in raw_data.items()}
-    all_dates = sorted(set().union(*[set(df.index) for df in data.values()]))
+    # One {date: (O, H, L, C, ema_fast, ema_slow, rolling_high)} dict per symbol: the hot loop
+    # below does O(1) dict lookups instead of pandas `date in df.index` + `df.loc[date]`
+    # (~1.9M lookups on the full universe; same approach as backtest_252dh_supertrend.py).
+    data = {}
+    for sym, df in raw_data.items():
+        pdf = prep_symbol_df(df, params)
+        data[sym] = dict(zip(pdf.index, pdf[_BAR_COLS].itertuples(index=False, name=None)))
+    del raw_data
+    all_dates = sorted(set().union(*[set(bars) for bars in data.values()]))
 
     positions = {}       # symbol -> position dict
     closed_trades = []   # list of closed-trade dicts
@@ -184,22 +195,21 @@ def run_backtest(params=None, symbols=None):
     for date in all_dates:
         # --- 1. manage existing positions: trailing-stop exits, add-ons ---
         for sym in list(positions.keys()):
-            df = data[sym]
-            if date not in df.index:
+            row = data[sym].get(date)
+            if row is None:
                 continue
-            row = df.loc[date]
             pos = positions[sym]
 
-            pos["peak_price"] = max(pos["peak_price"], row["High"])
+            pos["peak_price"] = max(pos["peak_price"], row[_H])
             profit_pct = (pos["peak_price"] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
-            cur_pl_pct = (row["Close"] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
+            cur_pl_pct = (row[_C] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
 
             if profit_pct >= params["profit_lock_trigger_pct"]:
                 dist = trail_distance_for_profit(profit_pct, params)
                 candidate_stop = pos["peak_price"] * (1 - dist / 100)
                 pos["stop_price"] = max(pos.get("stop_price", 0), candidate_stop)  # ratchet never loosens
-                if row["Low"] <= pos["stop_price"]:
-                    exit_price = sell_stop_fill(row["Open"], pos["stop_price"], params)
+                if row[_L] <= pos["stop_price"]:
+                    exit_price = sell_stop_fill(row[_O], pos["stop_price"], params)
                     pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
                     # Computed from exit_price (the actual stop fill), NOT
                     # cur_pl_pct (which is based on the day's Close) — those
@@ -226,16 +236,16 @@ def run_backtest(params=None, symbols=None):
 
             if cur_pl_pct <= params["add_on_trigger_pct"]:
                 above_emas = (
-                    pd.notna(row["ema_fast"]) and pd.notna(row["ema_slow"])
-                    and row["Close"] > row["ema_fast"] and row["Close"] > row["ema_slow"]
+                    pd.notna(row[_EF]) and pd.notna(row[_ES])
+                    and row[_C] > row[_EF] and row[_C] > row[_ES]
                 )
-                fresh_breakout = pd.notna(row["rolling_high"]) and row["High"] >= row["rolling_high"]
+                fresh_breakout = pd.notna(row[_RH]) and row[_H] >= row[_RH]
                 days_since_addon = (
                     (date - pos["last_addon_date"]).days if pos["last_addon_date"] else 999
                 )
                 if above_emas and fresh_breakout and days_since_addon >= 7:
                     add_qty = max(1, int(pos["qty"] * params["add_on_size_fraction"]))
-                    add_price = buy_stop_fill(row["Open"], row["rolling_high"], params)
+                    add_price = buy_stop_fill(row[_O], row[_RH], params)
                     total_cost = pos["avg_entry_price"] * pos["qty"] + add_price * add_qty
                     pos["qty"] += add_qty
                     pos["avg_entry_price"] = total_cost / pos["qty"]
@@ -244,16 +254,17 @@ def run_backtest(params=None, symbols=None):
         # --- 2. new entries ---
         if len(positions) < params["max_open_positions"]:
             for sym in entry_order(data.keys(), date, params):
-                df = data[sym]
-                if sym in positions or date not in df.index:
+                if sym in positions:
                     continue
-                row = df.loc[date]
-                if pd.isna(row["rolling_high"]) or pd.isna(row["ema_fast"]) or pd.isna(row["ema_slow"]):
+                row = data[sym].get(date)
+                if row is None:
                     continue
-                above_emas = row["Close"] > row["ema_fast"] and row["Close"] > row["ema_slow"]
-                breakout = row["High"] >= row["rolling_high"]
+                if pd.isna(row[_RH]) or pd.isna(row[_EF]) or pd.isna(row[_ES]):
+                    continue
+                above_emas = row[_C] > row[_EF] and row[_C] > row[_ES]
+                breakout = row[_H] >= row[_RH]
                 if above_emas and breakout:
-                    entry_price = buy_stop_fill(row["Open"], row["rolling_high"], params)
+                    entry_price = buy_stop_fill(row[_O], row[_RH], params)
                     size_rs = current_tier_size(len(closed_trades), params)
                     qty = int(size_rs // entry_price)
                     if qty < 1:
@@ -272,8 +283,9 @@ def run_backtest(params=None, symbols=None):
         # --- 3. equity curve point ---
         open_mtm = 0.0
         for sym, pos in positions.items():
-            if date in data[sym].index:
-                open_mtm += (data[sym].loc[date]["Close"] - pos["avg_entry_price"]) * pos["qty"]
+            bar = data[sym].get(date)
+            if bar is not None:
+                open_mtm += (bar[_C] - pos["avg_entry_price"]) * pos["qty"]
         equity_curve.append({
             "date": str(date.date()),
             "realized": round(realized_pl, 2),
