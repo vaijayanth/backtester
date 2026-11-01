@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-11-01T18:09:20.524096+00:00",
+  "data_through": "2026-10-30",
+  "universe_size": 1495,
+  "grid": {
+    "intrabar_order": [
+      "high_first",
+      "low_first"
+    ],
+    "random_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "gap_aware_fills": true,
+    "entry_priority": "random",
+    "runs": 10
+  },
+  "base_params_overrides": {},
+  "range": {
+    "win_rate_pct": {
+      "worst": 80.4,
+      "median": 84.53,
+      "best": 89.04,
+      "n": 10
+    },
+    "profit_factor": {
+      "worst": 1.97,
+      "median": 2.69,
+      "best": 3.74,
+      "n": 10
+    },
+    "max_drawdown_pct": {
+      "worst": 22.6,
+      "median": 12.260000000000002,
+      "best": 6.07,
+      "n": 10
+    },
+    "combined_pl_rs": {
+      "worst": 2167801.26,
+      "median": 6301104.18,
+      "best": 11685213.95,
+      "n": 10
+    },
+    "total_closed_trades": {
+      "worst": 3481,
+      "median": 3723.5,
+      "best": 3964,
+      "n": 10
+    }
+  },
+  "by_intrabar_order": {
+    "high_first": {
+      "win_rate_pct": {
+        "worst": 80.4,
+        "median": 80.52,
+        "best": 80.64,
+        "n": 5
+      },
+      "profit_factor": {
+        "worst": 1.97,
+        "median": 2.01,
+        "best": 2.07,
+        "n": 5
+      },
+      "max_drawdown_pct": {
+        "worst": 22.6,
+        "median": 18.66,
+        "best": 16.03,
+        "n": 5
+      },
+      "combined_pl_rs": {
+        "worst": 2167801.26,
+        "median": 2337385.76,
+        "best": 2612958.25,
+        "n": 5
+      },
+      "total_closed_trades": {
+        "worst": 3796,
+        "median": 3855,
+        "best": 3964,
+        "n": 5
+      }
+    },
+    "low_first": {
+      "win_rate_pct": {
+        "worst": 88.42,
+        "median": 88.88,
+        "best": 89.04,
+        "n": 5
+      },
+      "profit_factor": {
+        "worst": 3.31,
+        "median": 3.69,
+        "best": 3.74,
+        "n": 5
+      },
+      "max_drawdown_pct": {
+        "worst": 8.49,
+        "median": 7.32,
+        "best": 6.07,
+        "n": 5
+      },
+      "combined_pl_rs": {
+        "worst": 9989250.11,
+        "median": 10935735.18,
+        "best": 11685213.95,
+        "n": 5
+      },
+      "total_closed_trades": {
+        "worst": 3481,
+        "median": 3564,
+        "best": 3651,
+        "n": 5
+      }
+    }
+  },
+  "runs": [
+    {
+      "intrabar_order": "high_first",
+      "random_seed": 0,
+      "metrics": {
+        "win_rate_pct": 80.45,
+        "profit_factor": 2.07,
+        "max_drawdown_pct": 19.69,
+        "combined_pl_rs": 2337385.76,
+        "total_closed_trades": 3796
+      }
+    },
+    {
+      "intrabar_order": "high_first",
+      "random_seed": 1,
+      "metrics": {
+        "win_rate_pct": 80.6,
+        "profit_factor": 2.01,
+        "max_drawdown_pct": 22.6,
+        "combined_pl_rs": 2181029.77,
+        "total_closed_trades": 3855
+      }
+    },
+    {
+      "intrabar_order": "high_first",
+      "random_seed": 2,
+      "metrics": {
+        "win_rate_pct": 80.64,
+        "profit_factor": 1.97,
+        "max_drawdown_pct": 18.66,
+        "combined_pl_rs": 2167801.26,
+        "total_closed_trades": 3843
+      }
+    },
+    {
+      "intrabar_order": "high_first",
+      "random_seed": 3,
+      "metrics": {
+        "win_rate_pct": 80.52,
+        "profit_factor": 1.97,
+        "max_drawdown_pct": 18.33,
+        "combined_pl_rs": 2612958.25,
+        "total_closed_trades": 3964
+      }
+    },
+    {
+      "intrabar_order": "high_first",
+      "random_seed": 4,
+      "metrics": {
+        "win_rate_pct": 80.4,
+        "profit_factor": 2.03,
+        "max_drawdown_pct": 16.03,
+        "combined_pl_rs": 2511017.9,
+        "total_closed_trades": 3878
+      }
+    },
+    {
+      "intrabar_order": "low_first",
+      "random_seed": 0,
+      "metrics": {
+        "win_rate_pct": 88.99,
+        "profit_factor": 3.74,
+        "max_drawdown_pct": 8.49,
+        "combined_pl_rs": 11685213.95,
+        "total_closed_trades": 3578
+      }
+    },
+    {
+      "intrabar_order": "low_first",
+      "random_seed": 1,
+      "metrics": {
+        "win_rate_pct": 89.04,
+        "profit_factor": 3.7,
+        "max_drawdown_pct": 7.57,
+        "combined_pl_rs": 10935735.18,
+        "total_closed_trades": 3550
+      }
+    },
+    {
+      "intrabar_order": "low_first",
+      "random_seed": 2,
+      "metrics": {
+        "win_rate_pct": 88.42,
+        "profit_factor": 3.35,
+        "max_drawdown_pct": 7.32,
+        "combined_pl_rs": 9989250.11,
+        "total_closed_trades": 3481
+      }
+    },
+    {
+      "intrabar_order": "low_first",
+      "random_seed": 3,
+      "metrics": {
+        "win_rate_pct": 88.8,
+        "profit_factor": 3.31,
+        "max_drawdown_pct": 6.38,
+        "combined_pl_rs": 10790455.08,
+        "total_closed_trades": 3564
+      }
+    },
+    {
+      "intrabar_order": "low_first",
+      "random_seed": 4,
+      "metrics": {
+        "win_rate_pct": 88.88,
+        "profit_factor": 3.69,
+        "max_drawdown_pct": 6.07,
+        "combined_pl_rs": 11613151.62,
+        "total_closed_trades": 3651
+      }
+    }
+  ],
+  "note": "Daily bars cannot show whether the day's High or Low came first, and same-day entry priority is a shuffle, so read this as a range, not a point estimate."
+}

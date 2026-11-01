@@ -372,9 +372,10 @@
      outcome across the sensitivity grid, with a tick at the median. The rail is the point:
      a daily-bar backtest is a range, not a number. */
   .rr-intro{padding:12px 18px 4px;font:400 13px/1.55 var(--ui);color:var(--muted);max-width:none;}
-  .rr-grid{padding:8px 18px 6px;display:grid;grid-template-columns:minmax(96px,150px) 110px minmax(120px,1fr) 110px;column-gap:16px;align-items:center;}
-  .rr-head{font:500 12px var(--ui);color:var(--muted);padding:6px 0;}
-  .rr-head.r{text-align:right;}
+  .rr-grid{padding:8px 18px 6px;}
+  .rr-row{display:grid;grid-template-columns:minmax(96px,150px) 110px minmax(120px,1fr) 110px;column-gap:16px;align-items:center;}
+  .rr-row.hdr .rr-head{font:500 12px var(--ui);color:var(--muted);padding:6px 0;}
+  .rr-row.hdr .worst{text-align:right;grid-column:2;} .rr-row.hdr .best{grid-column:4;}
   .rr-label{font:500 14px var(--ui);color:var(--white);padding:14px 0;border-top:1px solid var(--border-soft);}
   .rr-val{font:600 15px var(--num);font-variant-numeric:tabular-nums;color:var(--white);padding:14px 0;border-top:1px solid var(--border-soft);}
   .rr-val.worst{text-align:right;}
@@ -386,6 +387,7 @@
   .rr-cap{position:absolute;top:34px;transform:translateX(-50%);font:400 11.5px var(--num);color:var(--dim);white-space:nowrap;}
   .rr-end{position:absolute;top:17px;width:2px;height:12px;background:var(--muted);}
   .rr-end.l{left:0;} .rr-end.r{right:0;}
+  #res-range-meta{font-family:var(--ui);}
   .rr-compare{padding:4px 18px 4px;}
   .rr-compare .list-table td,.rr-compare .list-table th{white-space:nowrap;}
   .rr-foot{padding:10px 18px 16px;font:400 12.5px/1.55 var(--ui);color:var(--muted);max-width:none;}
@@ -393,13 +395,13 @@
   .rr-empty{padding:16px 18px 20px;font:400 13.5px/1.55 var(--ui);color:var(--dim);}
   .res-legacy{display:block;margin-top:2px;font:500 11.5px var(--ui);color:var(--red);}
   @media (max-width:760px){
-    .rr-grid{grid-template-columns:1fr 1fr;row-gap:0;padding:6px 14px;}
-    .rr-head.mid{display:none;}
-    .rr-label{grid-column:1 / -1;padding:12px 0 2px;}
-    .rr-rail{grid-column:1 / -1;grid-row:auto;border-top:0;order:2;}
-    .rr-val{border-top:0;padding:2px 0 12px;order:3;}
-    .rr-val.worst{text-align:left;} .rr-val.best{text-align:right;}
-    .rr-head.worst,.rr-head.best{order:0;}
+    .rr-grid{padding:6px 14px;}
+    .rr-row.hdr{display:none;}
+    .rr-row{grid-template-columns:1fr 1fr;column-gap:8px;border-top:1px solid var(--border-soft);padding:10px 0 12px;}
+    .rr-label{grid-column:1 / -1;border-top:0;padding:0 0 2px;}
+    .rr-rail{grid-column:1 / -1;grid-row:2;border-top:0;height:50px;}
+    .rr-val{border-top:0;padding:0;grid-row:3;}
+    .rr-val.worst{text-align:left;grid-column:1;} .rr-val.best{text-align:right;grid-column:2;}
     .rr-intro,.rr-foot,.rr-empty,.rr-compare{padding-left:14px;padding-right:14px;}
   }
 
@@ -3799,8 +3801,8 @@ function renderSensitivity(d, body, meta){
     } else {
       rail = '<div class="rr-rail"></div>';
     }
-    return `<div class="rr-label">${label}</div>
-      <div class="rr-val worst${cls(r.worst)}">${rrFmt(key, r.worst)}</div>${rail}<div class="rr-val best${cls(r.best)}">${rrFmt(key, r.best)}</div>`;
+    return `<div class="rr-row"><div class="rr-label">${label}</div>
+      <div class="rr-val worst${cls(r.worst)}">${rrFmt(key, r.worst)}</div>${rail}<div class="rr-val best${cls(r.best)}">${rrFmt(key, r.best)}</div></div>`;
   }).join('');
 
   const orderName = {high_first: 'High first', low_first: 'Low first'};
@@ -3818,7 +3820,7 @@ function renderSensitivity(d, body, meta){
   body.innerHTML = `
     <div class="rr-intro">Daily price bars can't show whether a day's high or low came first, and several entries can compete for the same slot on one day, so a backtest depends on those assumptions. Read the result as a range: the worst, median and best of ${g.runs || (d.runs || []).length} runs.</div>
     <div class="rr-grid">
-      <div class="rr-head"></div><div class="rr-head r worst">Worst</div><div class="rr-head mid"></div><div class="rr-head best">Best</div>
+      <div class="rr-row hdr"><div class="rr-head worst">Worst</div><div class="rr-head best">Best</div></div>
       ${cells}
     </div>
     <div class="rr-compare table-scroll"><table class="list-table"><thead><tr><th>MEDIAN BY ASSUMPTION</th><th>WIN RATE</th><th>PROFIT FACTOR</th><th>MAX DRAWDOWN</th><th>COMBINED P&amp;L</th></tr></thead><tbody>${compare}</tbody></table></div>
