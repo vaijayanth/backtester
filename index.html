@@ -2603,6 +2603,8 @@ async function loadPipelineStatus(){
     ` &middot; ${totalUpdated} updated` +
     (totalFailed > 0 ? `, <span style="color:var(--amber)">${totalFailed} failed</span>` : '') +
     (breakerTripped > 0 ? ` &middot; <span style="color:var(--red)">⚠ outage breaker tripped${breakerTripped>1?' '+breakerTripped+'x':''} — likely a Yahoo Finance outage window, not bad tickers</span>` : '') +
+    ((status.symbols_behind_newest_date || 0) > 0.5 * (status.validated || 1)
+      ? ` &middot; <span style="color:var(--red)">${status.symbols_behind_newest_date} symbols have no bar for ${status.newest_date_any_symbol} — latest session incomplete</span>` : '') +
     (isStale ? ` &middot; <span style="color:var(--red)">stale — check Actions tab</span>` : '');
   el.style.color = isStale ? 'var(--amber)' : 'var(--muted)';
 

@@ -207,6 +207,108 @@ def nse_session_open_now() -> bool:
     return open_t <= now_ist <= close_t
 
 
+# --- Never-regress guards (added 2026-11-01) -------------------------------
+# Incident 2026-10-30: the 19:39Z daily run removed the good 2026-10-30 bar
+# from ~1,469 parquet files (each 1,246 -> 1,245 rows), because a re-fetch
+# returned a null/incomplete latest row that REPLACED the valid stored row
+# (drop_duplicates keep="last") and _trim_null_edges then deleted it. Two
+# invariants close that whole bug class, in every write path:
+#   1. a fetched row may only replace a stored row if the fetched row is valid
+#   2. a run may never shorten a series (valid stored rows newer than the
+#      fetched data are carried forward)
+# Each time a guard fires it is counted in GUARD_STATS so the pipeline status
+# (and the Actions log) can say so — a silent save is still a provider problem.
+GUARD_STATS = {
+    "protected_valid_rows": 0,        # fetched null/invalid row dropped while a valid stored bar existed for that date (the incident)
+    "null_rows_ignored_benign": 0,    # fetched invalid trailing row for a date with no stored bar (routine provider quirk — not an alarm)
+    "interior_invalid_dropped": 0,    # fetched invalid row NOT at the trailing edge — a real hole; validate_ohlc used to reject these
+    "stored_rows_restored": 0,        # valid stored rows carried forward because the fetch ended earlier
+    "symbols_protected": 0,
+    "carry_skipped_basis_mismatch": 0,  # restore skipped: stored/fetched closes disagree (split/dividend re-adjustment)
+}
+_OHLC = ["Open", "High", "Low", "Close"]
+CARRY_BASIS_TOLERANCE = 0.001  # stored vs freshly-fetched close on the last common date must agree within 0.1%
+
+
+def _naive_index(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    out.index = pd.to_datetime(out.index).tz_localize(None)
+    return out
+
+
+def valid_ohlc_rows(df: pd.DataFrame) -> pd.Series:
+    """True for rows with real prices: all OHLC present, positive, High >= Low."""
+    ok = df[_OHLC].notnull().all(axis=1)
+    ok &= (df[_OHLC].fillna(0) > 0).all(axis=1)
+    ok &= df["High"].fillna(0) >= df["Low"].fillna(0)
+    return ok
+
+
+def merge_preserving_valid(existing: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
+    """stored + fetched rows; fetched rows replace stored rows only when valid."""
+    new = _naive_index(new)
+    ok = valid_ohlc_rows(new)
+    good, bad = new[ok], new[~ok]
+    last_good = good.index.max() if len(good) else None
+    for d in bad.index:
+        if d in existing.index:
+            GUARD_STATS["protected_valid_rows"] += 1
+        elif last_good is not None and d < last_good:
+            GUARD_STATS["interior_invalid_dropped"] += 1
+        else:
+            GUARD_STATS["null_rows_ignored_benign"] += 1
+    merged = pd.concat([existing, good])
+    return merged[~merged.index.duplicated(keep="last")].sort_index()
+
+
+def carry_forward_newer(fetched: pd.DataFrame, stored: "pd.DataFrame | None") -> pd.DataFrame:
+    """Append valid stored rows dated after fetched's last date (never after
+    today IST), so a run can never move a symbol's last_date backwards. Skipped
+    when the stored rows are on a different price basis than the fetch (a
+    split/dividend re-adjustment) — the next incremental run re-fetches from
+    last_date-1 and fills the day in on the right basis."""
+    if stored is None or stored.empty or fetched is None or fetched.empty:
+        return fetched
+    f_max = pd.to_datetime(fetched.index).tz_localize(None).max()
+    if pd.to_datetime(stored.index).tz_localize(None).max() <= f_max:
+        return fetched  # common case: nothing to restore, no copies made
+    stored = _naive_index(stored)
+    fetched_n = _naive_index(fetched)
+    today_ist = pd.Timestamp((datetime.now(timezone.utc) + IST_OFFSET).date())
+    newer = stored[(stored.index > f_max) & (stored.index <= today_ist)]
+    newer = newer[valid_ohlc_rows(newer)]
+    if newer.empty:
+        return fetched
+    common = fetched_n.index.intersection(stored.index)
+    if len(common) == 0:
+        GUARD_STATS["carry_skipped_basis_mismatch"] += 1
+        return fetched
+    d = common.max()
+    f_close, s_close = float(fetched_n.loc[d, "Close"]), float(stored.loc[d, "Close"])
+    if s_close <= 0 or abs(f_close / s_close - 1) > CARRY_BASIS_TOLERANCE:
+        GUARD_STATS["carry_skipped_basis_mismatch"] += 1
+        return fetched
+    GUARD_STATS["stored_rows_restored"] += len(newer)
+    GUARD_STATS["symbols_protected"] += 1
+    return pd.concat([fetched_n, newer]).sort_index()
+
+
+def load_stored(path) -> "pd.DataFrame | None":
+    try:
+        return pd.read_parquet(path) if Path(path).exists() else None
+    except Exception:
+        return None
+
+
+def save_series(path, df: pd.DataFrame, stored: "pd.DataFrame | None" = None) -> pd.DataFrame:
+    """THE write path for a symbol's OHLC parquet. Enforces never-shorten
+    (carry_forward_newer) in one place so no caller can forget it. `stored`
+    may be passed when the caller already has the on-disk frame loaded."""
+    out = carry_forward_newer(df, stored if stored is not None else load_stored(path))
+    out.to_parquet(path)
+    return out
+
+
 def drop_intraday_today_row(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
     """If NSE is open right now, drop any row dated today (IST) from a
     freshly-fetched df - it can only be a partial/live snapshot, never a
@@ -284,7 +386,7 @@ def fetch_one(symbol: str) -> dict:
             df, save_note = max(candidates, key=lambda c: len(c[0]))
             RAW_DIR.mkdir(parents=True, exist_ok=True)
             out_path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
-            df.to_parquet(out_path)
+            df = save_series(out_path, df)
             row.update({
                 "status": STATUS_PARTIAL,
                 "records": len(df),
@@ -298,7 +400,7 @@ def fetch_one(symbol: str) -> dict:
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
-    df.to_parquet(out_path)
+    df = save_series(out_path, df)  # never shortens a series (see guards above)
 
     row.update({
         "status": STATUS_VALIDATED,

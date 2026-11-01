@@ -51,6 +51,7 @@ import argparse
 import json
 import sys
 import time
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -64,12 +65,15 @@ from backfill import (  # noqa: E402
     STATUS_PENDING,
     STATUS_VALIDATED,
     drop_intraday_today_row,
+    GUARD_STATS,
     fetch_one,
     fetch_with_retry,
     is_retryable,
     load_manifest,
     load_universe,
+    merge_preserving_valid,
     save_manifest,
+    save_series,
     validate_ohlc,
 )
 
@@ -134,18 +138,17 @@ def incremental_update(symbol: str, last_date_str: str) -> dict:
         })
         return row
 
-    new_df.index = pd.to_datetime(new_df.index).tz_localize(None)
-    merged = pd.concat([existing, new_df])
-    merged = merged[~merged.index.duplicated(keep="last")].sort_index()
+    # A fetched row replaces a stored row only if it is itself valid — a null/
+    # incomplete latest row from the provider must never overwrite a good bar
+    # (2026-10-30 incident, see backfill.py guards).
+    merged = merge_preserving_valid(existing, new_df)
 
     is_valid, note, trimmed = validate_ohlc(merged)
     if not is_valid:
         row["status"] = STATUS_FAILED
         row["error"] = f"post-merge validation failed: {note}"
         return row
-    merged = trimmed  # drop any leading/trailing null-OHLC edge rows before saving — see backfill.py's _trim_null_edges
-
-    merged.to_parquet(path)
+    merged = save_series(path, trimmed, stored=existing)  # a run may never move last_date backwards
     row.update({
         "records": len(merged),
         "first_date": str(merged.index.min().date()),
@@ -265,12 +268,26 @@ def main():
     validated = sum(1 for s in universe if manifest[s]["status"] == STATUS_VALIDATED)
     failed = sum(1 for s in universe if manifest[s]["status"] == STATUS_FAILED)
     pending = sum(1 for s in universe if manifest[s]["status"] == STATUS_PENDING)
-    # Most recent last_date across all VALIDATED symbols — the single
-    # number that answers "is today's close actually in the data yet".
-    latest_trading_date = max(
-        (manifest[s]["last_date"] for s in universe if manifest[s]["status"] == STATUS_VALIDATED and manifest[s]["last_date"]),
-        default=None,
-    )
+    # Date coverage across VALIDATED symbols. `latest_trading_date` used to be
+    # the MAX last_date — one stray symbol ahead of everyone else made a run
+    # that had lost the latest bar for ~99% of the universe look current
+    # (2026-10-30). It is now the date most symbols are on; the max and the
+    # per-date counts are published separately so a gap is visible.
+    last_dates = Counter(manifest[s]["last_date"] for s in universe
+                         if manifest[s]["status"] == STATUS_VALIDATED and manifest[s]["last_date"])
+    latest_trading_date = last_dates.most_common(1)[0][0] if last_dates else None
+    newest_date_any = max(last_dates) if last_dates else None
+    behind_newest = sum(c for d, c in last_dates.items() if newest_date_any and d < newest_date_any)
+    total_validated = sum(last_dates.values())
+    if GUARD_STATS["protected_valid_rows"] or GUARD_STATS["stored_rows_restored"] or GUARD_STATS["interior_invalid_dropped"]:
+        # GitHub Actions annotation — shows on the run summary page. Benign trailing nulls do NOT trigger this.
+        print(f"::warning::OHLC guards fired: kept {GUARD_STATS['protected_valid_rows']} valid stored bar(s) a fetch tried to null out, "
+              f"restored {GUARD_STATS['stored_rows_restored']} row(s) across {GUARD_STATS['symbols_protected']} symbol(s), "
+              f"{GUARD_STATS['interior_invalid_dropped']} interior invalid row(s) dropped, "
+              f"{GUARD_STATS['carry_skipped_basis_mismatch']} restore(s) skipped for price-basis mismatch.")
+    if newest_date_any != latest_trading_date and behind_newest > 0.5 * max(1, total_validated):
+        print(f"::warning::Most symbols are on {latest_trading_date} but the newest bar anywhere is {newest_date_any} — "
+              f"{behind_newest} symbol(s) look behind. Check the provider for a late/partial session.")
     print(f"\nRun complete. Universe totals — VALIDATED: {validated}  FAILED: {failed}  "
           f"PENDING: {pending}  (of {len(universe)})")
 
@@ -278,7 +295,11 @@ def main():
         status = {
             "last_run_started_utc": run_started.isoformat(),
             "last_run_finished_utc": datetime.now(timezone.utc).isoformat(),
-            "latest_trading_date": latest_trading_date,
+            "latest_trading_date": latest_trading_date,          # the date most symbols are on
+            "newest_date_any_symbol": newest_date_any,           # max last_date (can be ahead of the majority)
+            "symbols_behind_newest_date": behind_newest,
+            "last_date_coverage": dict(last_dates.most_common(5)),
+            "guards": dict(GUARD_STATS),                         # provider glitches the never-regress guards absorbed this run
             "universe_size": len(universe),
             "validated": validated,
             "failed": failed,
