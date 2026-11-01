@@ -1,0 +1,55 @@
+name: Python tests
+
+# Runs the repo's Python test suite (tests/run_all.py: OHLC never-regress guards, universe cleanup,
+# lookups, indicators, market snapshot, strangle screen, backtest engines, results index,
+# merge_universe_additions, supertrend market-date). No network and no checkpoint data needed —
+# everything external (Yahoo, Google Sheets) is mocked. Read-only: never commits anything.
+#
+# Only runs when something the tests exercise changes, so the daily data-refresh commits
+# (JSON / parquet) do not spawn a run each time.
+
+on:
+  push:
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "index.html"
+      - "data/universe_clean.csv"
+      - "data/universe_manual_additions.csv"
+      - "data/fno_universe.csv"
+      - "data/equity_names.json"
+      - "requirements.txt"
+      - ".github/workflows/tests.yml"
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "index.html"
+      - "data/universe_clean.csv"
+      - "data/universe_manual_additions.csv"
+      - "data/fno_universe.csv"
+      - "data/equity_names.json"
+      - "requirements.txt"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python tests/run_all.py
