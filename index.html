@@ -390,6 +390,7 @@
   #res-range-meta{font-family:var(--ui);}
   .rr-compare{padding:4px 18px 4px;}
   .rr-compare .list-table td,.rr-compare .list-table th{white-space:nowrap;}
+  .rr-compare .list-table td:first-child{font-family:var(--ui);}
   .rr-foot{padding:10px 18px 16px;font:400 12.5px/1.55 var(--ui);color:var(--muted);max-width:none;}
   .rr-foot.stale{color:var(--red);}
   .rr-empty{padding:16px 18px 20px;font:400 13.5px/1.55 var(--ui);color:var(--dim);}
@@ -1937,6 +1938,7 @@
     </div>
     <div class="stat-row" id="dh252-cap-row" style="padding:18px;display:flex;gap:24px;flex-wrap:wrap;">
       <div class="stat"><div class="stat-label">Initial capital</div><div class="stat-value">₹20,00,000</div></div>
+      <div class="stat"><div class="stat-label">Current capital</div><div class="stat-value" id="dh252-current-capital">—</div><div id="dh252-current-capital-sub" style="font-size:11px;color:var(--muted);margin-top:2px;">initial + realized + open p&amp;L</div></div>
       <div class="stat"><div class="stat-label">Cash remaining</div><div class="stat-value" id="dh252-cash">—</div></div>
       <div class="stat"><div class="stat-label">Open positions</div><div class="stat-value" id="dh252-open-count">—</div></div>
       <div class="stat"><div class="stat-label">Realized p&amp;L</div><div class="stat-value" id="dh252-realized">—</div></div>
@@ -2373,7 +2375,7 @@
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">A stock is listed when any one rule fires: RSI14 below 25, Supertrend flipped to green in the last 6 days and still green, or today's close is the 52-week low (close-based, 252 trading days). The rule that fired is underlined. Flip date is when Supertrend last changed colour; the Flip column counts trading days since then (weekends and market holidays excluded). Quantity is ₹20,000 divided by CMP, rounded down. A red note under a stock means its latest bar is older than the latest run's market date, so its signals may be stale. Place one add per stock per week; this page doesn't track what you bought.</div>
+    <div class="dash-footnote">A stock is listed when any one rule fires: RSI14 below 25, Supertrend flipped to green this week (Monday to the latest close) and is still green, or today's close is the 52-week low (close-based, 252 trading days). The rule that fired is underlined. Flip date is when Supertrend last changed colour; the Flip column counts trading days since then (weekends and market holidays excluded). Quantity is ₹20,000 divided by CMP, rounded down. A red note under a stock means its latest bar is older than the latest run's market date, so its signals may be stale. Place one add per stock per week; this page doesn't track what you bought.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -3797,7 +3799,7 @@ function renderSensitivity(d, body, meta){
       const span = r.best - r.worst;
       const p = span === 0 ? 50 : Math.max(0, Math.min(100, (r.median - r.worst) / span * 100));
       rail = `<div class="rr-rail"><span class="rr-end l"></span><span class="rr-end r"></span>
-        <span class="rr-tick" style="left:${p}%"></span><span class="rr-cap" style="left:${Math.max(12, Math.min(88, p))}%">median ${rrFmt(key, r.median)}</span></div>`;
+        <span class="rr-tick" style="left:${p}%"></span><span class="rr-cap" style="left:${Math.max(20, Math.min(80, p))}%">median ${rrFmt(key, r.median)}</span></div>`;
     } else {
       rail = '<div class="rr-rail"></div>';
     }
@@ -7754,7 +7756,10 @@ function eqDashRenderEquityChart(s){
   if(points.length){
     points.push({date: s.todayIso, value: points[points.length - 1].value + s.unrealizedMTM, today: true});
   }
-  const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+  // Realized (green) runs flat to today at the last realized value; it used to stop at the last closed trade,
+  // which made the amber dashed line look as if it began on a different date. Amber = only the open-position
+  // effect: last realized point -> today's mark-to-market.
+  const realizedSeries = points.map(p => [new Date(p.date).getTime(), Math.round(p.today ? points[points.length - 2].value : p.value)]);
   const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
 
   if(eqDashEquityChart){ eqDashEquityChart.destroy(); eqDashEquityChart = null; }
@@ -7763,7 +7768,7 @@ function eqDashRenderEquityChart(s){
     theme: {mode: 'dark'},
     series: [
       {name: 'Portfolio (realized)', data: realizedSeries},
-      {name: 'With open positions', data: withOpenSeries},
+      {name: 'With open positions (marked to market today)', data: withOpenSeries},
     ],
     colors: ['#00d26a', '#ff9f1a'],
     stroke: {width: [2, 2], dashArray: [0, 4], curve: 'straight'},
@@ -8451,7 +8456,10 @@ function dh252RenderEquityChart(state, openMtm){
     const todayIso = new Date().toISOString().slice(0, 10);
     points.push({date: todayIso, value: running + openMtm, today: true});
 
-    const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+    // Realized (green) runs flat to today at the last realized value; it used to stop at the last closed trade,
+  // which made the amber dashed line look as if it began on a different date. Amber = only the open-position
+  // effect: last realized point -> today's mark-to-market.
+  const realizedSeries = points.map(p => [new Date(p.date).getTime(), Math.round(p.today ? points[points.length - 2].value : p.value)]);
     const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
 
     if(dh252EquityChart){ dh252EquityChart.destroy(); dh252EquityChart = null; }
@@ -8460,7 +8468,7 @@ function dh252RenderEquityChart(state, openMtm){
       theme: {mode: 'dark'},
       series: [
         {name: 'Portfolio (realized)', data: realizedSeries},
-        {name: 'With open positions', data: withOpenSeries},
+        {name: 'With open positions (marked to market today)', data: withOpenSeries},
       ],
       colors: ['#00d26a', '#ff9f1a'],
       // stepline, not straight — with only a handful of closed trades so
@@ -8543,6 +8551,16 @@ function dh252RenderPositions(state){
     }
   }
   const combinedValue = DH252_INITIAL_CAPITAL_RS + realized + openMtm;
+  // Current capital = what the account is worth now: initial + realized + open (marked-to-market).
+  // Same figure the equity curve ends on and the CAGR below is computed from.
+  const currentCapEl = document.getElementById('dh252-current-capital');
+  if(currentCapEl){
+    currentCapEl.textContent = dh252FmtRs(combinedValue);
+    const capSub = document.getElementById('dh252-current-capital-sub');
+    if(capSub) capSub.textContent = openUnpricedCount
+      ? `initial + realized + open p&l (${openUnpricedCount} open position${openUnpricedCount === 1 ? '' : 's'} unpriced, not counted)`
+      : 'initial + realized + open p&l';
+  }
   // Combined P&L = realized (closed trades) + notional (open MTM) — the
   // true all-in picture, since looking at either alone understates it
   // (e.g. ₹1,000 open profit + ₹200 closed loss = ₹800 combined, not -₹200
@@ -9361,7 +9379,10 @@ function dhccRenderEquityChart(state, openMtm){
     const todayIso = new Date().toISOString().slice(0, 10);
     points.push({date: todayIso, value: running + openMtm, today: true});
 
-    const realizedSeries = points.map(p => [new Date(p.date).getTime(), p.today ? null : Math.round(p.value)]);
+    // Realized (green) runs flat to today at the last realized value; it used to stop at the last closed trade,
+  // which made the amber dashed line look as if it began on a different date. Amber = only the open-position
+  // effect: last realized point -> today's mark-to-market.
+  const realizedSeries = points.map(p => [new Date(p.date).getTime(), Math.round(p.today ? points[points.length - 2].value : p.value)]);
     const withOpenSeries = points.map((p, i) => [new Date(p.date).getTime(), (p.today || i === points.length - 2) ? Math.round(p.value) : null]);
 
     if(dhccEquityChart){ dhccEquityChart.destroy(); dhccEquityChart = null; }
@@ -9370,7 +9391,7 @@ function dhccRenderEquityChart(state, openMtm){
       theme: {mode: 'dark'},
       series: [
         {name: 'Realized P&L', data: realizedSeries},
-        {name: 'With open positions', data: withOpenSeries},
+        {name: 'With open positions (marked to market today)', data: withOpenSeries},
       ],
       colors: ['#00d26a', '#ff9f1a'],
       // stepline, not straight — see dh252RenderEquityChart for why.
@@ -9974,14 +9995,26 @@ function divRenderDataAsOf(){
 //   DIV_FLIP_WINDOW_DAYS and is still green, OR close == trailing 52-week low.
 // The supertrend feed's own lookback is 7 trading days (days_ago 0-6), so a
 // 6-day window is fully covered without touching the pipeline.
-const DIV_FLIP_WINDOW_DAYS = 6;
+const DIV_FLIP_WINDOW_DAYS = 6;   // fallback only: used when a feed entry has no flip date
 
-function divEntryCriteria(sym, week52, stMap, rsiMap){
+// Monday (ISO date) of the week containing `iso`. The weekly buy looks at Monday to the latest
+// close; a flip from the previous week's Friday is NOT this week's signal.
+function divWeekStart(iso){
+  if(!iso) return null;
+  const d = new Date(iso + 'T00:00:00Z');
+  if(isNaN(d)) return null;
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+function divEntryCriteria(sym, week52, stMap, rsiMap, weekStartIso){
   const w = week52[sym], st = stMap[sym], rsi = rsiMap[sym];
   const rsiHit = rsi != null && rsi < DIV_ENTRY_RSI_THRESHOLD;
   const flipDays = st && st.color === 'green' && st.recent_bullish_flip_days_ago != null
     ? (st.recent_bullish_flip_trading_days_ago != null ? st.recent_bullish_flip_trading_days_ago : st.recent_bullish_flip_days_ago) : null;
-  const flipHit = flipDays != null && flipDays <= DIV_FLIP_WINDOW_DAYS;
+  // This week = flip dated Monday..latest close; falls back to the trading-day window only if the date is missing.
+  const flipDate = st && st.recent_bullish_flip_date;
+  const flipHit = flipDays != null && (weekStartIso && flipDate ? flipDate >= weekStartIso : flipDays <= DIV_FLIP_WINDOW_DAYS);
   const lowHit = !!(w && w.pct_from_low != null && w.pct_from_low <= 0);
   return {rsiHit, flipHit, lowHit, flipDays, hits: (rsiHit ? 1 : 0) + (flipHit ? 1 : 0) + (lowHit ? 1 : 0)};
 }
@@ -10044,7 +10077,8 @@ function divRenderEntrySignals(week52, stMap, rsiMap){
   const behind = divWeekdaysBehind(dataIso);
   const stale = behind != null && behind >= 2;
 
-  const rows = DIV_UNIVERSE.map(sym => ({sym, c: divEntryCriteria(sym, week52, stMap, rsiMap)}))
+  const weekStartIso = divWeekStart(dataIso);   // Monday of the latest session's week
+  const rows = DIV_UNIVERSE.map(sym => ({sym, c: divEntryCriteria(sym, week52, stMap, rsiMap, weekStartIso)}))
     .filter(r => r.c.hits > 0)
     .map(r => {
       const w = week52[r.sym];

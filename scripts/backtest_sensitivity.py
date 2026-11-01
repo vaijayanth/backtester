@@ -48,7 +48,7 @@ def summarise(values, higher_is_better):
     lo, hi = min(vals), max(vals)
     return {
         "worst": lo if higher_is_better else hi,
-        "median": statistics.median(vals),
+        "median": round(statistics.median(vals), 2),
         "best": hi if higher_is_better else lo,
         "n": len(vals),
     }
@@ -102,10 +102,20 @@ def main():
     parser.add_argument("--seeds", type=int, default=5, help="random seeds per intrabar order (default 5)")
     parser.add_argument("--out", type=str, default=str(DEFAULT_OUT))
     args = parser.parse_args()
-    if args.seeds < 1:
-        parser.error("--seeds must be >= 1")
+    if not 1 <= args.seeds <= 20:
+        parser.error("--seeds must be between 1 and 20")
 
-    base = json.loads(Path(args.params).read_text()) if args.params else {}
+    base = {}
+    if args.params:
+        try:
+            base = json.loads(Path(args.params).read_text())
+        except (OSError, json.JSONDecodeError) as err:
+            parser.error(f"--params {args.params}: {err}")
+        if not isinstance(base, dict):
+            parser.error("--params must contain a JSON object (e.g. {\"max_open_positions\": 100})")
+        unknown = sorted(set(base) - set(engine.DEFAULT_PARAMS))
+        if unknown:
+            parser.error(f"unknown strategy param(s) {unknown}; known: {sorted(engine.DEFAULT_PARAMS)}")
     for forced in ("gap_aware_fills", "entry_priority", "intrabar_order", "random_seed"):
         base.pop(forced, None)   # the grid owns these
 

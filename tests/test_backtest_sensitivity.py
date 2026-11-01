@@ -90,6 +90,28 @@ def test_main_writes_atomically_and_ignores_forced_params():
         assert data["base_params_overrides"]["max_open_positions"] == 3 and not list(out.parent.glob("*.tmp"))
 
 
+def _main_with(args):
+    with mock.patch.object(sys, "argv", ["x"] + args):
+        try:
+            s.main()
+        except SystemExit as err:
+            return err.code
+    return 0
+
+
+def test_bad_inputs_fail_cleanly():
+    with tempfile.TemporaryDirectory() as tmp:
+        arr, bad, unk = Path(tmp) / "a.json", Path(tmp) / "b.json", Path(tmp) / "u.json"
+        arr.write_text("[1]"); bad.write_text("{nope"); unk.write_text('{"bogus_key": 1}')
+        for argv in (["--params", str(arr)], ["--params", str(bad)], ["--params", str(Path(tmp) / "missing.json")],
+                     ["--params", str(unk)], ["--seeds", "0"], ["--seeds", "21"]):
+            assert _main_with(argv) == 2, argv
+
+
+def test_medians_are_rounded():
+    assert s.summarise([12.26, 12.26, 12.26000000000001], False)["median"] == 12.26
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
