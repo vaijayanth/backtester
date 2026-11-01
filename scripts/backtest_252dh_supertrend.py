@@ -162,10 +162,13 @@ def symbol_order(symbols, date, entry_priority="random", random_seed=0, first=()
 
     `first` = symbols served before the rest (those with a pending sell_exit):
     a sale must free its cash before any buy that day is attempted, otherwise
-    a buy is wrongly counted as "no cash" only because its sale hadn't run yet."""
+    a buy is wrongly counted as "no cash" only because its sale hadn't run yet.
+    Applied in "random" mode only; "symbol" is EXACTLY the pre-2026-11-01 order
+    (verified equal to the old engine, trades and equity curve)."""
     syms = list(symbols)
-    if entry_priority != "symbol":
-        random.Random(f"{random_seed}|{date.date()}").shuffle(syms)
+    if entry_priority == "symbol":
+        return syms
+    random.Random(f"{random_seed}|{date.date()}").shuffle(syms)
     first = set(first)
     return [x for x in syms if x in first] + [x for x in syms if x not in first]
 

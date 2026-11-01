@@ -125,7 +125,7 @@ def test_252dh_sells_are_served_before_buys():
     for seed in range(20):
         order = d252.symbol_order(syms, day, "random", seed, first=["E", "C"])
         assert set(order[:2]) == {"E", "C"} and sorted(order) == syms
-    assert d252.symbol_order(syms, day, "symbol", first=["E", "C"]) == ["C", "E", "A", "B", "D", "F"]
+    assert d252.symbol_order(syms, day, "symbol", first=["E", "C"]) == syms  # legacy mode is exact manifest order
 
 
 def test_252dh_cash_goes_to_random_not_first_symbol():
