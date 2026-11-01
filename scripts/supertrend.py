@@ -29,7 +29,7 @@ Usage:
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -225,12 +225,34 @@ def _cmp_only_entry(symbol, latest_close, latest_date):
     }
 
 
+def _trading_days_between(calendar, after_date, up_to_date):
+    """Trading days strictly after `after_date` and up to (inclusive)
+    `up_to_date`, counted on the market calendar (dates the exchange
+    actually traded) — never weekends or holidays. 0 means same day."""
+    return sum(1 for d in calendar if after_date < d <= up_to_date)
+
+
+def _market_calendar(date_counts, n_symbols, latest_market_date):
+    """The set of dates the market traded, taken from the data itself (so
+    NSE holidays drop out automatically, no hard-coded holiday list to go
+    stale). A date counts when at least 20% of symbols have a bar on it —
+    that filters a stray one-symbol artefact — and the latest market date
+    is always included so a freshly-closed day is never miscounted."""
+    floor = max(3, int(n_symbols * 0.2))
+    cal = {d for d, c in date_counts.items() if c >= floor}
+    if latest_market_date:
+        cal.add(latest_market_date)
+    return sorted(cal)
+
+
 def build_supertrend(universe="fno"):
     validated = load_validated_set()
     partial = load_partial_set()
     available = validated | partial
     target_symbols = load_fno_symbols() if universe == "fno" else sorted(available)
 
+    from collections import Counter
+    date_counts = Counter()  # date -> number of symbols with a bar that day (recent window only)
     entries = []
     bullish_flips = []
     bearish_flips = []
@@ -255,6 +277,7 @@ def build_supertrend(universe="fno"):
 
         latest_close = closes[-1]
         latest_date = str(df.index[-1].date())
+        date_counts.update(str(d.date()) for d in df.index[-90:])
 
         if len(closes) < ATR_PERIOD + 2:
             entries.append(_cmp_only_entry(symbol, latest_close, latest_date))
@@ -295,8 +318,35 @@ def build_supertrend(universe="fno"):
         if flipped:
             (bullish_flips if today_dir == "up" else bearish_flips).append(entry)
 
+
+    # --- Market calendar + staleness (added 2026-11-01) --------------------
+    # Each entry's own last bar can lag the market's latest trading day when a
+    # fetch regresses or a provider is late (seen 2026-10-30: 1,492 of 1,499
+    # symbols silently lost their last bar). Counting "days since flip" from
+    # the symbol's own last bar then understates it and hides the problem.
+    # So: express flip age in TRADING days up to the market's latest date,
+    # and mark any entry whose bar is behind it.
+    today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
+    seen = [d for d in date_counts if d <= today_ist]
+    latest_market_date = max(seen) if seen else None
+    calendar = _market_calendar({d: c for d, c in date_counts.items() if d <= today_ist}, len(entries), latest_market_date)
+    stale_count = 0
+    for e in entries:
+        lag = _trading_days_between(calendar, e["date"], latest_market_date) if latest_market_date and e.get("date") else None
+        e["data_lag_trading_days"] = lag
+        e["stale_data"] = bool(lag)
+        stale_count += 1 if lag else 0
+        for src, dst in (("recent_flip_date", "recent_flip_trading_days_ago"),
+                         ("recent_bullish_flip_date", "recent_bullish_flip_trading_days_ago")):
+            fd = e.get(src)
+            e[dst] = _trading_days_between(calendar, fd, latest_market_date) if fd and latest_market_date else None
+        sd = e.get("current_streak_start_date")
+        e["current_streak_trading_days"] = _trading_days_between(calendar, sd, latest_market_date) if sd and latest_market_date else None
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "latest_market_date": latest_market_date,
+        "stale_symbols": stale_count,
         "universe": "nse_fno" if universe == "fno" else "full_backtester_universe",
         "universe_size": len(target_symbols),
         "params": {"atr_period": ATR_PERIOD, "multiplier": MULTIPLIER, "ema_fast": EMA_FAST},

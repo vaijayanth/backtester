@@ -350,6 +350,10 @@
   .div-slip-line .s{font:500 15px var(--num);min-width:8.5em;}
   .div-slip-line .qty{font:600 15px var(--num);min-width:4em;}
   .div-slip-line .why{font:400 13px var(--ui);color:var(--dim);}
+  .div-slip-warn{margin-top:8px;font:500 13px var(--ui);color:var(--red);max-width:none;}
+  .div-slip-lag{font:500 12.5px var(--ui);color:var(--red);}
+  .div-stale-note{display:block;font:500 11.5px var(--ui);color:var(--red);margin-top:2px;white-space:nowrap;}
+  #div-entry-table tr.div-row-stale td:first-child{box-shadow:inset 3px 0 0 var(--red);}
   .div-tab-count{display:none;margin-left:8px;font:600 12px var(--num);color:var(--green);}
   .div-tab-count.on{display:inline;}
   #div-entry-table th,#div-entry-table td{text-align:left;}
@@ -2321,11 +2325,11 @@
     </div>
     <div class="table-scroll">
       <table class="list-table" id="div-entry-table">
-        <thead><tr><th>STOCK</th><th title="Shares for a ₹20,000 add">QTY</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>FLIP</th><th>52W LOW ₹</th><th>ABOVE LOW</th><th>ADD ₹</th></tr></thead>
+        <thead><tr><th>STOCK</th><th title="Shares for a ₹20,000 add">QTY</th><th>CMP ₹</th><th>RSI14</th><th>SUPERTREND</th><th>FLIP DATE</th><th>FLIP</th><th>52W LOW ₹</th><th>ABOVE LOW</th><th>ADD ₹</th></tr></thead>
         <tbody id="div-entry-tbody"></tbody>
       </table>
     </div>
-    <div class="dash-footnote">A stock is listed when any one rule fires: RSI14 below 25, Supertrend flipped to green in the last 6 days and still green, or today's close is the 52-week low (close-based, 252 trading days). The rule that fired is underlined. Quantity is ₹20,000 divided by CMP, rounded down. Place one add per stock per week; this page doesn't track what you bought.</div>
+    <div class="dash-footnote">A stock is listed when any one rule fires: RSI14 below 25, Supertrend flipped to green in the last 6 days and still green, or today's close is the 52-week low (close-based, 252 trading days). The rule that fired is underlined. Flip date is when Supertrend last changed colour; the Flip column counts trading days since then (weekends and market holidays excluded). Quantity is ₹20,000 divided by CMP, rounded down. A red note under a stock means its latest bar is older than the latest run's market date, so its signals may be stale. Place one add per stock per week; this page doesn't track what you bought.</div>
   </div>
   </div><!-- /subtab-panel -->
 
@@ -2755,15 +2759,22 @@ function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
 // what gets sorted.
 function stFlipSortValue(entry){
   if(!entry) return '';
-  if(entry.recent_flip_days_ago != null) return entry.recent_flip_days_ago;
-  if(entry.current_streak_days != null && entry.color) return entry.current_streak_days;
+  if(entry.recent_flip_days_ago != null) return stFlipDays(entry);
+  if(entry.current_streak_days != null && entry.color) return stStreakDays(entry);
   return '';
 }
+
+// Days since flip = TRADING days (exchange calendar, no weekends/holidays) up to
+// the market's latest trading date. Feeds from 2026-11-01 carry *_trading_days_ago;
+// older feeds fall back to the symbol's own bar count (also trading days, but
+// measured to its own last bar).
+function stFlipDays(entry){ return entry.recent_flip_trading_days_ago != null ? entry.recent_flip_trading_days_ago : entry.recent_flip_days_ago; }
+function stStreakDays(entry){ return entry.current_streak_trading_days != null ? entry.current_streak_trading_days : entry.current_streak_days; }
 
 function stFlipLabel(entry){
   if(!entry) return '<span style="color:var(--muted);">—</span>';
   if(entry.recent_flip_days_ago != null){
-    const days = entry.recent_flip_days_ago;
+    const days = stFlipDays(entry);
     const dirLabel = entry.recent_flip_direction === 'up' ? 'GREEN' : 'RED';
     const dirColor = entry.recent_flip_direction === 'up' ? 'var(--green)' : 'var(--red)';
     return `<span style="color:${dirColor};font-weight:600;">Flipped to ${dirLabel} (${days})</span>`;
@@ -2771,7 +2782,7 @@ function stFlipLabel(entry){
   if(entry.current_streak_days != null && entry.color){
     const dirLabel = entry.color === 'green' ? 'GREEN' : 'RED';
     const dirColor = entry.color === 'green' ? 'var(--green)' : 'var(--red)';
-    return `<span style="color:${dirColor};opacity:0.75;">${dirLabel} ${entry.current_streak_days}d</span>`;
+    return `<span style="color:${dirColor};opacity:0.75;">${dirLabel} ${stStreakDays(entry)}d</span>`;
   }
   return '<span style="color:var(--muted);">—</span>';
 }
@@ -6379,6 +6390,7 @@ async function eqFetchSupertrend(){
     if(!res.ok) return null;
     const data = await res.json();
     window._eqSupertrendGeneratedAt = data.generated_at || null;
+    window._eqLatestMarketDate = data.latest_market_date || null; // pipeline-provided (2026-11-01+); null on older feeds
     const bySymbol = {};
     // This feed is Yahoo Finance tickers ("THYROCARE.NS", or ".BO" for a
     // handful of BSE-only listings like NSDL); Zerodha Tradebook fills
@@ -6389,6 +6401,12 @@ async function eqFetchSupertrend(){
     // entirely) — matches eqFetchWeek52's stripping, which already
     // handled both.
     (data.entries || []).forEach(e => { bySymbol[e.symbol.replace(/\.(NS|BO)$/, '')] = e; });
+    if(!window._eqLatestMarketDate){
+      // older feed without the field: newest bar date in the whole feed, never in the future
+      const todayIst = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Kolkata'}).format(new Date());
+      const ds = (data.entries || []).map(e => e.date).filter(d => d && d <= todayIst).sort();
+      window._eqLatestMarketDate = ds.length ? ds[ds.length - 1] : null;
+    }
     return bySymbol;
   } catch(e){
     return null; // signals degrade to "—" rather than block the page
@@ -9844,7 +9862,7 @@ function divEntryCriteria(sym, week52, stMap, rsiMap){
   const w = week52[sym], st = stMap[sym], rsi = rsiMap[sym];
   const rsiHit = rsi != null && rsi < DIV_ENTRY_RSI_THRESHOLD;
   const flipDays = st && st.color === 'green' && st.recent_bullish_flip_days_ago != null
-    ? st.recent_bullish_flip_days_ago : null;
+    ? (st.recent_bullish_flip_trading_days_ago != null ? st.recent_bullish_flip_trading_days_ago : st.recent_bullish_flip_days_ago) : null;
   const flipHit = flipDays != null && flipDays <= DIV_FLIP_WINDOW_DAYS;
   const lowHit = !!(w && w.pct_from_low != null && w.pct_from_low <= 0);
   return {rsiHit, flipHit, lowHit, flipDays, hits: (rsiHit ? 1 : 0) + (flipHit ? 1 : 0) + (lowHit ? 1 : 0)};
@@ -9876,9 +9894,34 @@ function divWeekdaysBehind(dataIso){
   return behind;
 }
 
+// Trading days a stock's last bar is behind the market's latest trading date.
+// Uses the pipeline's exchange-calendar count when the feed has it; older feeds
+// fall back to weekdays (holidays unknown client-side, so that path can only
+// under-count, never invent a lag).
+function divRowLag(st, latestMkt){
+  if(!st || !latestMkt || !st.date) return 0;
+  if(st.data_lag_trading_days != null) return st.data_lag_trading_days;
+  if(st.date >= latestMkt) return 0;
+  let n = 0, c = new Date(st.date + 'T00:00:00Z');
+  const end = new Date(latestMkt + 'T00:00:00Z');
+  while(c < end){ c = new Date(c.getTime() + 86400000); if(c.getUTCDay() !== 0 && c.getUTCDay() !== 6) n++; }
+  return n;
+}
+
+// Red explanation shown in the header when stocks' latest bar is older than the
+// latest run's market date: the signals for those stocks were computed on old data.
+function divLagWarning(staleUniverse, stMap, latestMkt){
+  if(!staleUniverse.length) return '';
+  const names = staleUniverse.length <= 4 ? staleUniverse.join(', ') : staleUniverse.slice(0, 4).join(', ') + ' and ' + (staleUniverse.length - 4) + ' more';
+  return `<div class="div-slip-warn">${staleUniverse.length} of ${DIV_UNIVERSE.length} stocks have no bar for ${divFmtDay(latestMkt)} (${names}). Their signals use older data and may have changed. Data problem, not a market signal.</div>`;
+}
+
 function divRenderEntrySignals(week52, stMap, rsiMap){
   const dates = DIV_UNIVERSE.map(s => (stMap[s] && stMap[s].date) || (week52[s] && week52[s].date)).filter(Boolean).sort();
-  const dataIso = dates.length ? dates[dates.length - 1] : null;
+  const latestMkt = window._eqLatestMarketDate || null;   // the latest run's market date, across the whole feed
+  const dataIso = latestMkt || (dates.length ? dates[dates.length - 1] : null);
+  const lagOf = sym => divRowLag(stMap[sym], latestMkt);
+  const staleUniverse = DIV_UNIVERSE.filter(sym => lagOf(sym) > 0);
   const dayLabel = divFmtDay(dataIso);
   const behind = divWeekdaysBehind(dataIso);
   const stale = behind != null && behind >= 2;
@@ -9888,7 +9931,7 @@ function divRenderEntrySignals(week52, stMap, rsiMap){
     .map(r => {
       const w = week52[r.sym];
       const close = w ? w.close : null;
-      return Object.assign(r, {close, qty: close ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / close)) : null});
+      return Object.assign(r, {close, lag: lagOf(r.sym), qty: close ? Math.max(1, Math.floor(DIV_ADD_AMOUNT_RS / close)) : null});
     })
     .sort((a, b) => b.c.hits - a.c.hits || (a.c.flipDays ?? 99) - (b.c.flipDays ?? 99) || a.sym.localeCompare(b.sym));
 
@@ -9897,26 +9940,33 @@ function divRenderEntrySignals(week52, stMap, rsiMap){
   if(tabCount){ tabCount.textContent = rows.length ? rows.length : ''; tabCount.classList.toggle('on', rows.length > 0); }
 
   document.getElementById('div-entry-tbody').innerHTML = rows.length ? rows.map(r => {
-    const {sym, c, close, qty} = r;
+    const {sym, c, close, qty, lag} = r;
     const w = week52[sym], st = stMap[sym], rsi = rsiMap[sym];
     const stColor = st && st.color ? st.color : null;
     const lowCls = c.lowHit ? ' class="rule-hit"' : '';
-    return `<tr><td>${sym}</td>
+    const flipIso = st && (st.recent_flip_date || st.current_streak_start_date) || null;
+    const flipFromStreak = !(st && st.recent_flip_date);
+    const staleNote = lag > 0
+      ? `<span class="div-stale-note" title="Latest bar is ${divFmtDay(st.date)}; the latest run's market date is ${divFmtDay(latestMkt)}. Signals for this stock may have changed.">bar ${divFmtDay(st.date)}</span>` : '';
+    return `<tr${lag > 0 ? ' class="div-row-stale"' : ''}><td>${sym}${staleNote}</td>
       <td class="num-qty">${qty !== null ? qty : '—'}</td>
       <td>${close != null ? dh252FmtRs(close) : '—'}</td>
       <td${c.rsiHit ? ' class="rule-hit"' : ''}>${rsi != null ? rsi.toFixed(1) : '—'}</td>
       <td style="color:${stColor === 'green' ? 'var(--green)' : stColor === 'red' ? 'var(--red)' : ''};font-weight:700">${stColor ? stColor.toUpperCase() : '—'}</td>
+      <td${c.flipHit ? ' class="rule-hit"' : ''} data-sort-value="${flipIso || ''}"${flipFromStreak ? ' style="color:var(--muted);" title="No flip in the lookback window; this is when the current colour began"' : ''}>${flipIso ? divFmtDay(flipIso) : '—'}</td>
       <td${c.flipHit ? ' class="rule-hit"' : ''} data-sort-value="${stFlipSortValue(st)}">${stFlipLabel(st)}</td>
       <td${lowCls}>${w && w.low_52w != null ? dh252FmtRs(w.low_52w) : '—'}</td>
       <td${lowCls}>${w && w.pct_from_low != null ? w.pct_from_low.toFixed(1) + '%' : '—'}</td>
       <td>${dh252FmtRs(DIV_ADD_AMOUNT_RS)}</td></tr>`;
-  }).join('') : `<tr><td colspan="9" class="loading" style="padding:0;"><div style="position:sticky;left:0;max-width:min(560px,calc(100vw - 84px));white-space:normal;text-align:left;font-family:var(--ui);padding:14px 18px;">${dataIso ? 'Nothing meets an entry rule as of the ' + dayLabel + ' close. Check again after Friday\u2019s close.' : 'Entry data not loaded. Press refresh before ordering.'}</div></td></tr>`;
+  }).join('') : `<tr><td colspan="10" class="loading" style="padding:0;"><div style="position:sticky;left:0;max-width:min(560px,calc(100vw - 84px));white-space:normal;text-align:left;font-family:var(--ui);padding:14px 18px;">${dataIso ? 'Nothing meets an entry rule as of the ' + dayLabel + ' close. Check again after Friday\u2019s close.' : 'Entry data not loaded. Press refresh before ordering.'}</div></td></tr>`;
 
   // Order slip in the page header: what to buy this weekend.
   const slip = document.getElementById('div-slip');
   if(!slip) return;
-  slip.classList.toggle('has-entries', rows.length > 0 && !stale);
-  slip.classList.toggle('stale', stale);
+  const staleListed = rows.filter(r => r.lag > 0);
+  const lagWarn = staleUniverse.length > 0;   // any universe stock behind the latest run
+  slip.classList.toggle('has-entries', rows.length > 0 && !stale && !lagWarn);
+  slip.classList.toggle('stale', stale || lagWarn);
   if(!dataIso){
     slip.className = 'div-slip';
     slip.innerHTML = '<div class="div-slip-title">Entry data not loaded</div><div class="div-slip-meta">Press refresh to reload the Supertrend and 52-week feeds before ordering.</div>';
@@ -9927,19 +9977,20 @@ function divRenderEntrySignals(week52, stMap, rsiMap){
     return;
   }
   if(!rows.length){
-    slip.innerHTML = `<div class="div-slip-title">No entry signals this week</div><div class="div-slip-meta">Checked against the ${dayLabel} close.</div>`;
+    slip.innerHTML = `<div class="div-slip-title">${lagWarn ? 'No signals found, but the data is incomplete' : 'No entry signals this week'}</div><div class="div-slip-meta">Checked against the ${dayLabel} close.</div>${divLagWarning(staleUniverse, stMap, latestMkt)}`;
     return;
   }
   const total = rows.reduce((sum, r) => sum + (r.qty && r.close ? r.qty * r.close : 0), 0);
   const lines = rows.map(r => {
     const reasons = [];
     if(r.c.rsiHit) reasons.push('RSI ' + rsiMap[r.sym].toFixed(1));
-    if(r.c.flipHit) reasons.push(r.c.flipDays === 0 ? 'green flip today' : 'green flip ' + r.c.flipDays + (r.c.flipDays === 1 ? ' day ago' : ' days ago'));
+    if(r.c.flipHit){ const fd = stMap[r.sym].recent_bullish_flip_date; reasons.push('green flip' + (fd ? ' ' + divFmtDay(fd) : '')); }
     if(r.c.lowHit) reasons.push('at 52-week low');
-    return `<div class="div-slip-line"><span class="s">${r.sym}</span><span class="qty">× ${r.qty !== null ? r.qty : '—'}</span><span class="why">${reasons.join(', ')}</span></div>`;
+    const lagTxt = r.lag > 0 ? `<span class="div-slip-lag">data ${divFmtDay(stMap[r.sym].date)}, ${r.lag} trading day${r.lag === 1 ? '' : 's'} behind</span>` : '';
+    return `<div class="div-slip-line"><span class="s">${r.sym}</span><span class="qty">× ${r.qty !== null ? r.qty : '—'}</span><span class="why">${reasons.join(', ')}</span>${lagTxt}</div>`;
   }).join('');
-  slip.innerHTML = `<div class="div-slip-head"><div class="div-slip-title">Buy this weekend</div>
-    <div class="div-slip-meta">${dayLabel} close, about ${dh252FmtRs(total)} across ${rows.length} ${rows.length === 1 ? 'stock' : 'stocks'}</div></div>${lines}`;
+  slip.innerHTML = `<div class="div-slip-head"><div class="div-slip-title">${lagWarn ? 'Buy this weekend: check the data first' : 'Buy this weekend'}</div>
+    <div class="div-slip-meta">${dayLabel} close, about ${dh252FmtRs(total)} across ${rows.length} ${rows.length === 1 ? 'stock' : 'stocks'}</div></div>${lines}${divLagWarning(staleUniverse, stMap, latestMkt)}`;
 }
 
 function divRenderSignals(){
