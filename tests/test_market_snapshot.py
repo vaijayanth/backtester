@@ -98,6 +98,14 @@ def test_pulse_counts_are_consistent():
     assert p["below_both"] + p["above_both"] <= p["counted"]
 
 
+def test_duplicate_index_dates_are_not_double_counted():
+    days = pd.bdate_range("2024-01-01", periods=320)
+    a = frame(days, 1)
+    dup = pd.concat([a, a.iloc[[100]]])       # one date appears twice
+    snap = snapshot_of({"A.NS": dup, "B.NS": frame(days, 2)})
+    assert len(snap["breadth_trend"]) == 320 and len({r["date"] for r in snap["breadth_trend"]}) == 320
+
+
 def test_no_data_raises():
     with mock.patch.object(ms, "load_validated_symbols", lambda: []):
         try:

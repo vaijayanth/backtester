@@ -62,8 +62,9 @@ def fetch_pending():
     data = resp.json()
     if not data.get("success"):
         raise RuntimeError(data.get("error", "sheet returned an error"))
-    return [r["symbol"].strip().upper() for r in data.get("rows", [])
-            if r.get("status") == "PENDING" and r.get("symbol", "").strip()]
+    # A Sheet cell can come back as a number or null; coerce instead of crashing the hourly job.
+    symbols = (str(r.get("symbol") or "").strip().upper() for r in data.get("rows", []) if r.get("status") == "PENDING")
+    return [s for s in symbols if s]
 
 
 def normalize_symbol(symbol):
@@ -118,16 +119,20 @@ def main():
     # raw -> normalized, in request order; a duplicate raw request in the
     # same batch is deduped (processed once, same outcome applied to all
     # matching rows via update_status's bulk match).
-    pairs = list(dict.fromkeys((raw, normalize_symbol(raw)) for raw in pending_raw))  # same symbol requested twice -> once
+    pairs = list(dict.fromkeys((raw, normalize_symbol(raw)) for raw in pending_raw))  # exact repeats -> once
 
-    to_merge, already_present, rejected, etf_blocked = [], [], [], []
+    to_merge, already_present, rejected, etf_blocked, merged_repeats = [], [], [], [], []
+    queued_norms = set()   # "NEWCO" and "NEWCO.NS" in one batch are the same symbol: append/check it once
     for raw, norm in pairs:
         if clean_universe.is_removed_etf(norm):
             # clean_universe would drop it on regeneration, so reporting MERGED would be a lie
             etf_blocked.append((raw, norm))
         elif norm in existing_manual or norm in existing_clean:
             already_present.append((raw, norm))
+        elif norm in queued_norms:
+            merged_repeats.append((raw, norm))   # same outcome for its sheet row; nothing appended twice
         elif symbol_has_real_data(norm):
+            queued_norms.add(norm)
             to_merge.append((raw, norm))
         else:
             rejected.append((raw, norm))
@@ -147,7 +152,7 @@ def main():
         print("Nothing new and valid to add to the universe file.")
 
     updates = (
-        [{"symbol": raw, "status": "MERGED", "note": f"added as {norm}"} for raw, norm in to_merge]
+        [{"symbol": raw, "status": "MERGED", "note": f"added as {norm}"} for raw, norm in to_merge + merged_repeats]
         + [{"symbol": raw, "status": "ALREADY_EXISTS", "note": f"{norm} already in universe"} for raw, norm in already_present]
         + [{"symbol": raw, "status": "REJECTED", "note": f"no price data found for {norm} on Yahoo — check spelling/exchange"} for raw, norm in rejected]
         + [{"symbol": raw, "status": "REJECTED", "note": f"{norm} is an ETF; the universe excludes ETFs by design (clean_universe.KNOWN_ETFS)"} for raw, norm in etf_blocked]

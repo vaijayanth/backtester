@@ -38,7 +38,7 @@ def upsert_entry(index: list, entry: dict) -> list:
     """Replace the entry with the same filename in place (a re-run or workflow retry for
     the same results file must not list the run twice); append if it is new."""
     for i, existing in enumerate(index):
-        if existing.get("filename") == entry["filename"]:
+        if isinstance(existing, dict) and existing.get("filename") == entry["filename"]:
             index[i] = entry
             return index
     index.append(entry)

@@ -41,6 +41,11 @@ def test_rerun_same_file_upserts_not_duplicates_and_keeps_order():
         assert idx[0]["win_rate_pct"] == 77.0
 
 
+def test_non_dict_items_in_index_do_not_crash_upsert():
+    idx = u.upsert_entry([1, None, {"filename": "a.json", "x": 1}], {"filename": "a.json", "x": 2})
+    assert idx == [1, None, {"filename": "a.json", "x": 2}]
+
+
 def test_corrupt_index_is_not_overwritten():
     with tempfile.TemporaryDirectory() as tmp:
         idx = Path(tmp) / "results" / "index.json"

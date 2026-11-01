@@ -118,6 +118,16 @@ def test_low_first_exits_on_a_stop_set_at_a_prior_close():
         assert abs(t[0]["exit_price"] - round(entry * 1.12 * 0.94, 2)) < 0.011, order   # stop = peak*0.94 from day 1
 
 
+def test_typo_in_choice_params_is_rejected_not_silently_legacy():
+    for bad in ({"intrabar_order": "Low_First"}, {"entry_priority": "alphabetical"}, {"intrabar_order": None}):
+        try:
+            run_sst({"A.NS": series()}, **bad)
+        except ValueError as err:
+            assert "must be one of" in str(err)
+        else:
+            raise AssertionError(bad)
+
+
 def test_default_intrabar_order_is_legacy_high_first():
     assert e.DEFAULT_PARAMS["intrabar_order"] == "high_first"
 

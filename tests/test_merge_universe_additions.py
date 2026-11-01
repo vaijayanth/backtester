@@ -58,6 +58,12 @@ def test_new_valid_symbol_is_merged_once_even_if_requested_twice():
     assert "NEWCO.NS" in clean and by_status(sent) == {"MERGED": ["NEWCO"]}
 
 
+def test_bare_and_suffixed_request_of_same_symbol_append_once_both_rows_merged():
+    sent, manual, _ = run_merge(["NEWCO", "NEWCO.NS"])
+    assert manual == ["NEWCO.NS"]
+    assert by_status(sent) == {"MERGED": ["NEWCO", "NEWCO.NS"]}
+
+
 def test_etf_is_rejected_not_reported_as_merged():
     sent, manual, clean = run_merge(["NIFTYBEES"], real_data=("NIFTYBEES.NS",))
     assert manual == [] and "NIFTYBEES.NS" not in clean
@@ -77,6 +83,14 @@ def test_existing_and_bad_symbols_resolved():
     st = by_status(sent)
     assert st["ALREADY_EXISTS"] == ["RELIANCE"] and st["REJECTED"] == ["TYPO"] and st["MERGED"] == ["NEWCO"]
     assert manual == ["NEWCO.NS"]
+
+
+def test_fetch_pending_survives_numeric_and_null_symbols():
+    rows = {"success": True, "rows": [{"status": "PENDING", "symbol": 500325}, {"status": "PENDING", "symbol": None},
+                                      {"status": "PENDING", "symbol": " reliance "}, {"status": "DONE", "symbol": "X"}]}
+    resp = type("R", (), {"raise_for_status": lambda self: None, "json": lambda self: rows})()
+    with mock.patch.object(m.requests, "get", lambda *a, **k: resp):
+        assert m.fetch_pending() == ["500325", "RELIANCE"]
 
 
 def test_no_pending_is_a_noop():

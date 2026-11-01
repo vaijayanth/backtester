@@ -58,6 +58,7 @@ def build_snapshot():
         df = pd.read_parquet(path)
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df = df.sort_index()
+        df = df[~df.index.duplicated(keep="last")]   # a duplicated date would double-count the symbol that day
         f = _stock_flags(df)
         flags50[symbol] = pd.Series(f["above50"], index=df.index)
         flags200[symbol] = pd.Series(f["above200"], index=df.index)

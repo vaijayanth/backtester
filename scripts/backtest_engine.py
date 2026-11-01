@@ -171,8 +171,14 @@ _BAR_COLS = ["Open", "High", "Low", "Close", "ema_fast", "ema_slow", "rolling_hi
 _O, _H, _L, _C, _EF, _ES, _RH = range(7)
 
 
+VALID_CHOICES = {"intrabar_order": ("high_first", "low_first"), "entry_priority": ("random", "symbol")}
+
+
 def run_backtest(params=None, symbols=None):
     params = {**DEFAULT_PARAMS, **(params or {})}
+    for key, allowed in VALID_CHOICES.items():   # a typo must not silently run the legacy mode
+        if params[key] not in allowed:
+            raise ValueError(f"params['{key}'] must be one of {allowed}, got {params[key]!r}")
     raw_data = load_universe_data(symbols)
     if not raw_data:
         raise RuntimeError(
