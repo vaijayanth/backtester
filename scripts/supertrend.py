@@ -29,6 +29,7 @@ Usage:
 
 import argparse
 import json
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -143,13 +144,59 @@ def _market_calendar(date_counts, n_symbols, latest_market_date):
     return sorted(cal)
 
 
+# Large, liquid names that trade every session: the market's latest date is read from
+# THEIR bars, so one stray symbol with an odd/early/late bar can't redefine "latest" and
+# mark ~1,500 healthy symbols stale (code-review 2026-11-01). Falls back to the whole
+# universe when fewer than REFERENCE_MIN of them are present (e.g. the F&O feed subset).
+REFERENCE_BASKET = ("ICICIBANK.NS", "SBIN.NS", "RELIANCE.NS", "HDFCBANK.NS", "TCS.NS", "INFY.NS", "ITC.NS", "LT.NS")
+REFERENCE_MIN = 2
+
+
+def pick_latest_market_date(date_counts, basket_last_dates, today_ist):
+    """Newest session date, never in the future (IST). Preference order:
+    1. newest date that at least REFERENCE_MIN reference-basket symbols share;
+    2. else newest date any symbol has (small/partial universes)."""
+    basket = Counter(d for d in basket_last_dates if d <= today_ist)
+    shared = [d for d, c in basket.items() if c >= REFERENCE_MIN]
+    if shared:
+        return max(shared)
+    seen = [d for d in date_counts if d <= today_ist]
+    return max(seen) if seen else None
+
+
+def weekdays_between(after_iso, up_to_iso):
+    """Weekdays strictly after `after_iso` up to and including `up_to_iso` (holidays unknown)."""
+    if not after_iso or not up_to_iso:
+        return None
+    from datetime import date as _d
+    a, b = _d.fromisoformat(after_iso), _d.fromisoformat(up_to_iso)
+    n, cur = 0, a
+    while cur < b:
+        cur = _d.fromordinal(cur.toordinal() + 1)
+        n += cur.weekday() < 5
+    return n
+
+
+def expected_last_session(now_utc):
+    """The most recent weekday session that should be in the data by now: today counts only
+    after 21:00 IST (after the 20:00 IST pipeline slot has had time to land), otherwise the
+    previous weekday. NSE holidays are not modelled — treat a lag of 1 as noise, 2+ as real."""
+    ist = now_utc + timedelta(hours=5, minutes=30)
+    d = ist.date()
+    if ist.hour < 21 or d.weekday() >= 5:
+        d = d - timedelta(days=1)
+    while d.weekday() >= 5:
+        d = d - timedelta(days=1)
+    return d.isoformat()
+
+
 def build_supertrend(universe="fno"):
     validated = load_validated_set()
     partial = load_partial_set()
     available = validated | partial
     target_symbols = load_fno_symbols() if universe == "fno" else sorted(available)
 
-    from collections import Counter
+    last_dates = {}  # symbol -> its last bar date
     date_counts = Counter()  # date -> number of symbols with a bar that day (recent window only)
     entries = []
     bullish_flips = []
@@ -176,6 +223,7 @@ def build_supertrend(universe="fno"):
         latest_close = closes[-1]
         latest_date = str(df.index[-1].date())
         date_counts.update(str(d.date()) for d in df.index[-90:])
+        last_dates[symbol] = latest_date
 
         if len(closes) < ATR_PERIOD + 2:
             entries.append(_cmp_only_entry(symbol, latest_close, latest_date))
@@ -225,8 +273,10 @@ def build_supertrend(universe="fno"):
     # So: express flip age in TRADING days up to the market's latest date,
     # and mark any entry whose bar is behind it.
     today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
-    seen = [d for d in date_counts if d <= today_ist]
-    latest_market_date = max(seen) if seen else None
+    latest_market_date = pick_latest_market_date(
+        date_counts, [last_dates[b] for b in REFERENCE_BASKET if b in last_dates], today_ist)
+    expected_session = expected_last_session(datetime.now(timezone.utc))
+    feed_lag_vs_clock = weekdays_between(latest_market_date, expected_session) if latest_market_date else None
     calendar = _market_calendar({d: c for d, c in date_counts.items() if d <= today_ist}, len(entries), latest_market_date)
     stale_count = 0
     for e in entries:
@@ -244,6 +294,8 @@ def build_supertrend(universe="fno"):
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "latest_market_date": latest_market_date,
+        "expected_last_session": expected_session,        # by the clock (weekdays; holidays not modelled)
+        "feed_lag_vs_clock_weekdays": feed_lag_vs_clock,  # 2+ = the whole feed is behind, even if no symbol lags the others
         "stale_symbols": stale_count,
         "universe": "nse_fno" if universe == "fno" else "full_backtester_universe",
         "universe_size": len(target_symbols),

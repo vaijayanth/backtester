@@ -118,11 +118,14 @@ def main():
     # raw -> normalized, in request order; a duplicate raw request in the
     # same batch is deduped (processed once, same outcome applied to all
     # matching rows via update_status's bulk match).
-    pairs = [(raw, normalize_symbol(raw)) for raw in pending_raw]
+    pairs = list(dict.fromkeys((raw, normalize_symbol(raw)) for raw in pending_raw))  # same symbol requested twice -> once
 
-    to_merge, already_present, rejected = [], [], []
+    to_merge, already_present, rejected, etf_blocked = [], [], [], []
     for raw, norm in pairs:
-        if norm in existing_manual or norm in existing_clean:
+        if clean_universe.is_removed_etf(norm):
+            # clean_universe would drop it on regeneration, so reporting MERGED would be a lie
+            etf_blocked.append((raw, norm))
+        elif norm in existing_manual or norm in existing_clean:
             already_present.append((raw, norm))
         elif symbol_has_real_data(norm):
             to_merge.append((raw, norm))
@@ -131,7 +134,8 @@ def main():
         time.sleep(0.3)  # light pacing against the yfinance calls above
 
     print(f"Pending: {len(pending_raw)}  New & valid: {len(to_merge)}  "
-          f"Already in universe: {len(already_present)}  Rejected (no real data): {len(rejected)}")
+          f"Already in universe: {len(already_present)}  Rejected (no real data): {len(rejected)}  "
+          f"Rejected (ETF excluded by design): {len(etf_blocked)}")
 
     if to_merge:
         with MANUAL_ADDITIONS_FILE.open("a", newline="") as f:
@@ -146,6 +150,7 @@ def main():
         [{"symbol": raw, "status": "MERGED", "note": f"added as {norm}"} for raw, norm in to_merge]
         + [{"symbol": raw, "status": "ALREADY_EXISTS", "note": f"{norm} already in universe"} for raw, norm in already_present]
         + [{"symbol": raw, "status": "REJECTED", "note": f"no price data found for {norm} on Yahoo — check spelling/exchange"} for raw, norm in rejected]
+        + [{"symbol": raw, "status": "REJECTED", "note": f"{norm} is an ETF; the universe excludes ETFs by design (clean_universe.KNOWN_ETFS)"} for raw, norm in etf_blocked]
     )
     updated = update_status(updates)
     print(f"Updated {updated} sheet row(s).")

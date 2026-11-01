@@ -80,6 +80,9 @@ DEFAULT_PARAMS = {
     "gap_aware_fills": True,
     "entry_priority": "random",
     "random_seed": 0,
+    #  - intrabar_order: "high_first" (legacy default) lets a day's High arm/raise the trailing
+    #    stop and the same day's Low hit it; "low_first" is conservative (see run_backtest).
+    "intrabar_order": "high_first",
 }
 
 
@@ -200,6 +203,18 @@ def run_backtest(params=None, symbols=None):
                 continue
             pos = positions[sym]
 
+            # Intrabar order: OHLC can't say whether the day's High or Low came first.
+            #  "high_first" (default, legacy): the High is reached first, so today's High
+            #     can arm/raise the stop and the same day's Low can hit it.
+            #  "low_first" (conservative): the Low comes first, so only a stop that already
+            #     existed at yesterday's close can be hit today; today's High only raises
+            #     the stop for tomorrow.
+            low_first = params.get("intrabar_order", "high_first") == "low_first"
+            stop_level = None
+            if low_first:
+                prior_stop = pos.get("stop_price", 0)
+                if prior_stop > 0 and row[_L] <= prior_stop:
+                    stop_level = prior_stop
             pos["peak_price"] = max(pos["peak_price"], row[_H])
             profit_pct = (pos["peak_price"] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
             cur_pl_pct = (row[_C] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
@@ -208,31 +223,34 @@ def run_backtest(params=None, symbols=None):
                 dist = trail_distance_for_profit(profit_pct, params)
                 candidate_stop = pos["peak_price"] * (1 - dist / 100)
                 pos["stop_price"] = max(pos.get("stop_price", 0), candidate_stop)  # ratchet never loosens
-                if row[_L] <= pos["stop_price"]:
-                    exit_price = sell_stop_fill(row[_O], pos["stop_price"], params)
-                    pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
-                    # Computed from exit_price (the actual stop fill), NOT
-                    # cur_pl_pct (which is based on the day's Close) — those
-                    # two can diverge significantly on the exit day itself,
-                    # since the stop fires on Low breaching the stop level,
-                    # not at the day's closing price. Confirmed as a real
-                    # bug via manual trade inspection before this fix.
-                    exit_pl_pct = (exit_price - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
-                    realized_pl += pl_rs
-                    closed_trades.append({
-                        "symbol": sym,
-                        "entry_date": str(pos["entry_date"].date()),
-                        "exit_date": str(date.date()),
-                        "entry_price": round(pos["avg_entry_price"], 2),
-                        "exit_price": round(exit_price, 2),
-                        "qty": pos["qty"],
-                        "pl_rs": round(pl_rs, 2),
-                        "pl_pct": round(exit_pl_pct, 2),
-                        "hold_days": (date - pos["entry_date"]).days,
-                        "had_addon": pos["last_addon_date"] is not None,
-                    })
-                    del positions[sym]
-                    continue  # no add-on check on a day we just exited
+                if not low_first and row[_L] <= pos["stop_price"]:
+                    stop_level = pos["stop_price"]
+
+            if stop_level is not None:
+                exit_price = sell_stop_fill(row[_O], stop_level, params)
+                pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
+                # Computed from exit_price (the actual stop fill), NOT
+                # cur_pl_pct (which is based on the day's Close) — those
+                # two can diverge significantly on the exit day itself,
+                # since the stop fires on Low breaching the stop level,
+                # not at the day's closing price. Confirmed as a real
+                # bug via manual trade inspection before this fix.
+                exit_pl_pct = (exit_price - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
+                realized_pl += pl_rs
+                closed_trades.append({
+                    "symbol": sym,
+                    "entry_date": str(pos["entry_date"].date()),
+                    "exit_date": str(date.date()),
+                    "entry_price": round(pos["avg_entry_price"], 2),
+                    "exit_price": round(exit_price, 2),
+                    "qty": pos["qty"],
+                    "pl_rs": round(pl_rs, 2),
+                    "pl_pct": round(exit_pl_pct, 2),
+                    "hold_days": (date - pos["entry_date"]).days,
+                    "had_addon": pos["last_addon_date"] is not None,
+                })
+                del positions[sym]
+                continue  # no add-on check on a day we just exited
 
             if cur_pl_pct <= params["add_on_trigger_pct"]:
                 above_emas = (

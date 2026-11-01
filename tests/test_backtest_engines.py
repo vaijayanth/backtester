@@ -79,6 +79,49 @@ def test_gap_down_stop_exits_at_open_not_at_stop():
     assert new["pl_rs"] < old["pl_rs"]  # the realistic fill is worse than the unreachable one
 
 
+# ---------------- intrabar order ----------------
+def _armed_same_day_scenario(order):
+    df = series()
+    i0 = first_entry_index(df)
+    entry = run_sst({"A.NS": df})["open_positions"][0]["avg_entry_price"]
+    c = df.columns.get_loc
+    # day 1: High +12% arms the 7% lock; Low dips below the freshly-armed stop (peak*0.94 = 1.053*entry)
+    df.iloc[i0 + 1, [c("Open"), c("High"), c("Low"), c("Close")]] = [entry * 1.02, entry * 1.12, entry * 0.99, entry * 1.08]
+    # day 2: calm, stays above the stop
+    df.iloc[i0 + 2, [c("Open"), c("High"), c("Low"), c("Close")]] = [entry * 1.09, entry * 1.10, entry * 1.08, entry * 1.09]
+    df = df.iloc[: i0 + 3]
+    return run_sst({"A.NS": df}, intrabar_order=order), entry
+
+
+def test_high_first_can_arm_and_hit_stop_on_the_same_day():
+    r, entry = _armed_same_day_scenario("high_first")
+    assert len(r["trades"]) == 1
+    assert abs(r["trades"][0]["exit_price"] - round(entry * 1.02, 2)) < 0.011   # gap-aware: fills at Open (below stop)
+
+
+def test_low_first_cannot_hit_a_stop_that_did_not_exist_yet():
+    r, entry = _armed_same_day_scenario("low_first")
+    assert r["trades"] == [] and len(r["open_positions"]) == 1
+
+
+def test_low_first_exits_on_a_stop_set_at_a_prior_close():
+    df = series()
+    i0 = first_entry_index(df)
+    entry = run_sst({"A.NS": df})["open_positions"][0]["avg_entry_price"]
+    c = df.columns.get_loc
+    df.iloc[i0 + 1, [c("Open"), c("High"), c("Low"), c("Close")]] = [entry * 1.08, entry * 1.12, entry * 1.07, entry * 1.10]
+    df.iloc[i0 + 2, [c("Open"), c("High"), c("Low"), c("Close")]] = [entry * 1.06, entry * 1.07, entry * 1.00, entry * 1.01]
+    df = df.iloc[: i0 + 3]
+    for order in ("high_first", "low_first"):
+        t = run_sst({"A.NS": df}, intrabar_order=order)["trades"]
+        assert len(t) == 1, order
+        assert abs(t[0]["exit_price"] - round(entry * 1.12 * 0.94, 2)) < 0.011, order   # stop = peak*0.94 from day 1
+
+
+def test_default_intrabar_order_is_legacy_high_first():
+    assert e.DEFAULT_PARAMS["intrabar_order"] == "high_first"
+
+
 # ---------------- priority ----------------
 def test_symbol_priority_is_alphabetical_legacy():
     frames = {f"{ch}.NS": series() for ch in "ABCDEF"}
