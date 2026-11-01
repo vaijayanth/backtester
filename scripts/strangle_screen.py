@@ -35,43 +35,8 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent.parent
-RAW_DIR = ROOT / "checkpoints" / "raw"
-MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
-FNO_UNIVERSE_CSV = ROOT / "data" / "fno_universe.csv"
-
-
-def compute_rsi14(closes):
-    out = [None] * len(closes)
-    if len(closes) < 15:
-        return out
-    gains = losses = 0.0
-    for i in range(1, 15):
-        diff = closes[i] - closes[i - 1]
-        gains += max(diff, 0)
-        losses += max(-diff, 0)
-    avg_gain, avg_loss = gains / 14, losses / 14
-    out[14] = 100.0 if avg_loss == 0 else 100 - 100 / (1 + avg_gain / avg_loss)
-    for i in range(15, len(closes)):
-        diff = closes[i] - closes[i - 1]
-        gain, loss = max(diff, 0), max(-diff, 0)
-        avg_gain = (avg_gain * 13 + gain) / 14
-        avg_loss = (avg_loss * 13 + loss) / 14
-        out[i] = 100.0 if avg_loss == 0 else 100 - 100 / (1 + avg_gain / avg_loss)
-    return out
-
-
-def load_fno_symbols():
-    if not FNO_UNIVERSE_CSV.exists():
-        return []
-    return pd.read_csv(FNO_UNIVERSE_CSV)["symbol"].tolist()
-
-
-def load_validated_set():
-    if not MANIFEST_CSV.exists():
-        return set()
-    manifest = pd.read_csv(MANIFEST_CSV)
-    return set(manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist())
+from common import FNO_UNIVERSE_CSV, MANIFEST_CSV, RAW_DIR, ROOT, load_fno_symbols, load_validated_set  # noqa: F401
+from indicators import compute_rsi14
 
 
 def current_month_key(today=None):

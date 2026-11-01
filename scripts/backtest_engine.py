@@ -40,9 +40,9 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent.parent
-RAW_DIR = ROOT / "checkpoints" / "raw"
-MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
+import common
+from common import MANIFEST_CSV, RAW_DIR, ROOT  # noqa: F401  (module attrs stay patchable)
+from indicators import compute_ema
 
 DEFAULT_PARAMS = {
     "breakout_window_days": 21,
@@ -87,10 +87,8 @@ DEFAULT_PARAMS = {
 # Data loading
 # ---------------------------------------------------------------------------
 def load_validated_symbols():
-    if not MANIFEST_CSV.exists():
-        return []
-    manifest = pd.read_csv(MANIFEST_CSV)
-    return manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist()
+    """VALIDATED symbols from MANIFEST_CSV (read at call time so tests/tools can repoint it)."""
+    return common.load_validated_symbols(MANIFEST_CSV)
 
 
 def load_universe_data(symbols=None):
@@ -115,19 +113,6 @@ def load_universe_data(symbols=None):
 # ---------------------------------------------------------------------------
 # Indicators — manually seeded EMA, matching Stock Detail's JS exactly
 # ---------------------------------------------------------------------------
-def compute_ema(values, period):
-    out = [None] * len(values)
-    if len(values) < period:
-        return out
-    ema = sum(values[:period]) / period
-    out[period - 1] = ema
-    mult = 2 / (period + 1)
-    for i in range(period, len(values)):
-        ema = (values[i] - ema) * mult + ema
-        out[i] = ema
-    return out
-
-
 def prep_symbol_df(df, params):
     df = df.copy()
     closes = df["Close"].tolist()

@@ -43,9 +43,9 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent.parent
-RAW_DIR = ROOT / "checkpoints" / "raw"
-MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
+import common
+from common import MANIFEST_CSV, RAW_DIR, ROOT  # noqa: F401
+from indicators import compute_supertrend  # shared definition; was a verbatim copy here
 
 BREAKOUT_WINDOW_DAYS = 252
 INITIAL_POSITION_RS = 1000
@@ -60,8 +60,7 @@ DEFAULT_INITIAL_CAPITAL_RS = 500000  # assumption, not stated in the spec — ov
 
 
 def load_validated_symbols(manifest_csv=MANIFEST_CSV):
-    manifest = pd.read_csv(manifest_csv)
-    return manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist()
+    return common.load_validated_symbols(manifest_csv)
 
 
 def load_universe_data(symbols=None, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV, breakout_window_days=BREAKOUT_WINDOW_DAYS):
@@ -82,53 +81,6 @@ def load_universe_data(symbols=None, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV,
     return data
 
 
-def compute_atr(highs, lows, closes, period=ATR_PERIOD):
-    n = len(closes)
-    tr = [None] * n
-    tr[0] = highs[0] - lows[0]
-    for i in range(1, n):
-        tr[i] = max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1]))
-    atr = [None] * n
-    if n < period:
-        return atr
-    atr[period - 1] = sum(tr[0:period]) / period
-    for i in range(period, n):
-        atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period
-    return atr
-
-
-def compute_supertrend(highs, lows, closes, period=ATR_PERIOD, multiplier=ST_MULTIPLIER):
-    """Returns direction list, 'up'/'down'/None per bar. Verbatim logic
-    from supertrend.py's compute_supertrend (kept self-contained here)."""
-    n = len(closes)
-    atr = compute_atr(highs, lows, closes, period)
-    final_upper = [None] * n
-    final_lower = [None] * n
-    direction = [None] * n
-
-    start = period - 1
-    if start >= n:
-        return direction
-
-    mid0 = (highs[start] + lows[start]) / 2
-    final_upper[start] = mid0 + multiplier * atr[start]
-    final_lower[start] = mid0 - multiplier * atr[start]
-    direction[start] = "down" if closes[start] <= final_upper[start] else "up"
-
-    for i in range(start + 1, n):
-        mid = (highs[i] + lows[i]) / 2
-        basic_upper = mid + multiplier * atr[i]
-        basic_lower = mid - multiplier * atr[i]
-        final_upper[i] = basic_upper if (basic_upper < final_upper[i - 1] or closes[i - 1] > final_upper[i - 1]) else final_upper[i - 1]
-        final_lower[i] = basic_lower if (basic_lower > final_lower[i - 1] or closes[i - 1] < final_lower[i - 1]) else final_lower[i - 1]
-        prev_dir = direction[i - 1]
-        if prev_dir == "down":
-            direction[i] = "up" if closes[i] > final_upper[i] else "down"
-        else:
-            direction[i] = "down" if closes[i] < final_lower[i] else "up"
-    return direction
-
-
 def prep_symbol_df(df, breakout_window_days=BREAKOUT_WINDOW_DAYS):
     """Returns {date: (open, high, low, close, rolling_high, supertrend_dir)}
     — plain dict, not a DataFrame, so the backtest's hot loop (all_dates x
@@ -139,7 +91,7 @@ def prep_symbol_df(df, breakout_window_days=BREAKOUT_WINDOW_DAYS):
     lows = df["Low"].tolist()
     opens = df["Open"].tolist()
     rolling_high = df["High"].rolling(breakout_window_days).max().shift(1).tolist()
-    supertrend_dir = compute_supertrend(highs, lows, closes)
+    supertrend_dir, _, _ = compute_supertrend(highs, lows, closes, ATR_PERIOD, ST_MULTIPLIER)
     return {
         date: (opens[i], highs[i], lows[i], closes[i], rolling_high[i], supertrend_dir[i])
         for i, date in enumerate(df.index)

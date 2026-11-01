@@ -25,32 +25,11 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).parent.parent
-RAW_DIR = ROOT / "checkpoints" / "raw"
-MANIFEST_CSV = ROOT / "checkpoints" / "manifest.csv"
+from common import MANIFEST_CSV, RAW_DIR, ROOT, load_validated_symbols  # noqa: F401
+from indicators import compute_ema
 
 EMA_FAST = 50
 EMA_SLOW = 200
-
-
-def compute_ema(values, period):
-    out = [None] * len(values)
-    if len(values) < period:
-        return out
-    ema = sum(values[:period]) / period
-    out[period - 1] = ema
-    mult = 2 / (period + 1)
-    for i in range(period, len(values)):
-        ema = (values[i] - ema) * mult + ema
-        out[i] = ema
-    return out
-
-
-def load_validated_symbols():
-    if not MANIFEST_CSV.exists():
-        return []
-    manifest = pd.read_csv(MANIFEST_CSV)
-    return manifest[manifest["status"] == "VALIDATED"]["symbol"].tolist()
 
 
 def build_snapshot():
