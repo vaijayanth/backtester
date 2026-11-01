@@ -80,9 +80,13 @@ DEFAULT_PARAMS = {
     "gap_aware_fills": True,
     "entry_priority": "random",
     "random_seed": 0,
-    #  - intrabar_order: "high_first" (legacy default) lets a day's High arm/raise the trailing
-    #    stop and the same day's Low hit it; "low_first" is conservative (see run_backtest).
-    "intrabar_order": "high_first",
+    #  - intrabar_order: daily OHLC can't say whether the High or the Low came first.
+    #    "low_first" (default since 2026-11-01): only a stop set at a PRIOR close can
+    #    be hit by today's Low; today's High raises the stop for tomorrow.
+    #    "high_first" (legacy): today's High can arm/raise the stop and the same day's Low can hit it.
+    #    To reproduce a pre-2026-11-01 run use gap_aware_fills=False, entry_priority="symbol",
+    #    intrabar_order="high_first".
+    "intrabar_order": "low_first",
 }
 
 
@@ -210,12 +214,12 @@ def run_backtest(params=None, symbols=None):
             pos = positions[sym]
 
             # Intrabar order: OHLC can't say whether the day's High or Low came first.
-            #  "high_first" (default, legacy): the High is reached first, so today's High
-            #     can arm/raise the stop and the same day's Low can hit it.
-            #  "low_first" (conservative): the Low comes first, so only a stop that already
+            #  "low_first" (default): the Low comes first, so only a stop that already
             #     existed at yesterday's close can be hit today; today's High only raises
             #     the stop for tomorrow.
-            low_first = params.get("intrabar_order", "high_first") == "low_first"
+            #  "high_first" (legacy): the High is reached first, so today's High
+            #     can arm/raise the stop and the same day's Low can hit it.
+            low_first = params.get("intrabar_order", "low_first") == "low_first"
             stop_level = None
             if low_first:
                 prior_stop = pos.get("stop_price", 0)
