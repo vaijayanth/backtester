@@ -406,6 +406,8 @@
     .rr-intro,.rr-foot,.rr-empty,.rr-compare{padding-left:14px;padding-right:14px;}
   }
 
+  @media (max-width:380px){ .stat-row .stat-value{font-size:17px;overflow-wrap:anywhere;} }  /* lakh/crore values fit a half-width tile at 320px */
+
   /* Keyboard focus + reduced motion */
   :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
   input:focus-visible,select:focus-visible,.search-box:focus-visible{outline-offset:0;}
