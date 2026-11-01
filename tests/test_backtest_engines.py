@@ -128,11 +128,11 @@ def test_typo_in_choice_params_is_rejected_not_silently_legacy():
             raise AssertionError(bad)
 
 
-def test_default_intrabar_order_is_conservative_low_first():
-    assert e.DEFAULT_PARAMS["intrabar_order"] == "low_first"
+def test_default_intrabar_order_is_legacy_high_first():
+    assert e.DEFAULT_PARAMS["intrabar_order"] == "high_first"
 
 
-def test_default_run_matches_explicit_low_first_and_differs_from_high_first_when_it_matters():
+def test_default_run_matches_explicit_high_first_and_differs_from_low_first_when_it_matters():
     df = series()
     i0 = first_entry_index(df)
     entry = run_sst({"A.NS": df})["open_positions"][0]["avg_entry_price"]
@@ -140,8 +140,8 @@ def test_default_run_matches_explicit_low_first_and_differs_from_high_first_when
     df.iloc[i0 + 1, [c("Open"), c("High"), c("Low"), c("Close")]] = [entry * 1.02, entry * 1.12, entry * 0.99, entry * 1.08]
     df = df.iloc[: i0 + 2]
     core = lambda r: (r["trades"], r["open_positions"], r["metrics"])
-    default, low, high = core(run_sst({"A.NS": df})), core(run_sst({"A.NS": df}, intrabar_order="low_first")), core(run_sst({"A.NS": df}, intrabar_order="high_first"))
-    assert default == low and default != high
+    default, high, low = core(run_sst({"A.NS": df})), core(run_sst({"A.NS": df}, intrabar_order="high_first")), core(run_sst({"A.NS": df}, intrabar_order="low_first"))
+    assert default == high and default != low
 
 
 # ---------------- priority ----------------
