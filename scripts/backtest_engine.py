@@ -90,6 +90,34 @@ DEFAULT_PARAMS = {
     #    symbols low_first gave HIGHER P&L (see docs/SPEC.md section 27) — treat results as a range.
     #    To reproduce a pre-2026-11-01 run use gap_aware_fills=False, entry_priority="symbol".
     "intrabar_order": "high_first",
+    # Fit-to-live-trading switches (added 2026-11-02; ALL OFF by default so existing results are unchanged —
+    # measured one by one in docs/SPEC.md section 31; "REALISTIC_PROFILE" below turns them all on):
+    #  - cash_limited: only buy while cash is available (account = initial_capital_rs, default Rs 50,00,000);
+    #    off = up to max_open_positions with no cash check.
+    #  - fee_buy_pct / fee_sell_pct: statutory charges per side as a fraction of trade value (delivery, free-brokerage
+    #    broker: buy ~0.12% = STT 0.1 + stamp 0.015 + exchange/SEBI; sell ~0.11% = STT 0.1 + exchange/SEBI/GST);
+    #    slippage_pct: adverse fill vs the modelled price, per side. All 0 = trades for free at exact prices.
+    #  - min_price / min_avg_traded_value_rs: skip stocks you would not really trade — price below min_price, or
+    #    20-day average traded value (Close x Volume, up to yesterday) below the floor. 0 = no filter.
+    #  - stop_peak: "high" (legacy) ratchets the trailing stop off each day's intraday High; "close" off the highest
+    #    CLOSE only (you move your GTT by hand after the close, so it lags the intraday peak).
+    "cash_limited": False,
+    "fee_buy_pct": 0.0,
+    "fee_sell_pct": 0.0,
+    "slippage_pct": 0.0,
+    "min_price": 0.0,
+    "min_avg_traded_value_rs": 0.0,
+    "stop_peak": "high",
+}
+
+REALISTIC_PROFILE = {
+    "cash_limited": True,
+    "fee_buy_pct": 0.0012,
+    "fee_sell_pct": 0.0011,
+    "slippage_pct": 0.001,
+    "min_price": 50.0,
+    "min_avg_traded_value_rs": 1e7,   # Rs 1 crore a day
+    "stop_peak": "close",
 }
 
 
@@ -131,6 +159,8 @@ def prep_symbol_df(df, params):
     # N-day high = highest HIGH of the preceding N days, NOT including today
     # — standard breakout definition, matches "GTT at the 21DH price."
     df["rolling_high"] = df["High"].rolling(params["breakout_window_days"]).max().shift(1)
+    # 20-day average traded value up to YESTERDAY (shift(1): no look-ahead) for the liquidity filter
+    df["avg_value"] = (df["Close"] * df["Volume"]).rolling(20).mean().shift(1)
     return df
 
 
@@ -174,11 +204,12 @@ def current_tier_size(closed_trades_count, params):
     return min(size, params["position_size_cap_rs"])
 
 
-_BAR_COLS = ["Open", "High", "Low", "Close", "ema_fast", "ema_slow", "rolling_high"]
-_O, _H, _L, _C, _EF, _ES, _RH = range(7)
+_BAR_COLS = ["Open", "High", "Low", "Close", "ema_fast", "ema_slow", "rolling_high", "avg_value"]
+_O, _H, _L, _C, _EF, _ES, _RH, _AV = range(8)
 
 
-VALID_CHOICES = {"intrabar_order": ("high_first", "low_first"), "entry_priority": ("breakout_strength", "random", "symbol")}
+VALID_CHOICES = {"intrabar_order": ("high_first", "low_first"), "entry_priority": ("breakout_strength", "random", "symbol"),
+                 "stop_peak": ("high", "close")}
 
 
 def run_backtest(params=None, symbols=None):
@@ -207,6 +238,20 @@ def run_backtest(params=None, symbols=None):
     closed_trades = []   # list of closed-trade dicts
     equity_curve = []    # [{date, realized, open_mtm, combined}]
     realized_pl = 0.0
+    cash_limited = params["cash_limited"]
+    cash = float(params["initial_capital_rs"])          # only enforced when cash_limited
+    fee_buy, fee_sell, slip = params["fee_buy_pct"], params["fee_sell_pct"], params["slippage_pct"]
+    costs_on = bool(fee_buy or fee_sell or slip)
+    min_price, min_value = params["min_price"], params["min_avg_traded_value_rs"]
+    peak_from_close = params["stop_peak"] == "close"
+
+    def tradable(row):
+        """Liquidity filter: skip stocks you would not really trade (known at the open: yesterday's data)."""
+        if min_price and row[_O] < min_price:
+            return False
+        if min_value and not (row[_AV] >= min_value):    # NaN (not enough history) fails too
+            return False
+        return True
 
     for date in all_dates:
         # --- 1. manage existing positions: trailing-stop exits, add-ons ---
@@ -228,7 +273,7 @@ def run_backtest(params=None, symbols=None):
                 prior_stop = pos.get("stop_price", 0)
                 if prior_stop > 0 and row[_L] <= prior_stop:
                     stop_level = prior_stop
-            pos["peak_price"] = max(pos["peak_price"], row[_H])
+            pos["peak_price"] = max(pos["peak_price"], row[_C] if peak_from_close else row[_H])
             profit_pct = (pos["peak_price"] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
             cur_pl_pct = (row[_C] - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
 
@@ -240,15 +285,19 @@ def run_backtest(params=None, symbols=None):
                     stop_level = pos["stop_price"]
 
             if stop_level is not None:
-                exit_price = sell_stop_fill(row[_O], stop_level, params)
-                pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"]
+                exit_price = sell_stop_fill(row[_O], stop_level, params) * (1 - slip)
+                proceeds = exit_price * pos["qty"]
+                sell_fee = proceeds * fee_sell
+                pl_rs = (exit_price - pos["avg_entry_price"]) * pos["qty"] - pos["fees"] - sell_fee
+                cash += proceeds - sell_fee
                 # Computed from exit_price (the actual stop fill), NOT
                 # cur_pl_pct (which is based on the day's Close) — those
                 # two can diverge significantly on the exit day itself,
                 # since the stop fires on Low breaching the stop level,
                 # not at the day's closing price. Confirmed as a real
                 # bug via manual trade inspection before this fix.
-                exit_pl_pct = (exit_price - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100
+                exit_pl_pct = (pl_rs / (pos["avg_entry_price"] * pos["qty"]) * 100 if costs_on
+                               else (exit_price - pos["avg_entry_price"]) / pos["avg_entry_price"] * 100)
                 realized_pl += pl_rs
                 closed_trades.append({
                     "symbol": sym,
@@ -274,13 +323,18 @@ def run_backtest(params=None, symbols=None):
                 days_since_addon = (
                     (date - pos["last_addon_date"]).days if pos["last_addon_date"] else 999
                 )
-                if above_emas and fresh_breakout and days_since_addon >= 7:
+                if above_emas and fresh_breakout and days_since_addon >= 7 and tradable(row):
                     add_qty = max(1, int(pos["qty"] * params["add_on_size_fraction"]))
-                    add_price = buy_stop_fill(row[_O], row[_RH], params)
-                    total_cost = pos["avg_entry_price"] * pos["qty"] + add_price * add_qty
-                    pos["qty"] += add_qty
-                    pos["avg_entry_price"] = total_cost / pos["qty"]
-                    pos["last_addon_date"] = date
+                    add_price = buy_stop_fill(row[_O], row[_RH], params) * (1 + slip)
+                    add_value = add_price * add_qty
+                    add_fee = add_value * fee_buy
+                    if not cash_limited or cash >= add_value + add_fee:
+                        cash -= add_value + add_fee
+                        total_cost = pos["avg_entry_price"] * pos["qty"] + add_value
+                        pos["qty"] += add_qty
+                        pos["avg_entry_price"] = total_cost / pos["qty"]
+                        pos["fees"] += add_fee
+                        pos["last_addon_date"] = date
 
         # --- 2. new entries ---
         if len(positions) < params["max_open_positions"]:
@@ -298,7 +352,7 @@ def run_backtest(params=None, symbols=None):
                     continue
                 above_emas = row[_C] > row[_EF] and row[_C] > row[_ES]
                 breakout = row[_H] >= row[_RH]
-                if above_emas and breakout:
+                if above_emas and breakout and tradable(row):
                     candidates.append((sym, row))
             if params.get("entry_priority", "breakout_strength") == "breakout_strength":
                 # Biggest breakout first, using ONLY what is known when the stops trigger: the size of the
@@ -310,11 +364,16 @@ def run_backtest(params=None, symbols=None):
                 # sort is stable: ties keep the seeded-shuffle order, never alphabetical.
                 candidates.sort(key=lambda c: -max(0.0, c[1][_O] / c[1][_RH] - 1))
             for sym, row in candidates:
-                entry_price = buy_stop_fill(row[_O], row[_RH], params)
+                entry_price = buy_stop_fill(row[_O], row[_RH], params) * (1 + slip)
                 size_rs = current_tier_size(len(closed_trades), params)
                 qty = int(size_rs // entry_price)
                 if qty < 1:
                     continue
+                entry_value = entry_price * qty
+                entry_fee = entry_value * fee_buy
+                if cash_limited and cash < entry_value + entry_fee:
+                    continue          # not enough cash for this one; a cheaper candidate may still fit
+                cash -= entry_value + entry_fee
                 positions[sym] = {
                     "entry_date": date,
                     "avg_entry_price": entry_price,
@@ -322,6 +381,7 @@ def run_backtest(params=None, symbols=None):
                     "peak_price": entry_price,
                     "stop_price": 0,
                     "last_addon_date": None,
+                    "fees": entry_fee,
                 }
                 if len(positions) >= params["max_open_positions"]:
                     break
@@ -331,7 +391,7 @@ def run_backtest(params=None, symbols=None):
         for sym, pos in positions.items():
             bar = data[sym].get(date)
             if bar is not None:
-                open_mtm += (bar[_C] - pos["avg_entry_price"]) * pos["qty"]
+                open_mtm += (bar[_C] - pos["avg_entry_price"]) * pos["qty"] - pos["fees"]
         equity_curve.append({
             "date": str(date.date()),
             "realized": round(realized_pl, 2),
