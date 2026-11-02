@@ -409,6 +409,23 @@
   @media (min-width:481px){ #dh252-cap-row .stat{min-width:165px;} }  /* 8-character rupee values (₹20,00,000) spilled past a 140px tile */
   @media (max-width:380px){ .stat-row .stat-value{font-size:17px;overflow-wrap:anywhere;} }  /* lakh/crore values fit a half-width tile at 320px */
 
+  /* Stale-data alerts: a loud red banner on every affected page, a red flag on the sidebar "EOD data" light
+     and on the mobile menu button. Loud on purpose: acting on yesterday's prices is the failure this prevents. */
+  .stale-banner{margin:0 0 16px;padding:14px 18px 14px 20px;border-radius:8px;border:1px solid var(--red);border-left:6px solid var(--red);background:rgba(255,59,48,.14);color:var(--white);}
+  .stale-banner[hidden]{display:none;}
+  .stale-banner .sb-head{font:700 16px/1.3 var(--ui);color:var(--red);}
+  .stale-banner .sb-line{font:500 14px/1.5 var(--ui);margin-top:6px;color:var(--white);}
+  .stale-banner .sb-line b{color:var(--red);}
+  .stale-banner .sb-note{font:400 12.5px/1.5 var(--ui);margin-top:8px;color:var(--dim);}
+  #sidebar-status.stale{color:var(--red);font-weight:700;}
+  #sidebar-status.stale .dot{background:var(--red);box-shadow:0 0 0 3px rgba(255,59,48,.35);}
+  #sidebar-status .stale-text{margin-right:6px;}
+  .mobile-nav-toggle{position:relative;}
+  .mobile-nav-toggle.stale::after{content:'';position:absolute;top:5px;right:5px;width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px #000;}
+  .stat-value.is-stale,.stale-flag{color:var(--red) !important;}
+  .stale-flag{display:block;font:700 13px var(--ui);margin-top:2px;}
+  @media (max-width:760px){ .stale-banner{margin:0 0 12px;padding:12px 14px 12px 16px;} }
+
   /* Keyboard focus + reduced motion */
   :focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
   input:focus-visible,select:focus-visible,.search-box:focus-visible{outline-offset:0;}
@@ -2787,7 +2804,7 @@ async function loadMarketSnapshot(){
   document.getElementById('dash-meta').textContent =
     `Market Data: Latest EOD (${snap.as_of_date})  |  Universe: ${snap.universe_size.toLocaleString('en-IN')} stocks`;
   document.getElementById('sidebar-status-sub').textContent = snap.as_of_date;
-  renderFreshnessStat('dash-data-asof', snap.generated_at, 'Market data last updated');
+  renderFreshnessStat('dash-data-asof', snap.generated_at, 'Market data last updated', null, {kind: 'session', dataDate: snap.as_of_date});
 }
 
 function symLabel(sym){ return sym.replace(/\.(NS|BO)$/, ''); }
@@ -4606,6 +4623,8 @@ function ivpLoadSupertrend(st){
   });
   ivpOptUniverse.sort();
   window._ivpSupertrendGeneratedAt = st.generated_at || null;
+  // The F&O feed's own market date (pipeline field, else the newest bar date in the feed)
+  window._ivpLatestMarketDate = st.latest_market_date || ((st.entries || []).map(e => e.date).filter(Boolean).sort().pop()) || null;
 }
 
 // CMP/Supertrend/RSI freshness (the daily pipeline files) is a separate
@@ -4614,9 +4633,9 @@ function ivpLoadSupertrend(st){
 // cadences (daily pipeline vs. a weekly manual export).
 function ivpRenderFreshness(){
   const dataIso = window._ivpSupertrendGeneratedAt || window._ivpScreensGeneratedAt;
-  renderFreshnessStat('ivp-data-asof', dataIso, 'Price / Supertrend / RSI14 data as of');
+  renderFreshnessStat('ivp-data-asof', dataIso, 'Price / Supertrend / RSI14 data as of', null, {kind: 'session', dataDate: window._ivpLatestMarketDate});
   renderFreshnessStat('ivp-upload-asof', ivpData ? ivpData.generated_at : null,
-    ivpData && ivpData.source === 'google_sheet' ? 'Sensibull file uploaded' : 'Sensibull snapshot (site default)', 24 * 8);
+    ivpData && ivpData.source === 'google_sheet' ? 'Sensibull file uploaded' : 'Sensibull snapshot (site default)', 24 * 8, {kind: 'age', maxAgeDays: 8});
 }
 
 // Index breadth itself isn't tracked anywhere in the daily pipeline (no
@@ -5080,7 +5099,7 @@ function ivpRenderPositions(){
   // was parsed, not data that goes stale on its own schedule. A huge
   // threshold keeps renderFreshnessStat's colour logic effectively
   // always-green rather than flagging a 2-hour-old upload as "stale".
-  renderFreshnessStat('ivp-pos-asof', data ? data.generated_at : null, 'Positions last uploaded', 24 * 365);
+  renderFreshnessStat('ivp-pos-asof', data ? data.generated_at : null, 'Positions last uploaded', 24 * 365, {kind: 'close'});
 
   if(!data || !data.positions.length){
     body.innerHTML = '<tr><td colspan="9" class="loading">Upload your positions CSV above to check open option legs against current SELL CALL/PUT signals.</td></tr>';
@@ -5724,7 +5743,7 @@ function otShowLastFetch(){
 // uses the same longer 8-day staleness threshold as IVP's Sensibull
 // upload badge rather than the 30h daily-data one.
 function otRenderFreshness(){
-  renderFreshnessStat('ot-data-asof', window._otLastUploadedAt, 'P&L file last uploaded', 24 * 8);
+  renderFreshnessStat('ot-data-asof', window._otLastUploadedAt, 'P&L file last uploaded', 24 * 8, {kind: 'age', maxAgeDays: 8});
 }
 
 async function otUpdateDbMeta(){
@@ -6780,6 +6799,13 @@ function eqFmtTime(ms){
   return `${h}:${m}${ap}`;
 }
 
+// "Last updated <time>" here was only the moment the page fetched, which reads as fresh even when the prices are old.
+// Say what matters: which market close the prices are from, then when they were fetched.
+function eqPricesAsOfText(){
+  const d = window._eqLatestMarketDate;
+  return (d ? 'Prices as of the ' + staleDay(d) + ' close' : 'Price date unknown') + ' · fetched ' + eqFmtTime(Date.now());
+}
+
 function eqSetSyncStatus(html){
   const el = document.getElementById('eq-sync-status');
   if(el) el.innerHTML = html;
@@ -6790,7 +6816,7 @@ function eqShowLastSync(){
   if(!raw) return;
   try{
     const {ts, fillCount, openCount, closedCount} = JSON.parse(raw);
-    eqSetSyncStatus(`${fillCount} fills · ${openCount} open · ${closedCount} closed — last updated ${eqFmtTime(ts)}`);
+    eqSetSyncStatus(`${fillCount} fills · ${openCount} open · ${closedCount} closed — cached ${eqFmtTime(ts)}, refreshing…`);
   } catch(e){}
 }
 
@@ -6831,7 +6857,8 @@ async function eqRefresh(){
 
   const now = Date.now();
   localStorage.setItem('bt_eq_last_sync', JSON.stringify({ts: now, fillCount: fills.length, openCount: open.length, closedCount: closed.length}));
-  eqSetSyncStatus(`${fills.length} fills · ${open.length} open · ${closed.length} closed — last updated ${eqFmtTime(now)}`);
+  staleCheckPrices('page-zswing', 'Prices (Supertrend, 52-week high)');
+  eqSetSyncStatus(`${fills.length} fills · ${open.length} open · ${closed.length} closed — ${eqPricesAsOfText()}`);
 }
 
 function eqRenderOpen(open, stMap){
@@ -7241,8 +7268,9 @@ async function eqDashRefresh(){
     await eqRefresh();
   }
   eqDashRenderAll();
+  staleCheckPrices('page-zswing', 'Prices (Supertrend, 52-week high)');
   document.getElementById('eqd-sync-status').textContent =
-    'Last updated ' + eqFmtTime(Date.now()) + ' — using the same data as Equity Trading Journal';
+    eqPricesAsOfText() + ' — using the same data as Equity Trading Journal';
 }
 
 // Mon-Fri count between two ISO dates, exclusive of the start day.
@@ -7952,8 +7980,9 @@ async function eqAlertsRefresh(){
     await eqRefresh();
   }
   eqAlertsRender();
+  staleCheckPrices('page-zswing', 'Prices (Supertrend, 52-week high)');
   document.getElementById('eqa-sync-status').textContent =
-    'Last updated ' + eqFmtTime(Date.now()) + ' — using the same data as Equity Trading Journal';
+    eqPricesAsOfText() + ' — using the same data as Equity Trading Journal';
 }
 
 function eqAlertsRow(p, st){
@@ -8831,11 +8860,121 @@ function dh252FmtDataAsOf(iso){
 // another important number on the page, not a new design language bolted
 // on. `thresholdHours` controls when it switches to the red/stale color
 // (defaults to 30h, matching the once-daily pipeline's existing convention).
-function renderFreshnessStat(elId, iso, label, thresholdHours){
+// ============================================================
+// STALE-DATA ALERTS (2026-11-02). Every timestamp that says "as of / updated / uploaded" is checked against
+// what it should be and, if not, a red banner goes on the page and the sidebar light turns red.
+//   kind 'session' : price data. Its own bar date must be the latest market close (NOT when it was fetched).
+//   kind 'age'     : a file you upload on a cadence (Sensibull weekly, P&L statement): older than maxAgeDays.
+//   kind 'close'   : an upload that must have been made after the last close (broker positions).
+// Expected last session: today counts only after 21:00 IST (the daily update lands ~20:00 IST), weekends
+// roll back to Friday. NSE holidays are not modelled, so the day after a holiday can show a false alert.
+// ============================================================
+// pageId -> {key -> {label, text, stale}}. A function (not a top-level const) because renderFreshnessStat is called
+// during page load, possibly before this part of the script has executed (a const would be in its temporal dead zone).
+function staleStore(){ return (window.__staleStore = window.__staleStore || {sources: {}}); }
+
+function staleExpectedSession(now){
+  const ist = new Date((now || new Date()).getTime() + 5.5 * 3600e3);          // IST wall clock held in UTC fields
+  const d = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()));
+  if(ist.getUTCHours() < 21 || d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
+  while(d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+function staleWeekdaysBetween(afterIso, upToIso){
+  let n = 0;
+  const c = new Date(afterIso + 'T00:00:00Z'), end = new Date(upToIso + 'T00:00:00Z');
+  while(c < end){ c.setUTCDate(c.getUTCDate() + 1); if(c.getUTCDay() !== 0 && c.getUTCDay() !== 6) n++; }
+  return n;
+}
+function staleDay(iso){
+  return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC'});
+}
+
+// Decide staleness for one source. Returns {stale, text}: text is the plain-words reason for the banner.
+function staleJudge(kind, label, iso, opts){
+  opts = opts || {};
+  if(kind === 'session'){
+    const have = opts.dataDate || null, want = staleExpectedSession();
+    if(!have) return {stale: true, kind: 'session', text: `<b>${label}</b>: the file has no data date, so it cannot be checked against the latest close (${staleDay(want)}).`};
+    if(have >= want) return {stale: false, text: ''};
+    const behind = staleWeekdaysBetween(have, want);
+    return {stale: true, kind: 'session', text: `<b>${label}</b>: data is from the <b>${staleDay(have)}</b> close; the latest close is <b>${staleDay(want)}</b> (${behind} trading day${behind === 1 ? '' : 's'} behind).`};
+  }
+  if(kind === 'age'){
+    const t = iso ? new Date(iso).getTime() : NaN;
+    if(isNaN(t)) return {stale: true, kind: 'upload', text: `<b>${label}</b>: no upload found.`};
+    const days = (Date.now() - t) / 86400000;
+    if(days <= (opts.maxAgeDays || 8)) return {stale: false, text: ''};
+    return {stale: true, kind: 'upload', text: `<b>${label}</b>: last uploaded <b>${Math.floor(days)} days ago</b>; it should be refreshed at least every ${opts.maxAgeDays || 8} days.`};
+  }
+  if(kind === 'close'){
+    const t = iso ? new Date(iso).getTime() : NaN;
+    const want = staleExpectedSession();
+    const closeTs = new Date(want + 'T15:30:00+05:30').getTime();
+    if(isNaN(t)) return {stale: true, kind: 'upload', text: `<b>${label}</b>: no upload found.`};
+    if(t >= closeTs) return {stale: false, text: ''};
+    const up = new Date(t).toLocaleString('en-IN', {day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'});
+    return {stale: true, kind: 'upload', text: `<b>${label}</b>: uploaded <b>${up} IST</b>, before the ${staleDay(want)} close. Upload again after the close.`};
+  }
+  return {stale: false, text: ''};
+}
+
+function staleRegister(pageId, key, label, verdict){
+  if(!pageId) return;
+  (staleStore().sources[pageId] = staleStore().sources[pageId] || {})[key] = {label, stale: verdict.stale, text: verdict.text, kind: verdict.kind};
+  staleRenderBanner(pageId);
+  staleUpdateSidebar();
+}
+
+function staleRenderBanner(pageId){
+  const page = document.getElementById(pageId);
+  if(!page) return;
+  let el = page.querySelector(':scope > .stale-banner');
+  if(!el){
+    el = document.createElement('div');
+    el.className = 'stale-banner';
+    el.setAttribute('role', 'alert');
+    el.hidden = true;
+    page.insertBefore(el, page.firstChild);
+  }
+  const bad = Object.values(staleStore().sources[pageId] || {}).filter(x => x.stale);
+  if(!bad.length){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="sb-head">STALE DATA: do not trade from this page until it is refreshed</div>` +
+    bad.map(x => `<div class="sb-line">${x.text}</div>`).join('') +
+    (bad.some(x => x.kind === 'session') ? `<div class="sb-note">The daily update runs on weekdays at about 8 pm IST; if it has not landed, run it from GitHub Actions. NSE holidays are not modelled, so the day after a market holiday may show this alert wrongly.</div>` : '') +
+    (bad.some(x => x.kind === 'upload') ? `<div class="sb-note">Upload a fresh file on this page to clear the upload alerts.</div>` : '');
+}
+
+function staleUpdateSidebar(){
+  const anyStale = Object.values(staleStore().sources).some(src => Object.values(src).some(x => x.stale));
+  const side = document.getElementById('sidebar-status');
+  if(side){
+    side.classList.toggle('stale', anyStale);
+    const t = side.querySelector('.stale-text');
+    if(anyStale && !t){ const sp = document.createElement('span'); sp.className = 'stale-text'; sp.textContent = 'STALE'; side.querySelector('.dot').after(sp); }
+    if(!anyStale && t) t.remove();
+  }
+  const tog = document.getElementById('mobile-nav-toggle');
+  if(tog) tog.classList.toggle('stale', anyStale);
+}
+
+// Price-data check for pages that do not render a freshness stat of their own (Zerodha Swing tabs).
+function staleCheckPrices(pageId, label){
+  staleRegister(pageId, 'prices', label, staleJudge('session', label, null, {dataDate: window._eqLatestMarketDate}));
+}
+
+// Renders a prominent "data as of" stat — big bold absolute timestamp + smaller relative-age sub-line — and,
+// with opts.kind, ALSO checks it against the latest market close / upload cadence (see STALE-DATA ALERTS).
+// Without opts it behaves as before (`thresholdHours` -> red when the file is older than that).
+function renderFreshnessStat(elId, iso, label, thresholdHours, opts){
   const el = document.getElementById(elId);
   if(!el) return;
+  const pageId = (el.closest('.page') || {}).id;
   const threshold = thresholdHours == null ? 30 : thresholdHours;
   const fmt = dh252FmtDataAsOf(iso);
+  const verdict = opts && opts.kind ? staleJudge(opts.kind, label, iso, opts) : null;
+  if(verdict) staleRegister(pageId, elId, label, verdict);
   if(!fmt){
     el.innerHTML = `<div class="stat" style="border-right:none;padding:14px 0;">
       <div class="stat-label">${label}</div>
@@ -8843,11 +8982,12 @@ function renderFreshnessStat(elId, iso, label, thresholdHours){
     </div>`;
     return;
   }
-  const stale = fmt.hoursAgo > threshold;
+  const stale = verdict ? verdict.stale : fmt.hoursAgo > threshold;
   el.innerHTML = `<div class="stat" style="border-right:none;padding:14px 0;">
     <div class="stat-label">${label}</div>
-    <div class="stat-value" style="color:${stale ? 'var(--red)' : 'var(--white)'};">${fmt.dateTimeStr}</div>
-    <div style="font-size:11px;color:${stale ? 'var(--red)' : 'var(--muted)'};margin-top:2px;">${fmt.agoStr}${stale ? ' — stale, check Actions tab' : ''}</div>
+    <div class="stat-value${stale ? ' is-stale' : ''}" style="color:${stale ? 'var(--red)' : 'var(--white)'};">${fmt.dateTimeStr}</div>
+    <div style="font-size:11px;color:${stale ? 'var(--red)' : 'var(--muted)'};margin-top:2px;">${fmt.agoStr}</div>
+    ${stale ? `<span class="stale-flag">${verdict ? 'STALE: not the latest market close' : 'stale, check Actions tab'}</span>` : ''}
   </div>`;
 }
 
@@ -8891,7 +9031,7 @@ function dh252RenderDataAsOf(){
   const fmt = dh252FmtDataAsOf(iso);
   // Daily job runs once a day — comfortably under ~30h old is normal
   // (pre-market the next day); past that the pipeline likely didn't run.
-  renderFreshnessStat('dh252-data-asof-header', iso, 'Price / Supertrend / 52W high data as of');
+  renderFreshnessStat('dh252-data-asof-header', iso, 'Price / Supertrend / 52W high data as of', null, {kind: 'session', dataDate: window._eqLatestMarketDate});
 
   // Same note repeated right on the Entry Signal panel — the page-top line
   // is easy to scroll past, and this is exactly where the "is this fresh
@@ -9212,6 +9352,8 @@ async function dh252LogTrade(){
 let dh252Initialized = false;
 function dh252Init(){
   dh252Initialized = true;
+  // Price freshness is checked on its own, so the alert shows even if the Google Sheet part of the page fails to load
+  eqFetchSupertrend().then(() => staleCheckPrices('page-dh252', 'Prices (Supertrend, 52-week high)'));
   subTabInit('dh252', ['performance', 'signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dh252-f-date').value = todayIso;
@@ -9494,7 +9636,7 @@ function dhccRenderPositions(state){
 function dhccRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
   const fmt = dh252FmtDataAsOf(iso);
-  renderFreshnessStat('dhcc-data-asof-header', iso, 'Price / Supertrend / RSI14 data as of');
+  renderFreshnessStat('dhcc-data-asof-header', iso, 'Price / Supertrend / RSI14 data as of', null, {kind: 'session', dataDate: window._eqLatestMarketDate});
   const entryEl = document.getElementById('dhcc-entry-asof');
   if(entryEl){
     entryEl.textContent = fmt ? `Data as of ${fmt.text}.` : '';
@@ -9920,6 +10062,7 @@ async function dhccLogDeleteRow(row){
 let dhccInitialized = false;
 function dhccInit(){
   dhccInitialized = true;
+  eqFetchSupertrend().then(() => staleCheckPrices('page-dhcc', 'Prices (Supertrend, RSI)'));
   subTabInit('dhcc', ['performance', 'signals', 'positions', 'log']);
   const todayIso = new Date().toISOString().slice(0, 10);
   document.getElementById('dhcc-f-date').value = todayIso;
@@ -9990,7 +10133,7 @@ const DIV_ADD_AMOUNT_RS = 20000;
 
 function divRenderDataAsOf(){
   const iso = window._eqWeek52GeneratedAt || window._eqSupertrendGeneratedAt;
-  renderFreshnessStat('div-data-asof', iso, 'Price / Supertrend / RSI14 data as of', 80); // weekday-only pipeline: a Sunday read is ~70h old and normal
+  renderFreshnessStat('div-data-asof', iso, 'Price / Supertrend / RSI14 data as of', 80, {kind: 'session', dataDate: window._eqLatestMarketDate});
 }
 
 // Entry rules for the weekly buy (any one fires — see docs/STRATEGY_DIVIDEND.md):
