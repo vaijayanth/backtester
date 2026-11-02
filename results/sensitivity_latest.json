@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T00:30:41.591881+00:00",
+  "generated_at": "2026-11-02T01:01:49.852031+00:00",
   "data_through": "2026-10-30",
   "universe_size": 1495,
   "grid": {
@@ -24,98 +24,98 @@
   "base_params_overrides": {},
   "range": {
     "win_rate_pct": {
-      "worst": 80.4,
-      "median": 84.27,
-      "best": 89.04,
+      "worst": 83.2,
+      "median": 87.24,
+      "best": 89.7,
       "n": 12
     },
     "profit_factor": {
-      "worst": 1.97,
-      "median": 2.7,
-      "best": 3.74,
+      "worst": 2.13,
+      "median": 2.76,
+      "best": 3.59,
       "n": 12
     },
     "max_drawdown_pct": {
-      "worst": 22.6,
-      "median": 12.26,
-      "best": 6.07,
+      "worst": 26.78,
+      "median": 10.13,
+      "best": 5.59,
       "n": 12
     },
     "combined_pl_rs": {
-      "worst": 2167801.26,
-      "median": 7738250.26,
-      "best": 16232582.81,
+      "worst": 293639.93,
+      "median": 1989607.61,
+      "best": 4686407.29,
       "n": 12
     },
     "total_closed_trades": {
-      "worst": 3481,
-      "median": 3819.5,
-      "best": 4308,
+      "worst": 1481,
+      "median": 1664.5,
+      "best": 1905,
       "n": 12
     }
   },
   "by_intrabar_order": {
     "high_first": {
       "win_rate_pct": {
-        "worst": 80.4,
-        "median": 80.56,
-        "best": 80.64,
+        "worst": 83.2,
+        "median": 84.33,
+        "best": 85.21,
         "n": 6
       },
       "profit_factor": {
-        "worst": 1.97,
-        "median": 2.02,
-        "best": 2.08,
+        "worst": 2.13,
+        "median": 2.21,
+        "best": 2.43,
         "n": 6
       },
       "max_drawdown_pct": {
-        "worst": 22.6,
-        "median": 18.49,
-        "best": 16.03,
+        "worst": 26.78,
+        "median": 19.79,
+        "best": 10.75,
         "n": 6
       },
       "combined_pl_rs": {
-        "worst": 2167801.26,
-        "median": 2424201.83,
-        "best": 5487250.41,
+        "worst": 293639.93,
+        "median": 502891.76,
+        "best": 1302088.71,
         "n": 6
       },
       "total_closed_trades": {
-        "worst": 3796,
-        "median": 3866.5,
-        "best": 4308,
+        "worst": 1481,
+        "median": 1512.0,
+        "best": 1728,
         "n": 6
       }
     },
     "low_first": {
       "win_rate_pct": {
-        "worst": 87.89,
-        "median": 88.84,
-        "best": 89.04,
+        "worst": 89.27,
+        "median": 89.41,
+        "best": 89.7,
         "n": 6
       },
       "profit_factor": {
-        "worst": 3.31,
-        "median": 3.67,
-        "best": 3.74,
+        "worst": 3.09,
+        "median": 3.42,
+        "best": 3.59,
         "n": 6
       },
       "max_drawdown_pct": {
-        "worst": 8.49,
-        "median": 7.14,
-        "best": 6.07,
+        "worst": 9.52,
+        "median": 8.72,
+        "best": 5.59,
         "n": 6
       },
       "combined_pl_rs": {
-        "worst": 9989250.11,
-        "median": 11274443.4,
-        "best": 16232582.81,
+        "worst": 2677126.52,
+        "median": 3288727.88,
+        "best": 4686407.29,
         "n": 6
       },
       "total_closed_trades": {
-        "worst": 3481,
-        "median": 3571.0,
-        "best": 3996,
+        "worst": 1661,
+        "median": 1675.5,
+        "best": 1905,
         "n": 6
       }
     }
@@ -123,65 +123,65 @@
   "by_entry_priority": {
     "breakout_strength": {
       "win_rate_pct": {
-        "worst": 80.59,
-        "median": 84.24,
-        "best": 87.89,
+        "worst": 83.85,
+        "median": 86.59,
+        "best": 89.34,
         "n": 2
       },
       "profit_factor": {
-        "worst": 2.08,
-        "median": 2.86,
-        "best": 3.64,
+        "worst": 2.43,
+        "median": 2.96,
+        "best": 3.49,
         "n": 2
       },
       "max_drawdown_pct": {
-        "worst": 17.41,
-        "median": 12.19,
-        "best": 6.97,
+        "worst": 14.62,
+        "median": 10.11,
+        "best": 5.59,
         "n": 2
       },
       "combined_pl_rs": {
-        "worst": 5487250.41,
-        "median": 10859916.61,
-        "best": 16232582.81,
+        "worst": 1302088.71,
+        "median": 2994248.0,
+        "best": 4686407.29,
         "n": 2
       },
       "total_closed_trades": {
-        "worst": 3996,
-        "median": 4152.0,
-        "best": 4308,
+        "worst": 1728,
+        "median": 1816.5,
+        "best": 1905,
         "n": 2
       }
     },
     "random": {
       "win_rate_pct": {
-        "worst": 80.4,
-        "median": 84.53,
-        "best": 89.04,
+        "worst": 83.2,
+        "median": 87.24,
+        "best": 89.7,
         "n": 10
       },
       "profit_factor": {
-        "worst": 1.97,
+        "worst": 2.13,
         "median": 2.69,
-        "best": 3.74,
+        "best": 3.59,
         "n": 10
       },
       "max_drawdown_pct": {
-        "worst": 22.6,
-        "median": 12.26,
-        "best": 6.07,
+        "worst": 26.78,
+        "median": 10.13,
+        "best": 6.12,
         "n": 10
       },
       "combined_pl_rs": {
-        "worst": 2167801.26,
-        "median": 6301104.18,
-        "best": 11685213.95,
+        "worst": 293639.93,
+        "median": 1725643.25,
+        "best": 3530287.01,
         "n": 10
       },
       "total_closed_trades": {
-        "worst": 3481,
-        "median": 3723.5,
-        "best": 3964,
+        "worst": 1481,
+        "median": 1613.5,
+        "best": 1689,
         "n": 10
       }
     }
@@ -192,11 +192,11 @@
       "entry_priority": "breakout_strength",
       "random_seed": 0,
       "metrics": {
-        "win_rate_pct": 80.59,
-        "profit_factor": 2.08,
-        "max_drawdown_pct": 17.41,
-        "combined_pl_rs": 5487250.41,
-        "total_closed_trades": 4308
+        "win_rate_pct": 83.85,
+        "profit_factor": 2.43,
+        "max_drawdown_pct": 14.62,
+        "combined_pl_rs": 1302088.71,
+        "total_closed_trades": 1728
       }
     },
     {
@@ -204,11 +204,11 @@
       "entry_priority": "random",
       "random_seed": 0,
       "metrics": {
-        "win_rate_pct": 80.45,
-        "profit_factor": 2.07,
-        "max_drawdown_pct": 19.69,
-        "combined_pl_rs": 2337385.76,
-        "total_closed_trades": 3796
+        "win_rate_pct": 84.18,
+        "profit_factor": 2.25,
+        "max_drawdown_pct": 24.96,
+        "combined_pl_rs": 571178.12,
+        "total_closed_trades": 1530
       }
     },
     {
@@ -216,11 +216,11 @@
       "entry_priority": "random",
       "random_seed": 1,
       "metrics": {
-        "win_rate_pct": 80.6,
-        "profit_factor": 2.01,
-        "max_drawdown_pct": 22.6,
-        "combined_pl_rs": 2181029.77,
-        "total_closed_trades": 3855
+        "win_rate_pct": 84.74,
+        "profit_factor": 2.14,
+        "max_drawdown_pct": 26.78,
+        "combined_pl_rs": 774159.97,
+        "total_closed_trades": 1566
       }
     },
     {
@@ -228,11 +228,11 @@
       "entry_priority": "random",
       "random_seed": 2,
       "metrics": {
-        "win_rate_pct": 80.64,
-        "profit_factor": 1.97,
-        "max_drawdown_pct": 18.66,
-        "combined_pl_rs": 2167801.26,
-        "total_closed_trades": 3843
+        "win_rate_pct": 84.47,
+        "profit_factor": 2.29,
+        "max_drawdown_pct": 10.75,
+        "combined_pl_rs": 434605.39,
+        "total_closed_trades": 1481
       }
     },
     {
@@ -240,11 +240,11 @@
       "entry_priority": "random",
       "random_seed": 3,
       "metrics": {
-        "win_rate_pct": 80.52,
-        "profit_factor": 1.97,
-        "max_drawdown_pct": 18.33,
-        "combined_pl_rs": 2612958.25,
-        "total_closed_trades": 3964
+        "win_rate_pct": 85.21,
+        "profit_factor": 2.13,
+        "max_drawdown_pct": 25.11,
+        "combined_pl_rs": 328416.47,
+        "total_closed_trades": 1481
       }
     },
     {
@@ -252,11 +252,11 @@
       "entry_priority": "random",
       "random_seed": 4,
       "metrics": {
-        "win_rate_pct": 80.4,
-        "profit_factor": 2.03,
-        "max_drawdown_pct": 16.03,
-        "combined_pl_rs": 2511017.9,
-        "total_closed_trades": 3878
+        "win_rate_pct": 83.2,
+        "profit_factor": 2.17,
+        "max_drawdown_pct": 12.72,
+        "combined_pl_rs": 293639.93,
+        "total_closed_trades": 1494
       }
     },
     {
@@ -264,11 +264,11 @@
       "entry_priority": "breakout_strength",
       "random_seed": 0,
       "metrics": {
-        "win_rate_pct": 87.89,
-        "profit_factor": 3.64,
-        "max_drawdown_pct": 6.97,
-        "combined_pl_rs": 16232582.81,
-        "total_closed_trades": 3996
+        "win_rate_pct": 89.34,
+        "profit_factor": 3.49,
+        "max_drawdown_pct": 5.59,
+        "combined_pl_rs": 4686407.29,
+        "total_closed_trades": 1905
       }
     },
     {
@@ -276,11 +276,11 @@
       "entry_priority": "random",
       "random_seed": 0,
       "metrics": {
-        "win_rate_pct": 88.99,
-        "profit_factor": 3.74,
-        "max_drawdown_pct": 8.49,
-        "combined_pl_rs": 11685213.95,
-        "total_closed_trades": 3578
+        "win_rate_pct": 89.37,
+        "profit_factor": 3.59,
+        "max_drawdown_pct": 9.52,
+        "combined_pl_rs": 3423449.59,
+        "total_closed_trades": 1674
       }
     },
     {
@@ -288,11 +288,11 @@
       "entry_priority": "random",
       "random_seed": 1,
       "metrics": {
-        "win_rate_pct": 89.04,
-        "profit_factor": 3.7,
-        "max_drawdown_pct": 7.57,
-        "combined_pl_rs": 10935735.18,
-        "total_closed_trades": 3550
+        "win_rate_pct": 89.45,
+        "profit_factor": 3.4,
+        "max_drawdown_pct": 8.84,
+        "combined_pl_rs": 3136647.28,
+        "total_closed_trades": 1677
       }
     },
     {
@@ -300,11 +300,11 @@
       "entry_priority": "random",
       "random_seed": 2,
       "metrics": {
-        "win_rate_pct": 88.42,
-        "profit_factor": 3.35,
-        "max_drawdown_pct": 7.32,
-        "combined_pl_rs": 9989250.11,
-        "total_closed_trades": 3481
+        "win_rate_pct": 89.7,
+        "profit_factor": 3.45,
+        "max_drawdown_pct": 8.6,
+        "combined_pl_rs": 3530287.01,
+        "total_closed_trades": 1689
       }
     },
     {
@@ -312,11 +312,11 @@
       "entry_priority": "random",
       "random_seed": 3,
       "metrics": {
-        "win_rate_pct": 88.8,
-        "profit_factor": 3.31,
-        "max_drawdown_pct": 6.38,
-        "combined_pl_rs": 10790455.08,
-        "total_closed_trades": 3564
+        "win_rate_pct": 89.52,
+        "profit_factor": 3.28,
+        "max_drawdown_pct": 8.87,
+        "combined_pl_rs": 3154006.16,
+        "total_closed_trades": 1661
       }
     },
     {
@@ -324,11 +324,11 @@
       "entry_priority": "random",
       "random_seed": 4,
       "metrics": {
-        "win_rate_pct": 88.88,
-        "profit_factor": 3.69,
-        "max_drawdown_pct": 6.07,
-        "combined_pl_rs": 11613151.62,
-        "total_closed_trades": 3651
+        "win_rate_pct": 89.27,
+        "profit_factor": 3.09,
+        "max_drawdown_pct": 6.12,
+        "combined_pl_rs": 2677126.52,
+        "total_closed_trades": 1668
       }
     }
   ],
