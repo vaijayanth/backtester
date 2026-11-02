@@ -1,6 +1,8 @@
 {
-  "generated_at": "2026-11-01T17:14:42.964170+00:00",
+  "generated_at": "2026-11-02T09:56:47.389759+00:00",
   "latest_market_date": "2026-10-30",
+  "expected_last_session": "2026-10-30",
+  "feed_lag_vs_clock_weekdays": 0,
   "stale_symbols": 0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -1933,7 +1935,7 @@
     },
     {
       "symbol": "COLPAL.NS",
-      "close": 1596.5,
+      "close": 1572.5,
       "color": "red",
       "flipped_today": false,
       "above_ema50": false,
