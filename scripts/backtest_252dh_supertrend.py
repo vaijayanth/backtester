@@ -105,29 +105,35 @@ def current_tier_size(closed_trades_count, base_position_rs):
     return base_position_rs + (closed_trades_count // POSITION_INCREMENT_TRADES) * POSITION_INCREMENT_RS
 
 
-def symbol_order(symbols, date, entry_priority="random", random_seed=0, first=()):
-    """Order symbols are processed within one trading day. Cash is finite, so
-    the first symbols processed get filled first; iterating in manifest
-    (alphabetical) order systematically favoured early names. "random" is a
-    per-date seeded shuffle (unbiased, exactly reproducible); "symbol" keeps the
-    legacy order for reproducing runs made before 2026-11-01.
-
-    `first` = symbols served before the rest (those with a pending sell_exit):
-    a sale must free its cash before any buy that day is attempted, otherwise
-    a buy is wrongly counted as "no cash" only because its sale hadn't run yet.
-    Applied in "random" mode only; "symbol" is EXACTLY the pre-2026-11-01 order
-    (verified equal to the old engine, trades and equity curve)."""
+def symbol_order(symbols, date, entry_priority="breakout_strength", random_seed=0, first=(), strengths=None):
+    """Order symbols are processed within one trading day. Cash is finite, so the first symbols
+    processed get filled first.
+      "symbol"            legacy pre-2026-11-01 order: manifest (alphabetical) order, EXACTLY (verified equal
+                          to the old engine, trades and equity curve).
+      "random"            per-date seeded shuffle (unbiased, reproducible).
+      "breakout_strength" (default, user's choice 2026-11-02) symbols with a pending new-entry buy are served
+                          biggest breakout first (`strengths`: symbol -> close/breakout level - 1 at the signal
+                          close); exact ties and everything else follow the seeded shuffle.
+    `first` = symbols served before everything else (those with a pending sell_exit): a sale must free its
+    cash before any buy that day is attempted, otherwise a buy is wrongly counted as "no cash" only because its
+    sale hadn't run yet. Applied in the two non-legacy modes only."""
     syms = list(symbols)
     if entry_priority == "symbol":
         return syms
     random.Random(f"{random_seed}|{date.date()}").shuffle(syms)
     first = set(first)
-    return [x for x in syms if x in first] + [x for x in syms if x not in first]
+    head = [x for x in syms if x in first]
+    rest = [x for x in syms if x not in first]
+    if entry_priority == "breakout_strength" and strengths:
+        ranked = sorted((x for x in rest if x in strengths), key=lambda x: -strengths[x])  # stable: ties keep shuffle order
+        ranked_set = set(ranked)
+        rest = ranked + [x for x in rest if x not in ranked_set]
+    return head + rest
 
 
 def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs=INITIAL_POSITION_RS, symbols=None,
                   breakout_window_days=BREAKOUT_WINDOW_DAYS, raw_dir=RAW_DIR, manifest_csv=MANIFEST_CSV,
-                  entry_priority="random", random_seed=0):
+                  entry_priority="breakout_strength", random_seed=0):
     raw_data = load_universe_data(symbols, raw_dir=raw_dir, manifest_csv=manifest_csv, breakout_window_days=breakout_window_days)
     if not raw_data:
         raise RuntimeError(f"No validated symbol data found in {raw_dir} — run the backfill workflow first.")
@@ -147,7 +153,8 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
 
     for date in all_dates:
         sells_due = [x for x, o in pending.items() if o["action"] == "sell_exit"]
-        for sym in symbol_order(data.keys(), date, entry_priority, random_seed, first=sells_due):
+        buy_strengths = {x: o["strength"] for x, o in pending.items() if o["action"] == "buy_new" and "strength" in o}
+        for sym in symbol_order(data.keys(), date, entry_priority, random_seed, first=sells_due, strengths=buy_strengths):
             bars = data[sym]
             bar = bars.get(date)
             if bar is None:
@@ -228,7 +235,7 @@ def run_backtest(initial_capital_rs=DEFAULT_INITIAL_CAPITAL_RS, position_size_rs
                 if rolling_high is None or pd.isna(rolling_high):
                     continue
                 if close_today > rolling_high:
-                    pending[sym] = {"action": "buy_new"}
+                    pending[sym] = {"action": "buy_new", "strength": close_today / rolling_high - 1}
 
         open_mtm = sum(
             (data[sym][date][3] - pos["avg_entry_price"]) * pos["qty"]
@@ -334,8 +341,8 @@ def main():
                          help=f"Breakout lookback in trading days (default {BREAKOUT_WINDOW_DAYS} = ~52-week high)")
     parser.add_argument("--raw-dir", type=str, default=str(RAW_DIR), help="Directory of per-symbol parquet OHLC")
     parser.add_argument("--manifest", type=str, default=str(MANIFEST_CSV), help="Manifest CSV listing VALIDATED symbols")
-    parser.add_argument("--entry-priority", choices=["random", "symbol"], default="random",
-                         help="order symbols are served cash on a day: seeded per-date shuffle (default, unbiased) or legacy manifest order")
+    parser.add_argument("--entry-priority", choices=["breakout_strength", "random", "symbol"], default="breakout_strength",
+                         help="order symbols are served cash on a day: biggest breakout first (default), seeded per-date shuffle, or legacy manifest order")
     parser.add_argument("--seed", type=int, default=0, help="seed for --entry-priority random")
     parser.add_argument("--out", type=str, default="results_252dh.json")
     args = parser.parse_args()

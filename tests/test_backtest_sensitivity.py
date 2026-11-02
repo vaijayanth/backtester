@@ -56,7 +56,9 @@ def run(seeds=2):
 def test_grid_runs_every_combination_and_restores_loader():
     original = e.load_universe_data
     runs, through, universe = run(2)
-    assert [(r["intrabar_order"], r["random_seed"]) for r in runs] == [("high_first", 0), ("high_first", 1), ("low_first", 0), ("low_first", 1)]
+    assert [(r["intrabar_order"], r["entry_priority"], r["random_seed"]) for r in runs] == [
+        ("high_first", "breakout_strength", 0), ("high_first", "random", 0), ("high_first", "random", 1),
+        ("low_first", "breakout_strength", 0), ("low_first", "random", 0), ("low_first", "random", 1)]
     assert through is not None and universe == 6
     assert e.load_universe_data is original
 
@@ -70,7 +72,8 @@ def test_grid_is_deterministic():
 def test_summary_shape_and_forced_params_stripped():
     runs, through, universe = run(2)
     summ = s.build_summary(runs, through, universe, {"max_open_positions": 2}, 2)
-    assert summ["grid"]["runs"] == 4 and summ["grid"]["gap_aware_fills"] is True
+    assert summ["grid"]["runs"] == 6 and summ["grid"]["gap_aware_fills"] is True
+    assert set(summ["by_entry_priority"]) == {"breakout_strength", "random"}
     assert set(summ["range"]) == {"win_rate_pct", "profit_factor", "max_drawdown_pct", "combined_pl_rs", "total_closed_trades"}
     assert set(summ["by_intrabar_order"]) == {"high_first", "low_first"}
     json.dumps(summ, default=float)   # serialisable

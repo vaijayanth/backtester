@@ -6,14 +6,15 @@ move the SST result a lot (measured 2026-11-01 on 350 real symbols: P&L Rs 3.6M 
 max drawdown 16% vs 7%). So instead of one number this runs a grid —
 
     intrabar_order  in {high_first, low_first}
-    random_seed     in {0 .. seeds-1}          (same-day entry priority shuffle)
+    entry priority in {breakout_strength (the strategy's rule: biggest breakout first)}
+                     + {random, seeds 0 .. seeds-1}   (shows how much an arbitrary same-day priority matters)
     gap_aware_fills = True                      (always: legacy fills were unreachable prices)
 
 — on one load of the data, and reports worst / median / best per metric ("worst" = the worst
 outcome for that metric: lowest win rate / profit factor / P&L, HIGHEST drawdown).
 
 Usage:
-  python scripts/backtest_sensitivity.py                         # defaults, 2 x 5 = 10 runs
+  python scripts/backtest_sensitivity.py                         # defaults, 2 x (1 + 5) = 12 runs
   python scripts/backtest_sensitivity.py --params params.json --seeds 3 --out results/sensitivity_latest.json
 """
 
@@ -58,6 +59,12 @@ def aggregate(runs):
     return {name: summarise([r["metrics"].get(key) for r in runs], hib) for key, (name, hib) in METRICS.items()}
 
 
+def entry_variants(seeds):
+    """(entry_priority, seed) pairs per intrabar order: the strategy's own ranking once, then the
+    random-priority shuffle for each seed."""
+    return [("breakout_strength", 0)] + [("random", s) for s in range(seeds)]
+
+
 def run_grid(base_params, seeds, symbols=None):
     """Runs the grid on ONE load of the data. Returns (runs, data_through, universe_size)."""
     cache = engine.load_universe_data(symbols)
@@ -66,14 +73,15 @@ def run_grid(base_params, seeds, symbols=None):
     runs, data_through, universe = [], None, None
     try:
         for order in INTRABAR_ORDERS:
-            for seed in range(seeds):
-                params = {**base_params, "gap_aware_fills": True, "entry_priority": "random",
+            for priority, seed in entry_variants(seeds):
+                params = {**base_params, "gap_aware_fills": True, "entry_priority": priority,
                           "intrabar_order": order, "random_seed": seed}
                 res = engine.run_backtest(params)
                 data_through = res["equity_curve"][-1]["date"] if res["equity_curve"] else data_through
                 universe = res.get("universe_size", universe)
-                runs.append({"intrabar_order": order, "random_seed": seed, "metrics": {k: res["metrics"].get(k) for k in METRICS}})
-                print(f"  {order:10} seed {seed}: win {res['metrics']['win_rate_pct']}%  PF {res['metrics']['profit_factor']}  "
+                runs.append({"intrabar_order": order, "entry_priority": priority, "random_seed": seed,
+                             "metrics": {k: res["metrics"].get(k) for k in METRICS}})
+                print(f"  {order:10} {priority:17} seed {seed}: win {res['metrics']['win_rate_pct']}%  PF {res['metrics']['profit_factor']}  "
                       f"DD {res['metrics']['max_drawdown_pct']}%  P&L Rs{res['metrics']['combined_pl_rs']:,.0f}")
     finally:
         engine.load_universe_data = original
@@ -85,11 +93,12 @@ def build_summary(runs, data_through, universe, base_params, seeds):
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "data_through": data_through,
         "universe_size": universe,
-        "grid": {"intrabar_order": list(INTRABAR_ORDERS), "random_seeds": list(range(seeds)),
-                 "gap_aware_fills": True, "entry_priority": "random", "runs": len(runs)},
+        "grid": {"intrabar_order": list(INTRABAR_ORDERS), "entry_priority": ["breakout_strength", "random"],
+                 "random_seeds": list(range(seeds)), "gap_aware_fills": True, "runs": len(runs)},
         "base_params_overrides": base_params,
         "range": aggregate(runs),
         "by_intrabar_order": {o: aggregate([r for r in runs if r["intrabar_order"] == o]) for o in INTRABAR_ORDERS},
+        "by_entry_priority": {p: aggregate([r for r in runs if r["entry_priority"] == p]) for p in ("breakout_strength", "random")},
         "runs": runs,
         "note": ("Daily bars cannot show whether the day's High or Low came first, and same-day entry priority "
                  "is a shuffle, so read this as a range, not a point estimate."),
@@ -99,7 +108,7 @@ def build_summary(runs, data_through, universe, base_params, seeds):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--params", type=str, default=None, help="JSON file of base strategy params (overrides defaults)")
-    parser.add_argument("--seeds", type=int, default=5, help="random seeds per intrabar order (default 5)")
+    parser.add_argument("--seeds", type=int, default=5, help="random-priority seeds per intrabar order (default 5; plus one breakout_strength run each)")
     parser.add_argument("--out", type=str, default=str(DEFAULT_OUT))
     args = parser.parse_args()
     if not 1 <= args.seeds <= 20:
@@ -119,7 +128,7 @@ def main():
     for forced in ("gap_aware_fills", "entry_priority", "intrabar_order", "random_seed"):
         base.pop(forced, None)   # the grid owns these
 
-    print(f"Sensitivity grid: {len(INTRABAR_ORDERS)} intrabar orders x {args.seeds} seeds, gap-aware fills")
+    print(f"Sensitivity grid: {len(INTRABAR_ORDERS)} intrabar orders x (1 breakout-strength + {args.seeds} random seeds), gap-aware fills")
     runs, data_through, universe = run_grid(base, args.seeds)
     summary = build_summary(runs, data_through, universe, base, args.seeds)
 

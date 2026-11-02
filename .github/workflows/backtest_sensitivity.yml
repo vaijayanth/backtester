@@ -1,7 +1,8 @@
 name: Run SST Backtest (sensitivity range)
 
 # Manually triggered from the Actions tab. Runs the SST backtest across a small grid —
-# 2 intrabar orders (High-first / Low-first) x N random seeds, gap-aware fills — on ONE load of
+# 2 intrabar orders (High-first / Low-first) x (1 breakout-strength run + N random-priority seeds),
+# gap-aware fills — on ONE load of
 # the checkpoint data and commits results/sensitivity_latest.json, which the Results page shows as
 # the "Robust backtest range". Why a range: daily OHLC can't say whether a day's High or Low came
 # first, and same-day entry priority is a seeded shuffle; those assumptions move the result a lot
@@ -15,7 +16,7 @@ on:
         required: false
         default: ""
       seeds:
-        description: "Random seeds per intrabar order (default 5 -> 10 runs)"
+        description: "Random-priority seeds per intrabar order (default 5 -> 12 runs incl. the breakout-strength one)"
         required: false
         default: "5"
 

@@ -75,10 +75,12 @@ DEFAULT_PARAMS = {
     #    at S fills at min(Open, S). Legacy (False) filled at L / S even when the
     #    day gapped through them, i.e. at a price that never traded.
     #  - entry_priority: when more breakouts fire on a day than max_open_positions
-    #    allows, "random" picks among them with a seeded per-date shuffle (reproducible,
-    #    no bias); legacy "symbol" took them in manifest order (alphabetical bias).
+    #    allows: "breakout_strength" (default, user's choice 2026-11-02) takes the biggest breakout
+    #    first (day's High vs the breakout level, in %), exact ties broken by the seeded shuffle;
+    #    "random" is the seeded per-date shuffle (reproducible, unbiased); legacy "symbol" took them
+    #    in manifest order (alphabetical bias).
     "gap_aware_fills": True,
-    "entry_priority": "random",
+    "entry_priority": "breakout_strength",
     "random_seed": 0,
     #  - intrabar_order: daily OHLC can't say whether the High or the Low came first.
     #    "high_first" (default, legacy): today's High can arm/raise the trailing stop and the same
@@ -175,7 +177,7 @@ _BAR_COLS = ["Open", "High", "Low", "Close", "ema_fast", "ema_slow", "rolling_hi
 _O, _H, _L, _C, _EF, _ES, _RH = range(7)
 
 
-VALID_CHOICES = {"intrabar_order": ("high_first", "low_first"), "entry_priority": ("random", "symbol")}
+VALID_CHOICES = {"intrabar_order": ("high_first", "low_first"), "entry_priority": ("breakout_strength", "random", "symbol")}
 
 
 def run_backtest(params=None, symbols=None):
@@ -281,6 +283,10 @@ def run_backtest(params=None, symbols=None):
 
         # --- 2. new entries ---
         if len(positions) < params["max_open_positions"]:
+            # Eligible breakouts first, then ranked, then opened until the position cap. Eligibility does
+            # not depend on positions opened earlier the same day, so this equals the old one-pass loop
+            # for "random" / "symbol" priority.
+            candidates = []
             for sym in entry_order(data.keys(), date, params):
                 if sym in positions:
                     continue
@@ -292,21 +298,28 @@ def run_backtest(params=None, symbols=None):
                 above_emas = row[_C] > row[_EF] and row[_C] > row[_ES]
                 breakout = row[_H] >= row[_RH]
                 if above_emas and breakout:
-                    entry_price = buy_stop_fill(row[_O], row[_RH], params)
-                    size_rs = current_tier_size(len(closed_trades), params)
-                    qty = int(size_rs // entry_price)
-                    if qty < 1:
-                        continue
-                    positions[sym] = {
-                        "entry_date": date,
-                        "avg_entry_price": entry_price,
-                        "qty": qty,
-                        "peak_price": entry_price,
-                        "stop_price": 0,
-                        "last_addon_date": None,
-                    }
-                    if len(positions) >= params["max_open_positions"]:
-                        break
+                    candidates.append((sym, row))
+            if params.get("entry_priority", "breakout_strength") == "breakout_strength":
+                # Biggest breakout first: how far the day's High cleared the breakout level, in %.
+                # sort is stable and candidates arrive in seeded-shuffle order, so exact ties are
+                # broken at random (reproducibly), never alphabetically.
+                candidates.sort(key=lambda c: -(c[1][_H] / c[1][_RH] - 1))
+            for sym, row in candidates:
+                entry_price = buy_stop_fill(row[_O], row[_RH], params)
+                size_rs = current_tier_size(len(closed_trades), params)
+                qty = int(size_rs // entry_price)
+                if qty < 1:
+                    continue
+                positions[sym] = {
+                    "entry_date": date,
+                    "avg_entry_price": entry_price,
+                    "qty": qty,
+                    "peak_price": entry_price,
+                    "stop_price": 0,
+                    "last_addon_date": None,
+                }
+                if len(positions) >= params["max_open_positions"]:
+                    break
 
         # --- 3. equity curve point ---
         open_mtm = 0.0

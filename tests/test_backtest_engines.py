@@ -144,6 +144,64 @@ def test_default_run_matches_explicit_high_first_and_differs_from_low_first_when
     assert default == high and default != low
 
 
+# ---------------- breakout-strength ranking ----------------
+def test_sst_biggest_breakout_wins_the_single_slot():
+    base = series()
+    i0 = first_entry_index(base)
+    weak, strong = base.copy(), base.copy()
+    c = strong.columns.get_loc
+    rh = strong["High"].iloc[i0 - 21:i0].max()
+    strong.iloc[i0, [c("High"), c("Close")]] = [rh + 6, rh + 5]      # clears the level by far more than A
+    frames = {"A.NS": weak, "B.NS": strong}   # A is alphabetically first
+    pick = lambda prio: run_sst(frames, max_open_positions=1, entry_priority=prio)["open_positions"][0]["symbol"]
+    assert pick("symbol") == "A.NS"
+    assert pick("breakout_strength") == "B.NS"
+    assert run_sst(frames, max_open_positions=1)["open_positions"][0]["symbol"] == "B.NS"     # it is the default
+
+
+def test_sst_equal_strength_ties_break_by_seeded_shuffle_not_alphabet():
+    frames = {f"{ch}.NS": series() for ch in "ABCDEF"}
+    pick = lambda seed: run_sst(frames, max_open_positions=1, random_seed=seed)["open_positions"][0]["symbol"]
+    assert pick(2) == pick(2) and len({pick(s) for s in range(12)}) >= 3
+
+
+def test_sst_ranking_matches_random_priority_when_cap_does_not_bind():
+    frames = {f"{ch}.NS": series(step=0.3 + i * 0.01) for i, ch in enumerate("ABCD")}
+    core = lambda r: sorted((t["symbol"], t["entry_date"], t["pl_rs"]) for t in r["trades"]) + sorted((p["symbol"], p["entry_date"]) for p in r["open_positions"])
+    assert core(run_sst(frames, entry_priority="breakout_strength")) == core(run_sst(frames, entry_priority="random"))
+
+
+def test_252dh_symbol_order_ranks_buys_by_strength_after_sells():
+    syms = list("ABCDEFG")
+    day = pd.Timestamp("2026-03-02")
+    strengths = {"C": 0.01, "E": 0.09, "G": 0.05}
+    for seed in range(10):
+        order = d252.symbol_order(syms, day, "breakout_strength", seed, first=["B"], strengths=strengths)
+        assert order[:4] == ["B", "E", "G", "C"] and sorted(order) == syms
+    assert d252.symbol_order(syms, day, "symbol", first=["B"], strengths=strengths) == syms
+    assert d252.symbol_order(syms, day, "random", 1, first=["B"], strengths=strengths)[0] == "B"
+
+
+def test_252dh_biggest_breakout_gets_the_only_cash():
+    with tempfile.TemporaryDirectory() as tmp:
+        raw = Path(tmp) / "raw"
+        raw.mkdir()
+        rows = []
+        for ch in "ABC":
+            df = series(300, step=2.0)
+            if ch == "C":   # the biggest close-above-the-252-day-high on the first signal day
+                sig = (df["Close"] > df["High"].rolling(252).max().shift(1)).idxmax()
+                df.loc[sig, ["High", "Close"]] = df.loc[sig, "Close"] + 8
+            df.to_parquet(raw / f"{ch}_NS.parquet")
+            rows.append({"symbol": f"{ch}.NS", "status": "VALIDATED"})
+        man = Path(tmp) / "manifest.csv"
+        pd.DataFrame(rows).to_csv(man, index=False)
+        run = lambda prio: sorted(p["symbol"] for p in d252.run_backtest(
+            initial_capital_rs=700, position_size_rs=1000, raw_dir=raw, manifest_csv=man, entry_priority=prio)["open_positions"])
+        assert run("symbol") == ["A.NS"]
+        assert run("breakout_strength") == ["C.NS"]
+
+
 # ---------------- priority ----------------
 def test_symbol_priority_is_alphabetical_legacy():
     frames = {f"{ch}.NS": series() for ch in "ABCDEF"}
