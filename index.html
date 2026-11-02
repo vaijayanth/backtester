@@ -3829,7 +3829,7 @@ function renderSensitivity(d, body, meta){
       ${cells}
     </div>
     <div class="rr-compare table-scroll"><table class="list-table"><thead><tr><th>MEDIAN BY ASSUMPTION</th><th>WIN RATE</th><th>PROFIT FACTOR</th><th>MAX DRAWDOWN</th><th>COMBINED P&amp;L</th></tr></thead><tbody>${compare}</tbody></table></div>
-    <div class="rr-foot${stale ? ' stale' : ''}">Fills use the day's open when a stop or breakout gaps. Same-day entries are ranked biggest breakout first, and also shuffled across ${(g.random_seeds || []).length} seeds to show how much the order matters. Run ${ran}${stale ? ': older than ' + RES_RANGE_STALE_DAYS + ' days, run it again.' : '.'}</div>`;
+    <div class="rr-foot${stale ? ' stale' : ''}">Fills use the day's open when a stop or breakout gaps. Same-day entries are ranked by the size of the opening gap above the breakout level, and also shuffled across ${(g.random_seeds || []).length} seeds to show how much the order matters. Run ${ran}${stale ? ': older than ' + RES_RANGE_STALE_DAYS + ' days, run it again.' : '.'}</div>`;
 }
 
 async function loadRunIndex(){

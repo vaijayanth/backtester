@@ -76,7 +76,8 @@ DEFAULT_PARAMS = {
     #    day gapped through them, i.e. at a price that never traded.
     #  - entry_priority: when more breakouts fire on a day than max_open_positions
     #    allows: "breakout_strength" (default, user's choice 2026-11-02) takes the biggest breakout
-    #    first (day's High vs the breakout level, in %), exact ties broken by the seeded shuffle;
+    #    first (size of the opening gap above the breakout level, in %: the only strength known when stops
+    #    trigger), all non-gap triggers tie and follow the seeded shuffle;
     #    "random" is the seeded per-date shuffle (reproducible, unbiased); legacy "symbol" took them
     #    in manifest order (alphabetical bias).
     "gap_aware_fills": True,
@@ -300,10 +301,14 @@ def run_backtest(params=None, symbols=None):
                 if above_emas and breakout:
                     candidates.append((sym, row))
             if params.get("entry_priority", "breakout_strength") == "breakout_strength":
-                # Biggest breakout first: how far the day's High cleared the breakout level, in %.
-                # sort is stable and candidates arrive in seeded-shuffle order, so exact ties are
-                # broken at random (reproducibly), never alphabetically.
-                candidates.sort(key=lambda c: -(c[1][_H] / c[1][_RH] - 1))
+                # Biggest breakout first, using ONLY what is known when the stops trigger: the size of the
+                # opening gap above the breakout level (a gap-up triggers at the open, ahead of every stop
+                # that triggers later in the session). NOT the day's High: that is only known at the close,
+                # so ranking by it picks the day's biggest winners (look-ahead; it inflated P&L ~5x in a
+                # first version). Non-gap triggers all tie at 0 and fall to the seeded shuffle, because the
+                # intraday order in which they trigger cannot be known from daily bars.
+                # sort is stable: ties keep the seeded-shuffle order, never alphabetical.
+                candidates.sort(key=lambda c: -max(0.0, c[1][_O] / c[1][_RH] - 1))
             for sym, row in candidates:
                 entry_price = buy_stop_fill(row[_O], row[_RH], params)
                 size_rs = current_tier_size(len(closed_trades), params)

@@ -145,18 +145,31 @@ def test_default_run_matches_explicit_high_first_and_differs_from_low_first_when
 
 
 # ---------------- breakout-strength ranking ----------------
-def test_sst_biggest_breakout_wins_the_single_slot():
+def test_sst_biggest_opening_gap_wins_the_single_slot():
     base = series()
     i0 = first_entry_index(base)
-    weak, strong = base.copy(), base.copy()
-    c = strong.columns.get_loc
-    rh = strong["High"].iloc[i0 - 21:i0].max()
-    strong.iloc[i0, [c("High"), c("Close")]] = [rh + 6, rh + 5]      # clears the level by far more than A
-    frames = {"A.NS": weak, "B.NS": strong}   # A is alphabetically first
+    plain, gapper = base.copy(), base.copy()
+    c = gapper.columns.get_loc
+    rh = gapper["High"].iloc[i0 - 21:i0].max()
+    gapper.iloc[i0, [c("Open"), c("High"), c("Close")]] = [rh + 4, rh + 6, rh + 5]   # gaps up through the level
+    frames = {"A.NS": plain, "B.NS": gapper}   # A is alphabetically first
     pick = lambda prio: run_sst(frames, max_open_positions=1, entry_priority=prio)["open_positions"][0]["symbol"]
     assert pick("symbol") == "A.NS"
     assert pick("breakout_strength") == "B.NS"
     assert run_sst(frames, max_open_positions=1)["open_positions"][0]["symbol"] == "B.NS"     # it is the default
+
+
+def test_sst_ranking_ignores_the_days_high_no_look_ahead():
+    """A day's High is unknowable when the stop triggers. Two stocks identical except one runs much
+    higher intraday AFTER the trigger must be ranked equally (tie -> seeded shuffle), not by that High."""
+    base = series()
+    i0 = first_entry_index(base)
+    runner = base.copy()
+    c = runner.columns.get_loc
+    runner.iloc[i0, c("High")] = runner["High"].iloc[i0] + 50      # huge intraday run, same Open
+    frames = {"A.NS": base, "B.NS": runner}
+    picks = {run_sst(frames, max_open_positions=1, random_seed=s)["open_positions"][0]["symbol"] for s in range(12)}
+    assert picks == {"A.NS", "B.NS"}, picks     # chosen by the shuffle, so BOTH win for some seeds (a High-based rank would always pick B)
 
 
 def test_sst_equal_strength_ties_break_by_seeded_shuffle_not_alphabet():
@@ -177,7 +190,7 @@ def test_252dh_symbol_order_ranks_buys_by_strength_after_sells():
     strengths = {"C": 0.01, "E": 0.09, "G": 0.05}
     for seed in range(10):
         order = d252.symbol_order(syms, day, "breakout_strength", seed, first=["B"], strengths=strengths)
-        assert order[:4] == ["B", "E", "G", "C"] and sorted(order) == syms
+        assert order[:4] == ["B", "E", "G", "C"] and sorted(order) == syms   # 252DH buys at the NEXT open after a close-based signal: no look-ahead
     assert d252.symbol_order(syms, day, "symbol", first=["B"], strengths=strengths) == syms
     assert d252.symbol_order(syms, day, "random", 1, first=["B"], strengths=strengths)[0] == "B"
 
