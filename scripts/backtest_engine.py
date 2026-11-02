@@ -90,8 +90,9 @@ DEFAULT_PARAMS = {
     #    symbols low_first gave HIGHER P&L (see docs/SPEC.md section 27) — treat results as a range.
     #    To reproduce a pre-2026-11-01 run use gap_aware_fills=False, entry_priority="symbol".
     "intrabar_order": "high_first",
-    # Fit-to-live-trading switches (added 2026-11-02; ALL OFF by default so existing results are unchanged —
-    # measured one by one in docs/SPEC.md section 31; "REALISTIC_PROFILE" below turns them all on):
+    # Fit-to-live-trading switches. DEFAULT = REALISTIC since 2026-11-02 (user: "whichever is realistic").
+    # Measured one by one in docs/SPEC.md sections 31-32; IDEALISED_PROFILE below turns them all off to
+    # reproduce the old free-trading numbers.
     #  - cash_limited: only buy while cash is available (account = initial_capital_rs, default Rs 50,00,000);
     #    off = up to max_open_positions with no cash check.
     #  - fee_buy_pct / fee_sell_pct: statutory charges per side as a fraction of trade value (delivery, free-brokerage
@@ -99,18 +100,9 @@ DEFAULT_PARAMS = {
     #    slippage_pct: adverse fill vs the modelled price, per side. All 0 = trades for free at exact prices.
     #  - min_price / min_avg_traded_value_rs: skip stocks you would not really trade — price below min_price, or
     #    20-day average traded value (Close x Volume, up to yesterday) below the floor. 0 = no filter.
-    #  - stop_peak: "high" (legacy) ratchets the trailing stop off each day's intraday High; "close" off the highest
+    #    The Rs 50 / Rs 1 crore floors and the cost percentages are placeholders, not user-tuned.
+    #  - stop_peak: "high" ratchets the trailing stop off each day's intraday High; "close" off the highest
     #    CLOSE only (you move your GTT by hand after the close, so it lags the intraday peak).
-    "cash_limited": False,
-    "fee_buy_pct": 0.0,
-    "fee_sell_pct": 0.0,
-    "slippage_pct": 0.0,
-    "min_price": 0.0,
-    "min_avg_traded_value_rs": 0.0,
-    "stop_peak": "high",
-}
-
-REALISTIC_PROFILE = {
     "cash_limited": True,
     "fee_buy_pct": 0.0012,
     "fee_sell_pct": 0.0011,
@@ -119,6 +111,13 @@ REALISTIC_PROFILE = {
     "min_avg_traded_value_rs": 1e7,   # Rs 1 crore a day
     "stop_peak": "close",
 }
+
+_FIT_KEYS = ("cash_limited", "fee_buy_pct", "fee_sell_pct", "slippage_pct",
+             "min_price", "min_avg_traded_value_rs", "stop_peak")
+REALISTIC_PROFILE = {k: DEFAULT_PARAMS[k] for k in _FIT_KEYS}
+# Pass as params to get the old free-trading behaviour (no cash limit, no costs, no filter, stop off the High).
+IDEALISED_PROFILE = {"cash_limited": False, "fee_buy_pct": 0.0, "fee_sell_pct": 0.0, "slippage_pct": 0.0,
+                     "min_price": 0.0, "min_avg_traded_value_rs": 0.0, "stop_peak": "high"}
 
 
 # ---------------------------------------------------------------------------

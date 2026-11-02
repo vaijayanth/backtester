@@ -23,7 +23,7 @@ def series(n=260, start=100.0, step=0.3):
 
 def run_sst(frames, **over):
     with mock.patch.object(e, "load_universe_data", lambda symbols=None: frames):
-        return e.run_backtest({"initial_capital_rs": 1e7, **over})
+        return e.run_backtest({"initial_capital_rs": 1e7, **e.IDEALISED_PROFILE, **over})
 
 
 def first_entry_index(df):

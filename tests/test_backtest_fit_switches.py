@@ -20,7 +20,7 @@ def series(n=260, start=100.0, step=0.3, vol=1_000_000):
 
 def run(frames, **over):
     with mock.patch.object(e, "load_universe_data", lambda symbols=None: frames):
-        return e.run_backtest({"initial_capital_rs": 1e7, **over})
+        return e.run_backtest({"initial_capital_rs": 1e7, **e.IDEALISED_PROFILE, **over})
 
 
 def first_entry(df):
@@ -36,10 +36,19 @@ def trade_scenario(df, i0, entry, peak_mult=1.12, exit_open_mult=0.70):
     return df.iloc[: i0 + 3]
 
 
-def test_defaults_are_off():
+def test_defaults_are_the_realistic_profile():
     d = e.DEFAULT_PARAMS
-    assert d["cash_limited"] is False and d["fee_buy_pct"] == d["fee_sell_pct"] == d["slippage_pct"] == 0
-    assert d["min_price"] == d["min_avg_traded_value_rs"] == 0 and d["stop_peak"] == "high"
+    assert {k: d[k] for k in e.REALISTIC_PROFILE} == e.REALISTIC_PROFILE
+    assert d["cash_limited"] is True and d["stop_peak"] == "close"
+    assert d["fee_buy_pct"] > 0 and d["fee_sell_pct"] > 0 and d["slippage_pct"] > 0
+    assert d["min_price"] > 0 and d["min_avg_traded_value_rs"] > 0
+
+
+def test_idealised_profile_is_all_off():
+    i = e.IDEALISED_PROFILE
+    assert i["cash_limited"] is False and i["fee_buy_pct"] == i["fee_sell_pct"] == i["slippage_pct"] == 0
+    assert i["min_price"] == i["min_avg_traded_value_rs"] == 0 and i["stop_peak"] == "high"
+    assert set(i) == set(e.REALISTIC_PROFILE)
 
 
 def test_cash_limit_blocks_buys_beyond_cash():
@@ -113,7 +122,7 @@ def test_close_based_stop_lags_the_intraday_peak():
 def test_realistic_profile_runs_and_is_never_better_than_free_trading_on_costs():
     frames = {f"S{i}.NS": series(start=200 + i, step=0.3 + i * 0.01) for i in range(6)}
     free = run(frames)["metrics"]["combined_pl_rs"]
-    real = run(frames, **e.REALISTIC_PROFILE)["metrics"]["combined_pl_rs"]
+    real = run(frames, **e.REALISTIC_PROFILE)["metrics"]["combined_pl_rs"]  # explicit, same as the default
     assert real < free
 
 
