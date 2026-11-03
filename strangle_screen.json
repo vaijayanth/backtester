@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T22:56:12.023162+00:00",
+  "generated_at": "2026-11-03T10:00:46.292882+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -14862,7 +14862,7 @@
     {
       "symbol": "AXISBANK.NS",
       "month": "2021-11",
-      "return_pct": -12.87,
+      "return_pct": -13.67,
       "status": "Loose",
       "rsi_at_start": null
     },
@@ -14871,7 +14871,7 @@
       "month": "2021-12",
       "return_pct": 2.05,
       "status": "Win",
-      "rsi_at_start": 28.8
+      "rsi_at_start": 29.0
     },
     {
       "symbol": "AXISBANK.NS",
@@ -16129,7 +16129,7 @@
     {
       "symbol": "BRITANNIA.NS",
       "month": "2021-11",
-      "return_pct": -3.66,
+      "return_pct": -4.05,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -16138,21 +16138,21 @@
       "month": "2021-12",
       "return_pct": 1.56,
       "status": "Win",
-      "rsi_at_start": 41.3
+      "rsi_at_start": 44.1
     },
     {
       "symbol": "BRITANNIA.NS",
       "month": "2022-01",
       "return_pct": -2.07,
       "status": "Win",
-      "rsi_at_start": 55.6
+      "rsi_at_start": 56.3
     },
     {
       "symbol": "BRITANNIA.NS",
       "month": "2022-02",
       "return_pct": -3.72,
       "status": "Win",
-      "rsi_at_start": 55.1
+      "rsi_at_start": 55.2
     },
     {
       "symbol": "BRITANNIA.NS",
@@ -28273,15 +28273,8 @@
     },
     {
       "symbol": "ALKEM.NS",
-      "month": "2021-10",
-      "return_pct": -7.42,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "ALKEM.NS",
       "month": "2021-11",
-      "return_pct": -0.48,
+      "return_pct": -2.62,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -28290,7 +28283,7 @@
       "month": "2021-12",
       "return_pct": 0.93,
       "status": "Win",
-      "rsi_at_start": 41.8
+      "rsi_at_start": 40.3
     },
     {
       "symbol": "ALKEM.NS",
@@ -28304,14 +28297,14 @@
       "month": "2022-02",
       "return_pct": -7.07,
       "status": "Win",
-      "rsi_at_start": 49.3
+      "rsi_at_start": 49.2
     },
     {
       "symbol": "ALKEM.NS",
       "month": "2022-03",
       "return_pct": 11.78,
       "status": "Loose",
-      "rsi_at_start": 38.7
+      "rsi_at_start": 38.6
     },
     {
       "symbol": "ALKEM.NS",
@@ -29128,7 +29121,7 @@
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2021-11",
-      "return_pct": -8.63,
+      "return_pct": -8.35,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -29137,21 +29130,21 @@
       "month": "2021-12",
       "return_pct": -0.55,
       "status": "Win",
-      "rsi_at_start": 33.5
+      "rsi_at_start": 30.6
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-01",
       "return_pct": -3.59,
       "status": "Win",
-      "rsi_at_start": 56.5
+      "rsi_at_start": 55.9
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-02",
       "return_pct": -15.07,
       "status": "Loose",
-      "rsi_at_start": 52.3
+      "rsi_at_start": 52.2
     },
     {
       "symbol": "AMBUJACEM.NS",
@@ -53655,15 +53648,8 @@
     },
     {
       "symbol": "INDUSTOWER.NS",
-      "month": "2021-10",
-      "return_pct": -7.02,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "INDUSTOWER.NS",
       "month": "2021-11",
-      "return_pct": 3.81,
+      "return_pct": -1.22,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -53672,21 +53658,21 @@
       "month": "2021-12",
       "return_pct": -12.23,
       "status": "Loose",
-      "rsi_at_start": 49.7
+      "rsi_at_start": 47.9
     },
     {
       "symbol": "INDUSTOWER.NS",
       "month": "2022-01",
       "return_pct": 1.83,
       "status": "Win",
-      "rsi_at_start": 40.1
+      "rsi_at_start": 39.7
     },
     {
       "symbol": "INDUSTOWER.NS",
       "month": "2022-02",
       "return_pct": -15.96,
       "status": "Loose",
-      "rsi_at_start": 47.5
+      "rsi_at_start": 47.4
     },
     {
       "symbol": "INDUSTOWER.NS",
@@ -66290,15 +66276,8 @@
     },
     {
       "symbol": "NAUKRI.NS",
-      "month": "2021-10",
-      "return_pct": -1.66,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "NAUKRI.NS",
       "month": "2021-11",
-      "return_pct": -4.95,
+      "return_pct": -6.22,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -66307,14 +66286,14 @@
       "month": "2021-12",
       "return_pct": -5.24,
       "status": "Win",
-      "rsi_at_start": 47.7
+      "rsi_at_start": 48.0
     },
     {
       "symbol": "NAUKRI.NS",
       "month": "2022-01",
       "return_pct": -12.67,
       "status": "Loose",
-      "rsi_at_start": 52.9
+      "rsi_at_start": 53.0
     },
     {
       "symbol": "NAUKRI.NS",
@@ -75383,15 +75362,8 @@
     },
     {
       "symbol": "PRESTIGE.NS",
-      "month": "2021-10",
-      "return_pct": -2.43,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "PRESTIGE.NS",
       "month": "2021-11",
-      "return_pct": -2.11,
+      "return_pct": -9.5,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -75400,28 +75372,28 @@
       "month": "2021-12",
       "return_pct": 11.71,
       "status": "Loose",
-      "rsi_at_start": 53.2
+      "rsi_at_start": 46.3
     },
     {
       "symbol": "PRESTIGE.NS",
       "month": "2022-01",
       "return_pct": 2.8,
       "status": "Win",
-      "rsi_at_start": 56.8
+      "rsi_at_start": 54.7
     },
     {
       "symbol": "PRESTIGE.NS",
       "month": "2022-02",
       "return_pct": -7.78,
       "status": "Win",
-      "rsi_at_start": 50.4
+      "rsi_at_start": 50.0
     },
     {
       "symbol": "PRESTIGE.NS",
       "month": "2022-03",
       "return_pct": 11.97,
       "status": "Loose",
-      "rsi_at_start": 44.4
+      "rsi_at_start": 44.3
     },
     {
       "symbol": "PRESTIGE.NS",
@@ -87655,13 +87627,6 @@
       "win_pct": 88.5
     },
     {
-      "symbol": "ALKEM.NS",
-      "win": 54,
-      "loose": 7,
-      "total": 61,
-      "win_pct": 88.5
-    },
-    {
       "symbol": "ICICIGI.NS",
       "win": 54,
       "loose": 7,
@@ -87677,6 +87642,13 @@
     },
     {
       "symbol": "AXISBANK.NS",
+      "win": 53,
+      "loose": 7,
+      "total": 60,
+      "win_pct": 88.3
+    },
+    {
+      "symbol": "ALKEM.NS",
       "win": 53,
       "loose": 7,
       "total": 60,
@@ -87970,13 +87942,6 @@
       "win_pct": 82.0
     },
     {
-      "symbol": "NAUKRI.NS",
-      "win": 50,
-      "loose": 11,
-      "total": 61,
-      "win_pct": 82.0
-    },
-    {
       "symbol": "TVSMOTOR.NS",
       "win": 50,
       "loose": 11,
@@ -87992,6 +87957,13 @@
     },
     {
       "symbol": "INDUSINDBK.NS",
+      "win": 49,
+      "loose": 11,
+      "total": 60,
+      "win_pct": 81.7
+    },
+    {
+      "symbol": "NAUKRI.NS",
       "win": 49,
       "loose": 11,
       "total": 60,
@@ -88467,13 +88439,6 @@
       "win_pct": 70.5
     },
     {
-      "symbol": "INDUSTOWER.NS",
-      "win": 43,
-      "loose": 18,
-      "total": 61,
-      "win_pct": 70.5
-    },
-    {
       "symbol": "JINDALSTEL.NS",
       "win": 43,
       "loose": 18,
@@ -88524,6 +88489,13 @@
     },
     {
       "symbol": "IDFCFIRSTB.NS",
+      "win": 42,
+      "loose": 18,
+      "total": 60,
+      "win_pct": 70.0
+    },
+    {
+      "symbol": "INDUSTOWER.NS",
       "win": 42,
       "loose": 18,
       "total": 60,
@@ -88747,14 +88719,14 @@
       "win_pct": 63.9
     },
     {
-      "symbol": "PRESTIGE.NS",
-      "win": 39,
+      "symbol": "POLICYBZR.NS",
+      "win": 38,
       "loose": 22,
-      "total": 61,
-      "win_pct": 63.9
+      "total": 60,
+      "win_pct": 63.3
     },
     {
-      "symbol": "POLICYBZR.NS",
+      "symbol": "PRESTIGE.NS",
       "win": 38,
       "loose": 22,
       "total": 60,
@@ -89002,9 +88974,9 @@
   "monthly_aggregate": [
     {
       "month": "2021-10",
-      "win_count": 115,
+      "win_count": 111,
       "loose_count": 5,
-      "final_impression": 110
+      "final_impression": 106
     },
     {
       "month": "2021-11",
