@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-04T21:00:59.787453+00:00",
+  "generated_at": "2026-11-05T09:50:49.531936+00:00",
   "universe": "nse_fno",
   "universe_size": 213,
   "skipped": [],
@@ -233,12 +233,12 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 409.7,
+      "close": 423.05,
       "high_52w": 686.07,
-      "pct_from_high": -40.28,
+      "pct_from_high": -38.34,
       "low_52w": 407.0,
-      "pct_from_low": 0.66,
-      "date": "2026-11-03"
+      "pct_from_low": 3.94,
+      "date": "2026-11-04"
     },
     {
       "symbol": "HDFCAMC.NS",
@@ -1997,11 +1997,11 @@
     },
     {
       "symbol": "VBL.NS",
-      "close": 420.45,
+      "close": 419.95,
       "high_52w": 543.45,
-      "pct_from_high": -22.63,
+      "pct_from_high": -22.72,
       "low_52w": 380.94,
-      "pct_from_low": 10.37,
+      "pct_from_low": 10.24,
       "date": "2026-11-04"
     },
     {
@@ -2141,12 +2141,6 @@
       "close": 15.73,
       "rsi14": 27.3,
       "date": "2026-11-04"
-    },
-    {
-      "symbol": "ICICIPRULI.NS",
-      "close": 409.7,
-      "rsi14": 27.4,
-      "date": "2026-11-03"
     }
   ],
   "rsi_all": [
@@ -2224,9 +2218,9 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 409.7,
-      "rsi14": 27.4,
-      "date": "2026-11-03"
+      "close": 423.05,
+      "rsi14": 40.5,
+      "date": "2026-11-04"
     },
     {
       "symbol": "HDFCAMC.NS",
@@ -3400,8 +3394,8 @@
     },
     {
       "symbol": "VBL.NS",
-      "close": 420.45,
-      "rsi14": 51.4,
+      "close": 419.95,
+      "rsi14": 51.3,
       "date": "2026-11-04"
     },
     {
