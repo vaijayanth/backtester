@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T17:45:39.483422+00:00",
+  "generated_at": "2026-11-06T20:36:02.872363+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -28981,7 +28981,7 @@
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2021-11",
-      "return_pct": -9.34,
+      "return_pct": -9.73,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -28990,35 +28990,35 @@
       "month": "2021-12",
       "return_pct": -0.55,
       "status": "Win",
-      "rsi_at_start": 30.6
+      "rsi_at_start": 17.8
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-01",
       "return_pct": -3.59,
       "status": "Win",
-      "rsi_at_start": 55.7
+      "rsi_at_start": 53.8
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-02",
       "return_pct": -15.07,
       "status": "Loose",
-      "rsi_at_start": 52.2
+      "rsi_at_start": 51.8
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-03",
       "return_pct": -2.3,
       "status": "Win",
-      "rsi_at_start": 25.5
+      "rsi_at_start": 25.4
     },
     {
       "symbol": "AMBUJACEM.NS",
       "month": "2022-04",
       "return_pct": 24.52,
       "status": "Loose",
-      "rsi_at_start": 50.9
+      "rsi_at_start": 50.8
     },
     {
       "symbol": "AMBUJACEM.NS",
@@ -35428,7 +35428,7 @@
     {
       "symbol": "BLUESTARCO.NS",
       "month": "2021-11",
-      "return_pct": -5.21,
+      "return_pct": -8.37,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -35437,14 +35437,14 @@
       "month": "2021-12",
       "return_pct": 8.0,
       "status": "Win",
-      "rsi_at_start": 38.3
+      "rsi_at_start": 37.5
     },
     {
       "symbol": "BLUESTARCO.NS",
       "month": "2022-01",
       "return_pct": -15.41,
       "status": "Loose",
-      "rsi_at_start": 52.7
+      "rsi_at_start": 52.4
     },
     {
       "symbol": "BLUESTARCO.NS",
@@ -65108,7 +65108,7 @@
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2021-11",
-      "return_pct": -12.68,
+      "return_pct": -13.56,
       "status": "Loose",
       "rsi_at_start": null
     },
@@ -65117,28 +65117,28 @@
       "month": "2021-12",
       "return_pct": -4.62,
       "status": "Win",
-      "rsi_at_start": 27.8
+      "rsi_at_start": 22.0
     },
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2022-01",
       "return_pct": -3.16,
       "status": "Win",
-      "rsi_at_start": 47.9
+      "rsi_at_start": 46.4
     },
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2022-02",
       "return_pct": -11.55,
       "status": "Loose",
-      "rsi_at_start": 45.3
+      "rsi_at_start": 45.0
     },
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2022-03",
       "return_pct": 13.43,
       "status": "Loose",
-      "rsi_at_start": 35.2
+      "rsi_at_start": 35.1
     },
     {
       "symbol": "NAM-INDIA.NS",
@@ -75412,7 +75412,7 @@
     {
       "symbol": "RADICO.NS",
       "month": "2021-11",
-      "return_pct": 2.03,
+      "return_pct": 6.68,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -75421,28 +75421,28 @@
       "month": "2021-12",
       "return_pct": 9.42,
       "status": "Win",
-      "rsi_at_start": 53.2
+      "rsi_at_start": 53.7
     },
     {
       "symbol": "RADICO.NS",
       "month": "2022-01",
       "return_pct": -12.25,
       "status": "Loose",
-      "rsi_at_start": 62.1
+      "rsi_at_start": 62.3
     },
     {
       "symbol": "RADICO.NS",
       "month": "2022-02",
       "return_pct": -16.93,
       "status": "Loose",
-      "rsi_at_start": 37.8
+      "rsi_at_start": 37.7
     },
     {
       "symbol": "RADICO.NS",
       "month": "2022-03",
       "return_pct": 0.9,
       "status": "Win",
-      "rsi_at_start": 36.2
+      "rsi_at_start": 36.1
     },
     {
       "symbol": "RADICO.NS",
@@ -80648,7 +80648,7 @@
     {
       "symbol": "SUZLON.NS",
       "month": "2021-11",
-      "return_pct": -2.84,
+      "return_pct": -4.2,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -80657,14 +80657,14 @@
       "month": "2021-12",
       "return_pct": 45.71,
       "status": "Loose",
-      "rsi_at_start": 53.5
+      "rsi_at_start": 50.4
     },
     {
       "symbol": "SUZLON.NS",
       "month": "2022-01",
       "return_pct": 11.68,
       "status": "Loose",
-      "rsi_at_start": 84.8
+      "rsi_at_start": 84.6
     },
     {
       "symbol": "SUZLON.NS",
