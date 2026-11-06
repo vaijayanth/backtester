@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T13:15:33.240459+00:00",
+  "generated_at": "2026-11-06T17:45:39.483422+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -10550,7 +10550,7 @@
     {
       "symbol": "HINDUNILVR.NS",
       "month": "2021-11",
-      "return_pct": -4.04,
+      "return_pct": -5.37,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -10559,21 +10559,21 @@
       "month": "2021-12",
       "return_pct": 0.86,
       "status": "Win",
-      "rsi_at_start": 38.7
+      "rsi_at_start": 34.6
     },
     {
       "symbol": "HINDUNILVR.NS",
       "month": "2022-01",
       "return_pct": -4.38,
       "status": "Win",
-      "rsi_at_start": 57.8
+      "rsi_at_start": 56.8
     },
     {
       "symbol": "HINDUNILVR.NS",
       "month": "2022-02",
       "return_pct": -5.7,
       "status": "Win",
-      "rsi_at_start": 46.2
+      "rsi_at_start": 46.1
     },
     {
       "symbol": "HINDUNILVR.NS",
@@ -26876,14 +26876,14 @@
       "month": "2021-12",
       "return_pct": 1.83,
       "status": "Win",
-      "rsi_at_start": 47.1
+      "rsi_at_start": 46.2
     },
     {
       "symbol": "ADANIENSOL.NS",
       "month": "2022-01",
       "return_pct": 13.6,
       "status": "Loose",
-      "rsi_at_start": 43.8
+      "rsi_at_start": 43.6
     },
     {
       "symbol": "ADANIENSOL.NS",
@@ -32893,15 +32893,8 @@
     },
     {
       "symbol": "BANKBARODA.NS",
-      "month": "2021-10",
-      "return_pct": 7.73,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "BANKBARODA.NS",
       "month": "2021-11",
-      "return_pct": -12.86,
+      "return_pct": -16.75,
       "status": "Loose",
       "rsi_at_start": null
     },
@@ -32910,28 +32903,28 @@
       "month": "2021-12",
       "return_pct": -5.37,
       "status": "Win",
-      "rsi_at_start": 39.4
+      "rsi_at_start": 21.6
     },
     {
       "symbol": "BANKBARODA.NS",
       "month": "2022-01",
       "return_pct": 31.8,
       "status": "Loose",
-      "rsi_at_start": 45.8
+      "rsi_at_start": 41.9
     },
     {
       "symbol": "BANKBARODA.NS",
       "month": "2022-02",
       "return_pct": -1.89,
       "status": "Win",
-      "rsi_at_start": 72.3
+      "rsi_at_start": 71.7
     },
     {
       "symbol": "BANKBARODA.NS",
       "month": "2022-03",
       "return_pct": 5.33,
       "status": "Win",
-      "rsi_at_start": 48.4
+      "rsi_at_start": 48.3
     },
     {
       "symbol": "BANKBARODA.NS",
@@ -40929,15 +40922,8 @@
     },
     {
       "symbol": "CROMPTON.NS",
-      "month": "2021-10",
-      "return_pct": -0.11,
-      "status": "Win",
-      "rsi_at_start": null
-    },
-    {
-      "symbol": "CROMPTON.NS",
       "month": "2021-11",
-      "return_pct": -4.75,
+      "return_pct": -5.43,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -40946,21 +40932,21 @@
       "month": "2021-12",
       "return_pct": -3.56,
       "status": "Win",
-      "rsi_at_start": 39.2
+      "rsi_at_start": 34.9
     },
     {
       "symbol": "CROMPTON.NS",
       "month": "2022-01",
       "return_pct": -2.66,
       "status": "Win",
-      "rsi_at_start": 55.0
+      "rsi_at_start": 54.5
     },
     {
       "symbol": "CROMPTON.NS",
       "month": "2022-02",
       "return_pct": 0.3,
       "status": "Win",
-      "rsi_at_start": 39.7
+      "rsi_at_start": 39.5
     },
     {
       "symbol": "CROMPTON.NS",
@@ -87802,13 +87788,6 @@
       "win_pct": 75.4
     },
     {
-      "symbol": "CROMPTON.NS",
-      "win": 46,
-      "loose": 15,
-      "total": 61,
-      "win_pct": 75.4
-    },
-    {
       "symbol": "POLYCAB.NS",
       "win": 46,
       "loose": 15,
@@ -87824,6 +87803,13 @@
     },
     {
       "symbol": "HEROMOTOCO.NS",
+      "win": 45,
+      "loose": 15,
+      "total": 60,
+      "win_pct": 75.0
+    },
+    {
+      "symbol": "CROMPTON.NS",
       "win": 45,
       "loose": 15,
       "total": 60,
@@ -88026,13 +88012,6 @@
       "win_pct": 71.7
     },
     {
-      "symbol": "BANKBARODA.NS",
-      "win": 43,
-      "loose": 18,
-      "total": 61,
-      "win_pct": 70.5
-    },
-    {
       "symbol": "GLENMARK.NS",
       "win": 43,
       "loose": 18,
@@ -88069,6 +88048,13 @@
     },
     {
       "symbol": "ABCAPITAL.NS",
+      "win": 42,
+      "loose": 18,
+      "total": 60,
+      "win_pct": 70.0
+    },
+    {
+      "symbol": "BANKBARODA.NS",
       "win": 42,
       "loose": 18,
       "total": 60,
@@ -88582,9 +88568,9 @@
   "monthly_aggregate": [
     {
       "month": "2021-10",
-      "win_count": 57,
+      "win_count": 55,
       "loose_count": 3,
-      "final_impression": 54
+      "final_impression": 52
     },
     {
       "month": "2021-11",
