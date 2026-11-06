@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T21:15:10.584816+00:00",
+  "generated_at": "2026-11-06T09:50:35.661664+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1495,
   "skipped": [],
@@ -48,15 +48,6 @@
       "low_52w": 5797.09,
       "pct_from_low": 74.92,
       "date": "2026-11-05"
-    },
-    {
-      "symbol": "DPEL.NS",
-      "close": 699.45,
-      "high_52w": 699.45,
-      "pct_from_high": 0.0,
-      "low_52w": 248.75,
-      "pct_from_low": 181.19,
-      "date": "2026-11-04"
     },
     {
       "symbol": "EMCURE.NS",
@@ -257,6 +248,15 @@
       "date": "2026-11-05"
     },
     {
+      "symbol": "PRIZOR.NS",
+      "close": 1443.25,
+      "high_52w": 1443.25,
+      "pct_from_high": 0.0,
+      "low_52w": 229.25,
+      "pct_from_low": 529.55,
+      "date": "2026-11-05"
+    },
+    {
       "symbol": "PVRINOX.NS",
       "close": 1581.4,
       "high_52w": 1581.4,
@@ -344,6 +344,15 @@
       "pct_from_high": 0.0,
       "low_52w": 416.56,
       "pct_from_low": 54.68,
+      "date": "2026-11-05"
+    },
+    {
+      "symbol": "PGINVIT.NS",
+      "close": 105.39,
+      "high_52w": 105.48,
+      "pct_from_high": -0.09,
+      "low_52w": 79.95,
+      "pct_from_low": 31.83,
       "date": "2026-11-05"
     },
     {
@@ -446,15 +455,6 @@
       "date": "2026-11-05"
     },
     {
-      "symbol": "PGINVIT.NS",
-      "close": 104.92,
-      "high_52w": 105.48,
-      "pct_from_high": -0.53,
-      "low_52w": 79.95,
-      "pct_from_low": 31.24,
-      "date": "2026-11-04"
-    },
-    {
       "symbol": "PPLPHARMA.NS",
       "close": 238.63,
       "high_52w": 239.92,
@@ -500,6 +500,15 @@
       "date": "2026-11-05"
     },
     {
+      "symbol": "MINDSPACE.NS",
+      "close": 497.44,
+      "high_52w": 501.19,
+      "pct_from_high": -0.75,
+      "low_52w": 428.74,
+      "pct_from_low": 16.02,
+      "date": "2026-11-05"
+    },
+    {
       "symbol": "SAREGAMA.NS",
       "close": 632.05,
       "high_52w": 636.8,
@@ -524,15 +533,6 @@
       "pct_from_high": -0.84,
       "low_52w": 252.68,
       "pct_from_low": 59.14,
-      "date": "2026-11-05"
-    },
-    {
-      "symbol": "PETRONET.NS",
-      "close": 317.0,
-      "high_52w": 319.71,
-      "pct_from_high": -0.85,
-      "low_52w": 235.34,
-      "pct_from_low": 34.7,
       "date": "2026-11-05"
     },
     {
@@ -737,12 +737,12 @@
     },
     {
       "symbol": "ABSMARINE.NS",
-      "close": 285.7,
+      "close": 297.7,
       "high_52w": 345.95,
-      "pct_from_high": -17.42,
+      "pct_from_high": -13.95,
       "low_52w": 149.55,
-      "pct_from_low": 91.04,
-      "date": "2026-11-04"
+      "pct_from_low": 99.06,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ACC.NS",
@@ -764,12 +764,12 @@
     },
     {
       "symbol": "ACCENTMIC.NS",
-      "close": 603.3,
+      "close": 627.2,
       "high_52w": 725.75,
-      "pct_from_high": -16.87,
+      "pct_from_high": -13.58,
       "low_52w": 265.48,
-      "pct_from_low": 127.25,
-      "date": "2026-11-04"
+      "pct_from_low": 136.25,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ACE.NS",
@@ -1043,12 +1043,12 @@
     },
     {
       "symbol": "AIMTRON.NS",
-      "close": 1920.5,
+      "close": 1921.25,
       "high_52w": 1950.25,
-      "pct_from_high": -1.53,
+      "pct_from_high": -1.49,
       "low_52w": 717.65,
-      "pct_from_low": 167.61,
-      "date": "2026-11-04"
+      "pct_from_low": 167.71,
+      "date": "2026-11-05"
     },
     {
       "symbol": "AJANTPHARM.NS",
@@ -1187,12 +1187,12 @@
     },
     {
       "symbol": "ALPEXSOLAR.NS",
-      "close": 675.95,
+      "close": 747.55,
       "high_52w": 1284.8,
-      "pct_from_high": -47.39,
+      "pct_from_high": -41.82,
       "low_52w": 660.4,
-      "pct_from_low": 2.35,
-      "date": "2026-11-04"
+      "pct_from_low": 13.2,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ALPHAGEO.NS",
@@ -1250,11 +1250,11 @@
     },
     {
       "symbol": "AMRUTANJAN.NS",
-      "close": 518.7,
+      "close": 517.7,
       "high_52w": 723.39,
-      "pct_from_high": -28.3,
+      "pct_from_high": -28.43,
       "low_52w": 485.38,
-      "pct_from_low": 6.86,
+      "pct_from_low": 6.66,
       "date": "2026-11-05"
     },
     {
@@ -1430,11 +1430,11 @@
     },
     {
       "symbol": "ARE&M.NS",
-      "close": 736.45,
+      "close": 732.15,
       "high_52w": 1004.74,
-      "pct_from_high": -26.7,
+      "pct_from_high": -27.13,
       "low_52w": 668.44,
-      "pct_from_low": 10.17,
+      "pct_from_low": 9.53,
       "date": "2026-11-05"
     },
     {
@@ -2348,12 +2348,12 @@
     },
     {
       "symbol": "BIRET.NS",
-      "close": 314.08,
+      "close": 320.23,
       "high_52w": 356.91,
-      "pct_from_high": -12.0,
+      "pct_from_high": -10.28,
       "low_52w": 301.21,
-      "pct_from_low": 4.27,
-      "date": "2026-11-04"
+      "pct_from_low": 6.31,
+      "date": "2026-11-05"
     },
     {
       "symbol": "BIRLACABLE.NS",
@@ -2592,10 +2592,10 @@
     {
       "symbol": "BSOFT.NS",
       "close": 330.3,
-      "high_52w": 458.73,
-      "pct_from_high": -28.0,
-      "low_52w": 268.24,
-      "pct_from_low": 23.14,
+      "high_52w": 454.41,
+      "pct_from_high": -27.31,
+      "low_52w": 265.72,
+      "pct_from_low": 24.3,
       "date": "2026-11-05"
     },
     {
@@ -2717,11 +2717,11 @@
     },
     {
       "symbol": "CARERATING.NS",
-      "close": 1588.1,
+      "close": 1578.1,
       "high_52w": 1785.38,
-      "pct_from_high": -11.05,
+      "pct_from_high": -11.61,
       "low_52w": 1400.72,
-      "pct_from_low": 13.38,
+      "pct_from_low": 12.66,
       "date": "2026-11-05"
     },
     {
@@ -3096,8 +3096,8 @@
     {
       "symbol": "COLPAL.NS",
       "close": 1688.0,
-      "high_52w": 2268.56,
-      "pct_from_high": -25.59,
+      "high_52w": 2234.45,
+      "pct_from_high": -24.46,
       "low_52w": 1572.5,
       "pct_from_low": 7.34,
       "date": "2026-11-05"
@@ -3230,11 +3230,11 @@
     },
     {
       "symbol": "CRIZAC.NS",
-      "close": 160.99,
+      "close": 156.99,
       "high_52w": 303.56,
-      "pct_from_high": -46.97,
+      "pct_from_high": -48.28,
       "low_52w": 137.56,
-      "pct_from_low": 17.03,
+      "pct_from_low": 14.12,
       "date": "2026-11-05"
     },
     {
@@ -3725,12 +3725,12 @@
     },
     {
       "symbol": "DPEL.NS",
-      "close": 699.45,
+      "close": 691.8,
       "high_52w": 699.45,
-      "pct_from_high": 0.0,
+      "pct_from_high": -1.09,
       "low_52w": 248.75,
-      "pct_from_low": 181.19,
-      "date": "2026-11-04"
+      "pct_from_low": 178.11,
+      "date": "2026-11-05"
     },
     {
       "symbol": "DREDGECORP.NS",
@@ -3851,12 +3851,12 @@
     },
     {
       "symbol": "EFFWA.NS",
-      "close": 330.5,
+      "close": 327.05,
       "high_52w": 396.54,
-      "pct_from_high": -16.65,
+      "pct_from_high": -17.52,
       "low_52w": 166.33,
-      "pct_from_low": 98.7,
-      "date": "2026-11-04"
+      "pct_from_low": 96.62,
+      "date": "2026-11-05"
     },
     {
       "symbol": "EICHERMOT.NS",
@@ -3986,12 +3986,12 @@
     },
     {
       "symbol": "EMBASSY.NS",
-      "close": 411.05,
+      "close": 416.36,
       "high_52w": 444.9,
-      "pct_from_high": -7.61,
+      "pct_from_high": -6.42,
       "low_52w": 391.1,
-      "pct_from_low": 5.1,
-      "date": "2026-11-04"
+      "pct_from_low": 6.46,
+      "date": "2026-11-05"
     },
     {
       "symbol": "EMBDL.NS",
@@ -4436,11 +4436,11 @@
     },
     {
       "symbol": "FLAIR.NS",
-      "close": 248.68,
+      "close": 248.18,
       "high_52w": 336.88,
-      "pct_from_high": -26.18,
+      "pct_from_high": -26.33,
       "low_52w": 220.52,
-      "pct_from_low": 12.77,
+      "pct_from_low": 12.54,
       "date": "2026-11-05"
     },
     {
@@ -4517,11 +4517,11 @@
     },
     {
       "symbol": "GABRIEL.NS",
-      "close": 1406.0,
+      "close": 1403.85,
       "high_52w": 1584.42,
-      "pct_from_high": -11.26,
+      "pct_from_high": -11.4,
       "low_52w": 821.4,
-      "pct_from_low": 71.17,
+      "pct_from_low": 70.91,
       "date": "2026-11-05"
     },
     {
@@ -4976,11 +4976,11 @@
     },
     {
       "symbol": "GOPAL.NS",
-      "close": 249.44,
+      "close": 248.94,
       "high_52w": 360.67,
-      "pct_from_high": -30.84,
+      "pct_from_high": -30.98,
       "low_52w": 240.35,
-      "pct_from_low": 3.78,
+      "pct_from_low": 3.57,
       "date": "2026-11-05"
     },
     {
@@ -5282,11 +5282,11 @@
     },
     {
       "symbol": "HAPPSTMNDS.NS",
-      "close": 317.4,
+      "close": 314.35,
       "high_52w": 513.59,
-      "pct_from_high": -38.2,
+      "pct_from_high": -38.79,
       "low_52w": 297.65,
-      "pct_from_low": 6.64,
+      "pct_from_low": 5.61,
       "date": "2026-11-05"
     },
     {
@@ -5417,12 +5417,12 @@
     },
     {
       "symbol": "HEG.NS",
-      "close": 288.18,
+      "close": 295.42,
       "high_52w": 739.25,
-      "pct_from_high": -61.02,
+      "pct_from_high": -60.04,
       "low_52w": 198.78,
-      "pct_from_low": 44.97,
-      "date": "2026-11-04"
+      "pct_from_low": 48.62,
+      "date": "2026-11-05"
     },
     {
       "symbol": "HEIDELBERG.NS",
@@ -5786,12 +5786,12 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 423.05,
+      "close": 427.65,
       "high_52w": 686.07,
-      "pct_from_high": -38.34,
+      "pct_from_high": -37.67,
       "low_52w": 407.0,
-      "pct_from_low": 3.94,
-      "date": "2026-11-04"
+      "pct_from_low": 5.07,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ICIL.NS",
@@ -6092,12 +6092,12 @@
     },
     {
       "symbol": "INDIGRID.NS",
-      "close": 169.69,
+      "close": 170.86,
       "high_52w": 176.98,
-      "pct_from_high": -4.12,
+      "pct_from_high": -3.46,
       "low_52w": 151.79,
-      "pct_from_low": 11.79,
-      "date": "2026-11-04"
+      "pct_from_low": 12.56,
+      "date": "2026-11-05"
     },
     {
       "symbol": "INDIQUBE.NS",
@@ -6371,12 +6371,12 @@
     },
     {
       "symbol": "IRBINVIT.NS",
-      "close": 59.69,
+      "close": 60.45,
       "high_52w": 63.44,
-      "pct_from_high": -5.91,
+      "pct_from_high": -4.71,
       "low_52w": 53.58,
-      "pct_from_low": 11.4,
-      "date": "2026-11-04"
+      "pct_from_low": 12.82,
+      "date": "2026-11-05"
     },
     {
       "symbol": "IRCON.NS",
@@ -7110,11 +7110,11 @@
     {
       "symbol": "KICL.NS",
       "close": 4340.2,
-      "high_52w": 6287.36,
-      "pct_from_high": -30.97,
+      "high_52w": 5970.24,
+      "pct_from_high": -27.3,
       "low_52w": 4017.63,
       "pct_from_low": 8.03,
-      "date": "2026-11-04"
+      "date": "2026-11-05"
     },
     {
       "symbol": "KIMS.NS",
@@ -7217,20 +7217,20 @@
     },
     {
       "symbol": "KKCL.NS",
-      "close": 438.15,
+      "close": 436.15,
       "high_52w": 546.5,
-      "pct_from_high": -19.83,
+      "pct_from_high": -20.19,
       "low_52w": 411.25,
-      "pct_from_low": 6.54,
+      "pct_from_low": 6.05,
       "date": "2026-11-05"
     },
     {
       "symbol": "KMEW.NS",
-      "close": 3143.3,
+      "close": 628.66,
       "high_52w": 3345.7,
-      "pct_from_high": -6.05,
-      "low_52w": 1190.35,
-      "pct_from_low": 164.07,
+      "pct_from_high": -81.21,
+      "low_52w": 628.66,
+      "pct_from_low": 0.0,
       "date": "2026-11-05"
     },
     {
@@ -7253,12 +7253,12 @@
     },
     {
       "symbol": "KODYTECH.NS",
-      "close": 1546.3,
+      "close": 1550.55,
       "high_52w": 1576.8,
-      "pct_from_high": -1.93,
+      "pct_from_high": -1.66,
       "low_52w": 569.45,
-      "pct_from_low": 171.54,
-      "date": "2026-11-04"
+      "pct_from_low": 172.29,
+      "date": "2026-11-05"
     },
     {
       "symbol": "KOLTEPATIL.NS",
@@ -7424,11 +7424,11 @@
     },
     {
       "symbol": "KSCL.NS",
-      "close": 684.5,
+      "close": 679.5,
       "high_52w": 1070.3,
-      "pct_from_high": -36.05,
+      "pct_from_high": -36.51,
       "low_52w": 659.1,
-      "pct_from_low": 3.85,
+      "pct_from_low": 3.1,
       "date": "2026-11-05"
     },
     {
@@ -7523,11 +7523,11 @@
     },
     {
       "symbol": "LAURUSLABS.NS",
-      "close": 2346.0,
+      "close": 2345.0,
       "high_52w": 2405.5,
-      "pct_from_high": -2.47,
+      "pct_from_high": -2.52,
       "low_52w": 943.96,
-      "pct_from_low": 148.53,
+      "pct_from_low": 148.42,
       "date": "2026-11-05"
     },
     {
@@ -8315,12 +8315,12 @@
     },
     {
       "symbol": "MINDSPACE.NS",
-      "close": 485.3,
+      "close": 497.44,
       "high_52w": 501.19,
-      "pct_from_high": -3.17,
+      "pct_from_high": -0.75,
       "low_52w": 428.74,
-      "pct_from_low": 13.19,
-      "date": "2026-11-04"
+      "pct_from_low": 16.02,
+      "date": "2026-11-05"
     },
     {
       "symbol": "MMFL.NS",
@@ -8369,11 +8369,11 @@
     },
     {
       "symbol": "MOIL.NS",
-      "close": 218.8,
+      "close": 216.6,
       "high_52w": 376.51,
-      "pct_from_high": -41.89,
+      "pct_from_high": -42.47,
       "low_52w": 203.22,
-      "pct_from_low": 7.67,
+      "pct_from_low": 6.58,
       "date": "2026-11-05"
     },
     {
@@ -8585,12 +8585,12 @@
     },
     {
       "symbol": "MVKAGRO.NS",
-      "close": 210.4,
+      "close": 211.9,
       "high_52w": 819.0,
-      "pct_from_high": -74.31,
+      "pct_from_high": -74.13,
       "low_52w": 160.05,
-      "pct_from_low": 31.46,
-      "date": "2026-11-04"
+      "pct_from_low": 32.4,
+      "date": "2026-11-05"
     },
     {
       "symbol": "MWL.NS",
@@ -8648,20 +8648,20 @@
     },
     {
       "symbol": "NATIONALUM.NS",
-      "close": 331.0,
+      "close": 326.5,
       "high_52w": 438.2,
-      "pct_from_high": -24.46,
+      "pct_from_high": -25.49,
       "low_52w": 222.67,
-      "pct_from_low": 48.65,
+      "pct_from_low": 46.63,
       "date": "2026-11-05"
     },
     {
       "symbol": "NAUKRI.NS",
-      "close": 1217.5,
+      "close": 1214.5,
       "high_52w": 1388.85,
-      "pct_from_high": -12.34,
+      "pct_from_high": -12.55,
       "low_52w": 923.1,
-      "pct_from_low": 31.89,
+      "pct_from_low": 31.57,
       "date": "2026-11-05"
     },
     {
@@ -8999,12 +8999,12 @@
     },
     {
       "symbol": "NOVARTIND.NS",
-      "close": 1714.3,
+      "close": 1716.5,
       "high_52w": 2428.2,
-      "pct_from_high": -29.4,
+      "pct_from_high": -29.31,
       "low_52w": 672.25,
-      "pct_from_low": 155.01,
-      "date": "2026-11-04"
+      "pct_from_low": 155.34,
+      "date": "2026-11-05"
     },
     {
       "symbol": "NPST.NS",
@@ -9053,11 +9053,11 @@
     },
     {
       "symbol": "NTPC.NS",
-      "close": 316.7,
+      "close": 313.7,
       "high_52w": 405.82,
-      "pct_from_high": -21.96,
+      "pct_from_high": -22.7,
       "low_52w": 298.0,
-      "pct_from_low": 6.28,
+      "pct_from_low": 5.27,
       "date": "2026-11-05"
     },
     {
@@ -9107,12 +9107,12 @@
     },
     {
       "symbol": "NXST.NS",
-      "close": 159.95,
+      "close": 157.49,
       "high_52w": 168.93,
-      "pct_from_high": -5.32,
+      "pct_from_high": -6.77,
       "low_52w": 146.46,
-      "pct_from_low": 9.21,
-      "date": "2026-11-04"
+      "pct_from_low": 7.53,
+      "date": "2026-11-05"
     },
     {
       "symbol": "NYKAA.NS",
@@ -9215,12 +9215,12 @@
     },
     {
       "symbol": "ONDOOR.NS",
-      "close": 249.0,
+      "close": 254.0,
       "high_52w": 305.8,
-      "pct_from_high": -18.57,
+      "pct_from_high": -16.94,
       "low_52w": 105.05,
-      "pct_from_low": 137.03,
-      "date": "2026-11-04"
+      "pct_from_low": 141.79,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ONEPOINT.NS",
@@ -9269,12 +9269,12 @@
     },
     {
       "symbol": "ORIANA.NS",
-      "close": 233.0,
+      "close": 243.5,
       "high_52w": 3001.1,
-      "pct_from_high": -92.24,
+      "pct_from_high": -91.89,
       "low_52w": 225.7,
-      "pct_from_low": 3.23,
-      "date": "2026-11-04"
+      "pct_from_low": 7.89,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ORIENTCEM.NS",
@@ -9548,11 +9548,11 @@
     },
     {
       "symbol": "PETRONET.NS",
-      "close": 317.0,
+      "close": 310.0,
       "high_52w": 319.71,
-      "pct_from_high": -0.85,
+      "pct_from_high": -3.04,
       "low_52w": 235.34,
-      "pct_from_low": 34.7,
+      "pct_from_low": 31.73,
       "date": "2026-11-05"
     },
     {
@@ -9629,12 +9629,12 @@
     },
     {
       "symbol": "PGINVIT.NS",
-      "close": 104.92,
+      "close": 105.39,
       "high_52w": 105.48,
-      "pct_from_high": -0.53,
+      "pct_from_high": -0.09,
       "low_52w": 79.95,
-      "pct_from_low": 31.24,
-      "date": "2026-11-04"
+      "pct_from_low": 31.83,
+      "date": "2026-11-05"
     },
     {
       "symbol": "PHOENIXLTD.NS",
@@ -9845,11 +9845,11 @@
     },
     {
       "symbol": "POWERGRID.NS",
-      "close": 261.15,
+      "close": 258.15,
       "high_52w": 319.41,
-      "pct_from_high": -18.24,
+      "pct_from_high": -19.18,
       "low_52w": 244.65,
-      "pct_from_low": 6.74,
+      "pct_from_low": 5.52,
       "date": "2026-11-05"
     },
     {
@@ -10007,12 +10007,12 @@
     },
     {
       "symbol": "PRIZOR.NS",
-      "close": 1318.55,
-      "high_52w": 1411.85,
-      "pct_from_high": -6.61,
+      "close": 1443.25,
+      "high_52w": 1443.25,
+      "pct_from_high": 0.0,
       "low_52w": 229.25,
-      "pct_from_low": 475.16,
-      "date": "2026-11-04"
+      "pct_from_low": 529.55,
+      "date": "2026-11-05"
     },
     {
       "symbol": "PROSTARM.NS",
@@ -10142,11 +10142,11 @@
     },
     {
       "symbol": "QUESS.NS",
-      "close": 328.65,
+      "close": 323.65,
       "high_52w": 381.75,
-      "pct_from_high": -13.91,
+      "pct_from_high": -15.22,
       "low_52w": 165.88,
-      "pct_from_low": 98.12,
+      "pct_from_low": 95.11,
       "date": "2026-11-05"
     },
     {
@@ -10574,11 +10574,11 @@
     },
     {
       "symbol": "RKFORGE.NS",
-      "close": 724.65,
+      "close": 722.65,
       "high_52w": 755.0,
-      "pct_from_high": -4.02,
+      "pct_from_high": -4.28,
       "low_52w": 461.96,
-      "pct_from_low": 56.87,
+      "pct_from_low": 56.43,
       "date": "2026-11-05"
     },
     {
@@ -11042,12 +11042,12 @@
     },
     {
       "symbol": "SARTELE.NS",
-      "close": 77.35,
+      "close": 76.8,
       "high_52w": 259.85,
-      "pct_from_high": -70.23,
+      "pct_from_high": -70.44,
       "low_52w": 73.4,
-      "pct_from_low": 5.38,
-      "date": "2026-11-04"
+      "pct_from_low": 4.63,
+      "date": "2026-11-05"
     },
     {
       "symbol": "SASKEN.NS",
@@ -11447,12 +11447,12 @@
     },
     {
       "symbol": "SHREMINVIT.NS",
-      "close": 101.6,
+      "close": 98.6,
       "high_52w": 104.9,
-      "pct_from_high": -3.15,
+      "pct_from_high": -6.01,
       "low_52w": 87.46,
-      "pct_from_low": 16.16,
-      "date": "2026-11-04"
+      "pct_from_low": 12.73,
+      "date": "2026-11-05"
     },
     {
       "symbol": "SHRINGARMS.NS",
@@ -12131,11 +12131,11 @@
     },
     {
       "symbol": "SUNDRMFAST.NS",
-      "close": 1097.4,
+      "close": 1093.35,
       "high_52w": 1270.0,
-      "pct_from_high": -13.59,
+      "pct_from_high": -13.91,
       "low_52w": 745.38,
-      "pct_from_low": 47.23,
+      "pct_from_low": 46.68,
       "date": "2026-11-05"
     },
     {
@@ -12365,12 +12365,12 @@
     },
     {
       "symbol": "TAC.NS",
-      "close": 365.55,
+      "close": 383.8,
       "high_52w": 869.9,
-      "pct_from_high": -57.98,
+      "pct_from_high": -55.88,
       "low_52w": 336.0,
-      "pct_from_low": 8.79,
-      "date": "2026-11-04"
+      "pct_from_low": 14.23,
+      "date": "2026-11-05"
     },
     {
       "symbol": "TAJGVK.NS",
@@ -13526,12 +13526,12 @@
     },
     {
       "symbol": "VINYAS.NS",
-      "close": 1595.5,
+      "close": 1551.65,
       "high_52w": 1675.15,
-      "pct_from_high": -4.75,
+      "pct_from_high": -7.37,
       "low_52w": 813.2,
-      "pct_from_low": 96.2,
-      "date": "2026-11-04"
+      "pct_from_low": 90.81,
+      "date": "2026-11-05"
     },
     {
       "symbol": "VIPIND.NS",
@@ -13562,12 +13562,12 @@
     },
     {
       "symbol": "VMARCIND.NS",
-      "close": 324.85,
+      "close": 331.85,
       "high_52w": 1664.05,
-      "pct_from_high": -80.48,
+      "pct_from_high": -80.06,
       "low_52w": 257.73,
-      "pct_from_low": 26.05,
-      "date": "2026-11-04"
+      "pct_from_low": 28.76,
+      "date": "2026-11-05"
     },
     {
       "symbol": "VMART.NS",
@@ -14052,12 +14052,6 @@
       "date": "2026-11-05"
     },
     {
-      "symbol": "DPEL.NS",
-      "close": 699.45,
-      "high_5y": 699.45,
-      "date": "2026-11-04"
-    },
-    {
       "symbol": "EMCURE.NS",
       "close": 2245.0,
       "high_5y": 2245.0,
@@ -14157,6 +14151,12 @@
       "symbol": "PGIL.NS",
       "close": 1338.8,
       "high_5y": 1338.8,
+      "date": "2026-11-05"
+    },
+    {
+      "symbol": "PRIZOR.NS",
+      "close": 1443.25,
+      "high_5y": 1443.25,
       "date": "2026-11-05"
     },
     {
@@ -14330,12 +14330,6 @@
       "date": "2026-11-05"
     },
     {
-      "symbol": "DPEL.NS",
-      "close": 699.45,
-      "rsi14": 74.5,
-      "date": "2026-11-04"
-    },
-    {
       "symbol": "ULTRACEMCO.NS",
       "close": 12250.0,
       "rsi14": 74.4,
@@ -14450,6 +14444,12 @@
       "date": "2026-11-05"
     },
     {
+      "symbol": "DPEL.NS",
+      "close": 691.8,
+      "rsi14": 71.6,
+      "date": "2026-11-05"
+    },
+    {
       "symbol": "BHARTIARTL.NS",
       "close": 2056.9,
       "rsi14": 71.5,
@@ -14529,8 +14529,8 @@
     },
     {
       "symbol": "LAURUSLABS.NS",
-      "close": 2346.0,
-      "rsi14": 70.2,
+      "close": 2345.0,
+      "rsi14": 70.1,
       "date": "2026-11-05"
     },
     {
@@ -14566,6 +14566,12 @@
       "date": "2026-11-05"
     },
     {
+      "symbol": "KMEW.NS",
+      "close": 628.66,
+      "rsi14": 13.7,
+      "date": "2026-11-05"
+    },
+    {
       "symbol": "BANSALWIRE.NS",
       "close": 63.26,
       "rsi14": 17.9,
@@ -14584,10 +14590,10 @@
       "date": "2026-11-05"
     },
     {
-      "symbol": "ORIANA.NS",
-      "close": 233.0,
-      "rsi14": 22.3,
-      "date": "2026-11-04"
+      "symbol": "SHREMINVIT.NS",
+      "close": 98.6,
+      "rsi14": 22.0,
+      "date": "2026-11-05"
     },
     {
       "symbol": "CONCORDBIO.NS",
@@ -14635,6 +14641,12 @@
       "symbol": "VAIBHAVGBL.NS",
       "close": 161.35,
       "rsi14": 27.4,
+      "date": "2026-11-05"
+    },
+    {
+      "symbol": "ORIANA.NS",
+      "close": 243.5,
+      "rsi14": 27.5,
       "date": "2026-11-05"
     },
     {
@@ -14708,12 +14720,6 @@
       "close": 5735.0,
       "rsi14": 29.0,
       "date": "2026-11-05"
-    },
-    {
-      "symbol": "ALPEXSOLAR.NS",
-      "close": 675.95,
-      "rsi14": 29.3,
-      "date": "2026-11-04"
     },
     {
       "symbol": "EQUITASBNK.NS",
@@ -14863,9 +14869,9 @@
     },
     {
       "symbol": "ABSMARINE.NS",
-      "close": 285.7,
-      "rsi14": 46.4,
-      "date": "2026-11-04"
+      "close": 297.7,
+      "rsi14": 52.7,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ACC.NS",
@@ -14881,9 +14887,9 @@
     },
     {
       "symbol": "ACCENTMIC.NS",
-      "close": 603.3,
-      "rsi14": 41.2,
-      "date": "2026-11-04"
+      "close": 627.2,
+      "rsi14": 47.1,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ACE.NS",
@@ -15067,9 +15073,9 @@
     },
     {
       "symbol": "AIMTRON.NS",
-      "close": 1920.5,
+      "close": 1921.25,
       "rsi14": 63.7,
-      "date": "2026-11-04"
+      "date": "2026-11-05"
     },
     {
       "symbol": "AJANTPHARM.NS",
@@ -15163,9 +15169,9 @@
     },
     {
       "symbol": "ALPEXSOLAR.NS",
-      "close": 675.95,
-      "rsi14": 29.3,
-      "date": "2026-11-04"
+      "close": 747.55,
+      "rsi14": 50.7,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ALPHAGEO.NS",
@@ -15205,8 +15211,8 @@
     },
     {
       "symbol": "AMRUTANJAN.NS",
-      "close": 518.7,
-      "rsi14": 62.5,
+      "close": 517.7,
+      "rsi14": 62.0,
       "date": "2026-11-05"
     },
     {
@@ -15325,8 +15331,8 @@
     },
     {
       "symbol": "ARE&M.NS",
-      "close": 736.45,
-      "rsi14": 50.6,
+      "close": 732.15,
+      "rsi14": 49.3,
       "date": "2026-11-05"
     },
     {
@@ -15937,9 +15943,9 @@
     },
     {
       "symbol": "BIRET.NS",
-      "close": 314.08,
-      "rsi14": 43.2,
-      "date": "2026-11-04"
+      "close": 320.23,
+      "rsi14": 51.4,
+      "date": "2026-11-05"
     },
     {
       "symbol": "BIRLACABLE.NS",
@@ -16100,7 +16106,7 @@
     {
       "symbol": "BSOFT.NS",
       "close": 330.3,
-      "rsi14": 60.3,
+      "rsi14": 61.6,
       "date": "2026-11-05"
     },
     {
@@ -16183,8 +16189,8 @@
     },
     {
       "symbol": "CARERATING.NS",
-      "close": 1588.1,
-      "rsi14": 45.4,
+      "close": 1578.1,
+      "rsi14": 44.1,
       "date": "2026-11-05"
     },
     {
@@ -16436,7 +16442,7 @@
     {
       "symbol": "COLPAL.NS",
       "close": 1688.0,
-      "rsi14": 47.8,
+      "rsi14": 50.1,
       "date": "2026-11-05"
     },
     {
@@ -16525,8 +16531,8 @@
     },
     {
       "symbol": "CRIZAC.NS",
-      "close": 160.99,
-      "rsi14": 56.3,
+      "close": 156.99,
+      "rsi14": 53.3,
       "date": "2026-11-05"
     },
     {
@@ -16855,9 +16861,9 @@
     },
     {
       "symbol": "DPEL.NS",
-      "close": 699.45,
-      "rsi14": 74.5,
-      "date": "2026-11-04"
+      "close": 691.8,
+      "rsi14": 71.6,
+      "date": "2026-11-05"
     },
     {
       "symbol": "DREDGECORP.NS",
@@ -16939,9 +16945,9 @@
     },
     {
       "symbol": "EFFWA.NS",
-      "close": 330.5,
-      "rsi14": 43.6,
-      "date": "2026-11-04"
+      "close": 327.05,
+      "rsi14": 41.8,
+      "date": "2026-11-05"
     },
     {
       "symbol": "EICHERMOT.NS",
@@ -17029,9 +17035,9 @@
     },
     {
       "symbol": "EMBASSY.NS",
-      "close": 411.05,
-      "rsi14": 39.2,
-      "date": "2026-11-04"
+      "close": 416.36,
+      "rsi14": 47.1,
+      "date": "2026-11-05"
     },
     {
       "symbol": "EMBDL.NS",
@@ -17329,8 +17335,8 @@
     },
     {
       "symbol": "FLAIR.NS",
-      "close": 248.68,
-      "rsi14": 63.1,
+      "close": 248.18,
+      "rsi14": 62.8,
       "date": "2026-11-05"
     },
     {
@@ -17383,8 +17389,8 @@
     },
     {
       "symbol": "GABRIEL.NS",
-      "close": 1406.0,
-      "rsi14": 50.6,
+      "close": 1403.85,
+      "rsi14": 50.3,
       "date": "2026-11-05"
     },
     {
@@ -17689,8 +17695,8 @@
     },
     {
       "symbol": "GOPAL.NS",
-      "close": 249.44,
-      "rsi14": 48.9,
+      "close": 248.94,
+      "rsi14": 48.3,
       "date": "2026-11-05"
     },
     {
@@ -17893,8 +17899,8 @@
     },
     {
       "symbol": "HAPPSTMNDS.NS",
-      "close": 317.4,
-      "rsi14": 51.4,
+      "close": 314.35,
+      "rsi14": 49.6,
       "date": "2026-11-05"
     },
     {
@@ -17983,9 +17989,9 @@
     },
     {
       "symbol": "HEG.NS",
-      "close": 288.18,
-      "rsi14": 59.6,
-      "date": "2026-11-04"
+      "close": 295.42,
+      "rsi14": 61.4,
+      "date": "2026-11-05"
     },
     {
       "symbol": "HEIDELBERG.NS",
@@ -18229,9 +18235,9 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 423.05,
-      "rsi14": 40.5,
-      "date": "2026-11-04"
+      "close": 427.65,
+      "rsi14": 44.2,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ICIL.NS",
@@ -18433,9 +18439,9 @@
     },
     {
       "symbol": "INDIGRID.NS",
-      "close": 169.69,
-      "rsi14": 50.6,
-      "date": "2026-11-04"
+      "close": 170.86,
+      "rsi14": 55.3,
+      "date": "2026-11-05"
     },
     {
       "symbol": "INDIQUBE.NS",
@@ -18619,9 +18625,9 @@
     },
     {
       "symbol": "IRBINVIT.NS",
-      "close": 59.69,
-      "rsi14": 37.8,
-      "date": "2026-11-04"
+      "close": 60.45,
+      "rsi14": 44.9,
+      "date": "2026-11-05"
     },
     {
       "symbol": "IRCON.NS",
@@ -19113,7 +19119,7 @@
       "symbol": "KICL.NS",
       "close": 4340.2,
       "rsi14": 32.1,
-      "date": "2026-11-04"
+      "date": "2026-11-05"
     },
     {
       "symbol": "KIMS.NS",
@@ -19183,14 +19189,14 @@
     },
     {
       "symbol": "KKCL.NS",
-      "close": 438.15,
-      "rsi14": 46.1,
+      "close": 436.15,
+      "rsi14": 44.9,
       "date": "2026-11-05"
     },
     {
       "symbol": "KMEW.NS",
-      "close": 3143.3,
-      "rsi14": 49.9,
+      "close": 628.66,
+      "rsi14": 13.7,
       "date": "2026-11-05"
     },
     {
@@ -19207,9 +19213,9 @@
     },
     {
       "symbol": "KODYTECH.NS",
-      "close": 1546.3,
-      "rsi14": 55.0,
-      "date": "2026-11-04"
+      "close": 1550.55,
+      "rsi14": 55.5,
+      "date": "2026-11-05"
     },
     {
       "symbol": "KOLTEPATIL.NS",
@@ -19321,8 +19327,8 @@
     },
     {
       "symbol": "KSCL.NS",
-      "close": 684.5,
-      "rsi14": 43.9,
+      "close": 679.5,
+      "rsi14": 42.3,
       "date": "2026-11-05"
     },
     {
@@ -19387,8 +19393,8 @@
     },
     {
       "symbol": "LAURUSLABS.NS",
-      "close": 2346.0,
-      "rsi14": 70.2,
+      "close": 2345.0,
+      "rsi14": 70.1,
       "date": "2026-11-05"
     },
     {
@@ -19915,9 +19921,9 @@
     },
     {
       "symbol": "MINDSPACE.NS",
-      "close": 485.3,
-      "rsi14": 52.0,
-      "date": "2026-11-04"
+      "close": 497.44,
+      "rsi14": 64.1,
+      "date": "2026-11-05"
     },
     {
       "symbol": "MMFL.NS",
@@ -19951,8 +19957,8 @@
     },
     {
       "symbol": "MOIL.NS",
-      "close": 218.8,
-      "rsi14": 44.0,
+      "close": 216.6,
+      "rsi14": 42.3,
       "date": "2026-11-05"
     },
     {
@@ -20095,9 +20101,9 @@
     },
     {
       "symbol": "MVKAGRO.NS",
-      "close": 210.4,
-      "rsi14": 42.5,
-      "date": "2026-11-04"
+      "close": 211.9,
+      "rsi14": 43.3,
+      "date": "2026-11-05"
     },
     {
       "symbol": "MWL.NS",
@@ -20137,14 +20143,14 @@
     },
     {
       "symbol": "NATIONALUM.NS",
-      "close": 331.0,
-      "rsi14": 52.1,
+      "close": 326.5,
+      "rsi14": 50.0,
       "date": "2026-11-05"
     },
     {
       "symbol": "NAUKRI.NS",
-      "close": 1217.5,
-      "rsi14": 50.5,
+      "close": 1214.5,
+      "rsi14": 50.0,
       "date": "2026-11-05"
     },
     {
@@ -20371,9 +20377,9 @@
     },
     {
       "symbol": "NOVARTIND.NS",
-      "close": 1714.3,
-      "rsi14": 40.3,
-      "date": "2026-11-04"
+      "close": 1716.5,
+      "rsi14": 40.5,
+      "date": "2026-11-05"
     },
     {
       "symbol": "NPST.NS",
@@ -20407,8 +20413,8 @@
     },
     {
       "symbol": "NTPC.NS",
-      "close": 316.7,
-      "rsi14": 51.7,
+      "close": 313.7,
+      "rsi14": 48.8,
       "date": "2026-11-05"
     },
     {
@@ -20443,9 +20449,9 @@
     },
     {
       "symbol": "NXST.NS",
-      "close": 159.95,
-      "rsi14": 43.3,
-      "date": "2026-11-04"
+      "close": 157.49,
+      "rsi14": 34.9,
+      "date": "2026-11-05"
     },
     {
       "symbol": "NYKAA.NS",
@@ -20515,9 +20521,9 @@
     },
     {
       "symbol": "ONDOOR.NS",
-      "close": 249.0,
-      "rsi14": 54.7,
-      "date": "2026-11-04"
+      "close": 254.0,
+      "rsi14": 57.6,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ONEPOINT.NS",
@@ -20551,9 +20557,9 @@
     },
     {
       "symbol": "ORIANA.NS",
-      "close": 233.0,
-      "rsi14": 22.3,
-      "date": "2026-11-04"
+      "close": 243.5,
+      "rsi14": 27.5,
+      "date": "2026-11-05"
     },
     {
       "symbol": "ORIENTCEM.NS",
@@ -20737,8 +20743,8 @@
     },
     {
       "symbol": "PETRONET.NS",
-      "close": 317.0,
-      "rsi14": 69.4,
+      "close": 310.0,
+      "rsi14": 65.8,
       "date": "2026-11-05"
     },
     {
@@ -20791,9 +20797,9 @@
     },
     {
       "symbol": "PGINVIT.NS",
-      "close": 104.92,
-      "rsi14": 67.1,
-      "date": "2026-11-04"
+      "close": 105.39,
+      "rsi14": 69.7,
+      "date": "2026-11-05"
     },
     {
       "symbol": "PHOENIXLTD.NS",
@@ -20935,8 +20941,8 @@
     },
     {
       "symbol": "POWERGRID.NS",
-      "close": 261.15,
-      "rsi14": 54.7,
+      "close": 258.15,
+      "rsi14": 51.5,
       "date": "2026-11-05"
     },
     {
@@ -21043,9 +21049,9 @@
     },
     {
       "symbol": "PRIZOR.NS",
-      "close": 1318.55,
-      "rsi14": 55.6,
-      "date": "2026-11-04"
+      "close": 1443.25,
+      "rsi14": 62.6,
+      "date": "2026-11-05"
     },
     {
       "symbol": "PROSTARM.NS",
@@ -21133,8 +21139,8 @@
     },
     {
       "symbol": "QUESS.NS",
-      "close": 328.65,
-      "rsi14": 50.7,
+      "close": 323.65,
+      "rsi14": 48.0,
       "date": "2026-11-05"
     },
     {
@@ -21421,8 +21427,8 @@
     },
     {
       "symbol": "RKFORGE.NS",
-      "close": 724.65,
-      "rsi14": 59.8,
+      "close": 722.65,
+      "rsi14": 59.5,
       "date": "2026-11-05"
     },
     {
@@ -21733,9 +21739,9 @@
     },
     {
       "symbol": "SARTELE.NS",
-      "close": 77.35,
-      "rsi14": 41.3,
-      "date": "2026-11-04"
+      "close": 76.8,
+      "rsi14": 40.7,
+      "date": "2026-11-05"
     },
     {
       "symbol": "SASKEN.NS",
@@ -22003,9 +22009,9 @@
     },
     {
       "symbol": "SHREMINVIT.NS",
-      "close": 101.6,
-      "rsi14": 52.2,
-      "date": "2026-11-04"
+      "close": 98.6,
+      "rsi14": 22.0,
+      "date": "2026-11-05"
     },
     {
       "symbol": "SHRINGARMS.NS",
@@ -22459,8 +22465,8 @@
     },
     {
       "symbol": "SUNDRMFAST.NS",
-      "close": 1097.4,
-      "rsi14": 49.1,
+      "close": 1093.35,
+      "rsi14": 48.3,
       "date": "2026-11-05"
     },
     {
@@ -22615,9 +22621,9 @@
     },
     {
       "symbol": "TAC.NS",
-      "close": 365.55,
-      "rsi14": 41.7,
-      "date": "2026-11-04"
+      "close": 383.8,
+      "rsi14": 49.3,
+      "date": "2026-11-05"
     },
     {
       "symbol": "TAJGVK.NS",
@@ -23389,9 +23395,9 @@
     },
     {
       "symbol": "VINYAS.NS",
-      "close": 1595.5,
-      "rsi14": 59.3,
-      "date": "2026-11-04"
+      "close": 1551.65,
+      "rsi14": 54.4,
+      "date": "2026-11-05"
     },
     {
       "symbol": "VIPIND.NS",
@@ -23413,9 +23419,9 @@
     },
     {
       "symbol": "VMARCIND.NS",
-      "close": 324.85,
-      "rsi14": 53.8,
-      "date": "2026-11-04"
+      "close": 331.85,
+      "rsi14": 56.0,
+      "date": "2026-11-05"
     },
     {
       "symbol": "VMART.NS",
