@@ -11,7 +11,6 @@ venv/
 # Data artifacts (published data lives in GitHub Releases, not git history)
 *.parquet
 checkpoints/
-checkpoints_10yr/
 
 # OS
 .DS_Store

@@ -1,7 +1,7 @@
 """
-Daily OHLC Update — keeps the 5-year backfilled checkpoint data current
+Daily OHLC Update — keeps the 10-year backfilled checkpoint data current
 through today's EOD close, without re-downloading each symbol's full
-5-year history every day (backfill.py's fetch_one does a full refetch —
+10-year history every day (backfill.py's fetch_one does a full refetch —
 fine for a one-time backfill, far too slow/wasteful to run on 1,466+
 symbols every single day).
 
@@ -10,11 +10,11 @@ Two modes, chosen per symbol automatically:
 1. INCREMENTAL (the common case, every VALIDATED symbol most days):
    fetch only the days since that symbol's last stored date, append to
    the existing parquet. Fast — a handful of rows per symbol instead of
-   ~1,250.
+   ~2,500.
 
 2. FULL REFRESH (one daily "slice" of the universe, so every symbol gets
    one roughly every FULL_REFRESH_CYCLE_DAYS trading days): re-run the
-   same full 5yr fetch backfill.py uses, overwriting the stored history
+   same full 10yr fetch backfill.py uses, overwriting the stored history
    outright. This exists specifically to correct a real, silent problem
    with incremental appends: yfinance's auto_adjust back-adjusts the
    ENTIRE price history for splits/bonuses/dividends at fetch time. A new

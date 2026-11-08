@@ -1,5 +1,5 @@
 """
-Backfill — fetches 5yr split/bonus-adjusted daily OHLC for the clean equity
+Backfill — fetches 10yr split/bonus-adjusted daily OHLC for the clean equity
 universe via yfinance, with per-stock chunk+checkpoint+resume reliability.
 See docs/SPEC.md section 4 ("Backfill Reliability Design") for the full
 rationale — this implements that design exactly.
@@ -43,18 +43,19 @@ RAW_DIR = CHECKPOINT_DIR / "raw"
 MANIFEST_CSV = CHECKPOINT_DIR / "manifest.csv"
 
 BATCH_SIZE = 50
-YEARS = 5
+YEARS = 10
 RETRY_DELAYS = [5, 15, 30]       # seconds, escalating backoff within one run
 MAX_AUTO_RETRY_ATTEMPTS = 3      # across separate runs — beyond this, stop auto-retrying
 
 # Was a flat 100 — rejected real, legitimate stocks whose Yahoo coverage is
-# shorter than 5 years (confirmed by hand for HALDYNGL: Yahoo genuinely
-# only carries ~43 rows for it, matching what the user independently saw
-# on another platform — not broken data, just shorter history). Supertrend
-# itself only needs ATR_PERIOD+2 (12) rows to produce a direction; this
-# floor gives a little buffer above that bare minimum rather than demanding
-# a full 5yr window just to accept a symbol at all. EMA50 still silently
-# comes back as unavailable (not wrong) below 50 rows — see supertrend.py.
+# shorter than the backfill window (confirmed by hand for HALDYNGL: Yahoo
+# genuinely only carries ~43 rows for it, matching what the user
+# independently saw on another platform — not broken data, just shorter
+# history). Supertrend itself only needs ATR_PERIOD+2 (12) rows to produce
+# a direction; this floor gives a little buffer above that bare minimum
+# rather than demanding a full 10yr window just to accept a symbol at all.
+# EMA50 still silently comes back as unavailable (not wrong) below 50 rows
+# — see supertrend.py.
 MIN_ROWS = 20
 
 MANIFEST_FIELDS = [
@@ -267,6 +268,14 @@ def carry_forward_newer(fetched: pd.DataFrame, stored: "pd.DataFrame | None") ->
     when the stored rows are on a different price basis than the fetch (a
     split/dividend re-adjustment) — the next incremental run re-fetches from
     last_date-1 and fills the day in on the right basis."""
+    if fetched is not None and not fetched.empty:
+        # Always persist tz-naive — fetched arrives tz-aware straight from
+        # yfinance. Without this, a symbol's on-disk tz depended on whether
+        # this run's last write was incremental_update (already tz-naive by
+        # the time it gets here) or a full refresh (fetched raw, still
+        # tz-aware) — a real inconsistency found 2026-11-08 while merging
+        # in 10yr history, see docs/SPEC.md's dated entry on that merge.
+        fetched = _naive_index(fetched)
     if stored is None or stored.empty or fetched is None or fetched.empty:
         return fetched
     f_max = pd.to_datetime(fetched.index).tz_localize(None).max()
@@ -343,12 +352,13 @@ def fetch_one(symbol: str) -> dict:
     if not is_valid:
         err = note
         # A handful of real, actively-traded NSE small/micro-caps come back
-        # with only a few dozen rows under period="5y" — not delisted, not
-        # a bad symbol, just a yfinance quirk for thinly-covered tickers
-        # (confirmed by hand for GSPL/HALDYNGL/VELJAN: all three are real,
-        # correctly-ticketed, currently trading). period="max" sometimes
-        # returns the ticker's full available history where "5y" truncates
-        # it — worth one extra attempt before giving up on the symbol.
+        # with only a few dozen rows under period=f"{YEARS}y" — not
+        # delisted, not a bad symbol, just a yfinance quirk for
+        # thinly-covered tickers (confirmed by hand for GSPL/HALDYNGL/
+        # VELJAN: all three are real, correctly-ticketed, currently
+        # trading). period="max" sometimes returns the ticker's full
+        # available history where the fixed window truncates it — worth
+        # one extra attempt before giving up on the symbol.
         try:
             df_max = ticker.history(period="max", auto_adjust=True)
         except Exception as e:
@@ -363,12 +373,13 @@ def fetch_one(symbol: str) -> dict:
         else:
             # Full validation (row-count floor) failed on both attempts —
             # before giving up entirely, check if the LONGER of the two
-            # (max-period, since it can only be >= the 5y pull) is at least
-            # structurally sound. If so, keep it as PARTIAL (CMP-only)
-            # rather than discarding real, usable price data just because
-            # there's too little of it for a Supertrend/EMA read. Prefer
-            # whichever pull actually passes the structural check, and
-            # between two structurally-sound candidates prefer the longer.
+            # (max-period, since it can only be >= the fixed-window pull)
+            # is at least structurally sound. If so, keep it as PARTIAL
+            # (CMP-only) rather than discarding real, usable price data
+            # just because there's too little of it for a Supertrend/EMA
+            # read. Prefer whichever pull actually passes the structural
+            # check, and between two structurally-sound candidates prefer
+            # the longer.
             s_valid, s_err, s_trim = validate_ohlc_structure(df)
             s_valid_max, s_err_max, s_trim_max = validate_ohlc_structure(df_max)
             candidates = []
@@ -381,7 +392,7 @@ def fetch_one(symbol: str) -> dict:
             else:
                 err_max = s_err_max
             if not candidates:
-                row["error"] = f"{err} (period=5y); {err_max} (period=max)"
+                row["error"] = f"{err} (period={YEARS}y); {err_max} (period=max)"
                 return row
             df, save_note = max(candidates, key=lambda c: len(c[0]))
             RAW_DIR.mkdir(parents=True, exist_ok=True)
