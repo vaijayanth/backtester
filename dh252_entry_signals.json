@@ -1,26 +1,15 @@
 {
-  "generated_at": "2026-11-08T10:39:32.915986+00:00",
+  "generated_at": "2026-11-08T11:59:37.640907+00:00",
   "source_generated_at": {
-    "market_screens": "2026-11-08T10:39:24.436738+00:00",
-    "supertrend": "2026-11-08T10:39:32.772735+00:00"
+    "market_screens": "2026-11-08T11:59:30.428408+00:00",
+    "supertrend": "2026-11-08T11:59:37.518303+00:00"
   },
   "latest_market_date": "2026-11-08",
   "rule": "close >= trailing 252-session high AND Supertrend(10,3) green, excludes EQ_LONGTERM_EXCLUDE. qty_at_base_tier assumes the flat Rs1000 base tier only \u2014 NOT the real effective tier, which depends on live closed-trade count and the 100-positions/positive-combined-P&L doubling milestone. Does NOT exclude symbols you already hold \u2014 join against your own positions for that.",
   "base_position_rs": 1000,
   "universe_size": 1495,
-  "entry_count": 52,
+  "entry_count": 42,
   "entries": [
-    {
-      "symbol": "ACUTAAS",
-      "close": 3926.9,
-      "high_52w": 3926.9,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
-      "qty_at_base_tier": 1
-    },
     {
       "symbol": "ADANIPORTS",
       "close": 1949.3,
@@ -40,7 +29,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 1
     },
     {
@@ -51,7 +40,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 3,
       "qty_at_base_tier": 1
     },
     {
@@ -62,7 +51,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 2,
       "qty_at_base_tier": 1
     },
     {
@@ -73,7 +62,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 1
     },
     {
@@ -84,7 +73,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 6,
       "qty_at_base_tier": 1
     },
     {
@@ -95,7 +84,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 4,
       "qty_at_base_tier": 1
     },
     {
@@ -106,7 +95,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 3,
       "qty_at_base_tier": 1
     },
     {
@@ -117,7 +106,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 6,
       "qty_at_base_tier": 2
     },
     {
@@ -139,24 +128,13 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 5,
       "qty_at_base_tier": 1
     },
     {
       "symbol": "GRWRHITECH",
       "close": 7903.0,
       "high_52w": 7903.0,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
-    },
-    {
-      "symbol": "ICIL",
-      "close": 508.5,
-      "high_52w": 508.5,
       "pct_from_high": 0.0,
       "date": "2026-11-08",
       "supertrend_color": "green",
@@ -172,7 +150,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 2
     },
     {
@@ -227,30 +205,8 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 4
-    },
-    {
-      "symbol": "LALPATHLAB",
-      "close": 2008.8,
-      "high_52w": 2008.8,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
-    },
-    {
-      "symbol": "LAURUSLABS",
-      "close": 2370.0,
-      "high_52w": 2370.0,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
     },
     {
       "symbol": "LENSKART",
@@ -271,24 +227,13 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 1
     },
     {
       "symbol": "MACPOWER",
       "close": 2339.7,
       "high_52w": 2339.7,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
-    },
-    {
-      "symbol": "MAHASTEEL",
-      "close": 1474.5,
-      "high_52w": 1474.5,
       "pct_from_high": 0.0,
       "date": "2026-11-08",
       "supertrend_color": "green",
@@ -315,7 +260,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 3,
       "qty_at_base_tier": 1
     },
     {
@@ -355,17 +300,6 @@
       "symbol": "NAVINFLUOR",
       "close": 9065.0,
       "high_52w": 9065.0,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
-      "qty_at_base_tier": 1
-    },
-    {
-      "symbol": "NITINSPIN",
-      "close": 670.15,
-      "high_52w": 670.15,
       "pct_from_high": 0.0,
       "date": "2026-11-08",
       "supertrend_color": "green",
@@ -414,7 +348,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 4
     },
     {
@@ -425,7 +359,7 @@
       "date": "2026-11-06",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 1,
       "qty_at_base_tier": 1
     },
     {
@@ -447,19 +381,8 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_days_ago": 3,
       "qty_at_base_tier": 4
-    },
-    {
-      "symbol": "SAREGAMA",
-      "close": 633.3,
-      "high_52w": 633.3,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": 2,
-      "qty_at_base_tier": 1
     },
     {
       "symbol": "SBC",
@@ -480,18 +403,7 @@
       "date": "2026-11-08",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
-    },
-    {
-      "symbol": "SHREEPUSHK",
-      "close": 580.45,
-      "high_52w": 580.45,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 5,
       "qty_at_base_tier": 1
     },
     {
@@ -539,17 +451,6 @@
       "qty_at_base_tier": 1
     },
     {
-      "symbol": "TEXINFRA",
-      "close": 129.04,
-      "high_52w": 129.04,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 7
-    },
-    {
       "symbol": "TFCILTD",
       "close": 167.67,
       "high_52w": 167.67,
@@ -559,17 +460,6 @@
       "flipped_today": false,
       "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 5
-    },
-    {
-      "symbol": "TIPSMUSIC",
-      "close": 792.25,
-      "high_52w": 792.25,
-      "pct_from_high": 0.0,
-      "date": "2026-11-08",
-      "supertrend_color": "green",
-      "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
-      "qty_at_base_tier": 1
     },
     {
       "symbol": "WESTLIFE",

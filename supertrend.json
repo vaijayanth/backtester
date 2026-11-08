@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-08T10:39:28.185725+00:00",
+  "generated_at": "2026-11-08T11:59:33.687823+00:00",
   "latest_market_date": "2026-11-08",
   "expected_last_session": "2026-11-06",
   "feed_lag_vs_clock_weekdays": 0,
@@ -71,7 +71,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "HINDALCO.NS",
@@ -111,7 +111,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "SUNPHARMA.NS",
@@ -160,18 +160,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 2,
-      "recent_bullish_flip_date": "2026-11-05",
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-30",
+      "recent_flip_days_ago": 6,
+      "recent_flip_date": "2026-10-30",
       "recent_flip_direction": "up",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "current_streak_days": 6,
+      "current_streak_start_date": "2026-10-30",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
-      "recent_bullish_flip_trading_days_ago": 2,
-      "current_streak_trading_days": 2
+      "recent_flip_trading_days_ago": 6,
+      "recent_bullish_flip_trading_days_ago": 6,
+      "current_streak_trading_days": 6
     },
     {
       "symbol": "DRREDDY.NS",
@@ -191,7 +191,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 22
+      "current_streak_trading_days": 33
     },
     {
       "symbol": "AUROPHARMA.NS",
@@ -200,18 +200,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 84,
-      "current_streak_start_date": "2026-06-23",
+      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_date": "2026-11-05",
+      "recent_flip_days_ago": 2,
+      "recent_flip_date": "2026-11-05",
+      "recent_flip_direction": "up",
+      "current_streak_days": 2,
+      "current_streak_start_date": "2026-11-05",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 84
+      "recent_flip_trading_days_ago": 2,
+      "recent_bullish_flip_trading_days_ago": 2,
+      "current_streak_trading_days": 2
     },
     {
       "symbol": "BAJAJFINSV.NS",
@@ -271,7 +271,7 @@
       "stale_data": true,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 58
+      "current_streak_trading_days": 69
     },
     {
       "symbol": "HDFCAMC.NS",
@@ -371,7 +371,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 45
+      "current_streak_trading_days": 56
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
@@ -500,18 +500,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 6,
-      "recent_bullish_flip_date": "2026-10-14",
-      "recent_flip_days_ago": 6,
-      "recent_flip_date": "2026-10-14",
-      "recent_flip_direction": "up",
-      "current_streak_days": 6,
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null,
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 17,
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": null,
+      "recent_bullish_flip_trading_days_ago": null,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "HINDUNILVR.NS",
@@ -540,18 +540,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 2,
-      "recent_bullish_flip_date": "2026-11-05",
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-30",
+      "recent_flip_days_ago": 6,
+      "recent_flip_date": "2026-10-30",
       "recent_flip_direction": "up",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "current_streak_days": 6,
+      "current_streak_start_date": "2026-10-30",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
-      "recent_bullish_flip_trading_days_ago": 2,
-      "current_streak_trading_days": 2
+      "recent_flip_trading_days_ago": 6,
+      "recent_bullish_flip_trading_days_ago": 6,
+      "current_streak_trading_days": 6
     },
     {
       "symbol": "NYKAA.NS",
@@ -565,13 +565,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 133,
-      "current_streak_start_date": "2026-04-10",
+      "current_streak_days": 7,
+      "current_streak_start_date": "2026-10-29",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 7
     },
     {
       "symbol": "ONGC.NS",
@@ -631,7 +631,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "RELIANCE.NS",
@@ -671,7 +671,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 36
+      "current_streak_trading_days": 47
     },
     {
       "symbol": "ADANIPORTS.NS",
@@ -685,13 +685,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 29,
+      "current_streak_days": 40,
       "current_streak_start_date": "2026-09-09",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 29
+      "current_streak_trading_days": 40
     },
     {
       "symbol": "ASIANPAINT.NS",
@@ -700,18 +700,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 2,
-      "recent_bullish_flip_date": "2026-11-05",
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
+      "recent_bullish_flip_days_ago": 4,
+      "recent_bullish_flip_date": "2026-11-03",
+      "recent_flip_days_ago": 4,
+      "recent_flip_date": "2026-11-03",
       "recent_flip_direction": "up",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "current_streak_days": 4,
+      "current_streak_start_date": "2026-11-03",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
-      "recent_bullish_flip_trading_days_ago": 2,
-      "current_streak_trading_days": 2
+      "recent_flip_trading_days_ago": 4,
+      "recent_bullish_flip_trading_days_ago": 4,
+      "current_streak_trading_days": 4
     },
     {
       "symbol": "AXISBANK.NS",
@@ -729,9 +729,9 @@
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
-      "recent_bullish_flip_trading_days_ago": 5,
-      "current_streak_trading_days": 5
+      "recent_flip_trading_days_ago": 16,
+      "recent_bullish_flip_trading_days_ago": 16,
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "BEL.NS",
@@ -769,9 +769,9 @@
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
-      "recent_bullish_flip_trading_days_ago": 5,
-      "current_streak_trading_days": 5
+      "recent_flip_trading_days_ago": 16,
+      "recent_bullish_flip_trading_days_ago": 16,
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "BRITANNIA.NS",
@@ -791,7 +791,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 38
+      "current_streak_trading_days": 49
     },
     {
       "symbol": "COALINDIA.NS",
@@ -811,7 +811,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 8
+      "current_streak_trading_days": 19
     },
     {
       "symbol": "EICHERMOT.NS",
@@ -829,9 +829,9 @@
       "current_streak_start_date": "2026-10-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 4,
-      "recent_bullish_flip_trading_days_ago": 4,
-      "current_streak_trading_days": 4
+      "recent_flip_trading_days_ago": 15,
+      "recent_bullish_flip_trading_days_ago": 15,
+      "current_streak_trading_days": 15
     },
     {
       "symbol": "GRASIM.NS",
@@ -865,13 +865,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 7,
+      "current_streak_days": 18,
       "current_streak_start_date": "2026-10-13",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 7
+      "current_streak_trading_days": 18
     },
     {
       "symbol": "HDFCBANK.NS",
@@ -911,7 +911,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 24
+      "current_streak_trading_days": 35
     },
     {
       "symbol": "ICICIBANK.NS",
@@ -931,7 +931,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 11
+      "current_streak_trading_days": 22
     },
     {
       "symbol": "JIOFIN.NS",
@@ -965,13 +965,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 12,
+      "current_streak_days": 23,
       "current_streak_start_date": "2026-10-06",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 12
+      "current_streak_trading_days": 23
     },
     {
       "symbol": "LT.NS",
@@ -1009,9 +1009,9 @@
       "current_streak_start_date": "2026-10-19",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 3
+      "recent_flip_trading_days_ago": 14,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 14
     },
     {
       "symbol": "NTPC.NS",
@@ -1031,7 +1031,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "POWERGRID.NS",
@@ -1051,7 +1051,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "SBILIFE.NS",
@@ -1076,22 +1076,22 @@
     {
       "symbol": "SHRIRAMFIN.NS",
       "close": 960.05,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
-      "above_ema50": false,
+      "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 35,
-      "current_streak_start_date": "2026-09-01",
+      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_date": "2026-11-05",
+      "recent_flip_days_ago": 2,
+      "recent_flip_date": "2026-11-05",
+      "recent_flip_direction": "up",
+      "current_streak_days": 2,
+      "current_streak_start_date": "2026-11-05",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "recent_flip_trading_days_ago": 2,
+      "recent_bullish_flip_trading_days_ago": 2,
+      "current_streak_trading_days": 2
     },
     {
       "symbol": "TCS.NS",
@@ -1111,7 +1111,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 7
+      "current_streak_trading_days": 18
     },
     {
       "symbol": "TATACONSUM.NS",
@@ -1140,18 +1140,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 5,
-      "recent_bullish_flip_date": "2026-10-15",
-      "recent_flip_days_ago": 5,
-      "recent_flip_date": "2026-10-15",
-      "recent_flip_direction": "up",
-      "current_streak_days": 5,
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null,
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 16,
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
-      "recent_bullish_flip_trading_days_ago": 5,
-      "current_streak_trading_days": 5
+      "recent_flip_trading_days_ago": null,
+      "recent_bullish_flip_trading_days_ago": null,
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "TITAN.NS",
@@ -1180,18 +1180,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 12,
-      "current_streak_start_date": "2026-10-06",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-30",
+      "recent_flip_days_ago": 6,
+      "recent_flip_date": "2026-10-30",
+      "recent_flip_direction": "up",
+      "current_streak_days": 6,
+      "current_streak_start_date": "2026-10-30",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 12
+      "recent_flip_trading_days_ago": 6,
+      "recent_bullish_flip_trading_days_ago": 6,
+      "current_streak_trading_days": 6
     },
     {
       "symbol": "ULTRACEMCO.NS",
@@ -1229,9 +1229,9 @@
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 17,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "360ONE.NS",
@@ -1271,7 +1271,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "ABCAPITAL.NS",
@@ -1369,9 +1369,9 @@
       "current_streak_start_date": "2026-10-19",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
+      "recent_flip_trading_days_ago": 14,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 3
+      "current_streak_trading_days": 14
     },
     {
       "symbol": "AMBER.NS",
@@ -1391,7 +1391,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "AMBUJACEM.NS",
@@ -1420,18 +1420,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 2,
-      "recent_bullish_flip_date": "2026-11-05",
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
-      "recent_flip_direction": "up",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null,
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 11,
+      "current_streak_start_date": "2026-10-23",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
-      "recent_bullish_flip_trading_days_ago": 2,
-      "current_streak_trading_days": 2
+      "recent_flip_trading_days_ago": null,
+      "recent_bullish_flip_trading_days_ago": null,
+      "current_streak_trading_days": 11
     },
     {
       "symbol": "ANGELONE.NS",
@@ -1451,7 +1451,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 11
+      "current_streak_trading_days": 22
     },
     {
       "symbol": "APLAPOLLO.NS",
@@ -1471,7 +1471,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 10
+      "current_streak_trading_days": 21
     },
     {
       "symbol": "ASHOKLEY.NS",
@@ -1531,7 +1531,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 3
+      "current_streak_trading_days": 9
     },
     {
       "symbol": "AUBANK.NS",
@@ -1551,7 +1551,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 31
+      "current_streak_trading_days": 42
     },
     {
       "symbol": "BAJAJHLDNG.NS",
@@ -1571,7 +1571,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 16
+      "current_streak_trading_days": 27
     },
     {
       "symbol": "BANDHANBNK.NS",
@@ -1591,7 +1591,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 13
+      "current_streak_trading_days": 24
     },
     {
       "symbol": "BANKBARODA.NS",
@@ -1651,7 +1651,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 36
+      "current_streak_trading_days": 47
     },
     {
       "symbol": "BHARATFORG.NS",
@@ -1671,7 +1671,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 50
+      "current_streak_trading_days": 61
     },
     {
       "symbol": "BHEL.NS",
@@ -1691,12 +1691,12 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 69
+      "current_streak_trading_days": 80
     },
     {
       "symbol": "BIOCON.NS",
       "close": 367.25,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
       "above_ema50": false,
       "date": "2026-11-08",
@@ -1705,13 +1705,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 35,
-      "current_streak_start_date": "2026-09-01",
+      "current_streak_days": 7,
+      "current_streak_start_date": "2026-10-29",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "current_streak_trading_days": 7
     },
     {
       "symbol": "BLUESTARCO.NS",
@@ -1731,7 +1731,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "BOSCHLTD.NS",
@@ -1780,18 +1780,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 5,
-      "recent_bullish_flip_date": "2026-10-15",
-      "recent_flip_days_ago": 5,
-      "recent_flip_date": "2026-10-15",
-      "recent_flip_direction": "up",
-      "current_streak_days": 5,
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null,
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 16,
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
-      "recent_bullish_flip_trading_days_ago": 5,
-      "current_streak_trading_days": 5
+      "recent_flip_trading_days_ago": null,
+      "recent_bullish_flip_trading_days_ago": null,
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "CAMS.NS",
@@ -1811,7 +1811,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 39
+      "current_streak_trading_days": 50
     },
     {
       "symbol": "CANBK.NS",
@@ -1831,7 +1831,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 74
+      "current_streak_trading_days": 85
     },
     {
       "symbol": "CDSL.NS",
@@ -1851,7 +1851,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "CGPOWER.NS",
@@ -1865,13 +1865,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 25,
+      "current_streak_days": 36,
       "current_streak_start_date": "2026-09-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 25
+      "current_streak_trading_days": 36
     },
     {
       "symbol": "CHOLAFIN.NS",
@@ -1911,7 +1911,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 27
+      "current_streak_trading_days": 38
     },
     {
       "symbol": "COFORGE.NS",
@@ -1920,18 +1920,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 5,
-      "recent_bullish_flip_date": "2026-10-15",
-      "recent_flip_days_ago": 5,
-      "recent_flip_date": "2026-10-15",
-      "recent_flip_direction": "up",
-      "current_streak_days": 5,
+      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_date": null,
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 16,
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
-      "recent_bullish_flip_trading_days_ago": 5,
-      "current_streak_trading_days": 5
+      "recent_flip_trading_days_ago": null,
+      "recent_bullish_flip_trading_days_ago": null,
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "COLPAL.NS",
@@ -1951,7 +1951,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 14
+      "current_streak_trading_days": 25
     },
     {
       "symbol": "CONCOR.NS",
@@ -1971,7 +1971,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 38
+      "current_streak_trading_days": 49
     },
     {
       "symbol": "CROMPTON.NS",
@@ -1991,7 +1991,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 50
+      "current_streak_trading_days": 61
     },
     {
       "symbol": "CUMMINSIND.NS",
@@ -2000,18 +2000,18 @@
       "flipped_today": false,
       "above_ema50": false,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 49,
-      "current_streak_start_date": "2026-08-12",
+      "recent_bullish_flip_days_ago": 3,
+      "recent_bullish_flip_date": "2026-11-04",
+      "recent_flip_days_ago": 2,
+      "recent_flip_date": "2026-11-05",
+      "recent_flip_direction": "down",
+      "current_streak_days": 2,
+      "current_streak_start_date": "2026-11-05",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 49
+      "recent_flip_trading_days_ago": 2,
+      "recent_bullish_flip_trading_days_ago": 3,
+      "current_streak_trading_days": 2
     },
     {
       "symbol": "DABUR.NS",
@@ -2031,7 +2031,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 23
+      "current_streak_trading_days": 34
     },
     {
       "symbol": "DELHIVERY.NS",
@@ -2051,27 +2051,27 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 64
+      "current_streak_trading_days": 75
     },
     {
       "symbol": "DIXON.NS",
       "close": 12604.0,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
       "above_ema50": false,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 28,
-      "current_streak_start_date": "2026-09-10",
+      "recent_bullish_flip_days_ago": 5,
+      "recent_bullish_flip_date": "2026-11-02",
+      "recent_flip_days_ago": 5,
+      "recent_flip_date": "2026-11-02",
+      "recent_flip_direction": "up",
+      "current_streak_days": 5,
+      "current_streak_start_date": "2026-11-02",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 28
+      "recent_flip_trading_days_ago": 5,
+      "recent_bullish_flip_trading_days_ago": 5,
+      "current_streak_trading_days": 5
     },
     {
       "symbol": "DLF.NS",
@@ -2091,7 +2091,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 20
+      "current_streak_trading_days": 31
     },
     {
       "symbol": "DMART.NS",
@@ -2111,7 +2111,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 77
+      "current_streak_trading_days": 88
     },
     {
       "symbol": "ENRIN.NS",
@@ -2129,9 +2129,9 @@
       "current_streak_start_date": "2026-10-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 5,
+      "recent_flip_trading_days_ago": 16,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 5
+      "current_streak_trading_days": 16
     },
     {
       "symbol": "FEDERALBNK.NS",
@@ -2149,9 +2149,9 @@
       "current_streak_start_date": "2026-10-19",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
-      "recent_bullish_flip_trading_days_ago": 3,
-      "current_streak_trading_days": 3
+      "recent_flip_trading_days_ago": 14,
+      "recent_bullish_flip_trading_days_ago": 14,
+      "current_streak_trading_days": 14
     },
     {
       "symbol": "FORCEMOT.NS",
@@ -2211,7 +2211,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "GLENMARK.NS",
@@ -2220,18 +2220,18 @@
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 2,
-      "recent_bullish_flip_date": "2026-11-05",
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
+      "recent_bullish_flip_days_ago": 5,
+      "recent_bullish_flip_date": "2026-11-02",
+      "recent_flip_days_ago": 5,
+      "recent_flip_date": "2026-11-02",
       "recent_flip_direction": "up",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "current_streak_days": 5,
+      "current_streak_start_date": "2026-11-02",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
-      "recent_bullish_flip_trading_days_ago": 2,
-      "current_streak_trading_days": 2
+      "recent_flip_trading_days_ago": 5,
+      "recent_bullish_flip_trading_days_ago": 5,
+      "current_streak_trading_days": 5
     },
     {
       "symbol": "GMRAIRPORT.NS",
@@ -2271,7 +2271,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 34
+      "current_streak_trading_days": 45
     },
     {
       "symbol": "GODREJCP.NS",
@@ -2291,7 +2291,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 49
+      "current_streak_trading_days": 60
     },
     {
       "symbol": "GODREJPROP.NS",
@@ -2331,7 +2331,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "HAL.NS",
@@ -2349,29 +2349,29 @@
       "current_streak_start_date": "2026-10-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 4,
-      "recent_bullish_flip_trading_days_ago": 4,
-      "current_streak_trading_days": 4
+      "recent_flip_trading_days_ago": 15,
+      "recent_bullish_flip_trading_days_ago": 15,
+      "current_streak_trading_days": 15
     },
     {
       "symbol": "HAVELLS.NS",
       "close": 1123.0,
       "color": "green",
       "flipped_today": false,
-      "above_ema50": false,
+      "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": 6,
-      "recent_bullish_flip_date": "2026-10-14",
-      "recent_flip_days_ago": 6,
-      "recent_flip_date": "2026-10-14",
+      "recent_bullish_flip_days_ago": 1,
+      "recent_bullish_flip_date": "2026-11-06",
+      "recent_flip_days_ago": 1,
+      "recent_flip_date": "2026-11-06",
       "recent_flip_direction": "up",
-      "current_streak_days": 6,
-      "current_streak_start_date": "2026-10-14",
+      "current_streak_days": 1,
+      "current_streak_start_date": "2026-11-06",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 1,
+      "recent_bullish_flip_trading_days_ago": 1,
+      "current_streak_trading_days": 1
     },
     {
       "symbol": "HINDPETRO.NS",
@@ -2411,7 +2411,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "HYUNDAI.NS",
@@ -2451,7 +2451,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 19
+      "current_streak_trading_days": 30
     },
     {
       "symbol": "IDEA.NS",
@@ -2471,7 +2471,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 23
+      "current_streak_trading_days": 34
     },
     {
       "symbol": "IDFCFIRSTB.NS",
@@ -2491,7 +2491,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "IEX.NS",
@@ -2525,13 +2525,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 131,
+      "current_streak_days": 142,
       "current_streak_start_date": "2026-04-15",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "INDIANB.NS",
@@ -2549,9 +2549,9 @@
       "current_streak_start_date": "2026-10-19",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
-      "recent_bullish_flip_trading_days_ago": 3,
-      "current_streak_trading_days": 3
+      "recent_flip_trading_days_ago": 14,
+      "recent_bullish_flip_trading_days_ago": 14,
+      "current_streak_trading_days": 14
     },
     {
       "symbol": "INDIGO.NS",
@@ -2576,22 +2576,22 @@
     {
       "symbol": "INDUSINDBK.NS",
       "close": 903.0,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
       "above_ema50": false,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 60,
-      "current_streak_start_date": "2026-07-28",
+      "recent_bullish_flip_days_ago": 2,
+      "recent_bullish_flip_date": "2026-11-05",
+      "recent_flip_days_ago": 2,
+      "recent_flip_date": "2026-11-05",
+      "recent_flip_direction": "up",
+      "current_streak_days": 2,
+      "current_streak_start_date": "2026-11-05",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 60
+      "recent_flip_trading_days_ago": 2,
+      "recent_bullish_flip_trading_days_ago": 2,
+      "current_streak_trading_days": 2
     },
     {
       "symbol": "INDUSTOWER.NS",
@@ -2611,7 +2611,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 84
+      "current_streak_trading_days": 95
     },
     {
       "symbol": "INOXWIND.NS",
@@ -2631,7 +2631,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 15
+      "current_streak_trading_days": 26
     },
     {
       "symbol": "IREDA.NS",
@@ -2651,7 +2651,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 64
+      "current_streak_trading_days": 75
     },
     {
       "symbol": "IRFC.NS",
@@ -2669,9 +2669,9 @@
       "current_streak_start_date": "2026-10-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 4,
-      "recent_bullish_flip_trading_days_ago": 4,
-      "current_streak_trading_days": 4
+      "recent_flip_trading_days_ago": 15,
+      "recent_bullish_flip_trading_days_ago": 15,
+      "current_streak_trading_days": 15
     },
     {
       "symbol": "JINDALSTEL.NS",
@@ -2751,7 +2751,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 15
+      "current_streak_trading_days": 26
     },
     {
       "symbol": "KAYNES.NS",
@@ -2765,13 +2765,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 35,
+      "current_streak_days": 46,
       "current_streak_start_date": "2026-09-01",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "current_streak_trading_days": 46
     },
     {
       "symbol": "KEI.NS",
@@ -2791,7 +2791,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "current_streak_trading_days": 46
     },
     {
       "symbol": "KFINTECH.NS",
@@ -2829,9 +2829,9 @@
       "current_streak_start_date": "2026-10-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 4,
-      "recent_bullish_flip_trading_days_ago": 4,
-      "current_streak_trading_days": 4
+      "recent_flip_trading_days_ago": 15,
+      "recent_bullish_flip_trading_days_ago": 15,
+      "current_streak_trading_days": 15
     },
     {
       "symbol": "LAURUSLABS.NS",
@@ -2845,13 +2845,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 135,
+      "current_streak_days": 146,
       "current_streak_start_date": "2026-04-08",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "LICHSGFIN.NS",
@@ -2871,27 +2871,27 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 8
+      "current_streak_trading_days": 19
     },
     {
       "symbol": "LICI.NS",
       "close": 396.85,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
       "above_ema50": false,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 26,
-      "current_streak_start_date": "2026-09-15",
+      "recent_bullish_flip_days_ago": 3,
+      "recent_bullish_flip_date": "2026-11-04",
+      "recent_flip_days_ago": 3,
+      "recent_flip_date": "2026-11-04",
+      "recent_flip_direction": "up",
+      "current_streak_days": 3,
+      "current_streak_start_date": "2026-11-04",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "recent_flip_trading_days_ago": 3,
+      "recent_bullish_flip_trading_days_ago": 3,
+      "current_streak_trading_days": 3
     },
     {
       "symbol": "LODHA.NS",
@@ -2949,9 +2949,9 @@
       "current_streak_start_date": "2026-10-16",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 4,
-      "recent_bullish_flip_trading_days_ago": 4,
-      "current_streak_trading_days": 4
+      "recent_flip_trading_days_ago": 15,
+      "recent_bullish_flip_trading_days_ago": 15,
+      "current_streak_trading_days": 15
     },
     {
       "symbol": "LUPIN.NS",
@@ -2971,7 +2971,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 51
+      "current_streak_trading_days": 62
     },
     {
       "symbol": "MAHABANK.NS",
@@ -2991,7 +2991,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 16
+      "current_streak_trading_days": 27
     },
     {
       "symbol": "MANAPPURAM.NS",
@@ -3011,7 +3011,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 44
+      "current_streak_trading_days": 55
     },
     {
       "symbol": "MANKIND.NS",
@@ -3071,7 +3071,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 29
+      "current_streak_trading_days": 40
     },
     {
       "symbol": "MCX.NS",
@@ -3089,9 +3089,9 @@
       "current_streak_start_date": "2026-11-03",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
-      "recent_bullish_flip_trading_days_ago": 3,
-      "current_streak_trading_days": 3
+      "recent_flip_trading_days_ago": 4,
+      "recent_bullish_flip_trading_days_ago": 4,
+      "current_streak_trading_days": 4
     },
     {
       "symbol": "MFSL.NS",
@@ -3111,7 +3111,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 19
+      "current_streak_trading_days": 30
     },
     {
       "symbol": "MOTHERSON.NS",
@@ -3171,7 +3171,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 7
+      "current_streak_trading_days": 18
     },
     {
       "symbol": "NAM-INDIA.NS",
@@ -3191,7 +3191,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "NATIONALUM.NS",
@@ -3211,7 +3211,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "current_streak_trading_days": 46
     },
     {
       "symbol": "NAUKRI.NS",
@@ -3225,13 +3225,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 27,
+      "current_streak_days": 38,
       "current_streak_start_date": "2026-09-11",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 27
+      "current_streak_trading_days": 38
     },
     {
       "symbol": "NBCC.NS",
@@ -3291,7 +3291,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 10
+      "current_streak_trading_days": 21
     },
     {
       "symbol": "OFSS.NS",
@@ -3311,7 +3311,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 22
+      "current_streak_trading_days": 33
     },
     {
       "symbol": "OIL.NS",
@@ -3331,7 +3331,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 21
+      "current_streak_trading_days": 32
     },
     {
       "symbol": "PAGEIND.NS",
@@ -3351,7 +3351,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 21
+      "current_streak_trading_days": 32
     },
     {
       "symbol": "PATANJALI.NS",
@@ -3391,7 +3391,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 79
+      "current_streak_trading_days": 90
     },
     {
       "symbol": "PERSISTENT.NS",
@@ -3411,7 +3411,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 9
+      "current_streak_trading_days": 20
     },
     {
       "symbol": "PETRONET.NS",
@@ -3425,13 +3425,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 123,
+      "current_streak_days": 134,
       "current_streak_start_date": "2026-04-27",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 101
     },
     {
       "symbol": "PFC.NS",
@@ -3449,9 +3449,9 @@
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 17,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "PGEL.NS",
@@ -3531,7 +3531,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 49
+      "current_streak_trading_days": 60
     },
     {
       "symbol": "PNB.NS",
@@ -3549,9 +3549,9 @@
       "current_streak_start_date": "2026-10-19",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 3,
-      "recent_bullish_flip_trading_days_ago": 3,
-      "current_streak_trading_days": 3
+      "recent_flip_trading_days_ago": 14,
+      "recent_bullish_flip_trading_days_ago": 14,
+      "current_streak_trading_days": 14
     },
     {
       "symbol": "PNBHOUSING.NS",
@@ -3591,7 +3591,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 19
+      "current_streak_trading_days": 30
     },
     {
       "symbol": "POLYCAB.NS",
@@ -3611,7 +3611,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 75
+      "current_streak_trading_days": 86
     },
     {
       "symbol": "POWERINDIA.NS",
@@ -3631,7 +3631,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 33
+      "current_streak_trading_days": 44
     },
     {
       "symbol": "PREMIERENE.NS",
@@ -3651,7 +3651,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 58
+      "current_streak_trading_days": 69
     },
     {
       "symbol": "PRESTIGE.NS",
@@ -3691,7 +3691,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 27
+      "current_streak_trading_days": 38
     },
     {
       "symbol": "RBLBANK.NS",
@@ -3711,7 +3711,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 7
+      "current_streak_trading_days": 18
     },
     {
       "symbol": "RECLTD.NS",
@@ -3731,7 +3731,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 51
+      "current_streak_trading_days": 62
     },
     {
       "symbol": "RVNL.NS",
@@ -3751,7 +3751,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 10
+      "current_streak_trading_days": 21
     },
     {
       "symbol": "SAGILITY.NS",
@@ -3771,7 +3771,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 16
+      "current_streak_trading_days": 27
     },
     {
       "symbol": "SAIL.NS",
@@ -3791,7 +3791,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "SBICARD.NS",
@@ -3811,7 +3811,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "SHREECEM.NS",
@@ -3871,7 +3871,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 26
+      "current_streak_trading_days": 37
     },
     {
       "symbol": "SONACOMS.NS",
@@ -3885,13 +3885,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 133,
-      "current_streak_start_date": "2026-04-10",
+      "current_streak_days": 9,
+      "current_streak_start_date": "2026-10-27",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 90
+      "current_streak_trading_days": 9
     },
     {
       "symbol": "SRF.NS",
@@ -3905,13 +3905,13 @@
       "recent_flip_days_ago": null,
       "recent_flip_date": null,
       "recent_flip_direction": null,
-      "current_streak_days": 63,
+      "current_streak_days": 74,
       "current_streak_start_date": "2026-07-23",
       "data_lag_trading_days": 0,
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 63
+      "current_streak_trading_days": 74
     },
     {
       "symbol": "SUPREMEIND.NS",
@@ -3922,16 +3922,16 @@
       "date": "2026-11-08",
       "recent_bullish_flip_days_ago": null,
       "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": 2,
-      "recent_flip_date": "2026-11-05",
-      "recent_flip_direction": "down",
-      "current_streak_days": 2,
-      "current_streak_start_date": "2026-11-05",
+      "recent_flip_days_ago": null,
+      "recent_flip_date": null,
+      "recent_flip_direction": null,
+      "current_streak_days": 10,
+      "current_streak_start_date": "2026-10-26",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 2,
+      "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 2
+      "current_streak_trading_days": 10
     },
     {
       "symbol": "SUZLON.NS",
@@ -3949,9 +3949,9 @@
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 17,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "SWIGGY.NS",
@@ -3971,7 +3971,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 17
+      "current_streak_trading_days": 28
     },
     {
       "symbol": "TATAELXSI.NS",
@@ -3991,7 +3991,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 7
+      "current_streak_trading_days": 18
     },
     {
       "symbol": "TATAPOWER.NS",
@@ -4031,7 +4031,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 77
+      "current_streak_trading_days": 88
     },
     {
       "symbol": "TORNTPHARM.NS",
@@ -4051,7 +4051,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 10
+      "current_streak_trading_days": 21
     },
     {
       "symbol": "TVSMOTOR.NS",
@@ -4091,7 +4091,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 35
+      "current_streak_trading_days": 46
     },
     {
       "symbol": "UNIONBANK.NS",
@@ -4131,7 +4131,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 34
+      "current_streak_trading_days": 45
     },
     {
       "symbol": "UNOMINDA.NS",
@@ -4169,9 +4169,9 @@
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 17,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "VBL.NS",
@@ -4191,7 +4191,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 20
+      "current_streak_trading_days": 31
     },
     {
       "symbol": "VMM.NS",
@@ -4211,7 +4211,7 @@
       "stale_data": false,
       "recent_flip_trading_days_ago": null,
       "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 27
+      "current_streak_trading_days": 38
     },
     {
       "symbol": "VOLTAS.NS",
@@ -4249,29 +4249,29 @@
       "current_streak_start_date": "2026-10-14",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": 6,
-      "recent_bullish_flip_trading_days_ago": 6,
-      "current_streak_trading_days": 6
+      "recent_flip_trading_days_ago": 17,
+      "recent_bullish_flip_trading_days_ago": 17,
+      "current_streak_trading_days": 17
     },
     {
       "symbol": "ZYDUSLIFE.NS",
       "close": 1199.5,
-      "color": "red",
+      "color": "green",
       "flipped_today": false,
       "above_ema50": true,
       "date": "2026-11-08",
-      "recent_bullish_flip_days_ago": null,
-      "recent_bullish_flip_date": null,
-      "recent_flip_days_ago": null,
-      "recent_flip_date": null,
-      "recent_flip_direction": null,
-      "current_streak_days": 10,
-      "current_streak_start_date": "2026-10-08",
+      "recent_bullish_flip_days_ago": 6,
+      "recent_bullish_flip_date": "2026-10-30",
+      "recent_flip_days_ago": 6,
+      "recent_flip_date": "2026-10-30",
+      "recent_flip_direction": "up",
+      "current_streak_days": 6,
+      "current_streak_start_date": "2026-10-30",
       "data_lag_trading_days": 0,
       "stale_data": false,
-      "recent_flip_trading_days_ago": null,
-      "recent_bullish_flip_trading_days_ago": null,
-      "current_streak_trading_days": 10
+      "recent_flip_trading_days_ago": 6,
+      "recent_bullish_flip_trading_days_ago": 6,
+      "current_streak_trading_days": 6
     }
   ],
   "bullish_flips": [
