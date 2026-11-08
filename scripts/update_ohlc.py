@@ -51,6 +51,7 @@ import argparse
 import json
 import sys
 import time
+import zlib
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -91,12 +92,47 @@ FULL_REFRESH_CYCLE_DAYS = 20  # ~one trading month — every symbol gets a corre
 # pointlessly within a run that's already in a bad window.
 OUTAGE_STREAK_THRESHOLD = 15
 
+# Interior-gap self-heal (2026-11-08). An incremental run only appends rows AFTER a
+# symbol's last stored date, so a hole in the MIDDLE of the stored history (an 11-session
+# hole, 21 Oct - 4 Nov 2026, silently flipped Supertrend colours) is never filled by it,
+# and the monthly rotation takes up to FULL_REFRESH_CYCLE_DAYS trading days to reach each
+# symbol. Any symbol whose last GAP_LOOKBACK_DAYS of stored bars contain a gap longer than
+# MAX_INTERIOR_GAP_DAYS calendar days (longest real NSE closure is ~5 days) is therefore
+# promoted to a full refetch immediately. MAX_GAP_HEALS_PER_RUN bounds the run time if a
+# provider glitch ever creates thousands of holes at once; the rest heal on the next run.
+MAX_INTERIOR_GAP_DAYS = 7
+GAP_LOOKBACK_DAYS = 400
+MAX_GAP_HEALS_PER_RUN = 400
+
+
+def interior_gap(symbol: str):
+    """Return (gap_start, gap_end) of the first hole in the stored history within the lookback
+    window, or None. Reads the stored parquet; a missing/unreadable file counts as no gap
+    (the catch-up path handles those)."""
+    path = RAW_DIR / f"{symbol.replace('.', '_')}.parquet"
+    try:
+        idx = pd.to_datetime(pd.read_parquet(path).index).tz_localize(None).sort_values()
+    except Exception:
+        return None
+    idx = idx[idx >= idx.max() - pd.Timedelta(days=GAP_LOOKBACK_DAYS)] if len(idx) else idx
+    if len(idx) < 2:
+        return None
+    gaps = pd.Series(idx[1:] - idx[:-1], index=idx[:-1])
+    bad = gaps[gaps > pd.Timedelta(days=MAX_INTERIOR_GAP_DAYS)]
+    if bad.empty:
+        return None
+    start = bad.index[0]
+    return start.date(), (start + bad.iloc[0]).date()
+
 
 def full_refresh_today(symbol: str) -> bool:
     """Deterministic daily bucket per symbol (stable across runs, not
     random) — spreads the correcting full refetch evenly across the
     FULL_REFRESH_CYCLE_DAYS-day cycle instead of clustering on one day."""
-    bucket = hash(symbol) % FULL_REFRESH_CYCLE_DAYS
+    # crc32, NOT hash(): Python salts str hashes per process (PYTHONHASHSEED), so hash() gave a
+    # different bucket every run and the "deterministic rotation" was really random - some symbols
+    # could go many cycles without a correcting refetch.
+    bucket = zlib.crc32(symbol.encode()) % FULL_REFRESH_CYCLE_DAYS
     day_index = datetime.now(timezone.utc).toordinal()  # ever-increasing day counter, not tied to weekday
     return bucket == (day_index % FULL_REFRESH_CYCLE_DAYS)
 
@@ -186,6 +222,20 @@ def main():
                 incremental_targets.append(symbol)
         elif is_retryable(row):
             catchup_targets.append(symbol)
+
+    # Promote symbols with a hole in their stored history to a full refetch now (see interior_gap).
+    healed = 0
+    for symbol in list(incremental_targets):
+        gap = interior_gap(symbol)
+        if gap and healed < MAX_GAP_HEALS_PER_RUN:
+            print(f"[gap] {symbol}: no stored bars between {gap[0]} and {gap[1]} - full refetch")
+            incremental_targets.remove(symbol)
+            full_refresh_targets.append(symbol)
+            healed += 1
+        elif gap:
+            print(f"[gap] {symbol}: hole {gap[0]}..{gap[1]} - over this run's heal cap, next run")
+    if healed:
+        print(f"Interior-gap heal: {healed} symbol(s) promoted to full refetch.")
 
     print(f"Universe: {len(universe)} symbols. "
           f"Incremental: {len(incremental_targets)}  "
@@ -312,6 +362,7 @@ def main():
             },
             "full_refresh": {
                 "attempted": len(full_refresh_targets),
+                "gap_heals_promoted": healed,
                 "refreshed": full_refreshed,
                 "failed": full_refresh_failed,
                 "outage_breaker_tripped": outage_trip_count,
