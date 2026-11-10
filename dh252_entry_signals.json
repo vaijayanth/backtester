@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-10T18:09:46.421501+00:00",
+  "generated_at": "2026-11-10T18:51:24.471691+00:00",
   "source_generated_at": {
-    "market_screens": "2026-11-10T18:09:37.942195+00:00",
-    "supertrend": "2026-11-10T18:09:46.310513+00:00"
+    "market_screens": "2026-11-10T18:51:16.021152+00:00",
+    "supertrend": "2026-11-10T18:51:24.366034+00:00"
   },
   "latest_market_date": "2026-11-09",
   "rule": "close >= trailing 252-session high AND Supertrend(10,3) green, excludes EQ_LONGTERM_EXCLUDE. qty_at_base_tier assumes the flat Rs1000 base tier only \u2014 NOT the real effective tier, which depends on live closed-trade count and the 100-positions/positive-combined-P&L doubling milestone. Does NOT exclude symbols you already hold \u2014 join against your own positions for that.",
@@ -56,8 +56,8 @@
     },
     {
       "symbol": "AUROPHARMA",
-      "close": 1855.3,
-      "high_52w": 1855.3,
+      "close": 1848.3,
+      "high_52w": 1848.3,
       "pct_from_high": 0.0,
       "date": "2026-11-09",
       "supertrend_color": "green",
@@ -298,8 +298,8 @@
     },
     {
       "symbol": "PDSL",
-      "close": 407.75,
-      "high_52w": 407.75,
+      "close": 405.55,
+      "high_52w": 405.55,
       "pct_from_high": 0.0,
       "date": "2026-11-09",
       "supertrend_color": "green",
