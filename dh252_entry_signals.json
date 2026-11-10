@@ -1,15 +1,26 @@
 {
-  "generated_at": "2026-11-09T23:34:06.483230+00:00",
+  "generated_at": "2026-11-10T10:23:39.699305+00:00",
   "source_generated_at": {
-    "market_screens": "2026-11-09T23:33:57.985671+00:00",
-    "supertrend": "2026-11-09T23:34:06.372378+00:00"
+    "market_screens": "2026-11-10T10:23:31.682880+00:00",
+    "supertrend": "2026-11-10T10:23:39.590800+00:00"
   },
   "latest_market_date": "2026-11-09",
   "rule": "close >= trailing 252-session high AND Supertrend(10,3) green, excludes EQ_LONGTERM_EXCLUDE. qty_at_base_tier assumes the flat Rs1000 base tier only \u2014 NOT the real effective tier, which depends on live closed-trade count and the 100-positions/positive-combined-P&L doubling milestone. Does NOT exclude symbols you already hold \u2014 join against your own positions for that.",
   "base_position_rs": 1000,
   "universe_size": 1494,
-  "entry_count": 42,
+  "entry_count": 46,
   "entries": [
+    {
+      "symbol": "AIMTRON",
+      "close": 1971.6,
+      "high_52w": 1971.6,
+      "pct_from_high": 0.0,
+      "date": "2026-11-09",
+      "supertrend_color": "green",
+      "flipped_today": false,
+      "recent_bullish_flip_days_ago": 3,
+      "qty_at_base_tier": 1
+    },
     {
       "symbol": "ANTHEM",
       "close": 958.15,
@@ -194,7 +205,7 @@
       "date": "2026-11-09",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 3,
+      "recent_bullish_flip_days_ago": 2,
       "qty_at_base_tier": 1
     },
     {
@@ -286,6 +297,17 @@
       "qty_at_base_tier": 1
     },
     {
+      "symbol": "PDSL",
+      "close": 407.75,
+      "high_52w": 407.75,
+      "pct_from_high": 0.0,
+      "date": "2026-11-09",
+      "supertrend_color": "green",
+      "flipped_today": false,
+      "recent_bullish_flip_days_ago": 2,
+      "qty_at_base_tier": 2
+    },
+    {
       "symbol": "PETRONET",
       "close": 320.45,
       "high_52w": 320.45,
@@ -306,6 +328,17 @@
       "flipped_today": false,
       "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 1
+    },
+    {
+      "symbol": "PGINVIT",
+      "close": 105.64,
+      "high_52w": 105.64,
+      "pct_from_high": 0.0,
+      "date": "2026-11-09",
+      "supertrend_color": "green",
+      "flipped_today": false,
+      "recent_bullish_flip_days_ago": null,
+      "qty_at_base_tier": 9
     },
     {
       "symbol": "PNB",
@@ -331,13 +364,13 @@
     },
     {
       "symbol": "PRIZOR",
-      "close": 1485.5,
-      "high_52w": 1485.5,
+      "close": 1614.05,
+      "high_52w": 1614.05,
       "pct_from_high": 0.0,
-      "date": "2026-11-06",
+      "date": "2026-11-09",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": 1,
+      "recent_bullish_flip_days_ago": 2,
       "qty_at_base_tier": 1
     },
     {
@@ -383,6 +416,17 @@
       "flipped_today": false,
       "recent_bullish_flip_days_ago": null,
       "qty_at_base_tier": 1
+    },
+    {
+      "symbol": "SHREMINVIT",
+      "close": 103.0,
+      "high_52w": 103.0,
+      "pct_from_high": 0.0,
+      "date": "2026-11-09",
+      "supertrend_color": "green",
+      "flipped_today": false,
+      "recent_bullish_flip_days_ago": 1,
+      "qty_at_base_tier": 9
     },
     {
       "symbol": "SONACOMS",

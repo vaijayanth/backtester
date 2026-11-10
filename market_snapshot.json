@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-11-09T23:33:53.266392+00:00",
+  "generated_at": "2026-11-10T10:23:27.070106+00:00",
   "as_of_date": "2026-11-09",
   "newest_date_any_symbol": "2026-11-09",
-  "symbols_behind_as_of": 26,
+  "symbols_behind_as_of": 0,
   "universe_size": 1495,
   "pulse": {
     "counted": 1450,
-    "above_ema50": 628,
-    "above_ema50_pct": 43.31,
-    "above_ema200": 636,
-    "above_ema200_pct": 43.86,
-    "above_both": 452,
-    "above_both_pct": 31.17,
-    "below_both": 638,
-    "below_both_pct": 44.0
+    "above_ema50": 631,
+    "above_ema50_pct": 43.52,
+    "above_ema200": 635,
+    "above_ema200_pct": 43.79,
+    "above_both": 455,
+    "above_both_pct": 31.38,
+    "below_both": 639,
+    "below_both_pct": 44.07
   },
   "breadth_trend": [
     {
@@ -263,12 +263,12 @@
     },
     {
       "date": "2017-01-16",
-      "above_ema50_pct": 78.12,
+      "above_ema50_pct": 78.35,
       "above_ema200_pct": null
     },
     {
       "date": "2017-01-17",
-      "above_ema50_pct": 76.61,
+      "above_ema50_pct": 76.89,
       "above_ema200_pct": null
     },
     {
@@ -278,22 +278,22 @@
     },
     {
       "date": "2017-01-19",
-      "above_ema50_pct": 81.05,
+      "above_ema50_pct": 81.17,
       "above_ema200_pct": null
     },
     {
       "date": "2017-01-20",
-      "above_ema50_pct": 71.27,
+      "above_ema50_pct": 71.52,
       "above_ema200_pct": null
     },
     {
       "date": "2017-01-23",
-      "above_ema50_pct": 74.33,
+      "above_ema50_pct": 74.45,
       "above_ema200_pct": null
     },
     {
       "date": "2017-01-24",
-      "above_ema50_pct": 77.75,
+      "above_ema50_pct": 77.63,
       "above_ema200_pct": null
     },
     {
@@ -313,7 +313,7 @@
     },
     {
       "date": "2017-01-31",
-      "above_ema50_pct": 71.76,
+      "above_ema50_pct": 71.88,
       "above_ema200_pct": null
     },
     {
@@ -348,7 +348,7 @@
     },
     {
       "date": "2017-02-09",
-      "above_ema50_pct": 82.42,
+      "above_ema50_pct": 82.54,
       "above_ema200_pct": null
     },
     {
@@ -373,12 +373,12 @@
     },
     {
       "date": "2017-02-16",
-      "above_ema50_pct": 67.03,
+      "above_ema50_pct": 67.16,
       "above_ema200_pct": null
     },
     {
       "date": "2017-02-17",
-      "above_ema50_pct": 68.25,
+      "above_ema50_pct": 68.38,
       "above_ema200_pct": null
     },
     {
@@ -398,7 +398,7 @@
     },
     {
       "date": "2017-02-23",
-      "above_ema50_pct": 71.38,
+      "above_ema50_pct": 71.5,
       "above_ema200_pct": null
     },
     {
@@ -423,12 +423,12 @@
     },
     {
       "date": "2017-03-03",
-      "above_ema50_pct": 67.03,
+      "above_ema50_pct": 67.15,
       "above_ema200_pct": null
     },
     {
       "date": "2017-03-06",
-      "above_ema50_pct": 67.03,
+      "above_ema50_pct": 67.15,
       "above_ema200_pct": null
     },
     {
@@ -503,7 +503,7 @@
     },
     {
       "date": "2017-03-28",
-      "above_ema50_pct": 69.99,
+      "above_ema50_pct": 69.87,
       "above_ema200_pct": null
     },
     {
@@ -673,7 +673,7 @@
     },
     {
       "date": "2017-05-18",
-      "above_ema50_pct": 67.27,
+      "above_ema50_pct": 67.39,
       "above_ema200_pct": null
     },
     {
@@ -1014,12 +1014,12 @@
     {
       "date": "2017-08-24",
       "above_ema50_pct": 41.51,
-      "above_ema200_pct": 65.77
+      "above_ema200_pct": 65.49
     },
     {
       "date": "2017-08-28",
       "above_ema50_pct": 45.22,
-      "above_ema200_pct": 66.71
+      "above_ema200_pct": 66.35
     },
     {
       "date": "2017-08-29",
@@ -1119,7 +1119,7 @@
     {
       "date": "2017-09-25",
       "above_ema50_pct": 42.47,
-      "above_ema200_pct": 67.03
+      "above_ema200_pct": 66.91
     },
     {
       "date": "2017-09-26",
@@ -1179,7 +1179,7 @@
     {
       "date": "2017-10-12",
       "above_ema50_pct": 65.17,
-      "above_ema200_pct": 73.6
+      "above_ema200_pct": 73.48
     },
     {
       "date": "2017-10-13",
@@ -1294,7 +1294,7 @@
     {
       "date": "2017-11-15",
       "above_ema50_pct": 52.35,
-      "above_ema200_pct": 74.0
+      "above_ema200_pct": 74.12
     },
     {
       "date": "2017-11-16",
@@ -1409,7 +1409,7 @@
     {
       "date": "2017-12-18",
       "above_ema50_pct": 65.93,
-      "above_ema200_pct": 79.76
+      "above_ema200_pct": 79.64
     },
     {
       "date": "2017-12-19",
@@ -1904,7 +1904,7 @@
     {
       "date": "2018-05-15",
       "above_ema50_pct": 32.28,
-      "above_ema200_pct": 46.93
+      "above_ema200_pct": 46.81
     },
     {
       "date": "2018-05-16",
@@ -1944,7 +1944,7 @@
     {
       "date": "2018-05-25",
       "above_ema50_pct": 24.72,
-      "above_ema200_pct": 41.56
+      "above_ema200_pct": 41.68
     },
     {
       "date": "2018-05-28",
@@ -12383,13 +12383,13 @@
     },
     {
       "date": "2026-11-08",
-      "above_ema50_pct": 44.14,
-      "above_ema200_pct": 44.0
+      "above_ema50_pct": 44.3,
+      "above_ema200_pct": 44.16
     },
     {
       "date": "2026-11-09",
-      "above_ema50_pct": 42.92,
-      "above_ema200_pct": 43.34
+      "above_ema50_pct": 43.11,
+      "above_ema200_pct": 43.79
     }
   ]
 }
