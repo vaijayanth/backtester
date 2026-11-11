@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T21:01:56.619444+00:00",
+  "generated_at": "2026-11-11T09:52:29.501114+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -8408,7 +8408,7 @@
     {
       "symbol": "BAJAJFINSV.NS",
       "month": "2016-11",
-      "return_pct": -7.94,
+      "return_pct": -1.97,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -8417,21 +8417,21 @@
       "month": "2016-12",
       "return_pct": -3.79,
       "status": "Win",
-      "rsi_at_start": 38.9
+      "rsi_at_start": null
     },
     {
       "symbol": "BAJAJFINSV.NS",
       "month": "2017-01",
       "return_pct": 12.0,
       "status": "Loose",
-      "rsi_at_start": 55.7
+      "rsi_at_start": 56.7
     },
     {
       "symbol": "BAJAJFINSV.NS",
       "month": "2017-02",
       "return_pct": 19.7,
       "status": "Loose",
-      "rsi_at_start": 73.5
+      "rsi_at_start": 73.8
     },
     {
       "symbol": "BAJAJFINSV.NS",
@@ -28162,7 +28162,7 @@
     {
       "symbol": "BEL.NS",
       "month": "2016-11",
-      "return_pct": 9.77,
+      "return_pct": 6.84,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -28171,28 +28171,28 @@
       "month": "2016-12",
       "return_pct": -4.45,
       "status": "Win",
-      "rsi_at_start": 66.5
+      "rsi_at_start": null
     },
     {
       "symbol": "BEL.NS",
       "month": "2017-01",
       "return_pct": 11.19,
       "status": "Loose",
-      "rsi_at_start": 44.2
+      "rsi_at_start": 45.4
     },
     {
       "symbol": "BEL.NS",
       "month": "2017-02",
       "return_pct": -2.01,
       "status": "Win",
-      "rsi_at_start": 63.0
+      "rsi_at_start": 63.3
     },
     {
       "symbol": "BEL.NS",
       "month": "2017-03",
       "return_pct": 3.92,
       "status": "Win",
-      "rsi_at_start": 50.6
+      "rsi_at_start": 50.7
     },
     {
       "symbol": "BEL.NS",
@@ -28575,7 +28575,7 @@
     {
       "symbol": "BEL.NS",
       "month": "2021-10",
-      "return_pct": 3.42,
+      "return_pct": 3.43,
       "status": "Win",
       "rsi_at_start": 55.6
     },
@@ -36751,7 +36751,7 @@
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2016-11",
-      "return_pct": -6.46,
+      "return_pct": -7.08,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -36760,35 +36760,35 @@
       "month": "2016-12",
       "return_pct": -4.68,
       "status": "Win",
-      "rsi_at_start": 33.2
+      "rsi_at_start": null
     },
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2017-01",
       "return_pct": 7.52,
       "status": "Win",
-      "rsi_at_start": 35.7
+      "rsi_at_start": 32.2
     },
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2017-02",
       "return_pct": 3.16,
       "status": "Win",
-      "rsi_at_start": 65.0
+      "rsi_at_start": 64.5
     },
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2017-03",
       "return_pct": 8.74,
       "status": "Win",
-      "rsi_at_start": 71.4
+      "rsi_at_start": 71.3
     },
     {
       "symbol": "KOTAKBANK.NS",
       "month": "2017-04",
       "return_pct": 2.84,
       "status": "Win",
-      "rsi_at_start": 70.4
+      "rsi_at_start": 70.3
     },
     {
       "symbol": "KOTAKBANK.NS",
@@ -37591,7 +37591,7 @@
     {
       "symbol": "LT.NS",
       "month": "2016-11",
-      "return_pct": -2.96,
+      "return_pct": -1.01,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -37600,14 +37600,14 @@
       "month": "2016-12",
       "return_pct": -2.69,
       "status": "Win",
-      "rsi_at_start": 49.2
+      "rsi_at_start": null
     },
     {
       "symbol": "LT.NS",
       "month": "2017-01",
       "return_pct": 6.65,
       "status": "Win",
-      "rsi_at_start": 50.4
+      "rsi_at_start": 50.6
     },
     {
       "symbol": "LT.NS",
@@ -82202,8 +82202,8 @@
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2016-11",
-      "return_pct": -9.52,
-      "status": "Win",
+      "return_pct": -12.59,
+      "status": "Loose",
       "rsi_at_start": null
     },
     {
@@ -82211,21 +82211,21 @@
       "month": "2016-12",
       "return_pct": -5.45,
       "status": "Win",
-      "rsi_at_start": 37.2
+      "rsi_at_start": null
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2017-01",
       "return_pct": 13.34,
       "status": "Loose",
-      "rsi_at_start": 41.2
+      "rsi_at_start": 39.9
     },
     {
       "symbol": "FEDERALBNK.NS",
       "month": "2017-02",
       "return_pct": 14.18,
       "status": "Loose",
-      "rsi_at_start": 68.7
+      "rsi_at_start": 68.5
     },
     {
       "symbol": "FEDERALBNK.NS",
@@ -102775,7 +102775,7 @@
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2016-11",
-      "return_pct": 1.51,
+      "return_pct": -4.72,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -102784,42 +102784,42 @@
       "month": "2016-12",
       "return_pct": -2.26,
       "status": "Win",
-      "rsi_at_start": 45.3
+      "rsi_at_start": null
     },
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2017-01",
       "return_pct": 14.61,
       "status": "Loose",
-      "rsi_at_start": 49.9
+      "rsi_at_start": 47.6
     },
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2017-02",
       "return_pct": 56.42,
       "status": "Loose",
-      "rsi_at_start": 61.8
+      "rsi_at_start": 61.5
     },
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2017-03",
       "return_pct": -3.59,
       "status": "Win",
-      "rsi_at_start": 88.2
+      "rsi_at_start": 88.1
     },
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2017-04",
       "return_pct": -6.4,
       "status": "Win",
-      "rsi_at_start": 58.2
+      "rsi_at_start": 58.1
     },
     {
       "symbol": "JINDALSTEL.NS",
       "month": "2017-05",
       "return_pct": 6.05,
       "status": "Win",
-      "rsi_at_start": 42.1
+      "rsi_at_start": 42.0
     },
     {
       "symbol": "JINDALSTEL.NS",
@@ -145818,7 +145818,7 @@
     {
       "symbol": "SOLARINDS.NS",
       "month": "2016-11",
-      "return_pct": -1.33,
+      "return_pct": -4.16,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -145827,21 +145827,21 @@
       "month": "2016-12",
       "return_pct": 2.72,
       "status": "Win",
-      "rsi_at_start": 48.1
+      "rsi_at_start": null
     },
     {
       "symbol": "SOLARINDS.NS",
       "month": "2017-01",
       "return_pct": 2.24,
       "status": "Win",
-      "rsi_at_start": 56.5
+      "rsi_at_start": 55.0
     },
     {
       "symbol": "SOLARINDS.NS",
       "month": "2017-02",
       "return_pct": 1.91,
       "status": "Win",
-      "rsi_at_start": 56.6
+      "rsi_at_start": 56.3
     },
     {
       "symbol": "SOLARINDS.NS",
@@ -145855,7 +145855,7 @@
       "month": "2017-04",
       "return_pct": 1.7,
       "status": "Win",
-      "rsi_at_start": 66.9
+      "rsi_at_start": 66.8
     },
     {
       "symbol": "SOLARINDS.NS",
@@ -154498,8 +154498,8 @@
     {
       "symbol": "UNIONBANK.NS",
       "month": "2016-11",
-      "return_pct": 11.89,
-      "status": "Loose",
+      "return_pct": 6.26,
+      "status": "Win",
       "rsi_at_start": null
     },
     {
@@ -154507,28 +154507,28 @@
       "month": "2016-12",
       "return_pct": -19.12,
       "status": "Loose",
-      "rsi_at_start": 61.5
+      "rsi_at_start": null
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2017-01",
       "return_pct": 15.82,
       "status": "Loose",
-      "rsi_at_start": 40.2
+      "rsi_at_start": 37.6
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2017-02",
       "return_pct": 1.38,
       "status": "Win",
-      "rsi_at_start": 68.0
+      "rsi_at_start": 67.7
     },
     {
       "symbol": "UNIONBANK.NS",
       "month": "2017-03",
       "return_pct": 5.95,
       "status": "Win",
-      "rsi_at_start": 54.3
+      "rsi_at_start": 54.2
     },
     {
       "symbol": "UNIONBANK.NS",
@@ -154542,7 +154542,7 @@
       "month": "2017-05",
       "return_pct": -9.28,
       "status": "Win",
-      "rsi_at_start": 67.2
+      "rsi_at_start": 67.1
     },
     {
       "symbol": "UNIONBANK.NS",
@@ -161134,13 +161134,6 @@
       "win_pct": 79.2
     },
     {
-      "symbol": "FEDERALBNK.NS",
-      "win": 95,
-      "loose": 25,
-      "total": 120,
-      "win_pct": 79.2
-    },
-    {
       "symbol": "LUPIN.NS",
       "win": 95,
       "loose": 25,
@@ -161170,6 +161163,13 @@
     },
     {
       "symbol": "CONCOR.NS",
+      "win": 94,
+      "loose": 26,
+      "total": 120,
+      "win_pct": 78.3
+    },
+    {
+      "symbol": "FEDERALBNK.NS",
       "win": 94,
       "loose": 26,
       "total": 120,
@@ -161960,6 +161960,13 @@
       "win_pct": 61.7
     },
     {
+      "symbol": "UNIONBANK.NS",
+      "win": 74,
+      "loose": 46,
+      "total": 120,
+      "win_pct": 61.7
+    },
+    {
       "symbol": "ETERNAL.NS",
       "win": 39,
       "loose": 25,
@@ -161982,13 +161989,6 @@
     },
     {
       "symbol": "MOTHERSON.NS",
-      "win": 73,
-      "loose": 47,
-      "total": 120,
-      "win_pct": 60.8
-    },
-    {
-      "symbol": "UNIONBANK.NS",
       "win": 73,
       "loose": 47,
       "total": 120,

@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-11-10T21:02:04.059846+00:00",
+  "generated_at": "2026-11-11T09:52:35.682673+00:00",
   "source_generated_at": {
-    "market_screens": "2026-11-10T21:01:52.354233+00:00",
-    "supertrend": "2026-11-10T21:02:03.931447+00:00"
+    "market_screens": "2026-11-11T09:52:26.765607+00:00",
+    "supertrend": "2026-11-11T09:52:35.559527+00:00"
   },
   "latest_market_date": "2026-11-09",
   "rule": "close >= trailing 252-session high AND Supertrend(10,3) green, excludes EQ_LONGTERM_EXCLUDE. qty_at_base_tier assumes the flat Rs1000 base tier only \u2014 NOT the real effective tier, which depends on live closed-trade count and the 100-positions/positive-combined-P&L doubling milestone. Does NOT exclude symbols you already hold \u2014 join against your own positions for that.",
   "base_position_rs": 1000,
   "universe_size": 1494,
-  "entry_count": 46,
+  "entry_count": 47,
   "entries": [
     {
       "symbol": "AIMTRON",
@@ -414,8 +414,19 @@
       "date": "2026-11-09",
       "supertrend_color": "green",
       "flipped_today": false,
-      "recent_bullish_flip_days_ago": null,
+      "recent_bullish_flip_days_ago": 6,
       "qty_at_base_tier": 1
+    },
+    {
+      "symbol": "SBC",
+      "close": 68.73,
+      "high_52w": 68.73,
+      "pct_from_high": 0.0,
+      "date": "2026-11-09",
+      "supertrend_color": "green",
+      "flipped_today": false,
+      "recent_bullish_flip_days_ago": null,
+      "qty_at_base_tier": 14
     },
     {
       "symbol": "SHREMINVIT",
