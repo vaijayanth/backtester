@@ -1,12 +1,12 @@
 {
-  "last_run_started_utc": "2026-11-11T12:54:51.368154+00:00",
-  "last_run_finished_utc": "2026-11-11T12:59:56.168105+00:00",
+  "last_run_started_utc": "2026-11-11T17:58:35.612948+00:00",
+  "last_run_finished_utc": "2026-11-11T18:03:48.105889+00:00",
   "latest_trading_date": "2026-11-11",
   "newest_date_any_symbol": "2026-11-11",
-  "symbols_behind_newest_date": 28,
+  "symbols_behind_newest_date": 27,
   "last_date_coverage": {
-    "2026-11-11": 1467,
-    "2026-11-09": 27,
+    "2026-11-11": 1468,
+    "2026-11-09": 26,
     "2026-11-08": 1
   },
   "guards": {
@@ -23,8 +23,8 @@
   "pending": 0,
   "incremental": {
     "attempted": 1424,
-    "updated": 1397,
-    "unchanged": 27,
+    "updated": 1,
+    "unchanged": 1423,
     "failed": 0
   },
   "full_refresh": {
