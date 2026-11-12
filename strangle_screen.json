@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-11T21:39:48.312613+00:00",
+  "generated_at": "2026-11-12T10:15:31.894996+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -848,7 +848,7 @@
     {
       "symbol": "TATASTEEL.NS",
       "month": "2016-11",
-      "return_pct": 2.15,
+      "return_pct": 0.86,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -857,35 +857,35 @@
       "month": "2016-12",
       "return_pct": -6.25,
       "status": "Win",
-      "rsi_at_start": 49.1
+      "rsi_at_start": null
     },
     {
       "symbol": "TATASTEEL.NS",
       "month": "2017-01",
       "return_pct": 17.69,
       "status": "Loose",
-      "rsi_at_start": 51.3
+      "rsi_at_start": 53.8
     },
     {
       "symbol": "TATASTEEL.NS",
       "month": "2017-02",
       "return_pct": 4.02,
       "status": "Win",
-      "rsi_at_start": 68.0
+      "rsi_at_start": 68.9
     },
     {
       "symbol": "TATASTEEL.NS",
       "month": "2017-03",
       "return_pct": -0.47,
       "status": "Win",
-      "rsi_at_start": 67.3
+      "rsi_at_start": 67.5
     },
     {
       "symbol": "TATASTEEL.NS",
       "month": "2017-04",
       "return_pct": -7.56,
       "status": "Win",
-      "rsi_at_start": 52.0
+      "rsi_at_start": 52.1
     },
     {
       "symbol": "TATASTEEL.NS",
@@ -30682,7 +30682,7 @@
     {
       "symbol": "COALINDIA.NS",
       "month": "2016-11",
-      "return_pct": -3.23,
+      "return_pct": -4.46,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -30691,21 +30691,21 @@
       "month": "2016-12",
       "return_pct": -2.98,
       "status": "Win",
-      "rsi_at_start": 40.4
+      "rsi_at_start": null
     },
     {
       "symbol": "COALINDIA.NS",
       "month": "2017-01",
       "return_pct": 3.05,
       "status": "Win",
-      "rsi_at_start": 50.7
+      "rsi_at_start": 51.3
     },
     {
       "symbol": "COALINDIA.NS",
       "month": "2017-02",
       "return_pct": 3.84,
       "status": "Win",
-      "rsi_at_start": 55.3
+      "rsi_at_start": 55.4
     },
     {
       "symbol": "COALINDIA.NS",
@@ -30927,7 +30927,7 @@
     {
       "symbol": "COALINDIA.NS",
       "month": "2019-10",
-      "return_pct": 3.78,
+      "return_pct": 3.77,
       "status": "Win",
       "rsi_at_start": 46.4
     },
@@ -43394,7 +43394,7 @@
     {
       "symbol": "TATACONSUM.NS",
       "month": "2016-11",
-      "return_pct": -3.01,
+      "return_pct": 3.38,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -43403,28 +43403,28 @@
       "month": "2016-12",
       "return_pct": -2.13,
       "status": "Win",
-      "rsi_at_start": 43.4
+      "rsi_at_start": null
     },
     {
       "symbol": "TATACONSUM.NS",
       "month": "2017-01",
       "return_pct": 4.93,
       "status": "Win",
-      "rsi_at_start": 52.3
+      "rsi_at_start": 57.4
     },
     {
       "symbol": "TATACONSUM.NS",
       "month": "2017-02",
       "return_pct": 6.97,
       "status": "Win",
-      "rsi_at_start": 59.2
+      "rsi_at_start": 60.5
     },
     {
       "symbol": "TATACONSUM.NS",
       "month": "2017-03",
       "return_pct": 8.7,
       "status": "Win",
-      "rsi_at_start": 64.0
+      "rsi_at_start": 64.2
     },
     {
       "symbol": "TATACONSUM.NS",
@@ -47594,7 +47594,7 @@
     {
       "symbol": "WIPRO.NS",
       "month": "2016-11",
-      "return_pct": 2.25,
+      "return_pct": 5.38,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -47603,28 +47603,28 @@
       "month": "2016-12",
       "return_pct": 1.01,
       "status": "Win",
-      "rsi_at_start": 63.7
+      "rsi_at_start": null
     },
     {
       "symbol": "WIPRO.NS",
       "month": "2017-01",
       "return_pct": -3.59,
       "status": "Win",
-      "rsi_at_start": 59.7
+      "rsi_at_start": 61.0
     },
     {
       "symbol": "WIPRO.NS",
       "month": "2017-02",
       "return_pct": 6.5,
       "status": "Win",
-      "rsi_at_start": 34.6
+      "rsi_at_start": 35.0
     },
     {
       "symbol": "WIPRO.NS",
       "month": "2017-03",
       "return_pct": 5.68,
       "status": "Win",
-      "rsi_at_start": 66.0
+      "rsi_at_start": 66.1
     },
     {
       "symbol": "WIPRO.NS",
@@ -96993,8 +96993,8 @@
     {
       "symbol": "INDHOTEL.NS",
       "month": "2016-11",
-      "return_pct": -10.57,
-      "status": "Loose",
+      "return_pct": 2.98,
+      "status": "Win",
       "rsi_at_start": null
     },
     {
@@ -97002,42 +97002,42 @@
       "month": "2016-12",
       "return_pct": -3.85,
       "status": "Win",
-      "rsi_at_start": 36.0
+      "rsi_at_start": null
     },
     {
       "symbol": "INDHOTEL.NS",
       "month": "2017-01",
       "return_pct": 9.31,
       "status": "Win",
-      "rsi_at_start": 43.7
+      "rsi_at_start": 54.3
     },
     {
       "symbol": "INDHOTEL.NS",
       "month": "2017-02",
       "return_pct": 16.05,
       "status": "Loose",
-      "rsi_at_start": 65.8
+      "rsi_at_start": 67.9
     },
     {
       "symbol": "INDHOTEL.NS",
       "month": "2017-03",
       "return_pct": -0.67,
       "status": "Win",
-      "rsi_at_start": 69.1
+      "rsi_at_start": 69.6
     },
     {
       "symbol": "INDHOTEL.NS",
       "month": "2017-04",
       "return_pct": 1.1,
       "status": "Win",
-      "rsi_at_start": 66.2
+      "rsi_at_start": 66.4
     },
     {
       "symbol": "INDHOTEL.NS",
       "month": "2017-05",
       "return_pct": 6.28,
       "status": "Win",
-      "rsi_at_start": 60.7
+      "rsi_at_start": 60.8
     },
     {
       "symbol": "INDHOTEL.NS",
@@ -134254,7 +134254,7 @@
     {
       "symbol": "PIIND.NS",
       "month": "2016-11",
-      "return_pct": 2.55,
+      "return_pct": 3.76,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -134263,28 +134263,28 @@
       "month": "2016-12",
       "return_pct": -5.17,
       "status": "Win",
-      "rsi_at_start": 48.8
+      "rsi_at_start": null
     },
     {
       "symbol": "PIIND.NS",
       "month": "2017-01",
       "return_pct": 4.28,
       "status": "Win",
-      "rsi_at_start": 50.5
+      "rsi_at_start": 52.1
     },
     {
       "symbol": "PIIND.NS",
       "month": "2017-02",
       "return_pct": -2.8,
       "status": "Win",
-      "rsi_at_start": 59.0
+      "rsi_at_start": 59.2
     },
     {
       "symbol": "PIIND.NS",
       "month": "2017-03",
       "return_pct": -2.54,
       "status": "Win",
-      "rsi_at_start": 38.5
+      "rsi_at_start": 38.6
     },
     {
       "symbol": "PIIND.NS",
@@ -161064,6 +161064,13 @@
       "win_pct": 80.8
     },
     {
+      "symbol": "INDHOTEL.NS",
+      "win": 97,
+      "loose": 23,
+      "total": 120,
+      "win_pct": 80.8
+    },
+    {
       "symbol": "UNITDSPR.NS",
       "win": 97,
       "loose": 23,
@@ -161072,13 +161079,6 @@
     },
     {
       "symbol": "GAIL.NS",
-      "win": 96,
-      "loose": 24,
-      "total": 120,
-      "win_pct": 80.0
-    },
-    {
-      "symbol": "INDHOTEL.NS",
       "win": 96,
       "loose": 24,
       "total": 120,
@@ -162208,9 +162208,9 @@
   "monthly_aggregate": [
     {
       "month": "2016-11",
-      "win_count": 116,
-      "loose_count": 40,
-      "final_impression": 76
+      "win_count": 117,
+      "loose_count": 39,
+      "final_impression": 78
     },
     {
       "month": "2016-12",
