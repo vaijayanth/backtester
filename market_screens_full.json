@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T10:15:30.015001+00:00",
+  "generated_at": "2026-11-12T14:02:30.029757+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1495,
   "skipped": [],
@@ -9350,11 +9350,11 @@
     },
     {
       "symbol": "NSDL.BO",
-      "close": 811.45,
+      "close": 810.8,
       "high_52w": 1148.22,
-      "pct_from_high": -29.33,
+      "pct_from_high": -29.39,
       "low_52w": 699.8,
-      "pct_from_low": 15.95,
+      "pct_from_low": 15.86,
       "date": "2026-11-12"
     },
     {
@@ -15098,15 +15098,15 @@
       "date": "2026-11-12"
     },
     {
-      "symbol": "NSDL.BO",
-      "close": 811.45,
-      "rsi14": 71.1,
-      "date": "2026-11-12"
-    },
-    {
       "symbol": "RELIANCE.NS",
       "close": 1339.7,
       "rsi14": 71.0,
+      "date": "2026-11-12"
+    },
+    {
+      "symbol": "NSDL.BO",
+      "close": 810.8,
+      "rsi14": 70.9,
       "date": "2026-11-12"
     },
     {
@@ -20935,8 +20935,8 @@
     },
     {
       "symbol": "NSDL.BO",
-      "close": 811.45,
-      "rsi14": 71.1,
+      "close": 810.8,
+      "rsi14": 70.9,
       "date": "2026-11-12"
     },
     {
