@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T21:38:51.445080+00:00",
+  "generated_at": "2026-11-13T09:58:22.555148+00:00",
   "universe": "nse_fno",
   "universe_size": 213,
   "skipped": [],
@@ -185,12 +185,21 @@
       "date": "2026-11-12"
     },
     {
+      "symbol": "ADANIPORTS.NS",
+      "close": 1930.0,
+      "high_52w": 1942.7,
+      "pct_from_high": -0.65,
+      "low_52w": 1298.13,
+      "pct_from_low": 48.68,
+      "date": "2026-11-12"
+    },
+    {
       "symbol": "GLENMARK.NS",
       "close": 2659.8,
       "high_52w": 2677.2,
       "pct_from_high": -0.65,
-      "low_52w": 1809.7,
-      "pct_from_low": 46.97,
+      "low_52w": 1808.6,
+      "pct_from_low": 47.06,
       "date": "2026-11-12"
     },
     {
@@ -209,15 +218,6 @@
       "pct_from_high": -0.87,
       "low_52w": 917.27,
       "pct_from_low": 29.83,
-      "date": "2026-11-12"
-    },
-    {
-      "symbol": "ADANIPORTS.NS",
-      "close": 1930.0,
-      "high_52w": 1949.3,
-      "pct_from_high": -0.99,
-      "low_52w": 1298.13,
-      "pct_from_low": 48.68,
       "date": "2026-11-12"
     }
   ],
@@ -332,12 +332,12 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 450.0,
+      "close": 466.95,
       "high_52w": 522.35,
-      "pct_from_high": -13.85,
+      "pct_from_high": -10.61,
       "low_52w": 407.0,
-      "pct_from_low": 10.57,
-      "date": "2026-11-11"
+      "pct_from_low": 14.73,
+      "date": "2026-11-12"
     },
     {
       "symbol": "HDFCAMC.NS",
@@ -522,8 +522,8 @@
     {
       "symbol": "ADANIPORTS.NS",
       "close": 1930.0,
-      "high_52w": 1949.3,
-      "pct_from_high": -0.99,
+      "high_52w": 1942.7,
+      "pct_from_high": -0.65,
       "low_52w": 1298.13,
       "pct_from_low": 48.68,
       "date": "2026-11-12"
@@ -890,11 +890,11 @@
     },
     {
       "symbol": "ASTRAL.NS",
-      "close": 1275.0,
+      "close": 1273.5,
       "high_52w": 1743.56,
-      "pct_from_high": -26.87,
+      "pct_from_high": -26.96,
       "low_52w": 1253.6,
-      "pct_from_low": 1.71,
+      "pct_from_low": 1.59,
       "date": "2026-11-12"
     },
     {
@@ -1025,11 +1025,11 @@
     },
     {
       "symbol": "CAMS.NS",
-      "close": 743.0,
+      "close": 739.75,
       "high_52w": 829.35,
-      "pct_from_high": -10.41,
+      "pct_from_high": -10.8,
       "low_52w": 617.28,
-      "pct_from_low": 20.37,
+      "pct_from_low": 19.84,
       "date": "2026-11-12"
     },
     {
@@ -1217,8 +1217,8 @@
       "close": 2659.8,
       "high_52w": 2677.2,
       "pct_from_high": -0.65,
-      "low_52w": 1809.7,
-      "pct_from_low": 46.97,
+      "low_52w": 1808.6,
+      "pct_from_low": 47.06,
       "date": "2026-11-12"
     },
     {
@@ -1854,10 +1854,10 @@
     {
       "symbol": "PREMIERENE.NS",
       "close": 895.0,
-      "high_52w": 1117.2,
-      "pct_from_high": -19.89,
-      "low_52w": 682.6,
-      "pct_from_low": 31.12,
+      "high_52w": 1116.57,
+      "pct_from_high": -19.84,
+      "low_52w": 682.21,
+      "pct_from_low": 31.19,
       "date": "2026-11-12"
     },
     {
@@ -2368,7 +2368,7 @@
     {
       "symbol": "GLENMARK.NS",
       "close": 2659.8,
-      "rsi14": 72.6,
+      "rsi14": 72.5,
       "date": "2026-11-12"
     },
     {
@@ -2551,9 +2551,9 @@
     },
     {
       "symbol": "ICICIPRULI.NS",
-      "close": 450.0,
-      "rsi14": 58.8,
-      "date": "2026-11-11"
+      "close": 466.95,
+      "rsi14": 66.4,
+      "date": "2026-11-12"
     },
     {
       "symbol": "HDFCAMC.NS",
@@ -2678,7 +2678,7 @@
     {
       "symbol": "ADANIPORTS.NS",
       "close": 1930.0,
-      "rsi14": 63.4,
+      "rsi14": 64.1,
       "date": "2026-11-12"
     },
     {
@@ -2923,8 +2923,8 @@
     },
     {
       "symbol": "ASTRAL.NS",
-      "close": 1275.0,
-      "rsi14": 35.9,
+      "close": 1273.5,
+      "rsi14": 35.6,
       "date": "2026-11-12"
     },
     {
@@ -3013,8 +3013,8 @@
     },
     {
       "symbol": "CAMS.NS",
-      "close": 743.0,
-      "rsi14": 63.4,
+      "close": 739.75,
+      "rsi14": 62.7,
       "date": "2026-11-12"
     },
     {
@@ -3032,7 +3032,7 @@
     {
       "symbol": "CGPOWER.NS",
       "close": 821.75,
-      "rsi14": 48.2,
+      "rsi14": 47.6,
       "date": "2026-11-12"
     },
     {
@@ -3110,7 +3110,7 @@
     {
       "symbol": "ENRIN.NS",
       "close": 3037.7,
-      "rsi14": 55.0,
+      "rsi14": 54.6,
       "date": "2026-11-12"
     },
     {
@@ -3140,7 +3140,7 @@
     {
       "symbol": "GLENMARK.NS",
       "close": 2659.8,
-      "rsi14": 72.6,
+      "rsi14": 72.5,
       "date": "2026-11-12"
     },
     {
@@ -3506,7 +3506,7 @@
     {
       "symbol": "PFC.NS",
       "close": 339.0,
-      "rsi14": 57.4,
+      "rsi14": 57.1,
       "date": "2026-11-12"
     },
     {
