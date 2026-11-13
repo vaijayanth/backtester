@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-11-13T09:58:21.651363+00:00",
-  "as_of_date": "2026-11-12",
-  "newest_date_any_symbol": "2026-11-12",
-  "symbols_behind_as_of": 0,
+  "generated_at": "2026-11-13T13:27:25.087233+00:00",
+  "as_of_date": "2026-11-13",
+  "newest_date_any_symbol": "2026-11-13",
+  "symbols_behind_as_of": 26,
   "universe_size": 1495,
   "pulse": {
     "counted": 1452,
-    "above_ema50": 798,
-    "above_ema50_pct": 54.96,
-    "above_ema200": 701,
-    "above_ema200_pct": 48.28,
-    "above_both": 548,
-    "above_both_pct": 37.74,
-    "below_both": 501,
-    "below_both_pct": 34.5
+    "above_ema50": 754,
+    "above_ema50_pct": 51.93,
+    "above_ema200": 678,
+    "above_ema200_pct": 46.69,
+    "above_both": 531,
+    "above_both_pct": 36.57,
+    "below_both": 551,
+    "below_both_pct": 37.95
   },
   "breadth_trend": [
     {
@@ -12400,6 +12400,11 @@
       "date": "2026-11-12",
       "above_ema50_pct": 54.75,
       "above_ema200_pct": 48.28
+    },
+    {
+      "date": "2026-11-13",
+      "above_ema50_pct": 51.7,
+      "above_ema200_pct": 46.22
     }
   ]
 }
