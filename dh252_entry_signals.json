@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-16T10:12:53.920614+00:00",
+  "generated_at": "2026-11-16T14:00:47.012337+00:00",
   "source_generated_at": {
-    "market_screens": "2026-11-16T10:12:42.941887+00:00",
-    "supertrend": "2026-11-16T10:12:53.777648+00:00"
+    "market_screens": "2026-11-16T14:00:35.434505+00:00",
+    "supertrend": "2026-11-16T14:00:46.882686+00:00"
   },
   "latest_market_date": "2026-11-16",
   "rule": "close >= trailing 252-session high AND Supertrend(10,3) green, excludes EQ_LONGTERM_EXCLUDE. qty_at_base_tier assumes the flat Rs1000 base tier only \u2014 NOT the real effective tier, which depends on live closed-trade count and the 100-positions/positive-combined-P&L doubling milestone. Does NOT exclude symbols you already hold \u2014 join against your own positions for that.",

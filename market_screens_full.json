@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T10:12:42.941887+00:00",
+  "generated_at": "2026-11-16T14:00:35.434505+00:00",
   "universe": "full_backtester_universe",
   "universe_size": 1495,
   "skipped": [],
@@ -9080,11 +9080,11 @@
     },
     {
       "symbol": "NSDL.BO",
-      "close": 797.25,
+      "close": 797.95,
       "high_52w": 1148.22,
-      "pct_from_high": -30.57,
+      "pct_from_high": -30.51,
       "low_52w": 699.8,
-      "pct_from_low": 13.93,
+      "pct_from_low": 14.03,
       "date": "2026-11-16"
     },
     {
@@ -20437,8 +20437,8 @@
     },
     {
       "symbol": "NSDL.BO",
-      "close": 797.25,
-      "rsi14": 64.3,
+      "close": 797.95,
+      "rsi14": 64.6,
       "date": "2026-11-16"
     },
     {
