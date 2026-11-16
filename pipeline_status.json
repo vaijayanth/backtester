@@ -1,20 +1,20 @@
 {
-  "last_run_started_utc": "2026-11-13T20:57:00.349983+00:00",
-  "last_run_finished_utc": "2026-11-13T21:00:37.649805+00:00",
-  "latest_trading_date": "2026-11-13",
-  "newest_date_any_symbol": "2026-11-13",
+  "last_run_started_utc": "2026-11-16T10:05:17.441732+00:00",
+  "last_run_finished_utc": "2026-11-16T10:12:10.323341+00:00",
+  "latest_trading_date": "2026-11-16",
+  "newest_date_any_symbol": "2026-11-16",
   "symbols_behind_newest_date": 27,
   "last_date_coverage": {
-    "2026-11-13": 1468,
-    "2026-11-12": 26,
+    "2026-11-16": 1468,
+    "2026-11-13": 26,
     "2026-11-08": 1
   },
   "guards": {
-    "protected_valid_rows": 1402,
+    "protected_valid_rows": 0,
     "null_rows_ignored_benign": 0,
     "interior_invalid_dropped": 0,
-    "stored_rows_restored": 65,
-    "symbols_protected": 65,
+    "stored_rows_restored": 0,
+    "symbols_protected": 0,
     "carry_skipped_basis_mismatch": 0
   },
   "universe_size": 1541,
@@ -22,15 +22,15 @@
   "failed": 42,
   "pending": 0,
   "incremental": {
-    "attempted": 1429,
-    "updated": 0,
-    "unchanged": 1429,
+    "attempted": 1396,
+    "updated": 1396,
+    "unchanged": 0,
     "failed": 0
   },
   "full_refresh": {
-    "attempted": 66,
+    "attempted": 99,
     "gap_heals_promoted": 1,
-    "refreshed": 65,
+    "refreshed": 98,
     "failed": 1,
     "outage_breaker_tripped": 0,
     "ended_in_outage_mode": false
