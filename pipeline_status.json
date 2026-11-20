@@ -1,6 +1,6 @@
 {
-  "last_run_started_utc": "2026-11-20T14:17:47.408405+00:00",
-  "last_run_finished_utc": "2026-11-20T14:24:53.257118+00:00",
+  "last_run_started_utc": "2026-11-20T18:43:07.452456+00:00",
+  "last_run_finished_utc": "2026-11-20T18:49:22.293210+00:00",
   "latest_trading_date": "2026-11-20",
   "newest_date_any_symbol": "2026-11-20",
   "symbols_behind_newest_date": 27,
@@ -9,11 +9,11 @@
     "2026-11-19": 27
   },
   "guards": {
-    "protected_valid_rows": 0,
+    "protected_valid_rows": 1396,
     "null_rows_ignored_benign": 0,
     "interior_invalid_dropped": 0,
-    "stored_rows_restored": 0,
-    "symbols_protected": 0,
+    "stored_rows_restored": 70,
+    "symbols_protected": 70,
     "carry_skipped_basis_mismatch": 0
   },
   "universe_size": 1541,
