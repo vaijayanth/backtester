@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-19T22:27:57.903361+00:00",
+  "generated_at": "2026-11-20T10:26:33.030006+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -13854,7 +13854,7 @@
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2016-11",
-      "return_pct": -5.12,
+      "return_pct": 4.28,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -13863,35 +13863,35 @@
       "month": "2016-12",
       "return_pct": -1.93,
       "status": "Win",
-      "rsi_at_start": 41.4
+      "rsi_at_start": null
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2017-01",
       "return_pct": 7.22,
       "status": "Win",
-      "rsi_at_start": 40.8
+      "rsi_at_start": 50.1
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2017-02",
       "return_pct": -2.9,
       "status": "Win",
-      "rsi_at_start": 66.6
+      "rsi_at_start": 69.3
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2017-03",
       "return_pct": 1.79,
       "status": "Win",
-      "rsi_at_start": 48.0
+      "rsi_at_start": 48.8
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
       "month": "2017-04",
       "return_pct": 1.98,
       "status": "Win",
-      "rsi_at_start": 39.9
+      "rsi_at_start": 40.0
     },
     {
       "symbol": "BAJAJ-AUTO.NS",
@@ -17214,7 +17214,7 @@
     {
       "symbol": "ITC.NS",
       "month": "2016-11",
-      "return_pct": -8.39,
+      "return_pct": 1.88,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -17223,28 +17223,28 @@
       "month": "2016-12",
       "return_pct": 3.8,
       "status": "Win",
-      "rsi_at_start": 31.0
+      "rsi_at_start": null
     },
     {
       "symbol": "ITC.NS",
       "month": "2017-01",
       "return_pct": 6.65,
       "status": "Win",
-      "rsi_at_start": 56.4
+      "rsi_at_start": 64.3
     },
     {
       "symbol": "ITC.NS",
       "month": "2017-02",
       "return_pct": 0.85,
       "status": "Win",
-      "rsi_at_start": 69.8
+      "rsi_at_start": 71.2
     },
     {
       "symbol": "ITC.NS",
       "month": "2017-03",
       "return_pct": 6.82,
       "status": "Win",
-      "rsi_at_start": 55.7
+      "rsi_at_start": 56.1
     },
     {
       "symbol": "ITC.NS",
@@ -74243,7 +74243,7 @@
     {
       "symbol": "COFORGE.NS",
       "month": "2016-11",
-      "return_pct": 4.24,
+      "return_pct": 5.76,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -74252,28 +74252,28 @@
       "month": "2016-12",
       "return_pct": -0.29,
       "status": "Win",
-      "rsi_at_start": 67.4
+      "rsi_at_start": null
     },
     {
       "symbol": "COFORGE.NS",
       "month": "2017-01",
       "return_pct": -3.56,
       "status": "Win",
-      "rsi_at_start": 53.2
+      "rsi_at_start": 57.1
     },
     {
       "symbol": "COFORGE.NS",
       "month": "2017-02",
       "return_pct": 1.51,
       "status": "Win",
-      "rsi_at_start": 37.3
+      "rsi_at_start": 38.0
     },
     {
       "symbol": "COFORGE.NS",
       "month": "2017-03",
       "return_pct": 4.21,
       "status": "Win",
-      "rsi_at_start": 44.5
+      "rsi_at_start": 44.7
     },
     {
       "symbol": "COFORGE.NS",
@@ -75083,7 +75083,7 @@
     {
       "symbol": "COLPAL.NS",
       "month": "2016-11",
-      "return_pct": -5.01,
+      "return_pct": 1.49,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -75092,35 +75092,35 @@
       "month": "2016-12",
       "return_pct": -3.03,
       "status": "Win",
-      "rsi_at_start": 39.6
+      "rsi_at_start": null
     },
     {
       "symbol": "COLPAL.NS",
       "month": "2017-01",
       "return_pct": -1.99,
       "status": "Win",
-      "rsi_at_start": 41.2
+      "rsi_at_start": 52.6
     },
     {
       "symbol": "COLPAL.NS",
       "month": "2017-02",
       "return_pct": 1.49,
       "status": "Win",
-      "rsi_at_start": 45.7
+      "rsi_at_start": 48.4
     },
     {
       "symbol": "COLPAL.NS",
       "month": "2017-03",
       "return_pct": 10.55,
       "status": "Loose",
-      "rsi_at_start": 49.3
+      "rsi_at_start": 49.8
     },
     {
       "symbol": "COLPAL.NS",
       "month": "2017-04",
       "return_pct": 4.13,
       "status": "Win",
-      "rsi_at_start": 73.2
+      "rsi_at_start": 73.3
     },
     {
       "symbol": "COLPAL.NS",
@@ -89533,7 +89533,7 @@
       "month": "2016-12",
       "return_pct": 0.0,
       "status": "Win",
-      "rsi_at_start": 100.0
+      "rsi_at_start": null
     },
     {
       "symbol": "GVT&D.NS",
@@ -111273,7 +111273,7 @@
     {
       "symbol": "LTM.NS",
       "month": "2016-11",
-      "return_pct": 3.69,
+      "return_pct": 5.88,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -111282,35 +111282,35 @@
       "month": "2016-12",
       "return_pct": 5.6,
       "status": "Win",
-      "rsi_at_start": 65.0
+      "rsi_at_start": null
     },
     {
       "symbol": "LTM.NS",
       "month": "2017-01",
       "return_pct": -0.93,
       "status": "Win",
-      "rsi_at_start": 67.8
+      "rsi_at_start": 77.6
     },
     {
       "symbol": "LTM.NS",
       "month": "2017-02",
       "return_pct": 6.98,
       "status": "Win",
-      "rsi_at_start": 43.2
+      "rsi_at_start": 44.4
     },
     {
       "symbol": "LTM.NS",
       "month": "2017-03",
       "return_pct": 0.69,
       "status": "Win",
-      "rsi_at_start": 67.0
+      "rsi_at_start": 67.5
     },
     {
       "symbol": "LTM.NS",
       "month": "2017-04",
       "return_pct": 0.63,
       "status": "Win",
-      "rsi_at_start": 64.2
+      "rsi_at_start": 64.3
     },
     {
       "symbol": "LTM.NS",
@@ -118798,8 +118798,8 @@
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2016-11",
-      "return_pct": 3.51,
-      "status": "Win",
+      "return_pct": 14.91,
+      "status": "Loose",
       "rsi_at_start": null
     },
     {
@@ -118807,35 +118807,35 @@
       "month": "2016-12",
       "return_pct": -4.73,
       "status": "Win",
-      "rsi_at_start": 52.0
+      "rsi_at_start": null
     },
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2017-01",
       "return_pct": 6.75,
       "status": "Win",
-      "rsi_at_start": 51.5
+      "rsi_at_start": 59.7
     },
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2017-02",
       "return_pct": 18.07,
       "status": "Loose",
-      "rsi_at_start": 65.2
+      "rsi_at_start": 67.6
     },
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2017-03",
       "return_pct": 9.32,
       "status": "Win",
-      "rsi_at_start": 78.3
+      "rsi_at_start": 79.0
     },
     {
       "symbol": "MOTILALOFS.NS",
       "month": "2017-04",
       "return_pct": 15.61,
       "status": "Loose",
-      "rsi_at_start": 74.3
+      "rsi_at_start": 74.4
     },
     {
       "symbol": "MOTILALOFS.NS",
@@ -122074,7 +122074,7 @@
     {
       "symbol": "NAUKRI.NS",
       "month": "2016-11",
-      "return_pct": -2.12,
+      "return_pct": 1.45,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -122083,28 +122083,28 @@
       "month": "2016-12",
       "return_pct": 0.44,
       "status": "Win",
-      "rsi_at_start": 50.9
+      "rsi_at_start": null
     },
     {
       "symbol": "NAUKRI.NS",
       "month": "2017-01",
       "return_pct": -8.43,
       "status": "Win",
-      "rsi_at_start": 53.8
+      "rsi_at_start": 50.7
     },
     {
       "symbol": "NAUKRI.NS",
       "month": "2017-02",
       "return_pct": 3.23,
       "status": "Win",
-      "rsi_at_start": 41.5
+      "rsi_at_start": 40.6
     },
     {
       "symbol": "NAUKRI.NS",
       "month": "2017-03",
       "return_pct": -5.8,
       "status": "Win",
-      "rsi_at_start": 49.2
+      "rsi_at_start": 49.0
     },
     {
       "symbol": "NAUKRI.NS",
@@ -122914,7 +122914,7 @@
     {
       "symbol": "NBCC.NS",
       "month": "2016-11",
-      "return_pct": -1.11,
+      "return_pct": 3.56,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -122923,35 +122923,35 @@
       "month": "2016-12",
       "return_pct": 4.3,
       "status": "Win",
-      "rsi_at_start": 45.4
+      "rsi_at_start": null
     },
     {
       "symbol": "NBCC.NS",
       "month": "2017-01",
       "return_pct": 12.32,
       "status": "Loose",
-      "rsi_at_start": 69.8
+      "rsi_at_start": 76.7
     },
     {
       "symbol": "NBCC.NS",
       "month": "2017-02",
       "return_pct": -7.12,
       "status": "Win",
-      "rsi_at_start": 64.1
+      "rsi_at_start": 65.6
     },
     {
       "symbol": "NBCC.NS",
       "month": "2017-03",
       "return_pct": 1.66,
       "status": "Win",
-      "rsi_at_start": 32.9
+      "rsi_at_start": 33.1
     },
     {
       "symbol": "NBCC.NS",
       "month": "2017-04",
       "return_pct": 15.8,
       "status": "Loose",
-      "rsi_at_start": 48.7
+      "rsi_at_start": 48.8
     },
     {
       "symbol": "NBCC.NS",
@@ -149801,8 +149801,8 @@
     {
       "symbol": "TATAELXSI.NS",
       "month": "2016-11",
-      "return_pct": 1.18,
-      "status": "Win",
+      "return_pct": 18.49,
+      "status": "Loose",
       "rsi_at_start": null
     },
     {
@@ -149810,42 +149810,42 @@
       "month": "2016-12",
       "return_pct": 9.87,
       "status": "Win",
-      "rsi_at_start": 57.4
+      "rsi_at_start": null
     },
     {
       "symbol": "TATAELXSI.NS",
       "month": "2017-01",
       "return_pct": 1.17,
       "status": "Win",
-      "rsi_at_start": 58.0
+      "rsi_at_start": 68.5
     },
     {
       "symbol": "TATAELXSI.NS",
       "month": "2017-02",
       "return_pct": 6.64,
       "status": "Win",
-      "rsi_at_start": 53.1
+      "rsi_at_start": 55.6
     },
     {
       "symbol": "TATAELXSI.NS",
       "month": "2017-03",
       "return_pct": -2.6,
       "status": "Win",
-      "rsi_at_start": 55.2
+      "rsi_at_start": 56.0
     },
     {
       "symbol": "TATAELXSI.NS",
       "month": "2017-04",
       "return_pct": 2.86,
       "status": "Win",
-      "rsi_at_start": 52.7
+      "rsi_at_start": 52.9
     },
     {
       "symbol": "TATAELXSI.NS",
       "month": "2017-05",
       "return_pct": -12.08,
       "status": "Loose",
-      "rsi_at_start": 50.6
+      "rsi_at_start": 50.7
     },
     {
       "symbol": "TATAELXSI.NS",
@@ -161743,13 +161743,6 @@
       "win_pct": 66.7
     },
     {
-      "symbol": "TATAELXSI.NS",
-      "win": 80,
-      "loose": 40,
-      "total": 120,
-      "win_pct": 66.7
-    },
-    {
       "symbol": "SONACOMS.NS",
       "win": 43,
       "loose": 22,
@@ -161779,6 +161772,13 @@
     },
     {
       "symbol": "SAIL.NS",
+      "win": 79,
+      "loose": 41,
+      "total": 120,
+      "win_pct": 65.8
+    },
+    {
+      "symbol": "TATAELXSI.NS",
       "win": 79,
       "loose": 41,
       "total": 120,
@@ -161841,13 +161841,6 @@
       "win_pct": 64.2
     },
     {
-      "symbol": "MOTILALOFS.NS",
-      "win": 77,
-      "loose": 43,
-      "total": 120,
-      "win_pct": 64.2
-    },
-    {
       "symbol": "PNBHOUSING.NS",
       "win": 77,
       "loose": 43,
@@ -161863,6 +161856,13 @@
     },
     {
       "symbol": "GMRAIRPORT.NS",
+      "win": 76,
+      "loose": 44,
+      "total": 120,
+      "win_pct": 63.3
+    },
+    {
+      "symbol": "MOTILALOFS.NS",
       "win": 76,
       "loose": 44,
       "total": 120,
@@ -162208,9 +162208,9 @@
   "monthly_aggregate": [
     {
       "month": "2016-11",
-      "win_count": 122,
-      "loose_count": 34,
-      "final_impression": 88
+      "win_count": 120,
+      "loose_count": 36,
+      "final_impression": 84
     },
     {
       "month": "2016-12",
