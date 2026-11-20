@@ -1,6 +1,6 @@
 {
-  "last_run_started_utc": "2026-11-20T10:21:39.762131+00:00",
-  "last_run_finished_utc": "2026-11-20T10:26:05.040380+00:00",
+  "last_run_started_utc": "2026-11-20T14:17:47.408405+00:00",
+  "last_run_finished_utc": "2026-11-20T14:24:53.257118+00:00",
   "latest_trading_date": "2026-11-20",
   "newest_date_any_symbol": "2026-11-20",
   "symbols_behind_newest_date": 27,
@@ -22,8 +22,8 @@
   "pending": 0,
   "incremental": {
     "attempted": 1425,
-    "updated": 1425,
-    "unchanged": 0,
+    "updated": 0,
+    "unchanged": 1425,
     "failed": 0
   },
   "full_refresh": {
