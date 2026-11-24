@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-24T16:18:53.161370+00:00",
+  "generated_at": "2026-11-24T20:50:42.125239+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -26573,7 +26573,7 @@
     {
       "symbol": "ASIANPAINT.NS",
       "month": "2017-12",
-      "return_pct": 0.98,
+      "return_pct": 0.99,
       "status": "Win",
       "rsi_at_start": 39.1
     },
@@ -27212,7 +27212,7 @@
       "month": "2025-07",
       "return_pct": 0.66,
       "status": "Win",
-      "rsi_at_start": 66.4
+      "rsi_at_start": 66.5
     },
     {
       "symbol": "ASIANPAINT.NS",
@@ -57226,7 +57226,7 @@
     {
       "symbol": "ASHOKLEY.NS",
       "month": "2016-12",
-      "return_pct": 0.13,
+      "return_pct": 0.12,
       "status": "Win",
       "rsi_at_start": null
     },
@@ -113072,7 +113072,7 @@
     {
       "symbol": "MAHABANK.NS",
       "month": "2018-04",
-      "return_pct": -0.0,
+      "return_pct": 0.0,
       "status": "Win",
       "rsi_at_start": 28.8
     },
@@ -113093,7 +113093,7 @@
     {
       "symbol": "MAHABANK.NS",
       "month": "2018-07",
-      "return_pct": 3.13,
+      "return_pct": 3.12,
       "status": "Win",
       "rsi_at_start": 34.0
     },
