@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-24T12:56:37.919546+00:00",
+  "generated_at": "2026-11-24T16:19:00.615405+00:00",
   "latest_market_date": "2026-11-23",
-  "expected_last_session": "2026-11-23",
-  "feed_lag_vs_clock_weekdays": 0,
+  "expected_last_session": "2026-11-24",
+  "feed_lag_vs_clock_weekdays": 1,
   "stale_symbols": 4,
   "universe": "full_backtester_universe",
   "universe_size": 1499,
