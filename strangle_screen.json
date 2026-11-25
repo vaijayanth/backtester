@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T20:41:30.887033+00:00",
+  "generated_at": "2026-11-25T22:45:07.641597+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -1870,7 +1870,7 @@
     {
       "symbol": "NMDC.NS",
       "month": "2019-01",
-      "return_pct": 0.0,
+      "return_pct": -0.0,
       "status": "Win",
       "rsi_at_start": 47.9
     },
@@ -2227,7 +2227,7 @@
     {
       "symbol": "NMDC.NS",
       "month": "2023-04",
-      "return_pct": -3.12,
+      "return_pct": -3.13,
       "status": "Win",
       "rsi_at_start": 47.0
     },
@@ -120520,7 +120520,7 @@
     {
       "symbol": "NAM-INDIA.NS",
       "month": "2018-05",
-      "return_pct": -11.95,
+      "return_pct": -11.94,
       "status": "Loose",
       "rsi_at_start": 35.5
     },
