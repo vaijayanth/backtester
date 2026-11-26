@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-26T11:27:43.633742+00:00",
+  "generated_at": "2026-11-26T15:43:06.107604+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -140316,7 +140316,7 @@
     {
       "symbol": "RBLBANK.NS",
       "month": "2017-08",
-      "return_pct": 1.25,
+      "return_pct": 1.26,
       "status": "Win",
       "rsi_at_start": 51.3
     },
@@ -144525,7 +144525,7 @@
       "month": "2021-06",
       "return_pct": -0.71,
       "status": "Win",
-      "rsi_at_start": 48.4
+      "rsi_at_start": 48.5
     },
     {
       "symbol": "SHREECEM.NS",
@@ -144866,7 +144866,7 @@
     {
       "symbol": "SHREECEM.NS",
       "month": "2025-07",
-      "return_pct": -0.75,
+      "return_pct": -0.76,
       "status": "Win",
       "rsi_at_start": 66.6
     },
