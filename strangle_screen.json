@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-26T19:49:02.337094+00:00",
+  "generated_at": "2026-11-26T20:33:42.982510+00:00",
   "threshold_pct": 10.0,
   "universe": "nse_fno",
   "universe_size": 213,
@@ -18327,7 +18327,7 @@
     {
       "symbol": "SBIN.NS",
       "month": "2020-02",
-      "return_pct": -0.0,
+      "return_pct": 0.0,
       "status": "Win",
       "rsi_at_start": 34.1
     },
@@ -55518,7 +55518,7 @@
     {
       "symbol": "ANANDRATHI.NS",
       "month": "2022-09",
-      "return_pct": 0.0,
+      "return_pct": -0.0,
       "status": "Win",
       "rsi_at_start": 47.2
     },
@@ -140316,7 +140316,7 @@
     {
       "symbol": "RBLBANK.NS",
       "month": "2017-08",
-      "return_pct": 1.26,
+      "return_pct": 1.25,
       "status": "Win",
       "rsi_at_start": 51.3
     },
@@ -144525,7 +144525,7 @@
       "month": "2021-06",
       "return_pct": -0.71,
       "status": "Win",
-      "rsi_at_start": 48.5
+      "rsi_at_start": 48.4
     },
     {
       "symbol": "SHREECEM.NS",
